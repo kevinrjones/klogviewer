@@ -87,7 +87,7 @@ to this
 ### Git Workflow
 #### Guidelines
 
-- Only commit when explicitly asked to
+- ***Only commit when explicitly asked to***
 - Use clear, descriptive commit messages.
 - DO NOT add any ads such as "Co-authored-by: Junie <junie@jetbrains.com>`."
 - Only generate the message for staged files/changes
