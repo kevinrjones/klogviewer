@@ -2,14 +2,14 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 import com.logviewer.core.parser.SimpleLogParser
-import com.logviewer.core.service.LogService
+import com.logviewer.core.source.FileLogSource
 import com.logviewer.ui.components.LogViewerScreen
 import com.logviewer.ui.viewmodel.LogViewerViewModel
 
 fun main() = application {
     val parser = SimpleLogParser()
-    val service = LogService(parser)
-    val viewModel = LogViewerViewModel(service)
+    val source = FileLogSource(parser)
+    val viewModel = LogViewerViewModel(source)
 
     Window(
         onCloseRequest = ::exitApplication,

@@ -1,7 +1,7 @@
 package com.logviewer.bdd.steps
 
 import com.logviewer.core.parser.SimpleLogParser
-import com.logviewer.core.service.LogService
+import com.logviewer.core.source.FileLogSource
 import com.logviewer.domain.model.LogLevel
 import com.logviewer.ui.mvi.LogViewerIntent
 import com.logviewer.ui.viewmodel.LogViewerViewModel
@@ -10,12 +10,14 @@ import io.cucumber.java.en.Then
 import io.cucumber.java.en.When
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.io.File
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.runBlocking
 
 class LogLoadingSteps {
     private val parser = SimpleLogParser()
-    private val service = LogService(parser)
-    private val viewModel = LogViewerViewModel(service)
+    private val source = FileLogSource(parser)
+    private val viewModel = LogViewerViewModel(source)
 
     @Given("a log file exists at {string} with content:")
     fun a_log_file_exists_at_with_content(path: String, content: String) {
@@ -25,10 +27,10 @@ class LogLoadingSteps {
     @When("I load the log file {string}")
     fun i_load_the_log_file(path: String) {
         viewModel.handleIntent(LogViewerIntent.LoadFile(path))
-        // Wait for loading to finish (since it's async in ViewModel)
+        // Wait for loading to finish
         runBlocking {
-            while (viewModel.state.value.isLoading) {
-                kotlinx.coroutines.delay(10)
+            withTimeout(2000) {
+                viewModel.state.first { !it.isLoading && (it.logs.isNotEmpty() || it.error != null) }
             }
         }
     }

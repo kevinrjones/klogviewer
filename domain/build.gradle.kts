@@ -4,4 +4,5 @@ plugins {
 
 dependencies {
     implementation(libs.arrow.core)
+    implementation(libs.kotlinx.coroutines.core)
 }

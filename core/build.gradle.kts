@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(project(":domain"))
     implementation(libs.arrow.core)
+    implementation(libs.kotlinx.coroutines.core)
     
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
