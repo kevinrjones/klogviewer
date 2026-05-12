@@ -14,5 +14,15 @@ dependencies {
     implementation(compose.runtime)
     implementation(compose.foundation)
     implementation(compose.material)
+    implementation(compose.materialIconsExtended)
     implementation(compose.ui)
+    
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.platform.launcher)
+    testImplementation(libs.strikt.core)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

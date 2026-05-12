@@ -25,13 +25,13 @@ fun FileSelector(
             onValueChange = { text = it },
             label = { Text("Log File Path") },
             modifier = Modifier.weight(1f),
-            singleLine = true
+            singleLine = true,
+            textStyle = MaterialTheme.typography.body1
         )
         Spacer(modifier = Modifier.width(8.dp))
         Button(
             onClick = onBrowseClick,
-            modifier = Modifier.height(56.dp),
-            colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.secondary)
+            modifier = Modifier.height(56.dp)
         ) {
             Text("Browse")
         }

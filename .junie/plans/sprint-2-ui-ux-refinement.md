@@ -84,7 +84,7 @@ Establish the formal tracking and documentation for the sprint.
 - Create `docs/sprint-2-ui.md` based on the Sprint 1 template, including Goal, Scope, and Key Decisions.
 - Update `docs/TASKS.md` with Section 7: "Sprint 2: UI/UX Refinement", including subtasks for Design, Layout, Filtering, and Highlighting.
 
-### * Step 2: Implement Design System and Theme Infrastructure
+### ✓ Step 2: Implement Design System and Theme Infrastructure
 Establish the visual foundation for the application.
 
 - Create `LogViewerTheme.kt` with "Command-Line Chic" color palettes for both Light and Dark modes.
@@ -92,7 +92,7 @@ Establish the visual foundation for the application.
 - Update `LogViewerState` and `LogViewerViewModel` to handle theme switching.
 - Refactor `LogList` and `FileSelector` to utilize the new theme tokens.
 
-###   Step 3: Refine Layout with Sidebar and Status Bar
+### ✓ Step 3: Refine Layout with Sidebar and Status Bar
 Organize the UI for better information density and accessibility.
 
 - Implement a collapsible `Sidebar` on the left for navigation and settings.
@@ -100,7 +100,7 @@ Organize the UI for better information density and accessibility.
 - Update `LogViewerScreen` to use a modern `Scaffold` with the new layout components.
 - Refactor the header into a clean, integrated Top Bar with a Search entry.
 
-###   Step 4: Implement Search and Level Filtering Logic
+### ✓ Step 4: Implement Search and Level Filtering Logic
 Enhance the utility of the log viewer with interactive analysis tools.
 
 - Add `searchQuery` and `levelFilters` to the MVI state.
@@ -108,7 +108,7 @@ Enhance the utility of the log viewer with interactive analysis tools.
 - Add an interactive `LogLevelFilter` group in the Sidebar.
 - Implement real-time search feedback in the Top Bar.
 
-###   Step 5: Add Intelligent Highlighting and Line Numbering
+### * Step 5: Add Intelligent Highlighting and Line Numbering
 Add professional log viewing features for improved readability.
 
 - Implement a regex-based `LogHighlighter` to identify IDs, IP addresses, and timestamps.
