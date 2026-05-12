@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.AwtWindow
 import com.logviewer.ui.mvi.LogViewerIntent
+import com.logviewer.ui.theme.LogViewerTheme
 import com.logviewer.ui.viewmodel.LogViewerViewModel
 import java.awt.FileDialog
 import java.awt.Frame
@@ -40,38 +41,65 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
         )
     }
 
-    Scaffold(
-        scaffoldState = scaffoldState,
-        topBar = {
-            TopAppBar(title = { Text("LogViewer Walking Skeleton") })
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
-            FileSelector(
-                path = state.filePath,
-                onLoadClick = { path ->
-                    viewModel.handleIntent(LogViewerIntent.LoadFile(path))
-                },
-                onBrowseClick = { showFileDialog = true }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (state.error != null) {
-                Text(text = "Error: ${state.error}", color = MaterialTheme.colors.error)
-                Spacer(modifier = Modifier.height(8.dp))
+    LogViewerTheme(darkTheme = state.isDarkMode) {
+        Scaffold(
+            scaffoldState = scaffoldState,
+            bottomBar = {
+                StatusBar(
+                    filePath = state.filePath,
+                    lineCount = state.logs.size
+                )
             }
+        ) { padding ->
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                Sidebar(
+                    isExpanded = state.isSidebarExpanded,
+                    onToggleExpanded = { viewModel.handleIntent(LogViewerIntent.ToggleSidebar) },
+                    isDarkMode = state.isDarkMode,
+                    onToggleTheme = { viewModel.handleIntent(LogViewerIntent.ToggleTheme) },
+                    levelFilters = state.levelFilters,
+                    onToggleLevel = { level -> viewModel.handleIntent(LogViewerIntent.ToggleLevel(level)) }
+                )
 
-            Box(modifier = Modifier.weight(1f)) {
-                if (state.isLoading) {
-                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                } else {
-                    LogList(logs = state.logs)
+                Column(modifier = Modifier.fillMaxSize()) {
+                    // Header Area
+                    TopBar(
+                        filePath = state.filePath,
+                        onLoadClick = { path ->
+                            viewModel.handleIntent(LogViewerIntent.LoadFile(path))
+                        },
+                        onBrowseClick = { showFileDialog = true },
+                        searchQuery = state.searchQuery,
+                        onSearchQueryChange = { query ->
+                            viewModel.handleIntent(LogViewerIntent.UpdateSearch(query))
+                        },
+                        matchesCount = state.filteredLogs.size,
+                        totalCount = state.logs.size
+                    )
+
+                    if (state.error != null) {
+                        Text(
+                            text = "Error: ${state.error}",
+                            color = MaterialTheme.colors.error,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+
+                    Box(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                        } else {
+                            LogList(
+                                logs = state.filteredLogs,
+                                searchQuery = state.searchQuery,
+                                isDarkMode = state.isDarkMode
+                            )
+                        }
+                    }
                 }
             }
         }

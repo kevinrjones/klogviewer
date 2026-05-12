@@ -4,6 +4,7 @@
 **What was shipped**
 - Initial project structure defined and documented.
 - Sprint 1: Walking Skeleton completed (Multi-module, MVI, Log Loading).
+- Sprint 2: UI/UX Refinement completed (Command-Line Chic theme, Layout, Filtering).
 - Deepened architecture with reactive `LogSource` streaming.
 - Native UI enhancements for file browsing.
 
@@ -78,3 +79,28 @@
 
 **Test coverage areas**
 - UI components: `FileSelector` and `LogViewerScreen` (verified via manual run and build).
+
+## Sprint: UI/UX Refinement
+**Title**: Sprint 2 Completion
+**Date/time completed**: 2026-05-12 12:55
+**What was shipped**
+- "Command-Line Chic" design system with Light/Dark mode support.
+- Refined layout with collapsible Sidebar and persistent Status Bar.
+- Real-time Log Level filtering and Text Search.
+- Intelligent Highlighting for IDs, IPs, and Timestamps.
+- Line numbering in a dedicated gutter.
+
+**Key decisions**
+- Used `CompositionLocal` for providing theme-specific log colors.
+- Implemented background thread filtering in `ViewModel` to ensure UI responsiveness.
+- Added `material-icons-extended` for a richer UI icon set.
+- Used `AnnotatedString` for efficient multi-pattern highlighting.
+
+**Gotchas**
+- `Icons.AutoMirrored` should be used for certain icons like `MenuOpen` to support RTL.
+- `LazyColumn` required `itemsIndexed` to reliably display line numbers.
+- `junit-platform-launcher` is required for Gradle 9.3 test execution in `:ui` module.
+
+**Test coverage areas**
+- `LogHighlighter`: Unit tests for regex-based highlighting and search term bolding.
+- UI Layout: Verified via build and compilation.
