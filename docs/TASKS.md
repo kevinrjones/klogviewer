@@ -29,3 +29,9 @@
 ## 5. Integration & Verification
 - [x] 5.1. Implement a Cucumber BDD feature for loading a log file `[x]`
 - [x] 5.2. Run the application and verify end-to-end "walking skeleton" flow `[x]`
+
+## 6. UI Enhancements
+- [x] 6.1. Add file browsing capability to the UI `[x]`
+    - [x] 6.1.1. Add "Browse" button to `FileSelector` `[x]`
+    - [x] 6.1.2. Implement native file picker integration `[x]`
+    - [x] 6.1.3. Ensure selected file path is loaded into the viewer `[x]`

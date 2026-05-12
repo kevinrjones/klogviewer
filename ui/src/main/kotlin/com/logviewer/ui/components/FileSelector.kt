@@ -11,9 +11,10 @@ import androidx.compose.ui.unit.dp
 fun FileSelector(
     path: String,
     onLoadClick: (String) -> Unit,
+    onBrowseClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var text by remember { mutableStateOf(path) }
+    var text by remember(path) { mutableStateOf(path) }
 
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -26,6 +27,14 @@ fun FileSelector(
             modifier = Modifier.weight(1f),
             singleLine = true
         )
+        Spacer(modifier = Modifier.width(8.dp))
+        Button(
+            onClick = onBrowseClick,
+            modifier = Modifier.height(56.dp),
+            colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.secondary)
+        ) {
+            Text("Browse")
+        }
         Spacer(modifier = Modifier.width(8.dp))
         Button(
             onClick = { onLoadClick(text) },

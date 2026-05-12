@@ -22,3 +22,19 @@ The first phase of the LogViewer project has been successfully completed, establ
     - Established a BDD (Behavior Driven Development) suite using Cucumber JVM to verify the end-to-end user story of loading and viewing log files.
 - **Documentation**:
     - Initialized `docs/TASKS.md` for status tracking and `docs/project_memory.md` for long-term project context.
+
+## 12:08
+
+### UI Enhancement: File Browsing Support
+
+Implemented native file browsing capability to allow users to easily select log files from their local disk.
+
+#### Changes:
+- **UI Components**:
+    - Added a "Browse" button to the `FileSelector` header.
+    - Integrated `java.awt.FileDialog` using Compose's `AwtWindow` to provide a native file selection experience.
+- **MVI Architecture**:
+    - Added `LogViewerIntent.SelectPath` to handle file selection without immediate loading, keeping the UI state in sync.
+    - Updated `LogViewerViewModel` to handle the new intent and update the `filePath` in the state.
+- **Maintenance**:
+    - Updated `TASKS.md` and `project_memory.md` to reflect the completion of this feature.

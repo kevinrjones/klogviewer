@@ -37,3 +37,21 @@
 **Test coverage areas**
 - `SimpleLogParser`: Unit tests for various log levels and invalid lines.
 - `LogViewerViewModel`: BDD test covering the end-to-end flow of loading a log file and updating the state.
+
+## Task: UI Enhancements - File Browsing
+**Title**: File Browsing Implementation
+**Date/time completed**: 2026-05-12 12:05
+**What was shipped**
+- Integrated native `FileDialog` into the Compose for Desktop UI.
+- Enhanced `FileSelector` component with a "Browse" button.
+- Updated MVI model with `SelectPath` intent for decoupled path selection.
+
+**Key decisions**
+- Used `java.awt.FileDialog` via `AwtWindow` to provide a native OS feel for file selection.
+- Maintained MVI purity by routing file selection through the ViewModel's state.
+
+**Gotchas**
+- `AwtWindow` requires careful handling of the `onCloseRequest` to ensure the dialog state is reset in the Composable.
+
+**Test coverage areas**
+- UI components: `FileSelector` and `LogViewerScreen` (verified via manual run and build).

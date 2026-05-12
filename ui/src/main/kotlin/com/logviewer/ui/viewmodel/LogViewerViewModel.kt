@@ -23,6 +23,7 @@ class LogViewerViewModel(
     fun handleIntent(intent: LogViewerIntent) {
         when (intent) {
             is LogViewerIntent.LoadFile -> loadFile(intent.path)
+            is LogViewerIntent.SelectPath -> _state.update { it.copy(filePath = intent.path) }
             LogViewerIntent.ClearLogs -> {
                 logJob?.cancel()
                 _state.update { it.copy(logs = emptyList(), filePath = "") }
