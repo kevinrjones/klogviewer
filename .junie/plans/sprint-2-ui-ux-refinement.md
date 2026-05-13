@@ -5,113 +5,104 @@ sessionId: session-260512-121343-ncg9
 # Requirements
 
 ### Overview & Goals
-The second sprint focuses on transforming the "Walking Skeleton" into a professional-grade log viewer. As a UI/UX-focused sprint, we will prioritize visual clarity, information density, and interactive analysis tools. We have chosen a **"Command-Line Chic"** aesthetic: an industrial, high-contrast look that honors developer tools while providing modern comforts like dark mode and intelligent highlighting.
+The third sprint introduces multi-log support, allowing users to analyze multiple log files simultaneously. We will implement two primary viewing modes: **Tabs** for isolated file viewing and **Interleaving** for a unified chronological stream of multiple files. This enhances the tool's utility for correlating events across different services or application components.
 
 ### Scope
 **In Scope:**
-- **Sprint Documentation**: Creation of `docs/sprint-2-ui.md` and updating `TASKS.md`.
-- **Custom Visual Identity**: Implementation of a refined "Command-Line Chic" theme with Light/Dark mode support.
-- **Enhanced Layout**: Introduction of a left sidebar for filters and a persistent status bar for file metadata.
-- **Interactive Filtering**: Real-time log level filtering (INFO, WARN, ERROR, etc.).
-- **Advanced Search**: Text search with live result highlighting.
-- **Intelligent Highlighting**: Automatic syntax highlighting for IDs, IP addresses, and timestamps using regex.
-- **Line Numbering**: Displaying line numbers in a gutter for better reference.
+- **Tabbed Interface**: Switch between multiple open log views.
+- **Interleaved View**: Merge multiple selected log files into a single, time-ordered list.
+- **Source Identification**: Visual colored badges to identify the origin of log entries in interleaved views.
+- **Multi-File Selection**: Support for selecting multiple files in the file picker (creating an interleaved tab).
+- **Workspace Management**: Adding/Removing files from the current view.
+- **Documentation**: Formal sprint document and ADRs for architectural changes.
 
 **Out of Scope:**
-- Multi-log interleaving (scheduled for Sprint 3).
-- Advanced log parsing templates (scheduled for Sprint 3).
+- Persistent workspaces (saved to disk).
+- Different parsing templates per file in the same interleaved view (will use the default parser for all).
 
 # Technical Design
 
 ### Current Implementation
-The application currently uses default Material colors and a simple vertical column layout. Log levels have basic color coding, but the content is unformatted.
+The application currently supports viewing a single log file at a time. The `LogViewerState` holds a single list of logs, and the `LogViewerViewModel` manages a single loading job.
 
 ### Key Decisions
-- **Theme**: A custom `LogViewerTheme` will be implemented, defaulting to **Dark Mode**. It will use high-contrast accents (#00A3E0 for primary, vibrant colors for log levels) on a near-black background (#121212).
-- **Typography**: `JetBrains Mono` will be enforced for all log-related content to ensure tabular alignment and readability.
-- **Highlighting Engine**: We will implement a `LogHighlighter` utility that uses regex to find domain-relevant patterns (UUIDs, IPv4/v6, Timestamps) and transforms them into `AnnotatedString` objects.
-- **State Management**: The `LogViewerState` will be extended to include search and filter parameters, with the `LogViewerViewModel` performing the filtering on the background thread to maintain UI responsiveness.
+- **Workspace-Centric State**: `LogViewerState` will be refactored to hold a list of `TabState` objects, each representing a Tab.
+- **LogEntry Attribution**: `LogEntry` will be updated to include an optional `sourceId` (filename) to track its origin.
+- **Chronological Merging**: A chronological merge algorithm based on `LogTimestamp` will be used to interleave entries.
+- **Dynamic Coloring**: Sources in an interleaved view will be assigned colors from a predefined palette.
+- **Documentation First**: All architectural decisions and sprint goals will be documented in `docs/` before implementation.
+
+### Proposed Documents
+1.  **`docs/sprints/sprint-3-log.md`**: Detailed sprint plan.
+2.  **`docs/adr/adr-006-multi-log-interleaving.md`**: Design for merging multiple log streams.
+3.  **`docs/adr/adr-007-tabbed-interface-architecture.md`**: Design for the tabbed MVI state.
 
 ### Proposed Changes
-- **Theme (`ui/theme`)**:
-    - `LogViewerTheme.kt`: The main theme entry point.
-    - `LogViewerColors.kt`: Definitions for "Industrial Dark" and "Clean Light" palettes.
-- **Components (`ui/components`)**:
-    - `Sidebar.kt`: Left-aligned pane for level filters and theme toggle.
-    - `StatusBar.kt`: Bottom pane for file information and line counts.
-    - `LogHighlighter.kt`: Logic for syntax highlighting using `AnnotatedString`.
-    - `LogEntryRow.kt`: Updated to include line numbers and highlighted content.
+- **Domain (`domain/model`)**:
+    - Update `LogEntry` to include `sourceId: String?`.
+- **Core (`core/source`)**:
+    - `MergedLogSource`: A new source that combines multiple `observeLogs` streams and merges them chronologically.
 - **MVI (`ui/mvi`)**:
-    - Add `LogViewerIntent.UpdateSearch`, `LogViewerIntent.ToggleLevel`, and `LogViewerIntent.ToggleTheme`.
+    - Refactor `LogViewerState` to support `tabs: List<TabState>` and `activeTabId`.
+    - Add `LogViewerIntent.AddTab`, `LogViewerIntent.CloseTab`, `LogViewerIntent.SwitchTab`.
+- **Components (`ui/components`)**:
+    - `TabRow.kt`: Header component for tab navigation.
+    - `SourceBadge.kt`: Visual label for log entries.
+    - Update `LogList.kt` and `LogEntryRow.kt` to handle multiple sources.
 
-### Documentation & Tracking
-- `docs/sprint-2-ui.md`: A comprehensive sprint document outlining goals, scope, and key decisions for the UI refinement phase.
-- `docs/TASKS.md`: Updated with a new section (7. Sprint 2: UI/UX Refinement) containing all subtasks.
-
-### File Structure
-```
-ui/src/main/kotlin/com/logviewer/ui/
-├── theme/
-│   ├── LogViewerTheme.kt
-│   └── LogViewerColors.kt
-├── components/
-│   ├── Sidebar.kt
-│   ├── StatusBar.kt
-│   ├── LogHighlighter.kt
-│   └── ...
-└── ...
+### Architecture Diagram
+```mermaid
+graph TD
+    UI[LogViewerScreen] --> TR[TabRow]
+    UI --> LL[LogList]
+    LL --> LB[SourceBadge]
+    UI --> VM[LogViewerViewModel]
+    VM --> TS[TabState]
+    VM --> MLS[MergedLogSource]
+    MLS --> FLS[FileLogSource 1..N]
+    FLS --> LE[LogEntry with sourceId]
 ```
 
 # Testing
 
 ### Validation Approach
-- **Visual Audit**: Verification of the "Command-Line Chic" aesthetic across both Light and Dark modes.
-- **Functional Verification**:
-    - Ensure searching for a term (e.g., "error") highlights all occurrences in the current view.
-    - Verify that unchecking a log level (e.g., "DEBUG") immediately removes those entries from the list.
-- **Performance Testing**: Load a 50,000 line log file and verify that scrolling remains fluid with highlighting and line numbers enabled.
+- **Multi-File Verification**: Load two files with overlapping timestamps and verify they are correctly interleaved.
+- **Tab Persistence**: Switch between tabs and ensure the scroll position and filters are maintained (in-memory).
+- **Source Visibility**: Verify that badges are hidden when viewing a single file but visible in interleaved mode.
 
 ### Key Scenarios
-- **Scenario: Theme Toggle**: User clicks the theme icon in the sidebar. The UI transitions from Dark to Light mode instantly, preserving all filters and scroll position.
-- **Scenario: Multi-term Highlighting**: A log line containing an IP address and a UUID is displayed. Both should be highlighted in their respective colors.
-- **Scenario: Search & Filter Interaction**: User filters for ERROR logs only and then searches for "connection". Only ERROR logs containing "connection" should be visible.
+- **Scenario: Interleaving Two Files**: User selects `app.log` and `db.log`. The resulting view shows entries from both, sorted by time, with distinct source badges.
+- **Scenario: Tab Switching**: User opens `file1.log`, then opens `file2.log` in a new tab. Switching back to the first tab preserves the search query and scroll position.
 
 # Delivery Steps
 
-### ✓ Step 1: Initialize Sprint 2 Documentation and Task Tracking
-Establish the formal tracking and documentation for the sprint.
+### ✓ Step 1: Initialize Sprint 3 Documentation
+Establish the formal plan and architectural foundation.
 
-- Create `docs/sprint-2-ui.md` based on the Sprint 1 template, including Goal, Scope, and Key Decisions.
-- Update `docs/TASKS.md` with Section 7: "Sprint 2: UI/UX Refinement", including subtasks for Design, Layout, Filtering, and Highlighting.
+- Create `docs/sprints/sprint-3-log.md` with goals and scope.
+- Create `docs/adr/adr-006-multi-log-interleaving.md` for merging strategy.
+- Create `docs/adr/adr-007-tabbed-interface-architecture.md` for tabbed state.
 
-### ✓ Step 2: Implement Design System and Theme Infrastructure
-Establish the visual foundation for the application.
+### * Step 2: Implement Tabbed Infrastructure
+Refactor state management and UI to support multiple concurrent views.
 
-- Create `LogViewerTheme.kt` with "Command-Line Chic" color palettes for both Light and Dark modes.
-- Set up `JetBrains Mono` as the default monospaced font for log content.
-- Update `LogViewerState` and `LogViewerViewModel` to handle theme switching.
-- Refactor `LogList` and `FileSelector` to utilize the new theme tokens.
+- Define `TabState` to encapsulate tab-specific data (logs, filters).
+- Update `LogViewerState` with `tabs` list and `activeTabId`.
+- Create `TabRow` component for navigating between tabs.
+- Implement `AddTab`, `CloseTab`, and `SwitchTab` intents.
 
-### ✓ Step 3: Refine Layout with Sidebar and Status Bar
-Organize the UI for better information density and accessibility.
+###   Step 3: Implement Multi-File Loading and Interleaving
+Add support for merging multiple log streams.
 
-- Implement a collapsible `Sidebar` on the left for navigation and settings.
-- Create a `StatusBar` at the bottom to show file path, line count, and encoding.
-- Update `LogViewerScreen` to use a modern `Scaffold` with the new layout components.
-- Refactor the header into a clean, integrated Top Bar with a Search entry.
+- Update `LogEntry` to include `sourceId`.
+- Implement `MergedLogSource` in `:core` for chronological merging.
+- Update `LogViewerViewModel` to handle multi-file selection and interleaved loading.
+- Ensure search and filtering are applied to the merged stream.
 
-### ✓ Step 4: Implement Search and Level Filtering Logic
-Enhance the utility of the log viewer with interactive analysis tools.
+###   Step 4: Source Identification and UI Polish
+Visualize the origin of logs and refine the user experience.
 
-- Add `searchQuery` and `levelFilters` to the MVI state.
-- Implement filtering logic in `LogViewerViewModel` to reactively update the displayed logs.
-- Add an interactive `LogLevelFilter` group in the Sidebar.
-- Implement real-time search feedback in the Top Bar.
-
-### * Step 5: Add Intelligent Highlighting and Line Numbering
-Add professional log viewing features for improved readability.
-
-- Implement a regex-based `LogHighlighter` to identify IDs, IP addresses, and timestamps.
-- Update `LogEntryRow` to include a gutter with line numbers.
-- Use `AnnotatedString` to apply syntax highlighting and search term bolding in the log content.
-- Ensure smooth scrolling performance when highlighting is active.
+- Implement `SourceBadge` component for log origin visualization.
+- Update `LogEntryRow` to display badges in interleaved tabs.
+- Assign dynamic colors to log sources for visual distinction.
+- Add "Add File to Workspace" capability to the Sidebar.
