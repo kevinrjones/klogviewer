@@ -29,7 +29,7 @@ class FileLogSource(
             // Using useLines for memory-efficient reading (still reads all for Initial load)
             val entries = file.useLines { lines ->
                 lines.mapNotNull { line ->
-                    parser.parse(line).getOrNull()
+                    parser.parse(line).getOrNull()?.copy(sourceId = file.name)
                 }.toList()
             }
             

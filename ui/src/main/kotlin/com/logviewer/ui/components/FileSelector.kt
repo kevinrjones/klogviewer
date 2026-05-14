@@ -11,6 +11,7 @@ import androidx.compose.ui.unit.dp
 fun FileSelector(
     path: String,
     onLoadClick: (String) -> Unit,
+    onAddToWorkspaceClick: (String) -> Unit,
     onBrowseClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -41,6 +42,13 @@ fun FileSelector(
             modifier = Modifier.height(56.dp)
         ) {
             Text("Load")
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Button(
+            onClick = { onAddToWorkspaceClick(text) },
+            modifier = Modifier.height(56.dp)
+        ) {
+            Text("Add to Workspace")
         }
     }
 }
