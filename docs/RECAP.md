@@ -106,3 +106,37 @@ Completed the missing pieces of the professional desktop experience by implement
 #### Quality Assurance:
 - **New Unit Tests**: Implemented `FileLogTailingTest` to verify that file appends are correctly detected and emitted.
 - **Integration Safety**: Verified that existing tab management and interleaving tests remain passing with the new streaming architecture.
+
+## 11:35
+
+### Window Management and UI Refinement
+
+Adjusted the application's initial presentation to align with desktop-centric standards.
+
+#### Changes:
+- **Window Configuration**: Set the default window size to 1200x800 and enabled centering on startup via `rememberWindowState`.
+- **UX**: Improved the initial impression of the application, ensuring that the high-density grid and sidebar have sufficient space immediately upon launch.
+
+## 11:45
+
+### Bug Fix: Log Parsing for App Logs
+
+Resolved an issue where the application failed to parse its own log files due to a strict regex.
+
+#### Changes:
+- **Parser Robustness**: Updated `SimpleLogParser` with a flexible regex that supports milliseconds and the `[THREAD] LEVEL` format used by Logback.
+- **Backwards Compatibility**: Maintained support for the simpler Sprint 1 log format.
+- **TDD**: Added a regression test with actual application log samples.
++
++## 12:45
++
++### Feature: Reverse Order View
++
++Added the ability to view log files in reverse order (newest entries at the top).
++
++#### Changes:
++- **MVI State**: Added `isReversed` flag to `TabState`.
++- **Sorting Logic**: Updated `LogViewerViewModel` to apply `reversed()` to filtered logs when the toggle is active.
++- **UI**: Added a "Reverse Order" toggle button to the `RibbonBar` under the "View" group.
++- **Persistence**: The sort order is maintained per tab and respected when new logs are appended in real-time.
++

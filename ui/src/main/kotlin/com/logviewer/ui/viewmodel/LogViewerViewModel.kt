@@ -53,6 +53,12 @@ class LogViewerViewModel(
                 }
                 filterLogs(_state.value.activeTabId)
             }
+            LogViewerIntent.ToggleSortOrder -> {
+                _state.update { currentState ->
+                    currentState.updateActiveTab { it.copy(isReversed = !it.isReversed) }
+                }
+                filterLogs(_state.value.activeTabId)
+            }
             LogViewerIntent.AddTab -> addTab()
             is LogViewerIntent.CloseTab -> closeTab(intent.id)
             is LogViewerIntent.SwitchTab -> {
@@ -176,9 +182,11 @@ class LogViewerViewModel(
                 matchesLevel && matchesSearch
             }
             
+            val sorted = if (tab.isReversed) filtered.reversed() else filtered
+            
             _state.update { currentState ->
                 currentState.copy(tabs = currentState.tabs.map { 
-                    if (it.id == tabId) it.copy(filteredLogs = filtered) else it 
+                    if (it.id == tabId) it.copy(filteredLogs = sorted) else it 
                 })
             }
         }

@@ -25,6 +25,8 @@ fun RibbonBar(
     totalCount: Int,
     levelFilters: Set<LogLevel>,
     onToggleLevel: (LogLevel) -> Unit,
+    isReversed: Boolean,
+    onToggleSortOrder: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -55,6 +57,11 @@ fun RibbonBar(
                         icon = Icons.Default.ViewSidebar, 
                         label = "Sidebar", 
                         onClick = onToggleSidebar
+                    )
+                    RibbonButton(
+                        icon = if (isReversed) Icons.Default.SwapVert else Icons.Default.Sort,
+                        label = if (isReversed) "Newest First" else "Oldest First",
+                        onClick = onToggleSortOrder
                     )
                 }
                 

@@ -13,6 +13,7 @@ data class TabState(
     val filePath: String = "",
     val searchQuery: String = "",
     val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
+    val isReversed: Boolean = false,
     val sourceIds: List<String> = emptyList(),
     val selectedEntry: LogEntry? = null
 )

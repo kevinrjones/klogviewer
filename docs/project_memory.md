@@ -271,3 +271,38 @@
 **Test coverage areas**
 - `core` module: Verified that existing tests pass with logging instrumentation.
 - `app` module: Startup log verification.
+
+## Task: Window Management
+**Title**: Initial Window Size and Centering
+**Date/time completed**: 2026-05-14 11:35
+**What was shipped**
+- Increased default window size to 1200x800 for better high-density grid visibility.
+- Configured window to start centered on the screen.
+
+**Key decisions**
+- Used `rememberWindowState` to manage window dimensions and position independently of the `Window` lifecycle.
+- Selected 1200x800 as a standard "desktop-centric" size that accommodates the sidebar, log grid, and future details pane.
+
+**Gotchas**
+- None.
+
+**Test coverage areas**
+- UI: Verified via manual run (simulated) and compilation.
+
+## Task: Log Parsing Robustness
+**Title**: Parser Regex Enhancement
+**Date/time completed**: 2026-05-14 11:45
+**What was shipped**
+- Enhanced `SimpleLogParser` to support professional log formats.
+- Support for milliseconds in timestamps.
+- Support for `[THREAD] LEVEL` and `[LEVEL]` interchangeably.
+
+**Key decisions**
+- Adopted a heuristic-based parsing logic that identifies the Log Level from either the bracketed field or the subsequent word, maximizing compatibility across different loggers.
+- Ensured `SimpleLogParser` remains "simple" by using a single regex and light post-processing instead of a full grammar-based parser.
+
+**Gotchas**
+- The `destructured` assignment in the previous implementation was too rigid for optional fields; switched to indexed group access for better control.
+
+**Test coverage areas**
+- `LogParserTest`: Added test cases for actual application logs and verified backwards compatibility with older formats.

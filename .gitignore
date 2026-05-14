@@ -126,6 +126,14 @@ gradle-app.setting
 **/vite.svg
 **/*.tsbuildinfo
 
+# OS files
+.DS_Store
+**/.DS_Store
+
+# Logs
+app/logs/
+app/jsonlogs/
+
 # Frontend environment files and secrets
 **/.env
 **/.env.*

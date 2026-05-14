@@ -44,4 +44,17 @@ class LogParserTest {
             expectThat(failure).isEqualTo(LogFailure.ParsingError("Could not parse log line", line))
         }
     }
+
+    @Test
+    fun `should parse application log line with milliseconds and thread`() {
+        val line = "2026-05-14 11:17:06.395 [main] INFO  Main - Starting LogViewer application"
+        val result = parser.parse(line)
+
+        expectThat(result.isRight()).isTrue()
+        result.onRight { entry ->
+            expectThat(entry.timestamp.value).isEqualTo("2026-05-14 11:17:06.395")
+            expectThat(entry.level).isEqualTo(LogLevel.INFO)
+            expectThat(entry.content.value).isEqualTo("Main - Starting LogViewer application")
+        }
+    }
 }

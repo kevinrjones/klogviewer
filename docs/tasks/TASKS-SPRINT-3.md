@@ -42,3 +42,8 @@
 - [ ] 8.7.2. Support resizable columns (Stretch)
 - [x] 8.7.3. Implement Local File Tailing in `FileLogSource`
 - [x] 8.7.4. Update `MergedLogSource` to support real-time merges
+- [x] 8.7.5. Implement "Reverse Order" (Newest First) toggle in UI
+
+### 8.8. Window Management
+- [x] 8.8.1. Increase default window size to 1200x800
+- [x] 8.8.2. Center window on startup

@@ -1,6 +1,6 @@
-import androidx.compose.ui.window.MenuBar
-import androidx.compose.ui.window.Window
-import androidx.compose.ui.window.application
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.*
 import com.logviewer.core.parser.SimpleLogParser
 import com.logviewer.core.source.FileLogSource
 import com.logviewer.ui.components.LogViewerScreen
@@ -17,9 +17,16 @@ fun main() {
         val source = FileLogSource(parser)
         val viewModel = LogViewerViewModel(source)
 
+        val windowState = rememberWindowState(
+            width = 1200.dp,
+            height = 800.dp,
+            position = WindowPosition(Alignment.Center)
+        )
+
         Window(
             onCloseRequest = ::exitApplication,
-            title = "LogViewer"
+            title = "LogViewer",
+            state = windowState
         ) {
         MenuBar {
             Menu("File") {

@@ -71,7 +71,9 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                         matchesCount = activeTab?.filteredLogs?.size ?: 0,
                         totalCount = activeTab?.logs?.size ?: 0,
                         levelFilters = activeTab?.levelFilters ?: emptySet(),
-                        onToggleLevel = { viewModel.handleIntent(LogViewerIntent.ToggleLevel(it)) }
+                        onToggleLevel = { viewModel.handleIntent(LogViewerIntent.ToggleLevel(it)) },
+                        isReversed = activeTab?.isReversed ?: false,
+                        onToggleSortOrder = { viewModel.handleIntent(LogViewerIntent.ToggleSortOrder) }
                     )
                 }
             },
