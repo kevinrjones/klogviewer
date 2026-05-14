@@ -10,6 +10,8 @@ dependencies {
     implementation(libs.arrow.core)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.swing)
+    implementation(libs.kotlin.logging)
+    implementation(libs.slf4j.api)
     implementation(compose.desktop.currentOs)
     implementation(compose.runtime)
     implementation(compose.foundation)

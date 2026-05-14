@@ -26,31 +26,34 @@ class LogLoadingSteps {
 
     @When("I load the log file {string}")
     fun i_load_the_log_file(path: String) {
-        viewModel.handleIntent(LogViewerIntent.LoadFile(path))
+        viewModel.handleIntent(LogViewerIntent.LoadFiles(listOf(path)))
         // Wait for loading to finish
         runBlocking {
             withTimeout(2000) {
-                viewModel.state.first { !it.isLoading && (it.logs.isNotEmpty() || it.error != null) }
+                viewModel.state.first { 
+                    val tab = it.activeTab
+                    tab != null && !tab.isLoading && (tab.logs.isNotEmpty() || tab.error != null) 
+                }
             }
         }
     }
 
     @Then("I should see {int} log entries")
     fun i_should_see_log_entries(count: Int) {
-        val state = viewModel.state.value
-        assertEquals(count, state.logs.size)
+        val tab = viewModel.state.value.activeTab
+        assertEquals(count, tab?.logs?.size ?: 0)
     }
 
     @Then("the first entry should have level {string} and content {string}")
     fun the_first_entry_should_have_level_and_content(level: String, content: String) {
-        val entry = viewModel.state.value.logs[0]
+        val entry = viewModel.state.value.activeTab!!.logs[0]
         assertEquals(level, entry.level.name)
         assertEquals(content, entry.content.value)
     }
 
     @Then("the second entry should have level {string} and content {string}")
     fun the_second_entry_should_have_level_and_content(level: String, content: String) {
-        val entry = viewModel.state.value.logs[1]
+        val entry = viewModel.state.value.activeTab!!.logs[1]
         assertEquals(level, entry.level.name)
         assertEquals(content, entry.content.value)
     }

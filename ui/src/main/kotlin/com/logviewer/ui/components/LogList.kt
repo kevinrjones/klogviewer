@@ -3,11 +3,11 @@ package com.logviewer.ui.components
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.logviewer.domain.model.LogEntry
@@ -20,29 +20,84 @@ fun LogList(
     logs: List<LogEntry>,
     searchQuery: String,
     isDarkMode: Boolean,
+    selectedEntry: LogEntry? = null,
+    onEntryClick: (LogEntry) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    LazyColumn(modifier = modifier.fillMaxSize()) {
-        itemsIndexed(logs) { index, entry ->
-            LogEntryRow(
-                entry = entry,
-                lineNumber = index + 1,
-                searchQuery = searchQuery,
-                isDarkMode = isDarkMode
-            )
+    Column(modifier = modifier.fillMaxSize()) {
+        LogListHeader()
+        LazyColumn(modifier = Modifier.weight(1f)) {
+            itemsIndexed(logs) { index, entry ->
+                LogEntryRow(
+                    entry = entry,
+                    lineNumber = index + 1,
+                    searchQuery = searchQuery,
+                    isDarkMode = isDarkMode,
+                    isSelected = entry == selectedEntry,
+                    onClick = { onEntryClick(entry) }
+                )
+            }
         }
     }
 }
 
 @Composable
+fun LogListHeader() {
+    Surface(
+        color = MaterialTheme.colors.surface,
+        elevation = 1.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Text(
+                text = "#",
+                style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.width(40.dp).padding(horizontal = 4.dp)
+            )
+            Text(
+                text = "Timestamp",
+                style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.width(180.dp).padding(horizontal = 4.dp)
+            )
+            Text(
+                text = "Level",
+                style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.width(60.dp).padding(horizontal = 4.dp)
+            )
+            Text(
+                text = "Message",
+                style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
+                modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
 fun LogEntryRow(
     entry: LogEntry,
     lineNumber: Int,
     searchQuery: String,
-    isDarkMode: Boolean
+    isDarkMode: Boolean,
+    isSelected: Boolean = false,
+    onClick: () -> Unit = {}
 ) {
     val logColors = LogViewerTheme.logColors
-    Row(modifier = Modifier.padding(vertical = 2.dp)) {
+    Surface(
+        color = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent,
+        onClick = onClick
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(vertical = 1.dp)
+                .fillMaxWidth(),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
         // Gutter / Line Number
         Text(
             text = lineNumber.toString().padStart(4, ' '),
@@ -67,12 +122,20 @@ fun LogEntryRow(
             modifier = Modifier.width(70.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
+
+        val sourceId = entry.sourceId
+        if (sourceId != null) {
+            SourceBadge(sourceId = sourceId)
+            Spacer(modifier = Modifier.width(8.dp))
+        }
+
         Text(
             text = LogHighlighter.highlight(entry.content.value, searchQuery, isDarkMode),
             style = MaterialTheme.typography.body1,
             fontSize = 12.sp
         )
     }
+}
 }
 
 private fun getLevelColor(level: LogLevel, colors: LogLevelColors): Color = when (level) {

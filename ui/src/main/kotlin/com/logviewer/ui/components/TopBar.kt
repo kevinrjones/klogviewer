@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 fun TopBar(
     filePath: String,
     onLoadClick: (String) -> Unit,
+    onAddToWorkspaceClick: (String) -> Unit,
     onBrowseClick: () -> Unit,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
@@ -29,6 +30,7 @@ fun TopBar(
             FileSelector(
                 path = filePath,
                 onLoadClick = onLoadClick,
+                onAddToWorkspaceClick = onAddToWorkspaceClick,
                 onBrowseClick = onBrowseClick
             )
             

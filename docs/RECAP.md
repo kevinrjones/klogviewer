@@ -67,3 +67,76 @@ Finalized Sprint 1 by updating all tracking documents to reflect its completion 
 - **Sprint Document**: Updated `docs/sprints/sprint-1-walking-skeleton.md` to "Completed" status, marking all tasks and definition of done items.
 - **Project Memory**: Enhanced `docs/project_memory.md` with detailed sections for the Streaming LogSource architecture deepening and the File Browsing UI enhancement.
 - **Status Alignment**: Ensured `TASKS.md` and project history are fully synchronized with the actual implementation state.
+
+
+# 2026-05-14
+
+## 08:11
+
+### Desktop Transition, Roadmap Definition, and Multi-Log Support
+
+Completed the analysis and planning phase for the desktop transition and implemented core multi-log management features.
+
+#### Analysis & Roadmap:
+- **SOTA & Gap Analysis**: Conducted an industry review (LogViewPlus, Tailviewer, Sematext) and established a gap analysis in `docs/FEATURES.md`. Defined requirements for a professional desktop UI, including ribbon bars and high-density grids.
+- **Product Roadmap**: Defined the evolution of LogViewer through Sprints 4-8. Created comprehensive sprint plans (`docs/sprints/sprint-4.md` to `sprint-8.md`) and architectural blueprints via 5 new ADRs (`adr-009` to `adr-013`) covering structured data, connectivity, visualization, persistence, and extensibility.
+- **Architectural Shift**: Authored `adr-008-desktop-centric-ui.md` to guide the move from mobile Material Design to a multi-pane, ribbon-based desktop workspace.
+
+#### Core Implementation (Sprint 3):
+- **Tabbed Interface Architecture**: Refactored the UI from a single-file model to a multi-tab workspace. Implemented `TabState` to track independent logs, filters, and search queries per tab.
+- **Multi-Log Interleaving**: Developed `MergedLogSource` to chronologically interleave entries from multiple log files, providing a unified view of distributed system events.
+- **UI & UX**:
+    - Added a native `TabRow` for workspace navigation.
+    - Enhanced the log list with source identification badges.
+    - Updated `LogViewerViewModel` to manage concurrent loading jobs and tab lifecycle.
+- **Quality Assurance**: Verified the interleaving logic with unit tests (`MergedLogSourceTest`) and ensured regression safety by updating the BDD integration suite.
+
+## 09:10
+
+### Sprint 3 Finalization: Real-time Support and Desktop UI Polish
+
+Completed the missing pieces of the professional desktop experience by implementing real-time log tailing and refining the grid UI with column headers.
+
+#### Core Achievements:
+- **Local File Tailing**: Enhanced `FileLogSource` to watch for local file changes. Implemented an efficient polling mechanism that detects appends and truncations, emitting reactive `LogUpdate` events.
+- **Real-time Multi-Log Support**: Refactored `MergedLogSource` to use `channelFlow`, enabling concurrent streaming from multiple log sources. Appends from any source are now unified in the interleaved view in real-time.
+- **Professional Grid UI**: Added visible column headers (Line #, Timestamp, Level, Message) to the `LogList` component, fulfilling the "High-Density Grid" requirement derived from the SOTA review.
+- **UI Bug Fixes**: Corrected a layout issue in `LogViewerScreen` where the main content area was not correctly utilizing remaining space in the `Row` when the sidebar was expanded.
+
+#### Quality Assurance:
+- **New Unit Tests**: Implemented `FileLogTailingTest` to verify that file appends are correctly detected and emitted.
+- **Integration Safety**: Verified that existing tab management and interleaving tests remain passing with the new streaming architecture.
+
+## 11:35
+
+### Window Management and UI Refinement
+
+Adjusted the application's initial presentation to align with desktop-centric standards.
+
+#### Changes:
+- **Window Configuration**: Set the default window size to 1200x800 and enabled centering on startup via `rememberWindowState`.
+- **UX**: Improved the initial impression of the application, ensuring that the high-density grid and sidebar have sufficient space immediately upon launch.
+
+## 11:45
+
+### Bug Fix: Log Parsing for App Logs
+
+Resolved an issue where the application failed to parse its own log files due to a strict regex.
+
+#### Changes:
+- **Parser Robustness**: Updated `SimpleLogParser` with a flexible regex that supports milliseconds and the `[THREAD] LEVEL` format used by Logback.
+- **Backwards Compatibility**: Maintained support for the simpler Sprint 1 log format.
+- **TDD**: Added a regression test with actual application log samples.
++
++## 12:45
++
++### Feature: Reverse Order View
++
++Added the ability to view log files in reverse order (newest entries at the top).
++
++#### Changes:
++- **MVI State**: Added `isReversed` flag to `TabState`.
++- **Sorting Logic**: Updated `LogViewerViewModel` to apply `reversed()` to filtered logs when the toggle is active.
++- **UI**: Added a "Reverse Order" toggle button to the `RibbonBar` under the "View" group.
++- **Persistence**: The sort order is maintained per tab and respected when new logs are appended in real-time.
++
