@@ -1,4 +1,4 @@
-# Sprint 11: Structured Data & Advanced Parsing
+# Sprint 12: Structured Data & Advanced Parsing
 
 ## 1. Goal
 Move beyond plain text logs by providing first-class support for JSON and XML structured data, enabling deep inspection and field-based filtering.

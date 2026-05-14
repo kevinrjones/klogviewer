@@ -152,3 +152,25 @@ Implemented a persistent preference system that respects OS conventions and trac
 - **MRU Menu**: Added a "Recently Opened" sub-menu to the File menu, showing up to 5 files and 5 directories.
 - **Recent Items Dialog**: Implemented a "More..." option that opens a dialog listing all historical recent items.
 - **Cross-Platform**: Designed for macOS, Windows, and Linux using standard paths like `Library/Application Support`, `%APPDATA%`, and `~/.config`.
+
+## 21:30
+
+### Log Format Analysis & Sprint 7 Planning
+
+Conducted a gap analysis of logging format support and established a new sprint to address these gaps.
+
+#### Core Achievements:
+- **Gap Analysis**: Documented limitations in `SimpleLogParser` regarding level mapping, timestamps, multiline entries, and structured data in `docs/LOGGING-FORMATS-GAP-ANALYSIS.md`.
+- **Sprint 7 Definition**: Created `docs/sprints/sprint-7-advanced-log-formats.md` to implement `LevelMapper`, `ParserRegistry` (Templates), `MultilineProcessor`, and `JsonLogParser`.
+- **Roadmap Refinement**: Renumbered future sprints (8-12) to integrate the new logging format priorities into the long-term plan.
+
+## 21:40
+
+### Advanced Logging Architecture (ADRs)
+
+Formalized the architectural decisions for the next phase of log parsing.
+
+#### Core Achievements:
+- **ADR 019: Template-based Parsing**: Decision to use a `ParserRegistry` with regex templates, `LevelMapper`, and heuristic auto-detection.
+- **ADR 020: Multiline Aggregation**: Decision to implement a `MultilineProcessor` at the ingestion layer for stack trace support.
+- **Traceability**: Linked Sprint 7 technical tasks to these new architectural foundations.

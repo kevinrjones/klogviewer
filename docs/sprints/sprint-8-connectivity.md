@@ -1,4 +1,4 @@
-# Sprint 7: Connectivity & Remote Sources
+# Sprint 8: Connectivity & Remote Sources
 
 ## 1. Goal
 Enable LogViewer to ingest logs from distributed environments by supporting SFTP/SSH, Cloud Storage, and direct network streams.

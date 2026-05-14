@@ -1,4 +1,4 @@
-# Sprint 10: Extensibility & Platform Maturity
+# Sprint 11: Extensibility & Platform Maturity
 
 ## 1. Goal
 Finalize LogViewer as a stable, professional platform by implementing a plugin API, optimizing for massive datasets, and providing native installers.

@@ -186,11 +186,12 @@
 - `docs/adr/adr-011-data-visualization-strategy.md`: Strategy for charting and analysis.
 - `docs/adr/adr-012-workspace-persistence.md`: Strategy for session saving and project files.
 - `docs/adr/adr-013-plugin-architecture.md`: Strategy for extensibility.
-- `docs/sprints/sprint-4-structured-data.md`: Detailed plan for Sprint 4.
-- `docs/sprints/sprint-5-connectivity.md`: Detailed plan for Sprint 5.
-- `docs/sprints/sprint-6-analysis-and-visualization.md`: Detailed plan for Sprint 6.
-- `docs/sprints/sprint-7-power-user-tools.md`: Detailed plan for Sprint 7.
-- `docs/sprints/sprint-8-extensibility-and-release.md`: Detailed plan for Sprint 8.
+- `docs/sprints/sprint-7-advanced-log-formats.md`: Detailed plan for Sprint 7.
+- `docs/sprints/sprint-8-connectivity.md`: Detailed plan for Sprint 8.
+- `docs/sprints/sprint-9-analysis-and-visualization.md`: Detailed plan for Sprint 9.
+- `docs/sprints/sprint-10-power-user-tools.md`: Detailed plan for Sprint 10.
+- `docs/sprints/sprint-11-extensibility-and-release.md`: Detailed plan for Sprint 11.
+- `docs/sprints/sprint-12-structured-data.md`: Detailed plan for Sprint 12.
 
 **Key decisions**
 - Structured the roadmap around five core themes: Data, Connectivity, Analysis, Persistence, and Platform.
@@ -547,3 +548,57 @@
 **Test coverage areas**
 - `PersistenceIntegrationTest`: Verified that tabs/splits are restored and logs are reloaded.
 - `PreferencesRepositoryTest`: Verified serialization of complex UI preference structures.
+
+## Task: Log Format Gap Analysis
+**Title**: Log Format Gap Analysis (Requirement Analysis)
+**Date/time completed**: 2026-05-14 17:05
+**What was shipped**
+- `docs/LOGGING-FORMATS-GAP-ANALYSIS.md`: Detailed analysis of current log parsing limitations and gaps in supporting diverse real-world log formats.
+- Updated `docs/tasks/TASKS-LOGGING.md` with new prioritized tasks for advanced format support.
+
+**Key decisions**
+- Identified five primary gap areas: Log Level Mapping, Timestamp Formats, Structured (JSON) Support, Multiline entries, and Auto-detection heuristics.
+- Proposed a strategy of transitioning from a single parser to a "Template-based Parser Registry" to support extensibility without code changes.
+
+**Gotchas**
+- Existing `SimpleLogParser` is too rigid for production use with varying third-party logs (e.g., abbreviated levels or ISO8601 timestamps).
+
+**Test coverage areas**
+- N/A (Analysis and Documentation phase).
+
+## Task: Sprint Planning (Advanced Logging)
+**Title**: Sprint 7 Planning: Advanced Log Formats
+**Date/time completed**: 2026-05-14 21:30
+**What was shipped**
+- `docs/sprints/sprint-7-advanced-log-formats.md`: Detailed sprint plan for implementing flexible parsing, multiline support, and JSON logs.
+- Renumbered existing future sprints (8-12) to maintain a consistent roadmap.
+- Updated `docs/project_memory.md` and roadmap references.
+
+**Key decisions**
+- Prioritized Advanced Log Formats as the immediate next sprint following the Gap Analysis.
+- Included initial JSON support in the next sprint to address modern cloud log requirements early.
+
+**Gotchas**
+- Renumbering future sprints requires updating multiple files and internal headers to avoid confusion.
+
+**Test coverage areas**
+- N/A (Planning phase).
+
+## Task: Advanced Logging ADRs
+**Title**: Architectural Decisions for Advanced Log Formats
+**Date/time completed**: 2026-05-14 21:40
+**What was shipped**
+- `docs/adr/adr-019-template-based-log-parsing.md`: Decision to implement a `ParserRegistry` with regex-based `LogTemplate`s and flexible `LevelMapper`.
+- `docs/adr/adr-020-multiline-log-aggregation.md`: Decision to implement a `MultilineProcessor` for handling stack traces and continuation lines.
+- Updated `docs/sprints/sprint-7-advanced-log-formats.md` to reference these new ADRs.
+
+**Key decisions**
+- Adopted regex-based templates with named capture groups to provide the highest level of flexibility for end-users.
+- Decided to perform multiline aggregation at the ingestion layer (`LogSource`) to ensure searching and filtering work on complete log units.
+- Formalized the "Heuristic Probe" strategy for automatic log format detection.
+
+**Gotchas**
+- Regex parsing and multiline buffering introduce memory and CPU overhead that must be monitored during implementation.
+
+**Test coverage areas**
+- N/A (Architecture and Documentation phase).
