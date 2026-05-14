@@ -9,6 +9,10 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":ui"))
     implementation(libs.arrow.core)
+    implementation(libs.kotlin.logging)
+    implementation(libs.slf4j.api)
+    runtimeOnly(libs.logback.classic)
+    runtimeOnly(libs.logstash.logback.encoder)
     implementation(compose.desktop.currentOs)
     
     testImplementation(libs.cucumber.java)

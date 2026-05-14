@@ -90,3 +90,19 @@ Completed the analysis and planning phase for the desktop transition and impleme
     - Enhanced the log list with source identification badges.
     - Updated `LogViewerViewModel` to manage concurrent loading jobs and tab lifecycle.
 - **Quality Assurance**: Verified the interleaving logic with unit tests (`MergedLogSourceTest`) and ensured regression safety by updating the BDD integration suite.
+
+## 09:10
+
+### Sprint 3 Finalization: Real-time Support and Desktop UI Polish
+
+Completed the missing pieces of the professional desktop experience by implementing real-time log tailing and refining the grid UI with column headers.
+
+#### Core Achievements:
+- **Local File Tailing**: Enhanced `FileLogSource` to watch for local file changes. Implemented an efficient polling mechanism that detects appends and truncations, emitting reactive `LogUpdate` events.
+- **Real-time Multi-Log Support**: Refactored `MergedLogSource` to use `channelFlow`, enabling concurrent streaming from multiple log sources. Appends from any source are now unified in the interleaved view in real-time.
+- **Professional Grid UI**: Added visible column headers (Line #, Timestamp, Level, Message) to the `LogList` component, fulfilling the "High-Density Grid" requirement derived from the SOTA review.
+- **UI Bug Fixes**: Corrected a layout issue in `LogViewerScreen` where the main content area was not correctly utilizing remaining space in the `Row` when the sidebar was expanded.
+
+#### Quality Assurance:
+- **New Unit Tests**: Implemented `FileLogTailingTest` to verify that file appends are correctly detected and emitted.
+- **Integration Safety**: Verified that existing tab management and interleaving tests remain passing with the new streaming architecture.

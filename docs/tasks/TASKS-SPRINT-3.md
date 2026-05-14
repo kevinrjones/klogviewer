@@ -36,3 +36,9 @@
 - [x] 8.6.2. Replace TopBar with a Ribbon/Toolbar component
 - [x] 8.6.3. Implement Split-Pane layout for Log Entry Details
 - [x] 8.6.4. Transition to high-density Grid view for log entries
+
+### 8.7. Enhanced Grid and Tailing
+- [x] 8.7.1. Implement Column Headers for the Log Grid
+- [ ] 8.7.2. Support resizable columns (Stretch)
+- [x] 8.7.3. Implement Local File Tailing in `FileLogSource`
+- [x] 8.7.4. Update `MergedLogSource` to support real-time merges

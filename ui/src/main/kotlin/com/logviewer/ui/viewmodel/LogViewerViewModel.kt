@@ -4,10 +4,13 @@ import com.logviewer.domain.model.*
 import com.logviewer.domain.repository.LogSource
 import com.logviewer.core.source.MergedLogSource
 import com.logviewer.ui.mvi.*
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.File
 import java.util.UUID
+
+private val logger = KotlinLogging.logger {}
 
 class LogViewerViewModel(
     private val logSource: LogSource,
@@ -22,6 +25,7 @@ class LogViewerViewModel(
     private val logJobs = mutableMapOf<String, Job>()
 
     fun handleIntent(intent: LogViewerIntent) {
+        logger.debug { "Handling intent: ${intent::class.simpleName}" }
         when (intent) {
             is LogViewerIntent.LoadFiles -> loadFiles(intent.paths)
             is LogViewerIntent.AddToWorkspace -> {
@@ -128,6 +132,7 @@ class LogViewerViewModel(
                             is LogFailure.FileError -> failure.message
                             is LogFailure.ParsingError -> failure.message
                         }
+                        logger.error { "Failed to load logs: $message" }
                         _state.update { it.updateActiveTab { tab -> tab.copy(isLoading = false, error = message) } }
                         _events.emit(LogViewerEvent.ShowError(message))
                     },

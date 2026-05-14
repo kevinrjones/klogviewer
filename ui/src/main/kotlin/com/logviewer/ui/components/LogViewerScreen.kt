@@ -96,7 +96,7 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                     onToggleLevel = { level -> viewModel.handleIntent(LogViewerIntent.ToggleLevel(level)) }
                 )
 
-                Column(modifier = Modifier.fillMaxSize()) {
+                Column(modifier = Modifier.weight(1f)) {
                     if (activeTab?.error != null) {
                         Text(
                             text = "Error: ${activeTab.error}",

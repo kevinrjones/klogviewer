@@ -6,16 +6,21 @@ import com.logviewer.core.source.FileLogSource
 import com.logviewer.ui.components.LogViewerScreen
 import com.logviewer.ui.viewmodel.LogViewerViewModel
 import com.logviewer.ui.mvi.LogViewerIntent
+import io.github.oshai.kotlinlogging.KotlinLogging
 
-fun main() = application {
-    val parser = SimpleLogParser()
-    val source = FileLogSource(parser)
-    val viewModel = LogViewerViewModel(source)
+private val logger = KotlinLogging.logger {}
 
-    Window(
-        onCloseRequest = ::exitApplication,
-        title = "LogViewer"
-    ) {
+fun main() {
+    logger.info { "Starting LogViewer application" }
+    application {
+        val parser = SimpleLogParser()
+        val source = FileLogSource(parser)
+        val viewModel = LogViewerViewModel(source)
+
+        Window(
+            onCloseRequest = ::exitApplication,
+            title = "LogViewer"
+        ) {
         MenuBar {
             Menu("File") {
                 Item("Open...", onClick = { viewModel.handleIntent(LogViewerIntent.ShowOpenDialog) })
@@ -35,4 +40,5 @@ fun main() = application {
         }
         LogViewerScreen(viewModel)
     }
+}
 }

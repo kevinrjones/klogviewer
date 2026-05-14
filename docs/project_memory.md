@@ -229,3 +229,45 @@
 **Test coverage areas**
 - `LogViewerViewModel`: Verified new intents for selection and dialog management.
 - Integration: Verified that state changes (filtering, selection) work correctly across the new UI components.
+
+## Task: Enhanced Grid and Tailing
+**Title**: Enhanced Grid & Local Tailing
+**Date/time completed**: 2026-05-14 09:10
+**What was shipped**
+- Log Grid Headers for Timestamp, Level, and Message.
+- Real-time Local File Tailing (watching for updates).
+- Support for streaming appends in `MergedLogSource`.
+- Polling-based change detection in `FileLogSource`.
+
+**Key decisions**
+- Used polling in `FileLogSource` for cross-platform reliability in detecting appends.
+- Switched `MergedLogSource` to `channelFlow` to support concurrent streaming from multiple files.
+- Added visible column headers to fulfill "Professional Desktop UI" requirements.
+
+**Gotchas**
+- Tailing an interleaved view requires careful merging of live flows; current implementation appends entries as they arrive to maintain responsiveness.
+- `RandomAccessFile.readLine()` uses ISO-8859-1; required manual conversion to UTF-8 for correct character representation.
+
+**Test coverage areas**
+- `FileLogTailingTest`: Unit test verifying that file appends are detected and emitted as `LogUpdate.Appended`.
+
+## Task: Logging Integration
+**Title**: Logging Infrastructure and Instrumentation
+**Date/time completed**: 2026-05-14 11:30
+**What was shipped**
+- Integrated SLF4J + Logback + logstash-logback-encoder with kotlin-logging facade.
+- Configured `logback.xml` with console and rolling JSON appenders.
+- Instrumented `FileLogSource`, `SimpleLogParser`, `MergedLogSource`, and `LogViewerViewModel` with extensive logging.
+- Added explicit error logging for all failure paths in the log loading and parsing pipeline.
+
+**Key decisions**
+- Used `kotlin-logging` to leverage idiomatic Kotlin features like lazy log message evaluation.
+- Implemented structured JSON logging via Logstash encoder to facilitate machine readability and future observability integration.
+- Placed `logback.xml` in the `app` module to centralize runtime logging configuration.
+
+**Gotchas**
+- Adding `logback-classic` as a `testRuntimeOnly` dependency in the `core` module was necessary to enable logging output during unit tests.
+
+**Test coverage areas**
+- `core` module: Verified that existing tests pass with logging instrumentation.
+- `app` module: Startup log verification.

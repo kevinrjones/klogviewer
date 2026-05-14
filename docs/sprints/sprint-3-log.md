@@ -27,12 +27,19 @@ Introduce the ability to view multiple log files simultaneously through a tabbed
 - Transition from "Mobile Chic" to professional Desktop patterns.
 - Implement Ribbon-style toolbar and native Menu Bar.
 - Introduce Split-Pane layout for entry details.
+- Implement High-Density Grid with Column Headers and resizable panes.
+
+### 2.6. Local File Tailing
+- Automatically watch local log files for updates.
+- Append new log entries to the view in real-time.
+- Ensure performance remains stable with long-running tail jobs.
 
 ## 3. Key Decisions
 - **Workspace-Centric State**: Refactor `LogViewerState` to manage a collection of `TabState` objects.
 - **LogEntry Attribution**: Add `sourceId` to `LogEntry` to track origin.
 - **Chronological Merging**: Implement a merge algorithm in `MergedLogSource` to combine multiple streams.
 - **MVI Extension**: Add new intents for tab management (`AddTab`, `CloseTab`, `SwitchTab`).
+- **File Watching**: Use a background coroutine with a polling or native file system watcher for local tailing.
 
 ## 4. Definition of Done
 - [x] Multiple log files can be opened in separate tabs.
@@ -40,8 +47,11 @@ Introduce the ability to view multiple log files simultaneously through a tabbed
 - [x] Source badges are visible and correctly colored in interleaved views.
 - [x] Filters and search work correctly on interleaved streams.
 - [x] Switching tabs preserves the state of each view.
+- [x] Log entries are displayed in a grid with visible column headers.
+- [x] New log entries automatically appear in the view when the file is updated.
 
 ## 5. Progress Log
 - **2026-05-14 08:11**: Implemented Tabbed infrastructure (8.2) and Multi-File Interleaving (8.3).
 - **2026-05-14 08:35**: Implemented Source Identification (8.4) including `SourceBadge` and dynamic coloring. Added "Add to Workspace" capability. Verified with integration tests (8.5).
-- **2026-05-14 08:45**: Completed Desktop UI Transition (8.6). Implemented native Menu Bar, Ribbon Bar, Split-Pane detail view, and high-density grid. All Sprint 3 tasks are now complete.
+- **2026-05-14 08:45**: Completed Desktop UI Transition (8.6). Implemented native Menu Bar, Ribbon Bar, Split-Pane detail view, and high-density grid.
+- **2026-05-14 09:00**: Added Log Grid Headers and implemented Local File Tailing (8.7). Verified with new unit tests for tailing logic. Sprint 3 is now officially concluded with all desktop patterns and real-time support in place.
