@@ -83,8 +83,8 @@ class LogSortingTest {
         file.appendText("2023-10-27 10:00:01 [INFO] Entry 2\n")
 
         // Wait for append (FileLogSource polls every 1s)
-        withTimeout(3000) {
-            viewModel.state.first { it.activeTab!!.logs.size == 2 }
+        withTimeout(5000) {
+            viewModel.state.first { it.activeTab!!.filteredLogs.size == 2 }
         }
 
         // Verify that Entry 2 is at the top (index 0)

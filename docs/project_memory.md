@@ -289,6 +289,7 @@
 **Test coverage areas**
 - UI: Verified via manual run (simulated) and compilation.
 
+
 ## Task: Log Parsing Robustness
 **Title**: Parser Regex Enhancement
 **Date/time completed**: 2026-05-14 11:45
@@ -306,3 +307,22 @@
 
 **Test coverage areas**
 - `LogParserTest`: Added test cases for actual application logs and verified backwards compatibility with older formats.
+
+## Task: Reverse Order View
+**Title**: Reverse Order Toggle Implementation
+**Date/time completed**: 2026-05-14 12:45
+**What was shipped**
+- Implemented a "Reverse Order" (Newest First) toggle in the Ribbon Bar.
+- Dynamic sorting logic that handles both initial loads and real-time appends.
+- Persistent sort state per tab.
+
+**Key decisions**
+- Applied the reversal at the filtering stage to ensure that search results and filtered views are also reversed when the toggle is active.
+- Chose to maintain the sort order state within `TabState` to ensure a consistent experience when switching between tabs.
+
+**Gotchas**
+- Real-time appends to a reversed list appear at the top, which can be disorienting if not expected; added a clear "Newest First" / "Oldest First" label to the toggle.
+- Integration tests needed to wait for the filtered list to update specifically, as the raw logs list updates independently.
+
+**Test coverage areas**
+- `LogSortingTest`: Integration test verifying that toggling sort order works correctly for both initial loads and real-time appends.
