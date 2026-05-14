@@ -112,7 +112,7 @@
 - Split Sprint 4 into three distinct sprints: Sprint 4 (User Preferences), Sprint 5 (Recursive Directory Loading), and Sprint 6 (UI Redesign).
 - Created `docs/sprints/sprint-5-recursive-loading.md` and `docs/sprints/sprint-6-ui-redesign.md`.
 - Created corresponding task list files: `TASKS-SPRINT-5-RECURSIVE-LOADING.md` and `TASKS-SPRINT-6-UI-REDESIGN.md`.
-- Renamed and renumbered future placeholder sprints (7-10) to maintain a continuous roadmap.
+- Renamed and renumbered future placeholder sprints (7-11) to maintain a continuous roadmap.
 
 **Key decisions**
 - Decided to isolate "Enema" (UI Redesign) into its own sprint to focus on desktop-centric UX polish after core features are stable.
