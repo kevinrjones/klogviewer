@@ -3,6 +3,7 @@ package com.logviewer.ui.viewmodel
 import com.logviewer.domain.model.*
 import com.logviewer.domain.repository.LogSource
 import com.logviewer.core.source.MergedLogSource
+import com.logviewer.core.repository.PreferencesRepository
 import com.logviewer.ui.mvi.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
@@ -14,6 +15,7 @@ private val logger = KotlinLogging.logger {}
 
 class LogViewerViewModel(
     private val logSource: LogSource,
+    private val prefsRepository: PreferencesRepository,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 ) {
     private val _state = MutableStateFlow(LogViewerState())
@@ -24,18 +26,39 @@ class LogViewerViewModel(
 
     private val logJobs = mutableMapOf<String, Job>()
 
+    init {
+        val prefs = prefsRepository.load()
+        _state.update { it.copy(
+            isDarkMode = prefs.isDarkMode,
+            isSidebarExpanded = prefs.isSidebarExpanded,
+            recentFiles = prefs.recentFiles,
+            recentDirectories = prefs.recentDirectories
+        ) }
+    }
+
     fun handleIntent(intent: LogViewerIntent) {
         logger.debug { "Handling intent: ${intent::class.simpleName}" }
         when (intent) {
-            is LogViewerIntent.LoadFiles -> loadFiles(intent.paths)
+            is LogViewerIntent.LoadFiles -> {
+                loadFiles(intent.paths)
+                updateRecentItems(intent.paths)
+            }
             is LogViewerIntent.AddToWorkspace -> {
                 val currentPaths = _state.value.activeTab?.sourceIds ?: emptyList()
-                loadFiles(currentPaths + intent.paths)
+                val allPaths = currentPaths + intent.paths
+                loadFiles(allPaths)
+                updateRecentItems(intent.paths)
             }
             is LogViewerIntent.SelectPath -> _state.update { it.updateActiveTab { tab -> tab.copy(filePath = intent.path) } }
             LogViewerIntent.ClearLogs -> clearActiveTab()
-            LogViewerIntent.ToggleTheme -> _state.update { it.copy(isDarkMode = !it.isDarkMode) }
-            LogViewerIntent.ToggleSidebar -> _state.update { it.copy(isSidebarExpanded = !it.isSidebarExpanded) }
+            LogViewerIntent.ToggleTheme -> {
+                _state.update { it.copy(isDarkMode = !it.isDarkMode) }
+                savePreferences()
+            }
+            LogViewerIntent.ToggleSidebar -> {
+                _state.update { it.copy(isSidebarExpanded = !it.isSidebarExpanded) }
+                savePreferences()
+            }
             is LogViewerIntent.UpdateSearch -> {
                 _state.update { it.updateActiveTab { tab -> tab.copy(searchQuery = intent.query) } }
                 filterLogs(_state.value.activeTabId)
@@ -69,6 +92,7 @@ class LogViewerViewModel(
             }
             LogViewerIntent.ShowOpenDialog -> _state.update { it.copy(pendingDialog = LogViewerState.DialogType.OPEN) }
             LogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = LogViewerState.DialogType.ADD) }
+            LogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = LogViewerState.DialogType.RECENT_ITEMS) }
             LogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null) }
         }
     }
@@ -190,5 +214,33 @@ class LogViewerViewModel(
                 })
             }
         }
+    }
+
+    private fun updateRecentItems(paths: List<String>) {
+        val files = paths.filter { File(it).isFile }
+        val dirs = paths.filter { File(it).isDirectory }
+        
+        if (files.isEmpty() && dirs.isEmpty()) return
+
+        _state.update { currentState ->
+            val newRecentFiles = (files + currentState.recentFiles).distinct().take(50)
+            val newRecentDirectories = (dirs + currentState.recentDirectories).distinct().take(50)
+            
+            currentState.copy(
+                recentFiles = newRecentFiles,
+                recentDirectories = newRecentDirectories
+            ).also { savePreferences(it) }
+        }
+    }
+
+    fun savePreferences(currentState: LogViewerState = _state.value) {
+        val currentPrefs = prefsRepository.load()
+        val newPrefs = currentPrefs.copy(
+            isDarkMode = currentState.isDarkMode,
+            isSidebarExpanded = currentState.isSidebarExpanded,
+            recentFiles = currentState.recentFiles,
+            recentDirectories = currentState.recentDirectories
+        )
+        prefsRepository.save(newPrefs)
     }
 }

@@ -23,9 +23,11 @@ data class LogViewerState(
     val activeTabId: String? = "default",
     val isDarkMode: Boolean = true,
     val isSidebarExpanded: Boolean = true,
+    val recentFiles: List<String> = emptyList(),
+    val recentDirectories: List<String> = emptyList(),
     val pendingDialog: DialogType? = null
 ) {
-    enum class DialogType { OPEN, ADD }
+    enum class DialogType { OPEN, ADD, RECENT_ITEMS }
     val activeTab: TabState? get() = tabs.find { it.id == activeTabId }
 
     fun updateActiveTab(block: (TabState) -> TabState): LogViewerState {

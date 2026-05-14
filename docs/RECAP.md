@@ -139,3 +139,16 @@ Added the ability to view log files in reverse order (newest entries at the top)
 - **Sorting Logic**: Updated `LogViewerViewModel` to apply `reversed()` to filtered logs when the toggle is active.
 - **UI**: Added a "Reverse Order" toggle button to the `RibbonBar` under the "View" group.
 - **Persistence**: The sort order is maintained per tab and respected when new logs are appended in real-time.
+
+## 14:30
+
+### Feature: User Preferences and MRU tracking
+
+Implemented a persistent preference system that respects OS conventions and tracks recently used items.
+
+#### Changes:
+- **Persistence**: Added `PreferencesRepository` using `kotlinx-serialization` to save/load JSON config from platform-specific app data folders.
+- **Window Management**: The application now restores its previous size, position, and maximization state on startup.
+- **MRU Menu**: Added a "Recently Opened" sub-menu to the File menu, showing up to 5 files and 5 directories.
+- **Recent Items Dialog**: Implemented a "More..." option that opens a dialog listing all historical recent items.
+- **Cross-Platform**: Designed for macOS, Windows, and Linux using standard paths like `Library/Application Support`, `%APPDATA%`, and `~/.config`.

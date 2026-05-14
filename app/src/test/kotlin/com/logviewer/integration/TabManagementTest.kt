@@ -1,6 +1,7 @@
 package com.logviewer.integration
 
 import com.logviewer.core.parser.SimpleLogParser
+import com.logviewer.core.repository.PreferencesRepository
 import com.logviewer.core.source.FileLogSource
 import com.logviewer.ui.mvi.LogViewerIntent
 import com.logviewer.ui.viewmodel.LogViewerViewModel
@@ -10,12 +11,17 @@ import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
 class TabManagementTest {
+    @TempDir
+    lateinit var tempDir: File
+
     private val parser = SimpleLogParser()
     private val source = FileLogSource(parser)
-    private val viewModel = LogViewerViewModel(source)
+    private val prefsRepository by lazy { PreferencesRepository(tempDir) }
+    private val viewModel by lazy { LogViewerViewModel(source, prefsRepository) }
 
     @Test
     fun `should maintain independent search queries and logs per tab`() = runBlocking {

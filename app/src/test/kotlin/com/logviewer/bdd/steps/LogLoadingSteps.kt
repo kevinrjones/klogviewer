@@ -1,6 +1,7 @@
 package com.logviewer.bdd.steps
 
 import com.logviewer.core.parser.SimpleLogParser
+import com.logviewer.core.repository.PreferencesRepository
 import com.logviewer.core.source.FileLogSource
 import com.logviewer.domain.model.LogLevel
 import com.logviewer.ui.mvi.LogViewerIntent
@@ -13,11 +14,14 @@ import java.io.File
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.runBlocking
+import java.nio.file.Files
 
 class LogLoadingSteps {
+    private val tempPrefsDir = Files.createTempDirectory("logviewer-prefs").toFile().apply { deleteOnExit() }
     private val parser = SimpleLogParser()
     private val source = FileLogSource(parser)
-    private val viewModel = LogViewerViewModel(source)
+    private val prefsRepository = PreferencesRepository(tempPrefsDir)
+    private val viewModel = LogViewerViewModel(source, prefsRepository)
 
     @Given("a log file exists at {string} with content:")
     fun a_log_file_exists_at_with_content(path: String, content: String) {

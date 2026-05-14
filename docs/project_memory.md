@@ -326,3 +326,26 @@
 
 **Test coverage areas**
 - `LogSortingTest`: Integration test verifying that toggling sort order works correctly for both initial loads and real-time appends.
+
+## Task: User Preferences and MRU tracking
+**Title**: Cross-Platform Preferences Persistence
+**Date/time completed**: 2026-05-14 14:30
+**What was shipped**
+- `PreferencesRepository` for saving/loading JSON configuration.
+- Persistence for window state (width, height, x, y, maximized).
+- Persistence for theme and sidebar visibility.
+- MRU tracking for files and directories with a "Recently Opened" menu.
+- "Show All Recent Items" dialog.
+
+**Key decisions**
+- Used `kotlinx-serialization` for JSON-based config files.
+- Followed OS-specific standards for app data locations (Library/Application Support on macOS, %APPDATA% on Windows, ~/.config on Linux).
+- Included a `customConfigDir` parameter in `PreferencesRepository` to facilitate isolated unit and integration testing.
+
+**Gotchas**
+- Window position in Compose Desktop can be tricky when using `Alignment.Center` vs `Absolute`; ensured that only absolute positions are saved to avoid jumping on next launch if the screen resolution changed.
+- Required updating all existing integration tests to provide a temporary preferences directory.
+
+**Test coverage areas**
+- `PreferencesRepositoryTest`: Unit tests for save/load and error handling.
+- Integration: Updated all tab and sorting integration tests to verify compatibility with the preferences system.

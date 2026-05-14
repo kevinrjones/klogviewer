@@ -1,10 +1,13 @@
 package com.logviewer.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.AwtWindow
 import androidx.compose.material.icons.Icons
@@ -15,6 +18,7 @@ import com.logviewer.ui.theme.LogViewerTheme
 import com.logviewer.ui.viewmodel.LogViewerViewModel
 import java.awt.FileDialog
 import java.awt.Frame
+import java.io.File
 
 @Composable
 fun LogViewerScreen(viewModel: LogViewerViewModel) {
@@ -34,7 +38,7 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
     }
 
     val pendingDialog = state.pendingDialog
-    if (pendingDialog != null) {
+    if (pendingDialog != null && pendingDialog != com.logviewer.ui.mvi.LogViewerState.DialogType.RECENT_ITEMS) {
         FileDialog(
             onCloseRequest = { results ->
                 viewModel.handleIntent(LogViewerIntent.DismissDialog)
@@ -42,9 +46,22 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                     when (pendingDialog) {
                         com.logviewer.ui.mvi.LogViewerState.DialogType.OPEN -> viewModel.handleIntent(LogViewerIntent.LoadFiles(results))
                         com.logviewer.ui.mvi.LogViewerState.DialogType.ADD -> viewModel.handleIntent(LogViewerIntent.AddToWorkspace(results))
+                        else -> {}
                     }
                 }
             }
+        )
+    }
+
+    if (pendingDialog == com.logviewer.ui.mvi.LogViewerState.DialogType.RECENT_ITEMS) {
+        RecentItemsDialog(
+            recentFiles = state.recentFiles,
+            recentDirectories = state.recentDirectories,
+            onSelect = { 
+                viewModel.handleIntent(LogViewerIntent.LoadFiles(listOf(it)))
+                viewModel.handleIntent(LogViewerIntent.DismissDialog)
+            },
+            onDismiss = { viewModel.handleIntent(LogViewerIntent.DismissDialog) }
         )
     }
 
@@ -216,3 +233,70 @@ private fun FileDialog(
     },
     dispose = FileDialog::dispose
 )
+
+@Composable
+fun RecentItemsDialog(
+    recentFiles: List<String>,
+    recentDirectories: List<String>,
+    onSelect: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Recently Opened Items") },
+        text = {
+            Column(modifier = Modifier.width(600.dp).heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
+                if (recentFiles.isNotEmpty()) {
+                    Text("Files", style = MaterialTheme.typography.subtitle2, modifier = Modifier.padding(vertical = 8.dp))
+                    recentFiles.forEach { path ->
+                        TextButton(
+                            onClick = { onSelect(path) },
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = path,
+                                style = MaterialTheme.typography.body2,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+                
+                if (recentFiles.isNotEmpty() && recentDirectories.isNotEmpty()) {
+                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                }
+
+                if (recentDirectories.isNotEmpty()) {
+                    Text("Directories", style = MaterialTheme.typography.subtitle2, modifier = Modifier.padding(vertical = 8.dp))
+                    recentDirectories.forEach { path ->
+                        TextButton(
+                            onClick = { onSelect(path) },
+                            modifier = Modifier.fillMaxWidth(),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = path,
+                                style = MaterialTheme.typography.body2,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+                }
+                
+                if (recentFiles.isEmpty() && recentDirectories.isEmpty()) {
+                    Text("No recent items found.", modifier = Modifier.padding(16.dp))
+                }
+            }
+        },
+        confirmButton = {
+            Button(onClick = onDismiss) {
+                Text("Close")
+            }
+        }
+    )
+}

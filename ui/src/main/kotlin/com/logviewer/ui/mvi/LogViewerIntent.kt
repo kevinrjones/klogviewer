@@ -17,6 +17,7 @@ sealed interface LogViewerIntent {
     // Dialogs
     data object ShowOpenDialog : LogViewerIntent
     data object ShowAddDialog : LogViewerIntent
+    data object ShowRecentDialog : LogViewerIntent
     data object DismissDialog : LogViewerIntent
     
     // Tab Management
