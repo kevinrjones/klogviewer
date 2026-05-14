@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -42,13 +44,13 @@ fun FilterBar(
         color = MaterialTheme.colors.surface
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // File Actions
             SearchBarIcon(icon = Icons.Default.AddCircle, tooltip = "Add File to Workspace", onClick = onAddClick)
             
-            Divider(modifier = Modifier.height(24.dp).width(1.dp).padding(horizontal = 4.dp))
+            Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
             
             // View Actions
             SearchBarIcon(icon = Icons.Default.Brightness4, tooltip = "Toggle Theme", onClick = onToggleTheme)
@@ -59,7 +61,7 @@ fun FilterBar(
                 onClick = onToggleSortOrder
             )
 
-            Divider(modifier = Modifier.height(24.dp).width(1.dp).padding(horizontal = 4.dp))
+            Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
             // Search Area
             Box(
@@ -67,7 +69,7 @@ fun FilterBar(
                     .weight(1f)
                     .padding(horizontal = 8.dp)
                     .background(MaterialTheme.colors.onSurface.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 2.dp),
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
                 contentAlignment = Alignment.CenterStart
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -78,17 +80,10 @@ fun FilterBar(
                     }
 
                     // Input field
-                    TextField(
+                    BasicTextField(
                         value = textState,
                         onValueChange = { textState = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("Filter...", fontSize = 14.sp) },
-                        colors = TextFieldDefaults.textFieldColors(
-                            backgroundColor = Color.Transparent,
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        ),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = {
@@ -97,15 +92,32 @@ fun FilterBar(
                                 textState = ""
                             }
                         }),
-                        textStyle = MaterialTheme.typography.body2.copy(fontSize = 14.sp)
+                        textStyle = MaterialTheme.typography.body2.copy(
+                            fontSize = 14.sp,
+                            color = MaterialTheme.colors.onSurface
+                        ),
+                        cursorBrush = SolidColor(MaterialTheme.colors.onSurface),
+                        decorationBox = { innerTextField ->
+                            Box(contentAlignment = Alignment.CenterStart) {
+                                if (textState.isEmpty() && filterQueries.isEmpty()) {
+                                    Text(
+                                        text = "Filter...",
+                                        style = MaterialTheme.typography.body2,
+                                        fontSize = 14.sp,
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        }
                     )
                     
                     if (filterQueries.isNotEmpty() || textState.isNotEmpty()) {
                         IconButton(onClick = { 
                             onClearQueries()
                             textState = ""
-                        }, modifier = Modifier.size(24.dp)) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear filters", modifier = Modifier.size(16.dp))
+                        }, modifier = Modifier.size(20.dp)) {
+                            Icon(Icons.Default.Close, contentDescription = "Clear filters", modifier = Modifier.size(14.dp))
                         }
                     }
                 }
@@ -129,8 +141,8 @@ private fun SearchBarIcon(
     tooltip: String,
     onClick: () -> Unit
 ) {
-    IconButton(onClick = onClick, modifier = Modifier.size(32.dp)) {
-        Icon(icon, contentDescription = tooltip, modifier = Modifier.size(20.dp))
+    IconButton(onClick = onClick, modifier = Modifier.size(28.dp)) {
+        Icon(icon, contentDescription = tooltip, modifier = Modifier.size(18.dp))
     }
 }
 

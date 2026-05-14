@@ -457,3 +457,23 @@
 **Test coverage areas**
 - `LogHighlighterTest`: Updated to verify "filter" highlighting.
 - `TabManagementTest`: Updated to verify independent filter query management.
+
+## Task: Density Improvements
+**Title**: Filter Bar and Sidebar Density Improvements (Sprint 6 Polish)
+**Date/time completed**: 2026-05-14 16:00
+**What was shipped**
+- Reduced the height of the `FilterBar` by switching to `BasicTextField` and reducing icon sizes.
+- Tightened vertical padding in the `Sidebar` filter rows (from 4dp to 2dp).
+- Updated `FilterBar` icons to 28dp (from 32dp) and Divider heights to 20dp (from 24dp).
+- Replaced the high-padding Material `TextField` with a custom `BasicTextField` implementation for an ultra-compact filter area.
+
+**Key decisions**
+- Used `BasicTextField` with a custom `decorationBox` to completely control the height of the filter input area, bypassing Material Design's default 56dp minimum.
+- Reduced overall vertical padding throughout the tool area to maximize the space available for log content.
+
+**Gotchas**
+- `BasicTextField` requires manual handling of placeholder text and text styles that were previously managed by the standard `TextField`.
+- Small icon targets (28dp) are acceptable for desktop-centric applications with mouse/pointer input.
+
+**Test coverage areas**
+- UI Layout: Verified via successful build and manual visual consistency checks.

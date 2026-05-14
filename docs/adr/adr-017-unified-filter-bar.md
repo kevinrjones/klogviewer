@@ -16,6 +16,7 @@ We replaced the `RibbonBar` with a unified, high-density `FilterBar` and updated
 - **Integrated Highlighting**: Updated `LogHighlighter` to highlight all active filter terms simultaneously in the log list.
 - **Cross Icon**: Added a prominent "cross" icon to the filter area to clear all active filters and current input text.
 - **Renaming**: Renamed all UI components and internal code elements from "Search" to "Filter" to ensure consistency with the user's preferred terminology.
+- **High-Density Optimization**: Switched from standard Material `TextField` to `BasicTextField` and reduced icon sizes (to 28dp) to minimize the bar's vertical footprint, maximizing space for log entries.
 
 ## Consequences
 - **Pros**:

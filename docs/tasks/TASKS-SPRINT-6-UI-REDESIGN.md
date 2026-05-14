@@ -43,3 +43,7 @@
 ### 11.9. Verification
 - [x] 11.9.1. Manual verification of the "Clean" UI
 - [x] 11.9.2. Verify accessibility of all functions after consolidation
+
+### 11.10. Density Improvements
+- [x] 11.10.1. Reduce height of Filter Bar (use BasicTextField and smaller icons)
+- [x] 11.10.2. Tighten vertical padding in Sidebar filters

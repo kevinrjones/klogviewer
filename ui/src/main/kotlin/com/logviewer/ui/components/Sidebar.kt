@@ -38,7 +38,7 @@ fun Sidebar(
         ) {
             if (isExpanded) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -60,7 +60,7 @@ fun Sidebar(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp),
+                        .padding(vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -110,7 +110,7 @@ private fun LogLevelToggle(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onToggle)
-            .padding(vertical = 4.dp)
+            .padding(vertical = 2.dp)
             .padding(start = 24.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
