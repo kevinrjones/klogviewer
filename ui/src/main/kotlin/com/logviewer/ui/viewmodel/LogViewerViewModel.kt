@@ -59,8 +59,32 @@ class LogViewerViewModel(
                 _state.update { it.copy(isSidebarExpanded = !it.isSidebarExpanded) }
                 savePreferences()
             }
-            is LogViewerIntent.UpdateSearch -> {
-                _state.update { it.updateActiveTab { tab -> tab.copy(searchQuery = intent.query) } }
+            is LogViewerIntent.AddFilterQuery -> {
+                if (intent.query.isNotBlank()) {
+                    _state.update { currentState ->
+                        currentState.updateActiveTab { tab ->
+                            if (!tab.filterQueries.contains(intent.query)) {
+                                tab.copy(filterQueries = tab.filterQueries + intent.query)
+                            } else tab
+                        }
+                    }
+                    filterLogs(_state.value.activeTabId)
+                }
+            }
+            is LogViewerIntent.RemoveFilterQuery -> {
+                _state.update { currentState ->
+                    currentState.updateActiveTab { tab ->
+                        tab.copy(filterQueries = tab.filterQueries - intent.query)
+                    }
+                }
+                filterLogs(_state.value.activeTabId)
+            }
+            LogViewerIntent.ClearFilterQueries -> {
+                _state.update { currentState ->
+                    currentState.updateActiveTab { tab ->
+                        tab.copy(filterQueries = emptyList())
+                    }
+                }
                 filterLogs(_state.value.activeTabId)
             }
             is LogViewerIntent.ToggleLevel -> {
@@ -197,13 +221,15 @@ class LogViewerViewModel(
             
             val filtered = tab.logs.filter { entry ->
                 val matchesLevel = tab.levelFilters.contains(entry.level)
-                val matchesSearch = if (tab.searchQuery.isEmpty()) {
+                val matchesFilter = if (tab.filterQueries.isEmpty()) {
                     true
                 } else {
-                    entry.content.value.contains(tab.searchQuery, ignoreCase = true) ||
-                    entry.timestamp.value.contains(tab.searchQuery, ignoreCase = true)
+                    tab.filterQueries.all { query ->
+                        entry.content.value.contains(query, ignoreCase = true) ||
+                        entry.timestamp.value.contains(query, ignoreCase = true)
+                    }
                 }
-                matchesLevel && matchesSearch
+                matchesLevel && matchesFilter
             }
             
             val sorted = if (tab.isReversed) filtered.reversed() else filtered

@@ -13,28 +13,30 @@ object LogHighlighter {
 
     fun highlight(
         text: String,
-        searchQuery: String,
+        filterQueries: List<String>,
         isDarkMode: Boolean
     ): AnnotatedString {
         return buildAnnotatedString {
             append(text)
             
-            // Highlight Search Query (Bold & Background)
-            if (searchQuery.isNotEmpty()) {
-                try {
-                    val matches = searchQuery.toRegex(RegexOption.IGNORE_CASE).findAll(text)
-                    matches.forEach { match ->
-                        addStyle(
-                            SpanStyle(
-                                fontWeight = FontWeight.Bold,
-                                background = if (isDarkMode) Color(0xFF424242) else Color(0xFFFFE082)
-                            ),
-                            match.range.first,
-                            match.range.last + 1
-                        )
+            // Highlight Filter Queries (Bold & Background)
+            filterQueries.forEach { query ->
+                if (query.isNotEmpty()) {
+                    try {
+                        val matches = query.toRegex(RegexOption.IGNORE_CASE).findAll(text)
+                        matches.forEach { match ->
+                            addStyle(
+                                SpanStyle(
+                                    fontWeight = FontWeight.Bold,
+                                    background = if (isDarkMode) Color(0xFF424242) else Color(0xFFFFE082)
+                                ),
+                                match.range.first,
+                                match.range.last + 1
+                            )
+                        }
+                    } catch (e: Exception) {
+                        // Ignore regex errors in search query
                     }
-                } catch (e: Exception) {
-                    // Ignore regex errors in search query
                 }
             }
 

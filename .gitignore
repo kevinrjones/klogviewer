@@ -140,4 +140,5 @@ app/jsonlogs/
 !**/.env.example
 /SonatypeUserToken.xml
 /local.properties
+.output.txt
 

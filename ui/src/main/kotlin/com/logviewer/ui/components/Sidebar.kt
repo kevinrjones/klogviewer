@@ -1,26 +1,28 @@
 package com.logviewer.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuOpen
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.logviewer.domain.model.LogLevel
 
 @Composable
 fun Sidebar(
     isExpanded: Boolean,
-    onToggleExpanded: () -> Unit,
-    isDarkMode: Boolean,
-    onToggleTheme: () -> Unit,
     levelFilters: Set<LogLevel>,
     onToggleLevel: (LogLevel) -> Unit,
+    levelCounts: Map<LogLevel, Int> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -34,33 +36,51 @@ fun Sidebar(
             modifier = Modifier.padding(8.dp),
             horizontalAlignment = if (isExpanded) Alignment.Start else Alignment.CenterHorizontally
         ) {
-            IconButton(onClick = onToggleExpanded) {
-                Icon(
-                    imageVector = if (isExpanded) Icons.AutoMirrored.Filled.MenuOpen else Icons.Default.Menu,
-                    contentDescription = if (isExpanded) "Collapse Sidebar" else "Expand Sidebar"
-                )
-            }
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            SidebarItem(
-                icon = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
-                label = if (isDarkMode) "Light Mode" else "Dark Mode",
-                isExpanded = isExpanded,
-                onClick = onToggleTheme
-            )
-
             if (isExpanded) {
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                Text(
-                    text = "Log Levels",
-                    style = MaterialTheme.typography.subtitle1,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
+                Row(
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FilterAlt,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "FILTERS",
+                        style = MaterialTheme.typography.overline,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                    )
+                }
+
+                Divider(modifier = Modifier.padding(vertical = 4.dp))
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
+                    )
+                    Text(
+                        text = "Levels (${LogLevel.entries.size})",
+                        style = MaterialTheme.typography.subtitle2.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
+                    )
+                }
+                
                 LogLevel.entries.forEach { level ->
                     LogLevelToggle(
                         level = level,
                         isEnabled = levelFilters.contains(level),
+                        count = levelCounts[level] ?: 0,
                         onToggle = { onToggleLevel(level) }
                     )
                 }
@@ -83,47 +103,56 @@ fun Sidebar(
 private fun LogLevelToggle(
     level: LogLevel,
     isEnabled: Boolean,
+    count: Int,
     onToggle: () -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onToggle)
-            .padding(vertical = 2.dp),
+            .padding(vertical = 4.dp)
+            .padding(start = 24.dp, end = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Checkbox(
-            checked = isEnabled,
-            onCheckedChange = { onToggle() },
-            colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.primary)
-        )
+        // Custom square checkbox to match the requested style
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                )
+                .background(
+                    if (isEnabled) MaterialTheme.colors.primary.copy(alpha = 0.2f)
+                    else Color.Transparent
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isEnabled) {
+                Icon(
+                    imageVector = Icons.Default.Check,
+                    contentDescription = null,
+                    tint = MaterialTheme.colors.primary,
+                    modifier = Modifier.size(10.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         Text(
-            text = level.name,
+            text = level.name.lowercase().replaceFirstChar { it.uppercase() },
             style = MaterialTheme.typography.body2,
+            modifier = Modifier.weight(1f),
+            maxLines = 1
+        )
+
+        Text(
+            text = count.toString(),
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
             maxLines = 1
         )
     }
 }
 
-@Composable
-private fun SidebarItem(
-    icon: ImageVector,
-    label: String,
-    isExpanded: Boolean,
-    onClick: () -> Unit
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(imageVector = icon, contentDescription = label)
-        if (isExpanded) {
-            Spacer(modifier = Modifier.width(16.dp))
-            Text(text = label, maxLines = 1, style = MaterialTheme.typography.body1)
-        }
-    }
-}

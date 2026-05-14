@@ -11,12 +11,14 @@ data class TabState(
     val isLoading: Boolean = false,
     val error: String? = null,
     val filePath: String = "",
-    val searchQuery: String = "",
+    val filterQueries: List<String> = emptyList(),
     val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
     val isReversed: Boolean = false,
     val sourceIds: List<String> = emptyList(),
     val selectedEntry: LogEntry? = null
-)
+) {
+    val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
+}
 
 data class LogViewerState(
     val tabs: List<TabState> = listOf(TabState(id = "default", title = "Log View")),

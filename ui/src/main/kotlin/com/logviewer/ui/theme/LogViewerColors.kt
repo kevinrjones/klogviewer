@@ -4,12 +4,13 @@ import androidx.compose.ui.graphics.Color
 
 object LogViewerColors {
     // Industrial Dark
-    val DarkBackground = Color(0xFF121212)
-    val DarkSurface = Color(0xFF1E1E1E)
+    val DarkBackground = Color(0xFF2B2B2B)
+    val DarkSurface = Color(0xFF3C3F41)
     val DarkPrimary = Color(0xFF00A3E0)
     val DarkOnPrimary = Color.White
     val DarkOnBackground = Color(0xFFE0E0E0)
     val DarkOnSurface = Color(0xFFE0E0E0)
+    val DarkTabBackground = Color(0xFF323232)
 
     // Clean Light
     val LightBackground = Color(0xFFFFFFFF)
@@ -18,6 +19,7 @@ object LogViewerColors {
     val LightOnPrimary = Color.White
     val LightOnBackground = Color(0xFF121212)
     val LightOnSurface = Color(0xFF121212)
+    val LightTabBackground = Color(0xFFE0E0E0)
 
     // Log Levels - Dark
     val DarkInfo = Color(0xFF00A3E0)

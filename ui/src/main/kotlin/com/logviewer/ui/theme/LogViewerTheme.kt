@@ -20,6 +20,10 @@ data class LogLevelColors(
     val unknown: Color
 )
 
+data class CustomColors(
+    val tabBackground: Color
+)
+
 val LocalLogLevelColors = staticCompositionLocalOf {
     LogLevelColors(
         debug = Color.Gray,
@@ -28,6 +32,12 @@ val LocalLogLevelColors = staticCompositionLocalOf {
         error = Color.Red,
         fatal = Color.Magenta,
         unknown = Color.Black
+    )
+}
+
+val LocalCustomColors = staticCompositionLocalOf {
+    CustomColors(
+        tabBackground = Color.LightGray
     )
 }
 
@@ -80,6 +90,16 @@ fun LogViewerTheme(
         )
     }
 
+    val customColors = if (darkTheme) {
+        CustomColors(
+            tabBackground = LogViewerColors.DarkTabBackground
+        )
+    } else {
+        CustomColors(
+            tabBackground = LogViewerColors.LightTabBackground
+        )
+    }
+
     val typography = Typography(
         body1 = TextStyle(
             fontFamily = FontFamily.Monospace,
@@ -105,6 +125,7 @@ fun LogViewerTheme(
         content = {
             CompositionLocalProvider(
                 LocalLogLevelColors provides logLevelColors,
+                LocalCustomColors provides customColors,
                 content = content
             )
         }
@@ -115,4 +136,8 @@ object LogViewerTheme {
     val logColors: LogLevelColors
         @Composable
         get() = LocalLogLevelColors.current
+
+    val customColors: CustomColors
+        @Composable
+        get() = LocalCustomColors.current
 }

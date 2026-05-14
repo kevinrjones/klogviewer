@@ -24,7 +24,7 @@ class TabManagementTest {
     private val viewModel by lazy { LogViewerViewModel(source, prefsRepository) }
 
     @Test
-    fun `should maintain independent search queries and logs per tab`() = runBlocking {
+    fun `should maintain independent filter queries and logs per tab`() = runBlocking {
         // Create first tab with a log
         val file1 = File.createTempFile("log1", ".log").apply {
             writeText("2023-10-27 10:00:00 [INFO] Log entry one\n")
@@ -38,7 +38,7 @@ class TabManagementTest {
             viewModel.state.first { !it.activeTab!!.isLoading && it.activeTab!!.logs.isNotEmpty() }
         }
         
-        viewModel.handleIntent(LogViewerIntent.UpdateSearch("entry one"))
+        viewModel.handleIntent(LogViewerIntent.AddFilterQuery("entry one"))
         assertEquals(1, viewModel.state.value.activeTab?.filteredLogs?.size)
 
         // Add second tab
@@ -58,18 +58,18 @@ class TabManagementTest {
             viewModel.state.first { !it.activeTab!!.isLoading && it.activeTab!!.logs.isNotEmpty() }
         }
         
-        viewModel.handleIntent(LogViewerIntent.UpdateSearch("failed"))
+        viewModel.handleIntent(LogViewerIntent.AddFilterQuery("failed"))
         assertEquals(1, viewModel.state.value.activeTab?.filteredLogs?.size)
         
         // Switch back to tab 1
         viewModel.handleIntent(LogViewerIntent.SwitchTab(tab1Id))
-        assertEquals("entry one", viewModel.state.value.activeTab?.searchQuery)
+        assertEquals(listOf("entry one"), viewModel.state.value.activeTab?.filterQueries)
         assertEquals(1, viewModel.state.value.activeTab?.filteredLogs?.size)
         assertEquals("Log entry one", viewModel.state.value.activeTab?.filteredLogs?.get(0)?.content?.value)
         
         // Switch to tab 2
         viewModel.handleIntent(LogViewerIntent.SwitchTab(tab2Id))
-        assertEquals("failed", viewModel.state.value.activeTab?.searchQuery)
+        assertEquals(listOf("failed"), viewModel.state.value.activeTab?.filterQueries)
         assertEquals(1, viewModel.state.value.activeTab?.filteredLogs?.size)
         assertEquals("Something failed", viewModel.state.value.activeTab?.filteredLogs?.get(0)?.content?.value)
     }

@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.AwtWindow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -18,7 +19,6 @@ import com.logviewer.ui.theme.LogViewerTheme
 import com.logviewer.ui.viewmodel.LogViewerViewModel
 import java.awt.FileDialog
 import java.awt.Frame
-import java.io.File
 
 @Composable
 fun LogViewerScreen(viewModel: LogViewerViewModel) {
@@ -77,20 +77,18 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                         onCloseClick = { viewModel.handleIntent(LogViewerIntent.CloseTab(it)) },
                         onAddClick = { viewModel.handleIntent(LogViewerIntent.AddTab) }
                     )
-                    RibbonBar(
-                        onOpenClick = { viewModel.handleIntent(LogViewerIntent.ShowOpenDialog) },
+                    FilterBar(
+                        filterQueries = activeTab?.filterQueries ?: emptyList(),
+                        onAddQuery = { viewModel.handleIntent(LogViewerIntent.AddFilterQuery(it)) },
+                        onRemoveQuery = { viewModel.handleIntent(LogViewerIntent.RemoveFilterQuery(it)) },
+                        onClearQueries = { viewModel.handleIntent(LogViewerIntent.ClearFilterQueries) },
                         onAddClick = { viewModel.handleIntent(LogViewerIntent.ShowAddDialog) },
-                        onClearClick = { viewModel.handleIntent(LogViewerIntent.ClearLogs) },
                         onToggleTheme = { viewModel.handleIntent(LogViewerIntent.ToggleTheme) },
                         onToggleSidebar = { viewModel.handleIntent(LogViewerIntent.ToggleSidebar) },
-                        searchQuery = activeTab?.searchQuery ?: "",
-                        onSearchQueryChange = { viewModel.handleIntent(LogViewerIntent.UpdateSearch(it)) },
-                        matchesCount = activeTab?.filteredLogs?.size ?: 0,
-                        totalCount = activeTab?.logs?.size ?: 0,
-                        levelFilters = activeTab?.levelFilters ?: emptySet(),
-                        onToggleLevel = { viewModel.handleIntent(LogViewerIntent.ToggleLevel(it)) },
                         isReversed = activeTab?.isReversed ?: false,
-                        onToggleSortOrder = { viewModel.handleIntent(LogViewerIntent.ToggleSortOrder) }
+                        onToggleSortOrder = { viewModel.handleIntent(LogViewerIntent.ToggleSortOrder) },
+                        matchesCount = activeTab?.filteredLogs?.size ?: 0,
+                        totalCount = activeTab?.logs?.size ?: 0
                     )
                 }
             },
@@ -108,11 +106,9 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
             ) {
                 Sidebar(
                     isExpanded = state.isSidebarExpanded,
-                    onToggleExpanded = { viewModel.handleIntent(LogViewerIntent.ToggleSidebar) },
-                    isDarkMode = state.isDarkMode,
-                    onToggleTheme = { viewModel.handleIntent(LogViewerIntent.ToggleTheme) },
                     levelFilters = activeTab?.levelFilters ?: emptySet(),
-                    onToggleLevel = { level -> viewModel.handleIntent(LogViewerIntent.ToggleLevel(level)) }
+                    onToggleLevel = { level -> viewModel.handleIntent(LogViewerIntent.ToggleLevel(level)) },
+                    levelCounts = activeTab?.levelCounts ?: emptyMap()
                 )
 
                 Column(modifier = Modifier.weight(1f)) {
@@ -131,7 +127,7 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                             } else {
                                 LogList(
                                     logs = activeTab?.filteredLogs ?: emptyList(),
-                                    searchQuery = activeTab?.searchQuery ?: "",
+                                    filterQueries = activeTab?.filterQueries ?: emptyList(),
                                     isDarkMode = state.isDarkMode,
                                     selectedEntry = activeTab?.selectedEntry,
                                     onEntryClick = { viewModel.handleIntent(LogViewerIntent.SelectEntry(it)) }
@@ -164,46 +160,49 @@ private fun LogTabRow(
     onCloseClick: (String) -> Unit,
     onAddClick: () -> Unit
 ) {
-    Surface(elevation = 4.dp, color = MaterialTheme.colors.primary) {
+    val tabBackground = LogViewerTheme.customColors.tabBackground
+    Surface(elevation = 4.dp, color = tabBackground) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             ScrollableTabRow(
                 selectedTabIndex = tabs.indexOfFirst { it.id == activeTabId }.coerceAtLeast(0),
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.weight(1f).height(32.dp),
                 edgePadding = 0.dp,
-                backgroundColor = MaterialTheme.colors.primary,
-                contentColor = MaterialTheme.colors.onPrimary
+                backgroundColor = tabBackground,
+                contentColor = MaterialTheme.colors.onSurface
             ) {
                 tabs.forEach { tab ->
                     Tab(
                         selected = tab.id == activeTabId,
-                        onClick = { onTabClick(tab.id) }
+                        onClick = { onTabClick(tab.id) },
+                        modifier = Modifier.height(32.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(
                                 text = tab.title,
-                                style = MaterialTheme.typography.button,
+                                style = MaterialTheme.typography.button.copy(fontSize = 12.sp),
                                 maxLines = 1
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             IconButton(
                                 onClick = { onCloseClick(tab.id) },
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(16.dp)
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
                                     contentDescription = "Close tab",
-                                    tint = if (tab.id == activeTabId) MaterialTheme.colors.onPrimary else MaterialTheme.colors.onPrimary.copy(alpha = 0.6f)
+                                    tint = if (tab.id == activeTabId) MaterialTheme.colors.onSurface else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                                    modifier = Modifier.size(14.dp)
                                 )
                             }
                         }
                     }
                 }
             }
-            IconButton(onClick = onAddClick) {
-                Icon(Icons.Default.Add, contentDescription = "Add tab", tint = MaterialTheme.colors.onPrimary)
+            IconButton(onClick = onAddClick, modifier = Modifier.size(32.dp)) {
+                Icon(Icons.Default.Add, contentDescription = "Add tab", tint = MaterialTheme.colors.onSurface, modifier = Modifier.size(18.dp))
             }
         }
     }

@@ -9,7 +9,9 @@ sealed interface LogViewerIntent {
     data object ClearLogs : LogViewerIntent
     data object ToggleTheme : LogViewerIntent
     data object ToggleSidebar : LogViewerIntent
-    data class UpdateSearch(val query: String) : LogViewerIntent
+    data class AddFilterQuery(val query: String) : LogViewerIntent
+    data class RemoveFilterQuery(val query: String) : LogViewerIntent
+    data object ClearFilterQueries : LogViewerIntent
     data class ToggleLevel(val level: LogLevel) : LogViewerIntent
     data object ToggleSortOrder : LogViewerIntent
     data class SelectEntry(val entry: com.logviewer.domain.model.LogEntry?) : LogViewerIntent

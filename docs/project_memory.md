@@ -14,6 +14,11 @@
 - Selected a Layered Multi-Module structure (`domain`, `core`, `ui`, `app`) for better separation of concerns.
 - Committed to using Tiny Types for core domain concepts to enhance type safety.
 - Transitioned to a streaming Flow-based `LogSource` to support scalability and real-time monitoring.
+- Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
+- UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
+- UI Simplification: Removed redundant toggles from Sidebar and unnecessary file icons from FilterBar to achieve a cleaner, content-focused interface.
+- Sidebar Restyling: Replaced standard Material checkboxes with a high-density, hierarchical filter panel featuring square checkboxes, right-aligned counts, and section headers with expand arrows, matching professional IDE patterns. Improved readability by using sentence case for log level names.
+- Unified Filtering: Transitioned from "Search" to "Filter" terminology. Added a clear-all "cross" icon to the FilterBar and updated all internal logic to match this terminology.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -275,6 +280,7 @@
 - Configured `logback.xml` with console and rolling JSON appenders.
 - Instrumented `FileLogSource`, `SimpleLogParser`, `MergedLogSource`, and `LogViewerViewModel` with extensive logging.
 - Added explicit error logging for all failure paths in the log loading and parsing pipeline.
+- Implemented high-density UI with horizontal scrolling and consolidated sidebar filters (Sprint 6).
 
 **Key decisions**
 - Used `kotlin-logging` to leverage idiomatic Kotlin features like lazy log message evaluation.
@@ -365,3 +371,89 @@
 **Test coverage areas**
 - `PreferencesRepositoryTest`: Unit tests for save/load and error handling.
 - Integration: Updated all tab and sorting integration tests to verify compatibility with the preferences system.
+
+## Sprint: UI/UX Redesign
+**Title**: Sprint 6 Completion ("Enema")
+**Date/time completed**: 2026-05-14 14:55
+**What was shipped**
+- High-density log list with 0dp vertical padding and no-wrap lines.
+- Shared horizontal scrolling for the entire log list and headers.
+- Consolidated level filters from toolbar to sidebar with entry counts.
+- Narrowed tab bar for increased vertical space.
+- IDE-style Dark Mode with dark gray color palette (`#2B2B2B`).
+
+**Key decisions**
+- Prioritized information density over Material Design whitespace for desktop productivity.
+- Used hash-based counts in `TabState` to provide immediate feedback in the sidebar.
+- Adopted Darcula-inspired colors for the dark theme to reduce eye strain.
+- Removed redundant filters to simplify the main interface.
+
+**Gotchas**
+- Shared horizontal scrolling for `LazyColumn` and its header requires careful layout coordination to ensure they scroll together.
+- Reducing padding to 0dp requires adjusting line-height or font-size if text appears too cramped; maintained 12sp for legibility.
+
+**Test coverage areas**
+- `LogViewerViewModel`: Verified `levelCounts` calculation.
+- UI Layout: Verified through manual inspection and compilation.
+
+## Task: UI Refinements and Polish
+**Title**: UI Refinements (Sprint 6 Polish)
+**Date/time completed**: 2026-05-14 15:17
+**What was shipped**
+- Native-style vertical and horizontal scrollbars in the log grid.
+- Ultra-high density log rows (0dp padding, no vertical gap).
+- Optimized tab bar depth (32dp) for maximum content visibility.
+- Improved log entry row interactions using `Modifier.clickable`.
+- Updated Tab Bar background to use a distinct grey color (`#323232` Dark / `#E0E0E0` Light) to provide better visual separation from the rest of the UI.
+
+**Key decisions**
+- Switched from `Surface(onClick)` to `Modifier.clickable` to bypass Material Design's minimum touch target size (48dp), enabling ultra-high density rows.
+- Used fixed-height (32dp) tab rows to maximize vertical real estate for logs.
+- Integrated `VerticalScrollbar` and `HorizontalScrollbar` for better navigation of large log files and long lines.
+- Introduced a specific `TabBackground` color that is slightly different from the `Surface` color (used for the Ribbon Bar) to ensure the tab area stands out visually.
+
+**Gotchas**
+- Material `Tab` and `ScrollableTabRow` components have internal constraints that can be overridden by explicit `Modifier.height`.
+- Horizontal scrollbars should be placed below the content they scroll to avoid overlapping with the last visible items.
+- When changing background colors, ensure `contentColor` is updated (e.g., from `onPrimary` to `onSurface`) to maintain readability.
+
+## Task: Sidebar Filter Styling
+**Title**: Sidebar Filter Restyling (Sprint 6 Polish)
+**Date/time completed**: 2026-05-14 15:40
+**What was shipped**
+- Redesigned `LogLevelToggle` with square checkboxes and right-aligned counts.
+- Implemented hierarchical layout for Sidebar filters with section headers ("FILTERS") and sub-sections ("Levels (5)").
+- Added expand/collapse arrows and proper indentation for filter entries.
+- High-density filter rows with optimized vertical padding.
+- Changed log level names to sentence case (e.g., "Debug", "Info") for a cleaner look.
+
+**Key decisions**
+- Used custom `Box`-based checkboxes to match the specific "IDE-style" look requested by the user, bypassing Material Design's default checkbox constraints.
+- Adopted a hierarchical list pattern to improve organization and scalability of filters.
+- Right-aligned counts to provide a cleaner visual scan of log distribution.
+
+**Gotchas**
+- Custom checkboxes require manual handling of checked states and icons, but provide much better control over high-density layouts.
+- Indentation (start padding) is crucial for conveying the hierarchical relationship between the category header and its items.
+
+## Task: Filter Bar Renaming & Cleanup
+**Title**: Filter Bar Renaming and Clear All (Sprint 6 Polish)
+**Date/time completed**: 2026-05-14 15:55
+**What was shipped**
+- Renamed all "Search" functionality to "Filter" throughout the application (UI and internal code).
+- Added a "cross" icon to the Filter Bar to clear all active filters and current input text.
+- Changed placeholder text from "Search..." to "Filter...".
+- Renamed `SearchBar` component to `FilterBar`.
+
+**Key decisions**
+- Aligned internal code (intents, state properties, functions) with the user-facing "Filter" language to maintain a clean and consistent domain language.
+- Placed the "clear all" cross icon inside the filter input area for intuitive access.
+- Updated `LogHighlighter` and its tests to reflect the new "filter" terminology.
+
+**Gotchas**
+- Renaming core concepts like "Search" to "Filter" requires a thorough sweep of the codebase, including tests and documentation, to avoid confusion.
+- The "clear" icon should handle both the text state and the list of active filter chips.
+
+**Test coverage areas**
+- `LogHighlighterTest`: Updated to verify "filter" highlighting.
+- `TabManagementTest`: Updated to verify independent filter query management.
