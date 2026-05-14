@@ -105,6 +105,22 @@
 - `LogHighlighter`: Unit tests for regex-based highlighting and search term bolding.
 - UI Layout: Verified via build and compilation.
 
+## Task: Roadmap Reorganization
+**Title**: Sprint 4 Split & Roadmap Refinement
+**Date/time completed**: 2026-05-14 14:35
+**What was shipped**
+- Split Sprint 4 into three distinct sprints: Sprint 4 (User Preferences), Sprint 5 (Recursive Directory Loading), and Sprint 6 (UI Redesign).
+- Created `docs/sprints/sprint-5-recursive-loading.md` and `docs/sprints/sprint-6-ui-redesign.md`.
+- Created corresponding task list files: `TASKS-SPRINT-5-RECURSIVE-LOADING.md` and `TASKS-SPRINT-6-UI-REDESIGN.md`.
+- Renamed and renumbered future placeholder sprints (7-10) to maintain a continuous roadmap.
+
+**Key decisions**
+- Decided to isolate "Enema" (UI Redesign) into its own sprint to focus on desktop-centric UX polish after core features are stable.
+- Elevated Recursive Directory Loading to a dedicated sprint due to its complexity and impact on the core `LogSource` architecture.
+
+**Gotchas**
+- Renumbering existing documentation files requires careful updates to internal titles and task IDs to avoid cross-referencing errors.
+
 ## Task: State-of-the-Art Review and Gap Analysis
 **Title**: Desktop UI Pattern Review & Gap Analysis
 **Date/time completed**: 2026-05-13 11:55

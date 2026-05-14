@@ -1,4 +1,4 @@
-# Sprint 6: Analysis & Visualization
+# Sprint 8: Analysis & Visualization
 
 ## 1. Goal
 Transform raw log data into visual insights by providing dashboards, time-series charts, and frequency analysis tools.

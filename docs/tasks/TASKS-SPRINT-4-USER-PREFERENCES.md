@@ -1,6 +1,6 @@
-# TASKS: Sprint 4 - User Preferences & UI Refinement
+# TASKS: Sprint 4 - User Preferences
 
-## 9. Sprint 4: User Preferences & UI Refinement
+## 9. Sprint 4: User Preferences
 
 ### 9.1. Initialize Sprint 4 Documentation
 - [x] 9.1.1. Create `docs/sprints/sprint-4-user-prefs.md`
@@ -13,16 +13,11 @@
 - [x] 9.2.4. Save window state (size/position) on close and restore on startup
 - [x] 9.2.5. Implement `kotlinx-serialization` for JSON-based storage
 
-### 9.3. Recursive Directory Loading
-- [ ] 9.3.1. Implement `DirectoryScanner` for recursive log discovery
-- [ ] 9.3.2. Extend `MergedLogSource` or create `DirectoryLogSource` to handle dynamic file lists
-- [ ] 9.3.3. Update UI to allow selecting directories
+### 9.3. [MOVED] Recursive Directory Loading
+- Moved to Sprint 5 (`TASKS-SPRINT-5-RECURSIVE-LOADING.md`)
 
-### 9.4. UI Simplification ("Enema")
-- [ ] 9.4.1. Remove log level selectors from Sidebar
-- [ ] 9.4.2. Remove log level selectors from Top/Nav bar if any remain
-- [ ] 9.4.3. Refine `RibbonBar` layout for better space utilization
-- [ ] 9.4.4. Ensure all filtering is accessible via the Ribbon Bar or keyboard shortcuts
+### 9.4. [MOVED] UI Simplification ("Enema")
+- Moved to Sprint 6 (`TASKS-SPRINT-6-UI-REDESIGN.md`)
 
 ### 9.5. Recent Files Menu
 - [x] 9.5.1. Implement tracking of recently opened files/directories
@@ -32,5 +27,5 @@
 
 ### 9.6. Verification & Polish
 - [x] 9.6.1. Unit tests for `PreferencesRepository`
-- [ ] 9.6.2. Unit tests for recursive directory scanner
-- [ ] 9.6.3. Manual verification of the "Clean" UI
+- [ ] 9.6.2. [MOVED] Unit tests for recursive directory scanner (Sprint 5)
+- [ ] 9.6.3. [MOVED] Manual verification of the "Clean" UI (Sprint 6)
