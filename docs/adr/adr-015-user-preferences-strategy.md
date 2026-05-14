@@ -1,10 +1,10 @@
 # ADR 015: User Preferences Persistence Strategy
 
 ## Status
-Proposed
+Accepted
 
 ## Context
-The application needs to persist user-specific settings such as window size, position, and Most Recently Used (MRU) files/directories across sessions. These settings should be stored in a way that respects standard operating system conventions for Mac, Windows, and Linux to ensure a native and reliable experience.
+The application needs to persist user-specific settings such as window size, position, and Most Recently Used (MRU) files/directories across sessions. Additionally, users expect their active workspace—including open tabs, split windows, and active filters—to be restored when the application restarts.
 
 ## Decision
 We will use a JSON-based configuration file stored in platform-specific application data directories.
@@ -18,21 +18,26 @@ We will use a JSON-based configuration file stored in platform-specific applicat
 
 ### Key Data to Persist
 - **Window State**: Width, height, X position, Y position.
-- **MRU Files**: A list of the most recently opened log files (limited to 5 for quick access, but storing more for the "Show All" feature).
+- **MRU Files**: A list of the most recently opened log files.
 - **MRU Directories**: A list of the most recently opened directories.
 - **UI Preferences**: Theme (Dark/Light), Sidebar visibility.
+- **UI Layout**: 
+    - Full configuration of all open tabs (IDs, titles).
+    - Configuration of split windows within each tab (log file paths, active filters, sort order).
+    - The currently active tab and active window focus.
 
 ### Implementation Details
 - A `UserPreferences` data class in the `domain` module.
 - A `PreferencesRepository` in the `core` module responsible for I/O and path resolution.
 - The `Main.kt` will load preferences on startup to configure the initial window state.
-- Preferences will be saved automatically on application close and optionally when key settings change.
+- `LogViewerViewModel` will load and restore the UI layout (tabs/splits) and trigger automatic log reloading.
+- Preferences are saved automatically whenever the UI configuration changes (e.g., adding a tab, splitting a window, loading a file, changing a filter).
 
 ## Consequences
 - **Pros**:
+    - "Pick up where you left off" experience for users.
     - Native feel by following OS standards.
     - Easy to debug and manually edit settings if needed (JSON).
-    - Decoupled from the UI framework (Compose).
 - **Cons**:
-    - Requires manual handling of platform-specific paths.
-    - JSON parsing adds a small overhead on startup.
+    - Preferences file size increases with the number of open tabs/splits.
+    - Automatic log reloading on startup may increase initial load time if many large files were open.

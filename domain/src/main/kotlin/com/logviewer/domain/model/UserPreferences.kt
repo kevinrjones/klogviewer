@@ -8,7 +8,27 @@ data class UserPreferences(
     val recentFiles: List<String> = emptyList(),
     val recentDirectories: List<String> = emptyList(),
     val isDarkMode: Boolean = true,
-    val isSidebarExpanded: Boolean = true
+    val isSidebarExpanded: Boolean = true,
+    val tabs: List<TabPreference> = emptyList(),
+    val activeTabId: String? = null
+)
+
+@Serializable
+data class TabPreference(
+    val id: String,
+    val title: String,
+    val windows: List<WindowPreference>,
+    val activeWindowId: String?
+)
+
+@Serializable
+data class WindowPreference(
+    val id: String,
+    val filePath: String,
+    val sourceIds: List<String> = emptyList(),
+    val filterQueries: List<String> = emptyList(),
+    val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
+    val isReversed: Boolean = false
 )
 
 @Serializable

@@ -35,10 +35,10 @@ class InterleavingIntegrationTest {
         
         viewModel.handleIntent(LogViewerIntent.LoadFiles(listOf(file1.absolutePath)))
         withTimeout(2000) {
-            viewModel.state.first { !it.activeTab!!.isLoading && it.activeTab!!.logs.isNotEmpty() }
+            viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && (it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false) }
         }
         
-        assertEquals(2, viewModel.state.value.activeTab?.logs?.size)
+        assertEquals(2, viewModel.state.value.activeTab?.activeWindow?.logs?.size)
 
         // Create second log file
         val file2 = File.createTempFile("log2", ".log").apply {
@@ -54,10 +54,10 @@ class InterleavingIntegrationTest {
         
         // Wait for merged load
         withTimeout(2000) {
-            viewModel.state.first { !it.activeTab!!.isLoading && it.activeTab!!.logs.size == 4 }
+            viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && it.activeTab?.activeWindow?.logs?.size == 4 }
         }
         
-        val logs = viewModel.state.value.activeTab!!.logs
+        val logs = viewModel.state.value.activeTab!!.activeWindow!!.logs
         assertEquals(4, logs.size)
         
         // Verify chronological order

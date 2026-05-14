@@ -32,6 +32,7 @@ fun FilterBar(
     onToggleSidebar: () -> Unit,
     isReversed: Boolean,
     onToggleSortOrder: () -> Unit,
+    onSplitClick: () -> Unit,
     matchesCount: Int,
     totalCount: Int,
     modifier: Modifier = Modifier
@@ -48,14 +49,15 @@ fun FilterBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // File Actions
-            SearchBarIcon(icon = Icons.Default.AddCircle, tooltip = "Add File to Workspace", onClick = onAddClick)
+            FilterBarIcon(icon = Icons.Default.AddCircle, tooltip = "Add File to Workspace", onClick = onAddClick)
             
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
             
             // View Actions
-            SearchBarIcon(icon = Icons.Default.Brightness4, tooltip = "Toggle Theme", onClick = onToggleTheme)
-            SearchBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)
-            SearchBarIcon(
+            FilterBarIcon(icon = Icons.Default.Brightness4, tooltip = "Toggle Theme", onClick = onToggleTheme)
+            FilterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)
+            FilterBarIcon(icon = Icons.Default.VerticalSplit, tooltip = "Split Horizontal", onClick = onSplitClick)
+            FilterBarIcon(
                 icon = if (isReversed) Icons.Default.SwapVert else Icons.AutoMirrored.Filled.Sort,
                 tooltip = if (isReversed) "Newest First" else "Oldest First",
                 onClick = onToggleSortOrder
@@ -113,11 +115,13 @@ fun FilterBar(
                     )
                     
                     if (filterQueries.isNotEmpty() || textState.isNotEmpty()) {
-                        IconButton(onClick = { 
-                            onClearQueries()
-                            textState = ""
-                        }, modifier = Modifier.size(20.dp)) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear filters", modifier = Modifier.size(14.dp))
+                        TooltipWrapper(tooltip = "Clear all filters") {
+                            IconButton(onClick = { 
+                                onClearQueries()
+                                textState = ""
+                            }, modifier = Modifier.size(20.dp)) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear all filters", modifier = Modifier.size(14.dp))
+                            }
                         }
                     }
                 }
@@ -136,13 +140,15 @@ fun FilterBar(
 }
 
 @Composable
-private fun SearchBarIcon(
+private fun FilterBarIcon(
     icon: ImageVector,
     tooltip: String,
     onClick: () -> Unit
 ) {
-    IconButton(onClick = onClick, modifier = Modifier.size(28.dp)) {
-        Icon(icon, contentDescription = tooltip, modifier = Modifier.size(18.dp))
+    TooltipWrapper(tooltip = tooltip) {
+        IconButton(onClick = onClick, modifier = Modifier.size(28.dp)) {
+            Icon(icon, contentDescription = tooltip, modifier = Modifier.size(18.dp))
+        }
     }
 }
 
@@ -162,13 +168,15 @@ private fun FilterChip(
         ) {
             Text(text = query, style = MaterialTheme.typography.caption, fontSize = 12.sp)
             Spacer(modifier = Modifier.width(4.dp))
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Remove",
-                modifier = Modifier
-                    .size(14.dp)
-                    .clickable { onRemove() }
-            )
+            TooltipWrapper(tooltip = "Remove filter") {
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Remove",
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clickable { onRemove() }
+                )
+            }
         }
     }
 }

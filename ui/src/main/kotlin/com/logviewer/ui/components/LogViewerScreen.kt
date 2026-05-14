@@ -1,5 +1,7 @@
 package com.logviewer.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -7,6 +9,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -24,6 +27,7 @@ import java.awt.Frame
 fun LogViewerScreen(viewModel: LogViewerViewModel) {
     val state by viewModel.state.collectAsState()
     val activeTab = state.activeTab
+    val activeWindow = activeTab?.activeWindow
     val scaffoldState = rememberScaffoldState()
 
     // Handle events
@@ -78,24 +82,25 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                         onAddClick = { viewModel.handleIntent(LogViewerIntent.AddTab) }
                     )
                     FilterBar(
-                        filterQueries = activeTab?.filterQueries ?: emptyList(),
+                        filterQueries = activeWindow?.filterQueries ?: emptyList(),
                         onAddQuery = { viewModel.handleIntent(LogViewerIntent.AddFilterQuery(it)) },
                         onRemoveQuery = { viewModel.handleIntent(LogViewerIntent.RemoveFilterQuery(it)) },
                         onClearQueries = { viewModel.handleIntent(LogViewerIntent.ClearFilterQueries) },
                         onAddClick = { viewModel.handleIntent(LogViewerIntent.ShowAddDialog) },
                         onToggleTheme = { viewModel.handleIntent(LogViewerIntent.ToggleTheme) },
                         onToggleSidebar = { viewModel.handleIntent(LogViewerIntent.ToggleSidebar) },
-                        isReversed = activeTab?.isReversed ?: false,
+                        isReversed = activeWindow?.isReversed ?: false,
                         onToggleSortOrder = { viewModel.handleIntent(LogViewerIntent.ToggleSortOrder) },
-                        matchesCount = activeTab?.filteredLogs?.size ?: 0,
-                        totalCount = activeTab?.logs?.size ?: 0
+                        onSplitClick = { viewModel.handleIntent(LogViewerIntent.SplitHorizontal) },
+                        matchesCount = activeWindow?.filteredLogs?.size ?: 0,
+                        totalCount = activeWindow?.logs?.size ?: 0
                     )
                 }
             },
             bottomBar = {
                 StatusBar(
-                    filePath = activeTab?.filePath ?: "",
-                    lineCount = activeTab?.logs?.size ?: 0
+                    filePath = activeWindow?.filePath ?: "",
+                    lineCount = activeWindow?.logs?.size ?: 0
                 )
             }
         ) { padding ->
@@ -106,43 +111,100 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
             ) {
                 Sidebar(
                     isExpanded = state.isSidebarExpanded,
-                    levelFilters = activeTab?.levelFilters ?: emptySet(),
+                    levelFilters = activeWindow?.levelFilters ?: emptySet(),
                     onToggleLevel = { level -> viewModel.handleIntent(LogViewerIntent.ToggleLevel(level)) },
-                    levelCounts = activeTab?.levelCounts ?: emptyMap()
+                    levelCounts = activeWindow?.levelCounts ?: emptyMap()
                 )
 
                 Column(modifier = Modifier.weight(1f)) {
-                    if (activeTab?.error != null) {
-                        Text(
-                            text = "Error: ${activeTab.error}",
-                            color = MaterialTheme.colors.error,
-                            modifier = Modifier.padding(16.dp)
-                        )
-                    }
-
-                    Column(modifier = Modifier.weight(1f)) {
-                        Box(modifier = Modifier.weight(1f).padding(horizontal = 16.dp)) {
-                            if (activeTab?.isLoading == true) {
-                                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                            } else {
-                                LogList(
-                                    logs = activeTab?.filteredLogs ?: emptyList(),
-                                    filterQueries = activeTab?.filterQueries ?: emptyList(),
-                                    isDarkMode = state.isDarkMode,
-                                    selectedEntry = activeTab?.selectedEntry,
-                                    onEntryClick = { viewModel.handleIntent(LogViewerIntent.SelectEntry(it)) }
-                                )
-                            }
+                    activeTab?.windows?.forEachIndexed { index, window ->
+                        if (index > 0) {
+                            Divider(modifier = Modifier.height(2.dp).fillMaxWidth(), color = MaterialTheme.colors.primary.copy(alpha = 0.5f))
                         }
                         
-                        // Detail Pane (Split View)
-                        if (activeTab?.selectedEntry != null) {
-                            Divider(modifier = Modifier.height(1.dp).fillMaxWidth())
-                            Box(modifier = Modifier.height(250.dp)) {
-                                LogEntryDetails(
-                                    entry = activeTab.selectedEntry,
-                                    onClose = { viewModel.handleIntent(LogViewerIntent.SelectEntry(null)) }
+                        val isWindowActive = window.id == activeTab.activeWindowId
+                        
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .background(if (isWindowActive) MaterialTheme.colors.onSurface.copy(alpha = 0.02f) else Color.Transparent)
+                                .padding(top = 4.dp)
+                        ) {
+                            // Window Header (Close button)
+                            if ((activeTab.windows.size) > 1) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+                                    horizontalArrangement = Arrangement.End,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (isWindowActive) {
+                                        Surface(
+                                            color = MaterialTheme.colors.primary.copy(alpha = 0.1f),
+                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                                        ) {
+                                            Text(
+                                                "Active",
+                                                style = MaterialTheme.typography.caption,
+                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                    }
+                                    TooltipWrapper(tooltip = "Close split") {
+                                        IconButton(
+                                            onClick = { viewModel.handleIntent(LogViewerIntent.CloseWindow(window.id)) },
+                                            modifier = Modifier.size(20.dp)
+                                        ) {
+                                            Icon(Icons.Default.Close, contentDescription = "Close Split", modifier = Modifier.size(14.dp))
+                                        }
+                                    }
+                                }
+                            }
+
+                            if (window.error != null) {
+                                Text(
+                                    text = "Error: ${window.error}",
+                                    color = MaterialTheme.colors.error,
+                                    modifier = Modifier.padding(16.dp)
                                 )
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(horizontal = 16.dp)
+                                    .clickable(
+                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                        indication = null
+                                    ) { 
+                                        viewModel.handleIntent(LogViewerIntent.SwitchWindow(window.id)) 
+                                    }
+                            ) {
+                                if (window.isLoading) {
+                                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+                                } else {
+                                    LogList(
+                                        logs = window.filteredLogs,
+                                        filterQueries = window.filterQueries,
+                                        isDarkMode = state.isDarkMode,
+                                        selectedEntry = window.selectedEntry,
+                                        onEntryClick = { 
+                                            viewModel.handleIntent(LogViewerIntent.SwitchWindow(window.id))
+                                            viewModel.handleIntent(LogViewerIntent.SelectEntry(it)) 
+                                        }
+                                    )
+                                }
+                            }
+                            
+                            // Detail Pane (Split View within Window)
+                            if (window.selectedEntry != null) {
+                                Divider(modifier = Modifier.height(1.dp).fillMaxWidth())
+                                Box(modifier = Modifier.height(200.dp)) {
+                                    LogEntryDetails(
+                                        entry = window.selectedEntry,
+                                        onClose = { viewModel.handleIntent(LogViewerIntent.SelectEntry(null)) }
+                                    )
+                                }
                             }
                         }
                     }
@@ -186,23 +248,27 @@ private fun LogTabRow(
                                 maxLines = 1
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            IconButton(
-                                onClick = { onCloseClick(tab.id) },
-                                modifier = Modifier.size(16.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Close,
-                                    contentDescription = "Close tab",
-                                    tint = if (tab.id == activeTabId) MaterialTheme.colors.onSurface else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
-                                    modifier = Modifier.size(14.dp)
-                                )
+                            TooltipWrapper(tooltip = "Close tab") {
+                                IconButton(
+                                    onClick = { onCloseClick(tab.id) },
+                                    modifier = Modifier.size(16.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Close tab",
+                                        tint = if (tab.id == activeTabId) MaterialTheme.colors.onSurface else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
                             }
                         }
                     }
                 }
             }
-            IconButton(onClick = onAddClick, modifier = Modifier.size(32.dp)) {
-                Icon(Icons.Default.Add, contentDescription = "Add tab", tint = MaterialTheme.colors.onSurface, modifier = Modifier.size(18.dp))
+            TooltipWrapper(tooltip = "Add new tab") {
+                IconButton(onClick = onAddClick, modifier = Modifier.size(32.dp)) {
+                    Icon(Icons.Default.Add, contentDescription = "Add tab", tint = MaterialTheme.colors.onSurface, modifier = Modifier.size(18.dp))
+                }
             }
         }
     }

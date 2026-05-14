@@ -15,6 +15,7 @@ dependencies {
     runtimeOnly(libs.logstash.logback.encoder)
     implementation(compose.desktop.currentOs)
     
+    testImplementation(libs.strikt.core)
     testImplementation(libs.cucumber.java)
     testImplementation(libs.cucumber.junit.platform.engine)
     testImplementation(libs.junit.jupiter.api)

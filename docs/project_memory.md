@@ -19,6 +19,10 @@
 - UI Simplification: Removed redundant toggles from Sidebar and unnecessary file icons from FilterBar to achieve a cleaner, content-focused interface.
 - Sidebar Restyling: Replaced standard Material checkboxes with a high-density, hierarchical filter panel featuring square checkboxes, right-aligned counts, and section headers with expand arrows, matching professional IDE patterns. Improved readability by using sentence case for log level names.
 - Unified Filtering: Transitioned from "Search" to "Filter" terminology. Added a clear-all "cross" icon to the FilterBar and updated all internal logic to match this terminology.
+- UI Density: Further reduced FilterBar height by transitioning to `BasicTextField` and smaller icons, and tightened sidebar filter padding for maximum vertical space.
+- Split View: Implemented horizontal split view support with an independent window-based architecture, allowing multiple logs to be viewed, filtered, and sorted independently within a single tab.
+- Navbar Tooltips: Integrated `TooltipArea` across all primary UI icons (tabs, filters, splits, details), improving discoverability and accessibility.
+- UI Layout Persistence: Implemented full workspace restoration. The application now remembers and reloads all open tabs, split windows, active filters, and loaded files on startup.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -477,3 +481,69 @@
 
 **Test coverage areas**
 - UI Layout: Verified via successful build and manual visual consistency checks.
+
+## Task: Horizontal Split View
+**Title**: Horizontal Split View Support (Sprint 6 Feature)
+**Date/time completed**: 2026-05-14 16:35
+**What was shipped**
+- Refactored `TabState` to support multiple `LogWindow` instances per tab.
+- Added a "Split Horizontal" button to the `FilterBar`.
+- Implemented vertical stacking of splits within a tab, allowing simultaneous viewing of multiple log files.
+- Added window focus management, where clicking a split makes it active for filtering and sidebar controls.
+- Added a "Close" button for individual split windows.
+
+**Key decisions**
+- Used a flexible window-based architecture instead of fixed splits, allowing for future expansion to vertical splits or arbitrary layouts.
+- Decided to make the newly created split active by default but start with no logs, allowing the user to explicitly load a new file.
+- Maintained backward compatibility for tab titles by only auto-updating the title when a single window is present.
+
+**Gotchas**
+- Refactoring `TabState` required widespread changes across the ViewModel and test suites.
+- Focus management is critical; users must know which split they are currently filtering. Visual feedback (a subtle background tint and "Active" badge) was added.
+
+**Test coverage areas**
+- `TabManagementTest`: Added integration test for multiple splits and independent log loading.
+- Regression: Updated all existing integration and BDD tests to work with the new window-based state.
+
+## Task: Navbar Tooltips
+**Title**: Navbar Tooltips Implementation (Sprint 6 Polish)
+**Date/time completed**: 2026-05-14 16:45
+**What was shipped**
+- Integrated `TooltipArea` across all primary UI icons in the `FilterBar`, `LogTabRow`, and `LogWindow`.
+- Created a reusable `TooltipWrapper` component to ensure consistent tooltip styling (yellowish background, shadow, 600ms delay).
+- Added tooltips for: Add File, Toggle Theme, Toggle Sidebar, Split Horizontal, Sort Order, Clear Filters, Remove Filter Chip, Close Tab, Add Tab, Close Split, and Close Details.
+- Renamed `SearchBarIcon` to `FilterBarIcon` to align with the renamed component.
+
+**Key decisions**
+- Used `androidx.compose.foundation.TooltipArea` to provide a native-feeling tooltip experience in the desktop environment.
+- Opted for a subtle 600ms delay to prevent tooltips from appearing too aggressively during rapid mouse movements.
+- Encapsulated the tooltip styling in a shared wrapper to maintain design consistency and reduce code duplication.
+
+**Gotchas**
+- `TooltipArea` is an experimental API in Compose Foundation and requires the `@OptIn(ExperimentalFoundationApi::class)` annotation.
+- Tooltip placement (CursorPoint) was adjusted to avoid overlapping with the icon being hovered.
+
+**Test coverage areas**
+- UI Components: Verified through successful compilation and passing UI module unit tests.
+
+## Task: UI Layout Persistence
+**Title**: UI Layout Persistence (Sprint 6 Refinement)
+**Date/time completed**: 2026-05-14 16:35
+**What was shipped**
+- Full workspace restoration on application startup, including all open tabs and split windows.
+- Persistent filtering state (search queries, log level filters) and sort order per split window.
+- Automatic reloading of log files into their respective windows upon startup.
+- Real-time persistence: UI layout and filter changes are saved to `preferences.json` as they happen.
+
+**Key decisions**
+- Refactored `LogViewerViewModel` to support background loading of logs for all windows during initialization, ensuring a seamless startup experience.
+- Extended `UserPreferences` with serializable `TabPreference` and `WindowPreference` structures to capture the complex UI state.
+- Decided to trigger `savePreferences` on layout and filter changes to prevent data loss in case of unexpected application closure.
+
+**Gotchas**
+- JUnit 5 requires test methods to return `Unit` (void). Using expression body with `expectThat` (which returns a builder) prevented tests from being recognized until an explicit `Unit` was added.
+- `LogLevel` enum required the `@Serializable` annotation to be included in the preference JSON.
+
+**Test coverage areas**
+- `PersistenceIntegrationTest`: Verified that tabs/splits are restored and logs are reloaded.
+- `PreferencesRepositoryTest`: Verified serialization of complex UI preference structures.

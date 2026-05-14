@@ -26,4 +26,9 @@ sealed interface LogViewerIntent {
     data object AddTab : LogViewerIntent
     data class CloseTab(val id: String) : LogViewerIntent
     data class SwitchTab(val id: String) : LogViewerIntent
+    
+    // Split Management
+    data object SplitHorizontal : LogViewerIntent
+    data class CloseWindow(val id: String) : LogViewerIntent
+    data class SwitchWindow(val id: String) : LogViewerIntent
 }

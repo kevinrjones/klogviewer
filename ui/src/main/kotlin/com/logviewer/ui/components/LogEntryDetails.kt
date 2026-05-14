@@ -38,8 +38,10 @@ fun LogEntryDetails(
                     verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                 ) {
                     Text("Log Entry Details", style = MaterialTheme.typography.h6)
-                    IconButton(onClick = onClose) {
-                        Icon(Icons.Default.Close, contentDescription = "Close")
+                    TooltipWrapper(tooltip = "Close details") {
+                        IconButton(onClick = onClose) {
+                            Icon(Icons.Default.Close, contentDescription = "Close details")
+                        }
                     }
                 }
                 

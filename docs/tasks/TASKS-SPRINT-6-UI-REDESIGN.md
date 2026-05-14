@@ -47,3 +47,18 @@
 ### 11.10. Density Improvements
 - [x] 11.10.1. Reduce height of Filter Bar (use BasicTextField and smaller icons)
 - [x] 11.10.2. Tighten vertical padding in Sidebar filters
+
+### 11.11. Split View Support
+- [x] 11.11.1. Refactor `TabState` to support multiple `LogWindow` instances
+- [x] 11.11.2. Add "Split Horizontal" button to `FilterBar`
+- [x] 11.11.3. Implement window focus and independent filtering/sorting per split
+- [x] 11.11.4. Update `LogViewerScreen` to render vertical stacks of splits
+
+### 11.12. UI Interactivity & Polish
+- [x] 11.12.1. Add tooltips to all icons in the navbar (FilterBar and TabRow)
+
+### 11.13. Workspace Persistence
+- [x] 11.13.1. Extend `UserPreferences` to include tab and split window configuration
+- [x] 11.13.2. Implement UI state restoration in `LogViewerViewModel` on startup
+- [x] 11.13.3. Implement automatic log reloading for all open windows
+- [x] 11.13.4. Ensure real-time persistence of layout and filter changes

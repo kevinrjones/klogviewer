@@ -39,30 +39,30 @@ class LogSortingTest {
         
         // Wait for load
         withTimeout(2000) {
-            viewModel.state.first { !it.activeTab!!.isLoading && it.activeTab!!.logs.size == 3 }
+            viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && it.activeTab?.activeWindow?.logs?.size == 3 }
         }
         
         // Default order (Oldest First)
-        assertEquals("Entry 1", viewModel.state.value.activeTab?.filteredLogs?.get(0)?.content?.value)
-        assertEquals("Entry 3", viewModel.state.value.activeTab?.filteredLogs?.get(2)?.content?.value)
+        assertEquals("Entry 1", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value)
+        assertEquals("Entry 3", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(2)?.content?.value)
         
         // Toggle sort order
         viewModel.handleIntent(LogViewerIntent.ToggleSortOrder)
         
         // Wait for filtering/sorting (it's on Dispatchers.Default)
         withTimeout(2000) {
-            viewModel.state.first { it.activeTab?.isReversed == true && it.activeTab?.filteredLogs?.get(0)?.content?.value == "Entry 3" }
+            viewModel.state.first { it.activeTab?.activeWindow?.isReversed == true && it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 3" }
         }
         
-        assertEquals("Entry 3", viewModel.state.value.activeTab?.filteredLogs?.get(0)?.content?.value)
-        assertEquals("Entry 1", viewModel.state.value.activeTab?.filteredLogs?.get(2)?.content?.value)
+        assertEquals("Entry 3", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value)
+        assertEquals("Entry 1", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(2)?.content?.value)
         
         // Toggle back
         viewModel.handleIntent(LogViewerIntent.ToggleSortOrder)
         withTimeout(2000) {
-            viewModel.state.first { it.activeTab?.isReversed == false && it.activeTab?.filteredLogs?.get(0)?.content?.value == "Entry 1" }
+            viewModel.state.first { it.activeTab?.activeWindow?.isReversed == false && it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 1" }
         }
-        assertEquals("Entry 1", viewModel.state.value.activeTab?.filteredLogs?.get(0)?.content?.value)
+        assertEquals("Entry 1", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value)
     }
 
     @Test
@@ -76,13 +76,13 @@ class LogSortingTest {
 
         // Wait for load
         withTimeout(2000) {
-            viewModel.state.first { !it.activeTab!!.isLoading && it.activeTab!!.logs.size == 1 }
+            viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && it.activeTab?.activeWindow?.logs?.size == 1 }
         }
 
         // Toggle reverse
         viewModel.handleIntent(LogViewerIntent.ToggleSortOrder)
         withTimeout(2000) {
-            viewModel.state.first { it.activeTab?.isReversed == true }
+            viewModel.state.first { it.activeTab?.activeWindow?.isReversed == true }
         }
 
         // Append log
@@ -90,11 +90,11 @@ class LogSortingTest {
 
         // Wait for append (FileLogSource polls every 1s)
         withTimeout(5000) {
-            viewModel.state.first { it.activeTab!!.filteredLogs.size == 2 }
+            viewModel.state.first { it.activeTab?.activeWindow?.filteredLogs?.size == 2 }
         }
 
         // Verify that Entry 2 is at the top (index 0)
-        assertEquals("Entry 2", viewModel.state.value.activeTab?.filteredLogs?.get(0)?.content?.value)
-        assertEquals("Entry 1", viewModel.state.value.activeTab?.filteredLogs?.get(1)?.content?.value)
+        assertEquals("Entry 2", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value)
+        assertEquals("Entry 1", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(1)?.content?.value)
     }
 }

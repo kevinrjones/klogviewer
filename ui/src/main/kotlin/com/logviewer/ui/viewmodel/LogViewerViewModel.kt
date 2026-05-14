@@ -28,29 +28,75 @@ class LogViewerViewModel(
 
     init {
         val prefs = prefsRepository.load()
-        _state.update { it.copy(
-            isDarkMode = prefs.isDarkMode,
-            isSidebarExpanded = prefs.isSidebarExpanded,
-            recentFiles = prefs.recentFiles,
-            recentDirectories = prefs.recentDirectories
-        ) }
+        if (prefs.tabs.isNotEmpty()) {
+            val initialState = LogViewerState(
+                tabs = prefs.tabs.map { tp ->
+                    TabState(
+                        id = tp.id,
+                        title = tp.title,
+                        windows = tp.windows.map { wp ->
+                            LogWindow(
+                                id = wp.id,
+                                filePath = wp.filePath,
+                                sourceIds = wp.sourceIds,
+                                filterQueries = wp.filterQueries,
+                                levelFilters = wp.levelFilters,
+                                isReversed = wp.isReversed
+                            )
+                        },
+                        activeWindowId = tp.activeWindowId
+                    )
+                },
+                activeTabId = prefs.activeTabId ?: prefs.tabs.firstOrNull()?.id,
+                isDarkMode = prefs.isDarkMode,
+                isSidebarExpanded = prefs.isSidebarExpanded,
+                recentFiles = prefs.recentFiles,
+                recentDirectories = prefs.recentDirectories
+            )
+            _state.value = initialState
+            
+            // Reload logs for all windows
+            initialState.tabs.forEach { tab ->
+                tab.windows.forEach { window ->
+                    if (window.sourceIds.isNotEmpty()) {
+                        loadFilesIntoWindow(window.id, window.sourceIds)
+                    }
+                }
+            }
+        } else {
+            _state.update { it.copy(
+                isDarkMode = prefs.isDarkMode,
+                isSidebarExpanded = prefs.isSidebarExpanded,
+                recentFiles = prefs.recentFiles,
+                recentDirectories = prefs.recentDirectories
+            ) }
+        }
     }
 
     fun handleIntent(intent: LogViewerIntent) {
         logger.debug { "Handling intent: ${intent::class.simpleName}" }
         when (intent) {
             is LogViewerIntent.LoadFiles -> {
-                loadFiles(intent.paths)
-                updateRecentItems(intent.paths)
+                val activeWindowId = _state.value.activeTab?.activeWindow?.id
+                if (activeWindowId != null) {
+                    loadFilesIntoWindow(activeWindowId, intent.paths)
+                    updateRecentItems(intent.paths)
+                }
             }
             is LogViewerIntent.AddToWorkspace -> {
-                val currentPaths = _state.value.activeTab?.sourceIds ?: emptyList()
-                val allPaths = currentPaths + intent.paths
-                loadFiles(allPaths)
-                updateRecentItems(intent.paths)
+                val activeWindow = _state.value.activeTab?.activeWindow
+                if (activeWindow != null) {
+                    val currentPaths = activeWindow.sourceIds
+                    val allPaths = currentPaths + intent.paths
+                    loadFilesIntoWindow(activeWindow.id, allPaths)
+                    updateRecentItems(intent.paths)
+                }
             }
-            is LogViewerIntent.SelectPath -> _state.update { it.updateActiveTab { tab -> tab.copy(filePath = intent.path) } }
-            LogViewerIntent.ClearLogs -> clearActiveTab()
+            is LogViewerIntent.SelectPath -> {
+                _state.update { it.updateActiveWindow { window -> window.copy(filePath = intent.path) } }
+                savePreferences()
+            }
+            LogViewerIntent.ClearLogs -> clearActiveWindow()
             LogViewerIntent.ToggleTheme -> {
                 _state.update { it.copy(isDarkMode = !it.isDarkMode) }
                 savePreferences()
@@ -62,78 +108,106 @@ class LogViewerViewModel(
             is LogViewerIntent.AddFilterQuery -> {
                 if (intent.query.isNotBlank()) {
                     _state.update { currentState ->
-                        currentState.updateActiveTab { tab ->
-                            if (!tab.filterQueries.contains(intent.query)) {
-                                tab.copy(filterQueries = tab.filterQueries + intent.query)
-                            } else tab
+                        currentState.updateActiveWindow { window ->
+                            if (!window.filterQueries.contains(intent.query)) {
+                                window.copy(filterQueries = window.filterQueries + intent.query)
+                            } else window
                         }
                     }
-                    filterLogs(_state.value.activeTabId)
+                    filterLogs(_state.value.activeTab?.activeWindow?.id)
+                    savePreferences()
                 }
             }
             is LogViewerIntent.RemoveFilterQuery -> {
                 _state.update { currentState ->
-                    currentState.updateActiveTab { tab ->
-                        tab.copy(filterQueries = tab.filterQueries - intent.query)
+                    currentState.updateActiveWindow { window ->
+                        window.copy(filterQueries = window.filterQueries - intent.query)
                     }
                 }
-                filterLogs(_state.value.activeTabId)
+                filterLogs(_state.value.activeTab?.activeWindow?.id)
+                savePreferences()
             }
             LogViewerIntent.ClearFilterQueries -> {
                 _state.update { currentState ->
-                    currentState.updateActiveTab { tab ->
-                        tab.copy(filterQueries = emptyList())
+                    currentState.updateActiveWindow { window ->
+                        window.copy(filterQueries = emptyList())
                     }
                 }
-                filterLogs(_state.value.activeTabId)
+                filterLogs(_state.value.activeTab?.activeWindow?.id)
+                savePreferences()
             }
             is LogViewerIntent.ToggleLevel -> {
                 _state.update { currentState ->
-                    currentState.updateActiveTab { tab ->
-                        val newFilters = if (tab.levelFilters.contains(intent.level)) {
-                            tab.levelFilters - intent.level
+                    currentState.updateActiveWindow { window ->
+                        val newFilters = if (window.levelFilters.contains(intent.level)) {
+                            window.levelFilters - intent.level
                         } else {
-                            tab.levelFilters + intent.level
+                            window.levelFilters + intent.level
                         }
-                        tab.copy(levelFilters = newFilters)
+                        window.copy(levelFilters = newFilters)
                     }
                 }
-                filterLogs(_state.value.activeTabId)
+                filterLogs(_state.value.activeTab?.activeWindow?.id)
+                savePreferences()
             }
             LogViewerIntent.ToggleSortOrder -> {
                 _state.update { currentState ->
-                    currentState.updateActiveTab { it.copy(isReversed = !it.isReversed) }
+                    currentState.updateActiveWindow { it.copy(isReversed = !it.isReversed) }
                 }
-                filterLogs(_state.value.activeTabId)
+                filterLogs(_state.value.activeTab?.activeWindow?.id)
+                savePreferences()
             }
             LogViewerIntent.AddTab -> addTab()
             is LogViewerIntent.CloseTab -> closeTab(intent.id)
             is LogViewerIntent.SwitchTab -> {
                 _state.update { it.copy(activeTabId = intent.id) }
+                savePreferences()
             }
             is LogViewerIntent.SelectEntry -> {
-                _state.update { it.updateActiveTab { tab -> tab.copy(selectedEntry = intent.entry) } }
+                _state.update { it.updateActiveWindow { window -> window.copy(selectedEntry = intent.entry) } }
             }
             LogViewerIntent.ShowOpenDialog -> _state.update { it.copy(pendingDialog = LogViewerState.DialogType.OPEN) }
             LogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = LogViewerState.DialogType.ADD) }
             LogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = LogViewerState.DialogType.RECENT_ITEMS) }
             LogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null) }
+            
+            // Split Management
+            LogViewerIntent.SplitHorizontal -> splitHorizontal()
+            is LogViewerIntent.CloseWindow -> closeWindow(intent.id)
+            is LogViewerIntent.SwitchWindow -> switchWindow(intent.id)
         }
     }
 
     private fun addTab() {
-        val newId = UUID.randomUUID().toString()
-        val newTab = TabState(id = newId, title = "New Tab")
-        _state.update { it.copy(tabs = it.tabs + newTab, activeTabId = newId) }
+        val newTabId = UUID.randomUUID().toString()
+        val newWindowId = UUID.randomUUID().toString()
+        val newTab = TabState(
+            id = newTabId,
+            title = "New Tab",
+            windows = listOf(LogWindow(id = newWindowId)),
+            activeWindowId = newWindowId
+        )
+        _state.update { it.copy(tabs = it.tabs + newTab, activeTabId = newTabId) }
+        savePreferences()
     }
 
     private fun closeTab(id: String) {
-        logJobs[id]?.cancel()
-        logJobs.remove(id)
+        val tab = _state.value.tabs.find { it.id == id }
+        tab?.windows?.forEach { window ->
+            logJobs[window.id]?.cancel()
+            logJobs.remove(window.id)
+        }
         _state.update { currentState ->
             val remainingTabs = currentState.tabs.filter { it.id != id }
             val newTabs = if (remainingTabs.isEmpty()) {
-                listOf(TabState(id = UUID.randomUUID().toString(), title = "Log View"))
+                val newTabId = UUID.randomUUID().toString()
+                val newWindowId = UUID.randomUUID().toString()
+                listOf(TabState(
+                    id = newTabId,
+                    title = "Log View",
+                    windows = listOf(LogWindow(id = newWindowId)),
+                    activeWindowId = newWindowId
+                ))
             } else {
                 remainingTabs
             }
@@ -144,33 +218,92 @@ class LogViewerViewModel(
             }
             currentState.copy(tabs = newTabs, activeTabId = newActiveId)
         }
+        savePreferences()
     }
 
-    private fun clearActiveTab() {
-        val activeTabId = _state.value.activeTabId ?: return
-        logJobs[activeTabId]?.cancel()
-        _state.update { it.updateActiveTab { tab -> tab.copy(logs = emptyList(), filePath = "", sourceIds = emptyList(), title = "Log View") } }
-        filterLogs(activeTabId)
-    }
-
-    private fun loadFiles(paths: List<String>) {
-        val activeTabId = _state.value.activeTabId ?: return
+    private fun splitHorizontal() {
+        val activeTab = _state.value.activeTab ?: return
+        val newWindowId = UUID.randomUUID().toString()
+        val newWindow = LogWindow(id = newWindowId)
         
-        logJobs[activeTabId]?.cancel()
-        logJobs[activeTabId] = scope.launch {
-            val title = if (paths.size == 1) File(paths[0]).name else "${paths.size} files"
-            _state.update { currentState ->
-                currentState.updateActiveTab { tab -> 
-                    tab.copy(
-                        isLoading = true, 
-                        error = null, 
-                        filePath = paths.joinToString(", "), 
-                        logs = emptyList(), 
-                        sourceIds = paths,
-                        title = title
-                    ) 
+        _state.update { currentState ->
+            currentState.updateActiveTab { tab ->
+                tab.copy(
+                    windows = tab.windows + newWindow,
+                    activeWindowId = newWindowId
+                )
+            }
+        }
+        savePreferences()
+    }
+
+    private fun closeWindow(id: String) {
+        logJobs[id]?.cancel()
+        logJobs.remove(id)
+        
+        _state.update { currentState ->
+            currentState.updateActiveTab { tab ->
+                val remainingWindows = tab.windows.filter { it.id != id }
+                if (remainingWindows.isEmpty()) tab // Cannot close the last window
+                else {
+                    val newActiveId = if (tab.activeWindowId == id) remainingWindows.last().id else tab.activeWindowId
+                    tab.copy(windows = remainingWindows, activeWindowId = newActiveId)
                 }
             }
+        }
+        savePreferences()
+    }
+
+    private fun switchWindow(id: String) {
+        _state.update { currentState ->
+            currentState.updateActiveTab { it.copy(activeWindowId = id) }
+        }
+        savePreferences()
+    }
+
+    private fun clearActiveWindow() {
+        val activeWindow = _state.value.activeTab?.activeWindow ?: return
+        logJobs[activeWindow.id]?.cancel()
+        _state.update { currentState ->
+            currentState.updateActiveWindow { window ->
+                window.copy(logs = emptyList(), filePath = "", sourceIds = emptyList())
+            }
+        }
+        filterLogs(activeWindow.id)
+        savePreferences()
+    }
+
+    private fun loadFilesIntoWindow(windowId: String, paths: List<String>) {
+        logJobs[windowId]?.cancel()
+        logJobs[windowId] = scope.launch {
+            val fileName = if (paths.size == 1) File(paths[0]).name else "${paths.size} files"
+            
+            _state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    tab.copy(windows = tab.windows.map { window ->
+                        if (window.id == windowId) {
+                            window.copy(
+                                isLoading = true, 
+                                error = null, 
+                                filePath = paths.joinToString(", "), 
+                                logs = emptyList(), 
+                                sourceIds = paths
+                            )
+                        } else window
+                    })
+                })
+            }
+            
+            // Update tab title if it's the only window or first window
+            _state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) {
+                        tab.copy(title = fileName)
+                    } else tab
+                })
+            }
+            
+            savePreferences()
             
             val flow = if (paths.size == 1) {
                 logSource.observeLogs(LogFilePath(paths[0]))
@@ -187,44 +320,52 @@ class LogViewerViewModel(
                             is LogFailure.ParsingError -> failure.message
                         }
                         logger.error { "Failed to load logs: $message" }
-                        _state.update { it.updateActiveTab { tab -> tab.copy(isLoading = false, error = message) } }
+                        _state.update { currentState ->
+                            currentState.copy(tabs = currentState.tabs.map { tab ->
+                                tab.copy(windows = tab.windows.map { window ->
+                                    if (window.id == windowId) window.copy(isLoading = false, error = message) else window
+                                })
+                            })
+                        }
                         _events.emit(LogViewerEvent.ShowError(message))
                     },
                     ifRight = { update ->
-                        handleLogUpdate(activeTabId, update)
+                        handleLogUpdate(windowId, update)
                     }
                 )
             }
         }
     }
 
-    private fun handleLogUpdate(tabId: String, update: LogUpdate) {
+    private fun handleLogUpdate(windowId: String, update: LogUpdate) {
         _state.update { currentState ->
             currentState.copy(tabs = currentState.tabs.map { tab ->
-                if (tab.id == tabId) {
-                    when (update) {
-                        is LogUpdate.Initial -> tab.copy(isLoading = false, logs = update.entries)
-                        is LogUpdate.Appended -> tab.copy(logs = tab.logs + update.entries)
-                        LogUpdate.Reset -> tab.copy(logs = emptyList())
-                    }
-                } else tab
+                tab.copy(windows = tab.windows.map { window ->
+                    if (window.id == windowId) {
+                        when (update) {
+                            is LogUpdate.Initial -> window.copy(isLoading = false, logs = update.entries)
+                            is LogUpdate.Appended -> window.copy(logs = window.logs + update.entries)
+                            LogUpdate.Reset -> window.copy(logs = emptyList())
+                        }
+                    } else window
+                })
             })
         }
-        filterLogs(tabId)
+        filterLogs(windowId)
     }
 
-    private fun filterLogs(tabId: String?) {
-        if (tabId == null) return
+    private fun filterLogs(windowId: String?) {
+        if (windowId == null) return
         
         scope.launch(Dispatchers.Default) {
-            val tab = _state.value.tabs.find { it.id == tabId } ?: return@launch
+            val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@launch
             
-            val filtered = tab.logs.filter { entry ->
-                val matchesLevel = tab.levelFilters.contains(entry.level)
-                val matchesFilter = if (tab.filterQueries.isEmpty()) {
+            val filtered = window.logs.filter { entry ->
+                val matchesLevel = window.levelFilters.contains(entry.level)
+                val matchesFilter = if (window.filterQueries.isEmpty()) {
                     true
                 } else {
-                    tab.filterQueries.all { query ->
+                    window.filterQueries.all { query ->
                         entry.content.value.contains(query, ignoreCase = true) ||
                         entry.timestamp.value.contains(query, ignoreCase = true)
                     }
@@ -232,11 +373,13 @@ class LogViewerViewModel(
                 matchesLevel && matchesFilter
             }
             
-            val sorted = if (tab.isReversed) filtered.reversed() else filtered
+            val sorted = if (window.isReversed) filtered.reversed() else filtered
             
             _state.update { currentState ->
-                currentState.copy(tabs = currentState.tabs.map { 
-                    if (it.id == tabId) it.copy(filteredLogs = sorted) else it 
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    tab.copy(windows = tab.windows.map { 
+                        if (it.id == windowId) it.copy(filteredLogs = sorted) else it 
+                    })
                 })
             }
         }
@@ -265,7 +408,25 @@ class LogViewerViewModel(
             isDarkMode = currentState.isDarkMode,
             isSidebarExpanded = currentState.isSidebarExpanded,
             recentFiles = currentState.recentFiles,
-            recentDirectories = currentState.recentDirectories
+            recentDirectories = currentState.recentDirectories,
+            tabs = currentState.tabs.map { tab ->
+                TabPreference(
+                    id = tab.id,
+                    title = tab.title,
+                    activeWindowId = tab.activeWindowId,
+                    windows = tab.windows.map { window ->
+                        WindowPreference(
+                            id = window.id,
+                            filePath = window.filePath,
+                            sourceIds = window.sourceIds,
+                            filterQueries = window.filterQueries,
+                            levelFilters = window.levelFilters,
+                            isReversed = window.isReversed
+                        )
+                    }
+                )
+            },
+            activeTabId = currentState.activeTabId
         )
         prefsRepository.save(newPrefs)
     }
