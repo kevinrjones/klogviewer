@@ -9,12 +9,23 @@ import strikt.assertions.isNotNull
 import strikt.assertions.isNull
 
 class MultilineProcessorTest {
+    private val registry = ParserRegistry()
+    private val template = registry.getTemplate("Standard")!!
 
-    private val template = LogTemplate(
-        name = "Standard",
-        regex = """^(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+(?<level>\S+)\s+(?<content>.*)$""",
-        timestampPattern = "yyyy-MM-dd HH:mm:ss"
-    )
+    @Test
+    fun `should recognize timezone-aware log as new header and flush previous`() {
+        val processor = MultilineProcessor(template)
+        
+        processor.process("2026-05-08 00:00:00 INFO First line")
+        val finishedEntry = processor.process("2026-05-08 00:27:56.321 +01:00 [INF] more stuff here")
+        
+        expectThat(finishedEntry).isNotNull()
+        expectThat(finishedEntry!!.content.value).isEqualTo("First line")
+        
+        val lastEntry = processor.flush()
+        expectThat(lastEntry).isNotNull()
+        expectThat(lastEntry!!.level).isEqualTo(LogLevel.INFO)
+    }
 
     @Test
     fun `should aggregate multiline logs`() {

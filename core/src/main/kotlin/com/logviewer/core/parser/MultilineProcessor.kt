@@ -20,11 +20,12 @@ class MultilineProcessor(
      * Processes a single line. Returns a completed [LogEntry] if a new header line is detected.
      */
     fun process(line: String): LogEntry? {
-        val isHeader = headerRegex.matches(line)
+        val trimmedLine = line.trim()
+        val isHeader = headerRegex.matches(trimmedLine)
         
         return if (isHeader) {
             val finishedEntry = currentEntry
-            currentEntry = parser.parse(line).getOrNull()
+            currentEntry = parser.parse(trimmedLine).getOrNull()
             bufferLineCount = 1
             finishedEntry
         } else {

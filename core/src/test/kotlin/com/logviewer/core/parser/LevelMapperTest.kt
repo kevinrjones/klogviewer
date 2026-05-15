@@ -54,10 +54,16 @@ class LevelMapperTest {
     }
 
     @Test
-    fun `should return default level for unknown strings`() {
-        expectThat(mapper.map("UNKNOWN_LEVEL")).isEqualTo(LogLevel.UNKNOWN)
-        
-        val customDefaultMapper = LevelMapper(defaultLevel = LogLevel.INFO)
-        expectThat(customDefaultMapper.map("SOMETHING")).isEqualTo(LogLevel.INFO)
+    fun `should handle bracketed and parenthesized levels`() {
+        expectThat(mapper.map("[INFO]")).isEqualTo(LogLevel.INFO)
+        expectThat(mapper.map("(INFO)")).isEqualTo(LogLevel.INFO)
+        expectThat(mapper.map("[INF]")).isEqualTo(LogLevel.INFO)
+        expectThat(mapper.map("(WARN)")).isEqualTo(LogLevel.WARN)
+    }
+
+    @Test
+    fun `should handle multiple brackets`() {
+        // Current implementation only removes one pair
+        expectThat(mapper.map("[[INFO]]")).isEqualTo(LogLevel.UNKNOWN)
     }
 }

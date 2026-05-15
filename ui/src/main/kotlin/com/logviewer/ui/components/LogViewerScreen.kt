@@ -230,7 +230,9 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                                 Box(modifier = Modifier.height(200.dp)) {
                                     LogEntryDetails(
                                         entry = window.selectedEntry,
-                                        onClose = { viewModel.handleIntent(LogViewerIntent.SelectEntry(null)) }
+                                        onClose = { viewModel.handleIntent(LogViewerIntent.SelectEntry(null)) },
+                                        filterQueries = window.filterQueries,
+                                        isDarkMode = state.isDarkMode
                                     )
                                 }
                             }

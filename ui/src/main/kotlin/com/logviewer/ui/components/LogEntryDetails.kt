@@ -10,11 +10,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.logviewer.domain.model.LogEntry
+import com.logviewer.domain.model.LogLevel
 
 @Composable
 fun LogEntryDetails(
     entry: LogEntry?,
     onClose: () -> Unit,
+    filterQueries: List<String> = emptyList(),
+    isDarkMode: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -48,24 +51,35 @@ fun LogEntryDetails(
                 Spacer(modifier = Modifier.height(16.dp))
                 
                 DetailItem(label = "Timestamp", value = entry.timestamp.value)
-                DetailItem(label = "Level", value = entry.level.name)
+                if (entry.level != LogLevel.UNKNOWN) {
+                    DetailItem(label = "Level", value = entry.level.name.lowercase().replaceFirstChar { it.uppercase() })
+                }
                 if (entry.sourceId != null) {
                     DetailItem(label = "Source", value = entry.sourceId!!)
                 }
+
+                entry.fields.forEach { (key, value) ->
+                    if (key != "timestamp" && key != "level" && key != "content") {
+                        val label = key.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
+                        DetailItem(label = label, value = value)
+                    }
+                }
                 
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Content", style = MaterialTheme.typography.subtitle2)
-                Surface(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
-                    shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        text = entry.content.value,
-                        modifier = Modifier.padding(12.dp),
-                        style = MaterialTheme.typography.body2,
-                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                    )
+                if (entry.content.value.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Content", style = MaterialTheme.typography.subtitle2)
+                    Surface(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = LogHighlighter.highlight(entry.content.value, filterQueries, isDarkMode),
+                            modifier = Modifier.padding(12.dp),
+                            style = MaterialTheme.typography.body2,
+                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                        )
+                    }
                 }
             }
         }

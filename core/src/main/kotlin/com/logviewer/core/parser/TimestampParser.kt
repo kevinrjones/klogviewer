@@ -2,9 +2,12 @@ package com.logviewer.core.parser
 
 import java.time.LocalDateTime
 import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.Instant
 import java.time.temporal.ChronoField
+import java.time.temporal.TemporalAccessor
 import java.util.Locale
 import io.github.oshai.kotlinlogging.KotlinLogging
 
@@ -34,19 +37,27 @@ class TimestampParser(private val pattern: String) {
         return try {
             val accessor = formatter.parse(input)
             
+            if (accessor.isSupported(ChronoField.OFFSET_SECONDS)) {
+                return Instant.from(accessor)
+            }
+
             val now = LocalDateTime.now(ZoneOffset.UTC)
-            val year = if (accessor.isSupported(ChronoField.YEAR)) accessor.get(ChronoField.YEAR) else now.year
-            val month = if (accessor.isSupported(ChronoField.MONTH_OF_YEAR)) accessor.get(ChronoField.MONTH_OF_YEAR) else now.monthValue
-            val day = if (accessor.isSupported(ChronoField.DAY_OF_MONTH)) accessor.get(ChronoField.DAY_OF_MONTH) else now.dayOfMonth
-            val hour = if (accessor.isSupported(ChronoField.HOUR_OF_DAY)) accessor.get(ChronoField.HOUR_OF_DAY) else 0
-            val minute = if (accessor.isSupported(ChronoField.MINUTE_OF_HOUR)) accessor.get(ChronoField.MINUTE_OF_HOUR) else 0
-            val second = if (accessor.isSupported(ChronoField.SECOND_OF_MINUTE)) accessor.get(ChronoField.SECOND_OF_MINUTE) else 0
-            val nano = if (accessor.isSupported(ChronoField.NANO_OF_SECOND)) accessor.get(ChronoField.NANO_OF_SECOND) else 0
+            val year = getField(accessor, ChronoField.YEAR, now.year)
+            val month = getField(accessor, ChronoField.MONTH_OF_YEAR, now.monthValue)
+            val day = getField(accessor, ChronoField.DAY_OF_MONTH, now.dayOfMonth)
+            val hour = getField(accessor, ChronoField.HOUR_OF_DAY, 0)
+            val minute = getField(accessor, ChronoField.MINUTE_OF_HOUR, 0)
+            val second = getField(accessor, ChronoField.SECOND_OF_MINUTE, 0)
+            val nano = getField(accessor, ChronoField.NANO_OF_SECOND, 0)
             
             LocalDateTime.of(year, month, day, hour, minute, second, nano).toInstant(ZoneOffset.UTC)
         } catch (e: Exception) {
             logger.debug { "Failed to parse timestamp '$input' with pattern '$pattern': ${e.message}" }
             null
         }
+    }
+
+    private fun getField(accessor: TemporalAccessor, field: ChronoField, default: Int): Int {
+        return if (accessor.isSupported(field)) accessor.get(field) else default
     }
 }

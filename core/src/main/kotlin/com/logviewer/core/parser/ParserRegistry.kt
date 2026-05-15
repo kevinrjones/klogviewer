@@ -24,8 +24,9 @@ class ParserRegistry {
     private fun registerDefaultTemplates() {
         register(LogTemplate(
             name = "Standard",
-            regex = """^(?<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:\s+[+-]\d{2}:?\d{2})?)\s+(?:\[(?<metadata>.*?)\]\s+)?(?<level>\[.*?\]|\S+)\s+(?<content>.*)$""",
-            timestampPattern = "yyyy-MM-dd HH:mm:ss[.SSS][ XXX]"
+            regex = """^\s*(?<timestamp>\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?<metadata>.*?)\]\s*)?(?<level>\[.*?\]|\S+)?(?:\s+(?<content>.*))?$""",
+            timestampPattern = "yyyy-MM-dd HH:mm:ss[.SSS][ XXX]",
+            columns = listOf("Timestamp", "Level", "Message")
         ))
         
         register(LogTemplate(

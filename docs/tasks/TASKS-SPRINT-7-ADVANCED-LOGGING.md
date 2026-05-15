@@ -46,3 +46,7 @@
 - [x] 12.7.3. Integration tests for `MultilineProcessor` with stack traces
 - [x] 12.7.4. Unit tests for `JsonLogParser` with various JSON layouts
 - [x] 12.7.5. Verify heuristic detection with sample log files (Log4j, Syslog, JSON)
+- [x] 12.7.6. Fix regression in `Standard` log level detection for timezone-aware entries
+- [x] 12.7.7. Improve parsing robustness against trailing whitespace in templates
+- [x] 12.7.8. Ensure `SimpleLogParser` populates `fields` map for consistent UI details
+- [x] 12.7.9. Fix false positive `logfmt` detection and improve `Standard` regex robustness

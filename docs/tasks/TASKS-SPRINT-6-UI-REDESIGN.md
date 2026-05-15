@@ -69,3 +69,4 @@
 
 ### 11.15. UI Bug Fixes
 - [x] 11.15.1. Fix column resizing 'snap back' regression and optimize save performance
+- [x] 11.15.2. Configure details pane to show dynamic fields based on log type

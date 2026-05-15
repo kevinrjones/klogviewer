@@ -28,6 +28,7 @@
 - Optimized performance by debouncing preference saves during rapid column resizing.
 - Added `IntrinsicSize.Min` to the log header to ensure proper vertical alignment and resize handle visibility.
 - Improved layout stability within `horizontalScroll` by removing infinite-width `fillMaxSize` constraints from `LazyColumn`.
+- Dynamic Details Pane: Redesigned the log entry details pane to adapt to different log formats. It now hides the "Level" field when unknown (common in structured logs like Nginx) and automatically displays all available fields from the `LogEntry.fields` map.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -738,3 +739,25 @@
 **Test coverage areas**
 - `PersistenceIntegrationTest`: Added `should persist column widths` test case to verify end-to-end state preservation.
 - Regression verification: Confirmed grid alignment and column visibility across standard and custom log formats.
+
+## Task: Dynamic Log Entry Details
+**Title**: Dynamic Details Pane Implementation
+**Date/time completed**: 2026-05-15 11:35
+**What was shipped**
+- Redesigned `LogEntryDetails` to show dynamic fields based on the log entry's content.
+- Conditional "Level" display: hide level if it is `UNKNOWN`.
+- Automated field display: iterate through and show all custom fields from structured logs (e.g., Nginx, Apache).
+- Enhanced "Content" box: only show if content is not blank and added support for multi-term highlighting.
+- Integrated highlighting into the details pane to match the main log grid.
+
+**Key decisions**
+- Used the presence of fields in `LogEntry.fields` to automatically adapt the details pane to different log formats (e.g., Syslog, JSON, Apache).
+- Optimized vertical space by hiding redundant or empty sections ("Level" when unknown, "Content" when blank).
+- Passed `filterQueries` and `isDarkMode` to the details pane to ensure visual consistency with the main list.
+
+**Gotchas**
+- Adding new parameters to `LogEntryDetails` required updating the call site in `LogViewerScreen` and importing `LogLevel` in the component file.
+- `LogHighlighter.highlight` returns an `AnnotatedString` which is correctly handled by the `Text` composable, but it needs current theme context.
+
+**Test coverage areas**
+- UI: Verified through compilation and regression pass of existing integration tests.

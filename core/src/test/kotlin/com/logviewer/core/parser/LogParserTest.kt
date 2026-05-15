@@ -69,4 +69,27 @@ class LogParserTest {
             expectThat(entry.content.value).isEqualTo("more stuff here")
         }
     }
+
+    @Test
+    fun `should parse line with no space after offset correctly`() {
+        val line = "2026-05-08 00:27:56.321 +01:00[INF] more stuff here"
+        val result = parser.parse(line)
+        expectThat(result.isRight()).isTrue()
+        result.onRight { entry ->
+            expectThat(entry.level).isEqualTo(LogLevel.INFO)
+            expectThat(entry.content.value).isEqualTo("more stuff here")
+        }
+    }
+
+    @Test
+    fun `should parse debug line with thread metadata correctly`() {
+        val line = "2026-05-12 10:15:03.752 [main] DEBUG more stuff here"
+        val result = parser.parse(line)
+        
+        expectThat(result.isRight()).isTrue()
+        result.onRight { entry ->
+            expectThat(entry.level).isEqualTo(LogLevel.DEBUG)
+            expectThat(entry.content.value).isEqualTo("more stuff here")
+        }
+    }
 }

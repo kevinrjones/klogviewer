@@ -15,7 +15,8 @@ class TemplateLogParser(val template: LogTemplate) : LogParser {
     private val groupNames = """\(\?\<(\w+)\>""".toRegex().findAll(template.regex).map { it.groupValues[1] }.toList()
 
     override fun parse(line: String): Either<LogFailure.ParsingError, LogEntry> {
-        val matchResult = regex.matchEntire(line) ?: run {
+        val trimmedLine = line.trim()
+        val matchResult = regex.matchEntire(trimmedLine) ?: run {
             logger.debug { "Template [${template.name}] failed to parse line: $line" }
             return LogFailure.ParsingError("Could not parse log line with template ${template.name}", line).left()
         }

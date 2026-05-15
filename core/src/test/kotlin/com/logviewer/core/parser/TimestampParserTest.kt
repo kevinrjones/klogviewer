@@ -37,11 +37,20 @@ class TimestampParserTest {
         val result = parser.parse("2024-05-14 15:24:08 +01:00")
         
         expectThat(result).isNotNull()
-        // Note: Currently TimestampParser.parse returns Instant in UTC, 
-        // but it doesn't actually use the timezone from the input yet 
-        // because it uses LocalDateTime.toInstant(ZoneOffset.UTC).
-        // For now we just verify it doesn't fail.
-        expectThat(result).isEqualTo(LocalDateTime.of(2024, 5, 14, 15, 24, 8).toInstant(ZoneOffset.UTC))
+        // 15:24:08 +01:00 is 14:24:08 UTC
+        val expected = LocalDateTime.of(2024, 5, 14, 14, 24, 8).toInstant(ZoneOffset.UTC)
+        expectThat(result).isEqualTo(expected)
+    }
+
+    @Test
+    fun `should parse timestamp with negative timezone offset`() {
+        val parser = TimestampParser("yyyy-MM-dd HH:mm:ss[.SSS][ XXX]")
+        val result = parser.parse("2024-05-14 15:24:08 -05:00")
+        
+        expectThat(result).isNotNull()
+        // 15:24:08 -05:00 is 20:24:08 UTC
+        val expected = LocalDateTime.of(2024, 5, 14, 20, 24, 8).toInstant(ZoneOffset.UTC)
+        expectThat(result).isEqualTo(expected)
     }
 
     @Test
