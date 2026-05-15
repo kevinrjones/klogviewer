@@ -1,15 +1,10 @@
 package com.klogviewer.core.repository
 
-import com.klogviewer.domain.model.TabPreference
-import com.klogviewer.domain.model.UserPreferences
-import com.klogviewer.domain.model.WindowPreference
-import com.klogviewer.domain.model.WindowStatePreferences
-import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
-import strikt.assertions.isTrue
 import java.io.File
 
 class PreferencesRepositoryTest {

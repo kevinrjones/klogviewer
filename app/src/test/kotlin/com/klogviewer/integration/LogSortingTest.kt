@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 class LogSortingTest {
     @TempDir
@@ -42,7 +43,7 @@ class LogSortingTest {
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file.absolutePath)))
         
         // Wait for load and filtering
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { 
                 it.activeTab?.activeWindow?.isLoading == false && 
                 it.activeTab?.activeWindow?.logs?.size == 3 &&
@@ -58,7 +59,7 @@ class LogSortingTest {
         viewModel.handleIntent(KLogViewerIntent.ToggleSortOrder)
         
         // Wait for filtering/sorting (it's on Dispatchers.Default)
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.isReversed == true && it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 3" }
         }
         
@@ -67,7 +68,7 @@ class LogSortingTest {
         
         // Toggle back
         viewModel.handleIntent(KLogViewerIntent.ToggleSortOrder)
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.isReversed == false && it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 1" }
         }
         assertEquals("Entry 1", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value)
@@ -83,13 +84,13 @@ class LogSortingTest {
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file.absolutePath)))
 
         // Wait for load
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && it.activeTab?.activeWindow?.logs?.size == 1 }
         }
 
         // Toggle reverse
         viewModel.handleIntent(KLogViewerIntent.ToggleSortOrder)
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.isReversed == true }
         }
 
@@ -97,7 +98,7 @@ class LogSortingTest {
         file.appendText("2023-10-27 10:00:01 [INFO] Entry 2\n")
 
         // Wait for append (FileLogSource polls every 1s)
-        withTimeout(5000) {
+        withTimeout(5000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.filteredLogs?.size == 2 }
         }
 

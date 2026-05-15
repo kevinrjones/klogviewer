@@ -55,7 +55,7 @@ class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParse
                 fields = fields,
                 instant = timestampParser?.parse(timestampRaw)
             ).right()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             logger.debug { "Failed to parse JSON log line: $line" }
             LogFailure.ParsingError("Could not parse JSON log line", line).left()
         }

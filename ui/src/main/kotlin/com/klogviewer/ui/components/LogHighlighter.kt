@@ -34,7 +34,7 @@ object LogHighlighter {
                                 match.range.last + 1
                             )
                         }
-                    } catch (e: Exception) {
+                    } catch (_: Exception) {
                         // Ignore regex errors in search query
                     }
                 }

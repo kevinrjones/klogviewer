@@ -948,6 +948,27 @@
 - `InterleavingIntegrationTest` (verified no regressions in log merging)
 - Manual UI verification for icon tinting and tooltip correctness.
 
+## Task: README Spruce-up
+**Title**: README Spruce-up
+**Date/time completed**: 2026-05-15 17:40
+**What was shipped**
+- Created a comprehensive `README.md` in the root directory.
+- Added professional badges (Kotlin, Compose for Desktop, License).
+- Highlighted core application features: multiple tabs, horizontal split panes, interleaved logs, real-time tailing, and advanced parsing.
+- Included placeholders and descriptions for screenshots in `docs/images/screenshots`.
+- Provided clear "Getting Started" instructions for running and building the application.
+
+**Key decisions**
+- Chose a professional, "senior project manager" tone for the README.
+- Organized features into logical sections to highlight the desktop-centric nature of KLogViewer.
+- Included a technology stack section to provide immediate context for developers.
+
+**Gotchas**
+- The project lacked a root README, so it was created from scratch using information gathered from `docs/RECAP.md` and `docs/FEATURES.md`.
+
+**Test coverage areas**
+- N/A (Documentation change).
+
 ## Task: Project Renaming
 **Title**: Project Renaming to KLogViewer
 **Date/time completed**: 2026-05-15 17:30

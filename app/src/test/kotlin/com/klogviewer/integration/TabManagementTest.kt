@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 class TabManagementTest {
     @TempDir
@@ -38,7 +39,7 @@ class TabManagementTest {
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file1.absolutePath)))
         
         // Wait for load
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && (it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false) }
         }
         
@@ -58,7 +59,7 @@ class TabManagementTest {
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file2.absolutePath)))
         
         // Wait for load
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && (it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false) }
         }
         
@@ -87,7 +88,7 @@ class TabManagementTest {
         
         // Load into first window
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file1.absolutePath)))
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false }
         }
         
@@ -105,7 +106,7 @@ class TabManagementTest {
             deleteOnExit()
         }
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file2.absolutePath)))
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { tabState ->
                 tabState.activeTab?.windows?.find { it.id == secondWindowId }?.logs?.isNotEmpty() ?: false
             }

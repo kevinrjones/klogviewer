@@ -4,10 +4,9 @@ import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
-import java.time.Instant
 import java.time.LocalDateTime
-import java.time.ZoneOffset
 import java.time.Year
+import java.time.ZoneOffset
 
 class TimestampParserTest {
 

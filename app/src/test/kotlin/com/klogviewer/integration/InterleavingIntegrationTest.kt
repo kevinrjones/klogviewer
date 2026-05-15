@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 class InterleavingIntegrationTest {
     @TempDir
@@ -38,7 +39,7 @@ class InterleavingIntegrationTest {
         }
         
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file1.absolutePath)))
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && (it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false) }
         }
         
@@ -57,7 +58,7 @@ class InterleavingIntegrationTest {
         viewModel.handleIntent(KLogViewerIntent.AddToWorkspace(listOf(file2.absolutePath)))
         
         // Wait for merged load
-        withTimeout(2000) {
+        withTimeout(2000.milliseconds) {
             viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && it.activeTab?.activeWindow?.logs?.size == 4 }
         }
         

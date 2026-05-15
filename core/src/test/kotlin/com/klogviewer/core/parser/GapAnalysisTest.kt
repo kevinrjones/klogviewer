@@ -87,7 +87,6 @@ class GapAnalysisTest {
 
     @Test
     fun `2_3 Log Structure - JSON`() {
-        val parser = JsonLogParser()
         val line = """{"ts": "2026-05-14T16:53:00Z", "level": "INFO", "msg": "Hello JSON"}"""
         val config = JsonMapping(timestampKey = "ts", levelKey = "level", contentKey = "msg")
         val configuredParser = JsonLogParser(config)

@@ -18,6 +18,7 @@ import strikt.assertions.hasSize
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNotNull
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 class PersistenceIntegrationTest {
@@ -77,7 +78,6 @@ class PersistenceIntegrationTest {
         expectThat(window.id).isEqualTo("win-1")
         expectThat(window.logs).hasSize(1)
         expectThat(window.logs[0].content.value).isEqualTo("Test message")
-        Unit
     }
 
     @Test
@@ -110,7 +110,6 @@ class PersistenceIntegrationTest {
         val newTabPref = savedPrefs.tabs.find { it.id == activeTabId }
         expectThat(newTabPref).isNotNull()
         expectThat(newTabPref?.windows?.get(0)?.sourceIds).isEqualTo(listOf(logFile.absolutePath))
-        Unit
     }
 
     @Test
@@ -137,7 +136,7 @@ class PersistenceIntegrationTest {
         val savedPrefs = withTimeout(2.seconds) {
             var prefs = prefsRepo.load()
             while (prefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }?.columnWidths?.get("Timestamp") != 250) {
-                kotlinx.coroutines.delay(100)
+                kotlinx.coroutines.delay(100.milliseconds)
                 prefs = prefsRepo.load()
             }
             prefs
@@ -145,7 +144,6 @@ class PersistenceIntegrationTest {
         val savedWindow = savedPrefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }
         
         expectThat(savedWindow?.columnWidths?.get("Timestamp")).isEqualTo(250)
-        Unit
     }
 
     @Test
@@ -172,7 +170,7 @@ class PersistenceIntegrationTest {
         val savedPrefs = withTimeout(2.seconds) {
             var prefs = prefsRepo.load()
             while (prefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }?.isAutoScrollEnabled != false) {
-                kotlinx.coroutines.delay(100)
+                kotlinx.coroutines.delay(100.milliseconds)
                 prefs = prefsRepo.load()
             }
             prefs
@@ -180,6 +178,5 @@ class PersistenceIntegrationTest {
         val savedWindow = savedPrefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }
         
         expectThat(savedWindow?.isAutoScrollEnabled).isEqualTo(false)
-        Unit
     }
 }

@@ -1,15 +1,13 @@
 package com.klogviewer.core.parser
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import java.time.Instant
 import java.time.temporal.ChronoField
 import java.time.temporal.TemporalAccessor
-import java.util.Locale
-import io.github.oshai.kotlinlogging.KotlinLogging
+import java.util.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -28,7 +26,7 @@ class TimestampParser(private val pattern: String) {
                 } else {
                     Instant.ofEpochMilli(value)
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 null
             }
         }

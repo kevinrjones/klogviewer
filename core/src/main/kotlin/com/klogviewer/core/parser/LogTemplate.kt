@@ -1,7 +1,5 @@
 package com.klogviewer.core.parser
 
-import com.klogviewer.domain.model.LogLevel
-
 data class LogTemplate(
     val name: String,
     val regex: String,

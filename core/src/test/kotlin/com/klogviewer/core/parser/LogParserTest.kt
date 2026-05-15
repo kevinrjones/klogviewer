@@ -1,11 +1,11 @@
 package com.klogviewer.core.parser
 
-import com.klogviewer.domain.model.*
+import com.klogviewer.domain.model.LogFailure
+import com.klogviewer.domain.model.LogLevel
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isTrue
-import arrow.core.Either
 
 class LogParserTest {
     private val parser = SimpleLogParser()

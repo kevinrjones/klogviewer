@@ -3,7 +3,7 @@ package com.klogviewer.core.parser
 import com.klogviewer.domain.model.LogLevel
 
 class LevelMapper(
-    private val customMappings: Map<String, LogLevel> = emptyMap(),
+    customMappings: Map<String, LogLevel> = emptyMap(),
     private val usePrefixMatching: Boolean = false,
     private val defaultLevel: LogLevel = LogLevel.UNKNOWN
 ) {

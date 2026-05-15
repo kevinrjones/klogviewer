@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import java.io.File
 import java.io.RandomAccessFile
+import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -25,8 +26,8 @@ class FileLogSource(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LogSource {
 
-    override fun observeLogs(path: LogFilePath, requestedParser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = flow {
-        val effectiveParser = requestedParser ?: this@FileLogSource.parser
+    override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = flow {
+        val effectiveParser = parser ?: this@FileLogSource.parser
         val multilineProcessor = if (effectiveParser is TemplateLogParser) {
             MultilineProcessor(effectiveParser.template)
         } else null
@@ -62,7 +63,7 @@ class FileLogSource(
             // Tailing
             var lastPosition = file.length()
             while (true) {
-                delay(1000) // Poll every second
+                delay(1000.milliseconds) // Poll every second
                 val currentLength = file.length()
                 
                 if (currentLength < lastPosition) {

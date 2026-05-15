@@ -11,6 +11,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.File
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -242,7 +243,6 @@ class KLogViewerViewModel(
     }
 
     private fun splitHorizontal() {
-        val activeTab = _state.value.activeTab ?: return
         val newWindowId = UUID.randomUUID().toString()
         val newWindow = LogWindow(id = newWindowId)
         
@@ -462,7 +462,7 @@ class KLogViewerViewModel(
         if (debounce) {
             saveJob?.cancel()
             saveJob = scope.launch {
-                delay(500)
+                delay(500.milliseconds)
                 performSave(currentState)
             }
         } else {

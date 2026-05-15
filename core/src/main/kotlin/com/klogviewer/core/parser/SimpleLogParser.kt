@@ -10,7 +10,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 private val logger = KotlinLogging.logger {}
 
 class SimpleLogParser : LogParser {
-    private val regex = """^\s*(?<timestamp>\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?<metadata>.*?)\]\s*)?(?<level>\[.*?\]|\S+)?(?:\s+(?<content>.*))?$""".toRegex()
+    private val regex = """^\s*(?<timestamp>\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?<metadata>.*?)]\s*)?(?<level>\[.*?]|\S+)?(?:\s+(?<content>.*))?$""".toRegex()
     private val levelMapper = LevelMapper()
     private val timestampParser = TimestampParser("yyyy-MM-dd HH:mm:ss[.SSS][ XXX]")
 
@@ -27,8 +27,8 @@ class SimpleLogParser : LogParser {
         val contentRaw = matchResult.groups["content"]?.value ?: ""
 
         // Smart level detection
-        var finalLevel = LogLevel.UNKNOWN
-        var finalContent = contentRaw
+        var finalLevel: LogLevel
+        var finalContent: String
         var finalMetadata = metadataRaw ?: ""
         var finalLevelRaw: String? = null
 

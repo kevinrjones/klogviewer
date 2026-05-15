@@ -3,17 +3,11 @@ package com.klogviewer.core.source
 import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.domain.model.LogFilePath
 import com.klogviewer.domain.model.LogUpdate
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FileLogTailingTest {
@@ -35,8 +29,8 @@ class FileLogTailingTest {
         }
 
         // Wait for initial load
-        withTimeout(2000) {
-            while (results.isEmpty()) delay(100)
+        withTimeout(2000.milliseconds) {
+            while (results.isEmpty()) delay(100.milliseconds)
         }
         assertEquals(1, (results[0] as LogUpdate.Initial).entries.size)
 
@@ -44,8 +38,8 @@ class FileLogTailingTest {
         file.appendText("2023-10-27 10:00:01 [INFO] Appended line\n")
 
         // Wait for append
-        withTimeout(3000) {
-            while (results.size < 2) delay(100)
+        withTimeout(3000.milliseconds) {
+            while (results.size < 2) delay(100.milliseconds)
         }
         
         val appendUpdate = results[1] as LogUpdate.Appended

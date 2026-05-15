@@ -7,7 +7,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 private val logger = KotlinLogging.logger {}
 
 class MultilineProcessor(
-    private val template: LogTemplate,
+    template: LogTemplate,
     private val maxBufferLines: Int = 500
 ) {
     private val parser = TemplateLogParser(template)

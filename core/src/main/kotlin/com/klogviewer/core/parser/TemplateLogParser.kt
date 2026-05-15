@@ -12,7 +12,7 @@ private val logger = KotlinLogging.logger {}
 class TemplateLogParser(val template: LogTemplate) : LogParser {
     private val regex = template.regex.toRegex()
     private val timestampParser = TimestampParser(template.timestampPattern)
-    private val groupNames = """\(\?\<(\w+)\>""".toRegex().findAll(template.regex).map { it.groupValues[1] }.toList()
+    private val groupNames = """\(\?<(\w+)>""".toRegex().findAll(template.regex).map { it.groupValues[1] }.toList()
 
     override fun parse(line: String): Either<LogFailure.ParsingError, LogEntry> {
         val trimmedLine = line.trim()
@@ -24,7 +24,7 @@ class TemplateLogParser(val template: LogTemplate) : LogParser {
         val groups = matchResult.groups as MatchNamedGroupCollection
         
         val fields = groupNames.associateWith { name ->
-            try { groups[name]?.value ?: "" } catch (e: Exception) { "" }
+            try { groups[name]?.value ?: "" } catch (_: Exception) { "" }
         }
 
         val timestampRaw = fields["timestamp"] ?: ""
@@ -33,8 +33,8 @@ class TemplateLogParser(val template: LogTemplate) : LogParser {
         val contentRaw = fields["content"] ?: ""
 
         // Smart level detection
-        var finalLevel = LogLevel.UNKNOWN
-        var finalContent = contentRaw
+        var finalLevel: LogLevel
+        var finalContent: String
         var finalMetadata = metadataRaw ?: ""
         var finalLevelRaw: String? = null
 
