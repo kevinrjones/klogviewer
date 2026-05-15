@@ -14,6 +14,7 @@ sealed interface LogViewerIntent {
     data object ClearFilterQueries : LogViewerIntent
     data class ToggleLevel(val level: LogLevel) : LogViewerIntent
     data object ToggleSortOrder : LogViewerIntent
+    data object ToggleAutoScroll : LogViewerIntent
     data class SelectEntry(val entry: com.logviewer.domain.model.LogEntry?) : LogViewerIntent
     
     // Dialogs

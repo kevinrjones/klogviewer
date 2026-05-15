@@ -29,6 +29,7 @@ data class WindowPreference(
     val filterQueries: List<String> = emptyList(),
     val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
     val isReversed: Boolean = false,
+    val isAutoScrollEnabled: Boolean = true,
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap()
 )

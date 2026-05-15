@@ -30,6 +30,12 @@
 - Improved layout stability within `horizontalScroll` by removing infinite-width `fillMaxSize` constraints from `LazyColumn`.
 - Dynamic Details Pane: Redesigned the log entry details pane to adapt to different log formats. It now hides the "Level" field when unknown (common in structured logs like Nginx) and automatically displays all available fields from the `LogEntry.fields` map.
 - Formalized the Ubiquitous Language and established it as a core architectural requirement (ADR-022).
+- UI Robustness: Implemented truncation (10k-50k chars) and constraint capping (10k dp) for large log entries to prevent `IllegalArgumentException` in Compose `Constraints`.
+- Multi-Log Differentiation: Added colored badges (dots) and pale grey background shading to distinguish between sources in interleaved views.
+- Full-Width Backgrounds: Fixed log entry layout to ensure background colors and selection highlights extend to the full width of the scrollable window.
+- Synchronized Row Widths: Implemented dynamic width tracking to ensure all rows stretch to the width of the widest row, filling the background to the edge.
+- Automatic Scrolling: Implemented auto-scroll (tailing) functionality with a persistent toggle in the toolbar.
+- Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -823,3 +829,120 @@
 
 **Test coverage areas**
 - Documentation-only task; verified terminological alignment with existing domain model tests.
+
+## Task: UI Robustness - Large Log Entry Handling
+**Title**: Large Log Entry Handling
+**Date/time completed**: 2026-05-15 14:40
+**What was shipped**
+- Truncation logic in `LogList` (10k chars) and `LogEntryDetails` (50k chars).
+- Maximum width constraint (10k dp) for log columns in `LogList`.
+- Resize protection cap (10k dp) for manual column dragging.
+
+**Key decisions**
+- Chose truncation as a primary defense to ensure both measurement safety and rendering performance.
+- Selected 10,000.dp as a safe upper bound for Compose's bit-packed `Constraints` system while still allowing for very wide log lines.
+- Decided to truncate in the UI layer to maintain full search/filter capabilities in the ViewModel layer.
+
+**Gotchas**
+- `horizontalScroll` with `softWrap = false` is a "perfect storm" for Compose crashes as it invites infinite measurement.
+- Vertical overflow is also possible in the details pane if entries are extremely large (multi-megabyte single lines), requiring similar truncation there.
+
+**Test coverage areas**
+- Build verification and manual inspection of truncation logic.
+
+## Task: Multi-Log Visual Differentiation
+**Title**: Multi-Log Visual Differentiation
+**Date/time completed**: 2026-05-15 15:20
+**What was shipped**
+- Colored badges (dots) in the gutter for source identification.
+- Pale grey background shading based on `sourceId` for interleaved entries.
+- Dynamic gutter sizing (50dp/60dp) based on source count.
+- Path-based `sourceId` in `FileLogSource` for reliable differentiation.
+
+**Key decisions**
+- Used full paths for `sourceId` to ensure uniqueness across different directories.
+- Implemented dynamic gutter width to keep the UI clean when viewing only a single log.
+- Selected subtle grey shades to provide grouping without competing with level-based text colors.
+
+**Gotchas**
+- Changing `sourceId` from filename to full path requires updating all tests that assert on this field.
+- Misalignment between header and rows can easily occur if gutter width is not kept in sync.
+
+**Test coverage areas**
+- `MergedLogSourceTest` (unit)
+- `InterleavingIntegrationTest` (integration)
+- `LogSortingTest` (integration)
+
+## Task: Full-Width Log Entry Backgrounds
+**Title**: Full-Width Log Entry Backgrounds
+**Date/time completed**: 2026-05-15 15:45
+**What was shipped**
+- Full-width background coverage for log entries in `LogList`.
+- Automatic expansion of the "Message" column to fill viewport width.
+
+**Key decisions**
+- Applied `Modifier.fillMaxWidth()` to both the container `Box` and the child `Row` of each log entry to ensure they stretch to the full width provided by the `LazyColumn` (which itself fills the scrollable viewport).
+- Added `Modifier.weight(1f)` to the final column to ensure it matches the header's layout logic, preventing the background from terminating at the end of the text.
+
+**Gotchas**
+- In a `horizontalScroll` context, `fillMaxWidth()` on an item inside `LazyColumn` results in the item being as wide as the viewport or the widest item, ensuring full-width backgrounds even if the content is short.
+
+**Test coverage areas**
+- Build verification and UI alignment inspection.
+
+## Task: Fix Message Column Visibility
+**Title**: Fix Message Column Visibility
+**Date/time completed**: 2026-05-15 16:00
+**What was shipped**
+- Fixed regression where "Message" column was hidden by `weight(1f)` squashing.
+- Dynamic layout in `LogList` that respects both viewport width and content width.
+- Use of `BoxWithConstraints` to ensure background colors cover the full viewport even with short content.
+
+**Key decisions**
+- Used `widthIn(min = viewportWidth)` instead of `fillMaxWidth()` to allow expansion beyond viewport.
+- Replaced `weight(1f)` with manual `minWidth` calculation for the last column to prevent squashing.
+- Maintained 10,000dp safety cap for horizontal measurement.
+
+**Gotchas**
+- `fillMaxWidth()` inside `horizontalScroll` restricts width to viewport, which is fatal for weighted columns when fixed columns already consume significant space.
+
+**Test coverage areas**
+- `InterleavingIntegrationTest`
+- `LogSortingTest`
+
+## Task: Synchronized Row Widths
+**Title**: Synchronized Row Widths for Full-Width Backgrounds
+**Date/time completed**: 2026-05-15 16:20
+**What was shipped**
+- Dynamic row width synchronization in `LogList`.
+- Consistent background coverage for short rows in horizontally scrolled views.
+
+**Key decisions**
+- Used `onSizeChanged` on each row to track the maximum width encountered during composition.
+- Applied `max(viewportWidth, widestSeenWidth)` as a minimum width constraint for both rows and the header.
+- Passed `widestRowWidth` state down to children to ensure immediate alignment upon recomposition.
+
+**Test coverage areas**
+- `InterleavingIntegrationTest`
+- `LogSortingTest`
+
+## Task: Automatic Scrolling
+**Title**: Automatic Scrolling (Log Tailing)
+**Date/time completed**: 2026-05-15 15:20
+**What was shipped**
+- Automatic scrolling to the end of the log list when new entries are added.
+- Persistent "Auto-scroll" toggle in the toolbar for user control.
+
+**Key decisions**
+- Used `LaunchedEffect(logs.size)` in `LogList` to trigger scroll actions whenever the log count changes.
+- Chose `scrollToItem` for immediate jumping to the end, ensuring users always see the latest logs when auto-scroll is active.
+- Integrated the toggle into `FilterBar` for easy access alongside other view controls.
+- Persisted the `isAutoScrollEnabled` flag in `UserPreferences` to maintain user choice across application restarts.
+
+**Gotchas**
+- Initially used `animateScrollToItem`, but switched to `scrollToItem` to ensure performance and immediate feedback on high-frequency log updates.
+
+**Test coverage areas**
+- `PersistenceIntegrationTest` (verified state persistence)
+- `InterleavingIntegrationTest` (verified no regressions in log merging)
+- Manual UI verification for icon tinting and tooltip correctness.

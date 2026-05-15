@@ -74,8 +74,14 @@ fun LogEntryDetails(
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
                         shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
                     ) {
+                        val fullContent = entry.content.value
+                        val displayContent = if (fullContent.length > 50000) {
+                            fullContent.take(50000) + "\n... (truncated for performance, total length: ${fullContent.length} chars)"
+                        } else {
+                            fullContent
+                        }
                         Text(
-                            text = LogHighlighter.highlight(entry.content.value, filterQueries, isDarkMode),
+                            text = LogHighlighter.highlight(displayContent, filterQueries, isDarkMode),
                             modifier = Modifier.padding(12.dp),
                             style = MaterialTheme.typography.body2,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
@@ -95,8 +101,13 @@ private fun DetailItem(label: String, value: String) {
             style = MaterialTheme.typography.subtitle2,
             modifier = Modifier.width(100.dp)
         )
+        val displayValue = if (value.length > 10000) {
+            value.take(10000) + "... (truncated)"
+        } else {
+            value
+        }
         Text(
-            text = value,
+            text = displayValue,
             style = MaterialTheme.typography.body2
         )
     }

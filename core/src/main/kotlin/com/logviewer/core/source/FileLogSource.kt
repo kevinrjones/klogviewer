@@ -46,13 +46,13 @@ class FileLogSource(
                 if (multilineProcessor != null) {
                     val entries = mutableListOf<LogEntry>()
                     lines.forEach { line ->
-                        multilineProcessor.process(line)?.let { entries.add(it.copy(sourceId = file.name)) }
+                        multilineProcessor.process(line)?.let { entries.add(it.copy(sourceId = path.value)) }
                     }
-                    multilineProcessor.flush()?.let { entries.add(it.copy(sourceId = file.name)) }
+                    multilineProcessor.flush()?.let { entries.add(it.copy(sourceId = path.value)) }
                     entries
                 } else {
                     lines.mapNotNull { line ->
-                        effectiveParser.parse(line).getOrNull()?.copy(sourceId = file.name)
+                        effectiveParser.parse(line).getOrNull()?.copy(sourceId = path.value)
                     }.toList()
                 }
             }
@@ -81,11 +81,11 @@ class FileLogSource(
                             val utf8Line = String(line.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
                             if (multilineProcessor != null) {
                                 multilineProcessor.process(utf8Line)?.let {
-                                    newEntries.add(it.copy(sourceId = file.name))
+                                    newEntries.add(it.copy(sourceId = path.value))
                                 }
                             } else {
                                 effectiveParser.parse(utf8Line).getOrNull()?.let {
-                                    newEntries.add(it.copy(sourceId = file.name))
+                                    newEntries.add(it.copy(sourceId = path.value))
                                 }
                             }
                             line = raf.readLine()
@@ -94,7 +94,7 @@ class FileLogSource(
                         // but for now we'll flush at the end of the batch
                         if (multilineProcessor != null) {
                             multilineProcessor.flush()?.let {
-                                newEntries.add(it.copy(sourceId = file.name))
+                                newEntries.add(it.copy(sourceId = path.value))
                             }
                         }
                         lastPosition = raf.filePointer

@@ -91,6 +91,8 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                         onToggleSidebar = { viewModel.handleIntent(LogViewerIntent.ToggleSidebar) },
                         isReversed = activeWindow?.isReversed ?: false,
                         onToggleSortOrder = { viewModel.handleIntent(LogViewerIntent.ToggleSortOrder) },
+                        isAutoScrollEnabled = activeWindow?.isAutoScrollEnabled ?: true,
+                        onToggleAutoScroll = { viewModel.handleIntent(LogViewerIntent.ToggleAutoScroll) },
                         onSplitClick = { viewModel.handleIntent(LogViewerIntent.SplitHorizontal) },
                         matchesCount = activeWindow?.filteredLogs?.size ?: 0,
                         totalCount = activeWindow?.logs?.size ?: 0
@@ -210,8 +212,10 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                                         logs = window.filteredLogs,
                                         filterQueries = window.filterQueries,
                                         isDarkMode = state.isDarkMode,
+                                        sourceIds = window.sourceIds,
                                         columns = window.columns,
                                         columnWidths = window.columnWidths,
+                                        isAutoScrollEnabled = window.isAutoScrollEnabled,
                                         selectedEntry = window.selectedEntry,
                                         onEntryClick = { 
                                             viewModel.handleIntent(LogViewerIntent.SwitchWindow(window.id))

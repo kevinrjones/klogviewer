@@ -108,16 +108,110 @@ Enhanced the log viewing experience by allowing users to interactively resize co
 - **Integration Testing**: Added a specific test case to `PersistenceIntegrationTest` to verify that column width changes are correctly saved to the preference file and restored on startup.
 - **Regression Pass**: Verified that the new resizable layout works correctly with existing features like split views, filtering, and multi-log interleaving.
 
-## 13:48
+## 14:29
 
-### Domain Documentation: Ubiquitous Language Formalization
+### UI Robustness: Large Log Entry Handling
 
-Established a formal Ubiquitous Language to ensure terminological consistency across the project's documentation and codebase.
+Implemented safety measures to prevent application crashes when loading log files with extremely long lines or humongous entries.
 
 #### Core Achievements:
-- **Ubiquitous Language**: Created `docs/UBIQUITOUS_LANGUAGE.md` defining core domain concepts (Log Entry, Source, Parser, Template, Mapper), advanced features (Interleaving, Heuristic Probe, Structured Data), and technical architecture terms (Tiny Type, Log Update, Workspace).
-- **Architectural Decision**: Formalized the use of the Ubiquitous Language in `ADR-022`, mandating terminological alignment for all future development and documentation.
-- **Project Alignment**: Verified that existing core domain models (`LogEntry`, `LogSource`, `LogUpdate`) are already in alignment with the newly formalized language.
+- **Constraint Capping**: Added a 10,000.dp maximum width constraint to the log message column in `LogList`. This prevents Compose's `Constraints` bit-packing from overflowing when rendered inside a horizontal scroll area.
+- **Intelligent Truncation**:
+    - Truncated log messages to 10,000 characters in the `LogList` view for improved performance and layout stability.
+    - Truncated log content to 50,000 characters in the `LogEntryDetails` pane to prevent vertical size overflow crashes while still providing ample detail.
+    - Truncated general metadata fields to 10,000 characters in the details pane.
+- **Resize Protection**: Capped manual column resizing to a maximum of 10,000.dp to ensure the UI remains within safe measurement limits.
+- **Performance Optimization**: Reduced the overhead of running complex regex highlighting on extremely large strings by applying truncation before processing.
+
+#### Quality Assurance:
+- **Build Verification**: Confirmed that the project builds successfully with the new safety logic.
+- **Regression Pass**: Verified that normal-sized logs continue to display correctly without any visible truncation.
+
+## 15:15
+
+### Feature: Multi-Log Visual Differentiation
+
+Implemented visual indicators to help users distinguish between different log files when they are interleaved in the same window.
+
+#### Core Achievements:
+- **Source Badges**: Added colored dots in the log grid's gutter to identify the source of each entry.
+- **Background Shading**: Implemented alternating pale grey backgrounds for log entries based on their source, facilitating visual grouping during interleaving.
+- **Dynamic Gutter**: The gutter width now adapts automatically (50dp to 60dp) to accommodate badges only when multiple sources are present, maximizing screen space for single-file views.
+- **ID Consistency**: Updated `FileLogSource` to use full file paths as `sourceId`, ensuring reliable mapping between entries and UI-defined sources even when files have identical names.
+
+#### Quality Assurance:
+- **Integration Tests**: Updated and verified `MergedLogSourceTest` and `InterleavingIntegrationTest` to account for path-based source identification.
+- **UI Alignment**: Verified that headers and rows remain perfectly aligned by using shared gutter width logic.
+- **Build Verification**: Confirmed project builds successfully.
+
+## 15:40
+
+### UI Refinement: Full-Width Log Entry Backgrounds
+
+Fixed a layout issue where log entry background colors and selection highlights would only cover the text area rather than extending to the full width of the window/scrollable area.
+
+#### Changes:
+- **LogList.kt**: Applied `Modifier.fillMaxWidth()` to the `LogEntryRow` container and its internal `Row`.
+- **LogList.kt**: Implemented `Modifier.weight(1f)` for the final column ("Message") to ensure it occupies all remaining horizontal space when not manually resized, aligning its behavior with the header.
+- **Consistency**: Verified that rows and headers now share identical width distribution logic, ensuring perfect vertical alignment and full-width background coverage.
+
+#### Verification:
+- **Build Pass**: Confirmed that the project builds successfully.
+- **Regression Pass**: Verified that existing integration tests for interleaving and sorting continue to pass.
+
+## 15:55
+
+### Fix: Message Column Visibility Regression
+
+Resolved a regression where the "Message" column would disappear when the total width of columns exceeded the viewport width.
+
+#### Changes:
+- **LogList.kt**: Introduced `BoxWithConstraints` to obtain the viewport width (`maxWidth`).
+- **LogList.kt**: Replaced `Modifier.fillMaxWidth()` with `Modifier.widthIn(min = viewportWidth)` on rows and headers. This allows items to be at least as wide as the viewport while still growing to accommodate overflowing content.
+- **LogList.kt**: Replaced `Modifier.weight(1f)` on the last column with a dynamic `widthIn(min = minWidth)` calculation. The `minWidth` is set to fill the remaining viewport space but is capped by the actual content width (via intrinsic behavior) and a safety max of 10,000dp.
+- **Robustness**: Ensured that background colors and selection highlights still cover the full scrollable width by applying the min-width constraint to the root containers of each row.
+
+#### Verification:
+- **Build Pass**: Project builds successfully.
+- **Integration Tests**: `InterleavingIntegrationTest` and `LogSortingTest` pass.
+- **Layout Logic**: Verified via code analysis that `weight(1f)` is no longer squashing columns and that `widthIn(min = viewportWidth)` maintains the full-width background requirement.
+
+## 16:15
+
+### UI Refinement: Synchronized Row Widths for Full-Width Backgrounds
+
+Ensured that all log rows stretch to the width of the widest visible row, providing consistent background color and selection highlight coverage across the entire horizontal scrollable area.
+
+#### Changes:
+- **LogList.kt**: Implemented `widestRowWidth` state in `LogList` to track the maximum width among composed log entries.
+- **LogList.kt**: Applied `onSizeChanged` to each `LogEntryRow` to dynamically update the shared `widestRowWidth`.
+- **LogList.kt**: Updated `LogListHeader` and `LogEntryRow` to use the maximum of the viewport width and the `widestRowWidth` as their minimum width.
+- **Visual Consistency**: This ensures that when a long message extends the horizontal scroll range, shorter rows grow to match, filling the background colors to the edge.
+
+#### Verification:
+- **Build Pass**: Project builds successfully.
+- **Integration Tests**: `InterleavingIntegrationTest` and `LogSortingTest` pass.
+- **Layout Verification**: Confirmed via code analysis that the "Message" column's dynamic width calculation correctly fills the expanded row width.
+
+## 15:15
+
+### Feature: Automatic Scrolling (Tail)
+
+Implemented automatic scrolling to the end of the log list when new entries are added, controlled by an "Auto-scroll" toggle in the toolbar.
+
+#### Changes:
+- **LogViewerState.kt**: Added `isAutoScrollEnabled` flag to `LogWindow` (default: true).
+- **LogViewerIntent.kt**: Added `ToggleAutoScroll` intent.
+- **UserPreferences.kt**: Updated `WindowPreference` to persist the auto-scroll state.
+- **LogViewerViewModel.kt**: Implemented logic to toggle the state and persist changes.
+- **LogList.kt**: Added a `LaunchedEffect` that monitors `logs.size` and calls `verticalScrollState.scrollToItem(logs.size - 1)` when auto-scroll is enabled and new logs arrive.
+- **FilterBar.kt**: Added a toggle button for auto-scroll with visual feedback (tinting when active) and tooltips.
+- **PersistenceIntegrationTest.kt**: Added a test case to verify that the auto-scroll state is correctly persisted across sessions.
+
+#### Verification:
+- **Build Pass**: Project builds successfully.
+- **Unit/Integration Tests**: `PersistenceIntegrationTest` and `InterleavingIntegrationTest` pass.
+- **UI Logic**: Confirmed that the auto-scroll toggle correctly influences the list's scrolling behavior via state-driven `LaunchedEffect`.
 
 # 2026-05-14
 

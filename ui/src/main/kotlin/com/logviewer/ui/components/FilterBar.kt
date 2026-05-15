@@ -32,6 +32,8 @@ fun FilterBar(
     onToggleSidebar: () -> Unit,
     isReversed: Boolean,
     onToggleSortOrder: () -> Unit,
+    isAutoScrollEnabled: Boolean,
+    onToggleAutoScroll: () -> Unit,
     onSplitClick: () -> Unit,
     matchesCount: Int,
     totalCount: Int,
@@ -61,6 +63,12 @@ fun FilterBar(
                 icon = if (isReversed) Icons.Default.SwapVert else Icons.AutoMirrored.Filled.Sort,
                 tooltip = if (isReversed) "Newest First" else "Oldest First",
                 onClick = onToggleSortOrder
+            )
+            FilterBarIcon(
+                icon = Icons.Default.ArrowDownward,
+                tooltip = if (isAutoScrollEnabled) "Auto-scroll ON" else "Auto-scroll OFF",
+                onClick = onToggleAutoScroll,
+                tint = if (isAutoScrollEnabled) MaterialTheme.colors.primary else LocalContentColor.current
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
@@ -143,11 +151,12 @@ fun FilterBar(
 private fun FilterBarIcon(
     icon: ImageVector,
     tooltip: String,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    tint: Color = LocalContentColor.current
 ) {
     TooltipWrapper(tooltip = tooltip) {
         IconButton(onClick = onClick, modifier = Modifier.size(28.dp)) {
-            Icon(icon, contentDescription = tooltip, modifier = Modifier.size(18.dp))
+            Icon(icon, contentDescription = tooltip, modifier = Modifier.size(18.dp), tint = tint)
         }
     }
 }

@@ -43,15 +43,15 @@ class MergedLogSourceTest {
         assertEquals(4, update.entries.size)
         
         assertEquals("2023-10-27 10:00:00", update.entries[0].timestamp.value)
-        assertEquals(file1.name, update.entries[0].sourceId)
+        assertEquals(file1.absolutePath, update.entries[0].sourceId)
         
         assertEquals("2023-10-27 10:00:01", update.entries[1].timestamp.value)
-        assertEquals(file2.name, update.entries[1].sourceId)
+        assertEquals(file2.absolutePath, update.entries[1].sourceId)
         
         assertEquals("2023-10-27 10:00:02", update.entries[2].timestamp.value)
-        assertEquals(file1.name, update.entries[2].sourceId)
+        assertEquals(file1.absolutePath, update.entries[2].sourceId)
         
         assertEquals("2023-10-27 10:00:03", update.entries[3].timestamp.value)
-        assertEquals(file2.name, update.entries[3].sourceId)
+        assertEquals(file2.absolutePath, update.entries[3].sourceId)
     }
 }

@@ -147,4 +147,39 @@ class PersistenceIntegrationTest {
         expectThat(savedWindow?.columnWidths?.get("Timestamp")).isEqualTo(250)
         Unit
     }
+
+    @Test
+    fun `should persist auto-scroll state`(): Unit = runBlocking {
+        val prefsDir = File(tempDir, "prefs")
+        val prefsRepo = PreferencesRepository(prefsDir)
+        val parser = SimpleLogParser()
+        val registry = ParserRegistry()
+        val heuristicProbe = HeuristicProbe(registry)
+        val source = FileLogSource(parser)
+        val viewModel = LogViewerViewModel(source, prefsRepo, heuristicProbe)
+
+        // Toggle auto-scroll (default is true, so toggle to false)
+        viewModel.handleIntent(LogViewerIntent.ToggleAutoScroll)
+
+        // Verify state
+        val window = viewModel.state.value.activeTab?.activeWindow
+        expectThat(window?.isAutoScrollEnabled).isEqualTo(false)
+
+        // Verify preferences were saved
+        val activeTabId = viewModel.state.value.activeTabId
+        val activeWindowId = viewModel.state.value.activeTab?.activeWindowId
+        
+        val savedPrefs = withTimeout(2.seconds) {
+            var prefs = prefsRepo.load()
+            while (prefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }?.isAutoScrollEnabled != false) {
+                kotlinx.coroutines.delay(100)
+                prefs = prefsRepo.load()
+            }
+            prefs
+        }
+        val savedWindow = savedPrefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }
+        
+        expectThat(savedWindow?.isAutoScrollEnabled).isEqualTo(false)
+        Unit
+    }
 }

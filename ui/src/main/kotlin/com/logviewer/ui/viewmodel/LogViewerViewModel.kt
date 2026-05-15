@@ -46,6 +46,7 @@ class LogViewerViewModel(
                                 filterQueries = wp.filterQueries,
                                 levelFilters = wp.levelFilters,
                                 isReversed = wp.isReversed,
+                                isAutoScrollEnabled = wp.isAutoScrollEnabled,
                                 columns = wp.columns,
                                 columnWidths = wp.columnWidths
                             )
@@ -161,6 +162,12 @@ class LogViewerViewModel(
                     currentState.updateActiveWindow { it.copy(isReversed = !it.isReversed) }
                 }
                 filterLogs(_state.value.activeTab?.activeWindow?.id)
+                savePreferences()
+            }
+            LogViewerIntent.ToggleAutoScroll -> {
+                _state.update { currentState ->
+                    currentState.updateActiveWindow { it.copy(isAutoScrollEnabled = !it.isAutoScrollEnabled) }
+                }
                 savePreferences()
             }
             LogViewerIntent.AddTab -> addTab()
@@ -485,6 +492,7 @@ class LogViewerViewModel(
                             filterQueries = window.filterQueries,
                             levelFilters = window.levelFilters,
                             isReversed = window.isReversed,
+                            isAutoScrollEnabled = window.isAutoScrollEnabled,
                             columns = window.columns,
                             columnWidths = window.columnWidths
                         )

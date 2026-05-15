@@ -2,6 +2,7 @@ package com.logviewer.ui.components
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,9 +10,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,6 +18,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -35,8 +35,10 @@ fun LogList(
     logs: List<LogEntry>,
     filterQueries: List<String>,
     isDarkMode: Boolean,
+    sourceIds: List<String> = emptyList(),
     columns: List<String> = emptyList(),
     columnWidths: Map<String, Int> = emptyMap(),
+    isAutoScrollEnabled: Boolean = true,
     selectedEntry: LogEntry? = null,
     onEntryClick: (LogEntry) -> Unit = {},
     onColumnResize: (String, Int) -> Unit = { _, _ -> },
@@ -44,10 +46,20 @@ fun LogList(
 ) {
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberLazyListState()
+    val density = LocalDensity.current
+    var widestRowWidth by remember(sourceIds) { mutableStateOf(0.dp) }
+
+    LaunchedEffect(logs.size) {
+        if (isAutoScrollEnabled && logs.isNotEmpty()) {
+            verticalScrollState.scrollToItem(logs.size - 1)
+        }
+    }
 
     val displayColumns = if (columns.isEmpty()) listOf("Timestamp", "Level", "Message") else columns
 
-    Box(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+        val viewportWidth = maxWidth
+        val minContentWidth = if (widestRowWidth > viewportWidth) widestRowWidth else viewportWidth
         Row(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.weight(1f)) {
                 Column(
@@ -58,6 +70,8 @@ fun LogList(
                     LogListHeader(
                         columns = displayColumns,
                         columnWidths = columnWidths,
+                        viewportWidth = minContentWidth,
+                        sourceIds = sourceIds,
                         onColumnResize = onColumnResize,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -71,10 +85,18 @@ fun LogList(
                                 lineNumber = index + 1,
                                 filterQueries = filterQueries,
                                 isDarkMode = isDarkMode,
+                                viewportWidth = minContentWidth,
+                                sourceIds = sourceIds,
                                 columns = displayColumns,
                                 columnWidths = columnWidths,
                                 isSelected = entry == selectedEntry,
-                                onClick = { onEntryClick(entry) }
+                                onClick = { onEntryClick(entry) },
+                                modifier = Modifier.onSizeChanged { size ->
+                                    val width = with(density) { size.width.toDp() }
+                                    if (width > widestRowWidth) {
+                                        widestRowWidth = width
+                                    }
+                                }
                             )
                         }
                     }
@@ -96,6 +118,8 @@ fun LogList(
 fun LogListHeader(
     columns: List<String>,
     columnWidths: Map<String, Int>,
+    viewportWidth: Dp,
+    sourceIds: List<String> = emptyList(),
     onColumnResize: (String, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -106,14 +130,15 @@ fun LogListHeader(
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
+                .widthIn(min = viewportWidth)
                 .padding(vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            val gutterWidth = if (sourceIds.size > 1) 60.dp else 50.dp
             Text(
                 text = "#",
                 style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier.width(50.dp).padding(horizontal = 4.dp)
+                modifier = Modifier.width(gutterWidth).padding(horizontal = 4.dp)
             )
             
             columns.forEachIndexed { index, column ->
@@ -123,7 +148,9 @@ fun LogListHeader(
                 val currentWidthState = rememberUpdatedState(widthDp)
                 
                 val columnModifier = if (isLast && !isResized) {
-                    Modifier.weight(1f).widthIn(min = widthDp)
+                    val otherWidths = columns.dropLast(1).sumOf { getColumnWidth(it, columnWidths).value.toDouble() }.dp + gutterWidth
+                    val minWidth = if (viewportWidth - otherWidths > widthDp) viewportWidth - otherWidths else widthDp
+                    Modifier.widthIn(min = minWidth, max = 10000.dp)
                 } else {
                     Modifier.width(widthDp)
                 }
@@ -157,7 +184,8 @@ fun LogListHeader(
                                         onDrag = { change, dragAmount ->
                                             change.consume()
                                             accumulatedDrag += dragAmount.x
-                                            val newWidth = (startWidth + with(density) { accumulatedDrag.toDp() }).coerceAtLeast(40.dp)
+                                            val newWidth = (startWidth + with(density) { accumulatedDrag.toDp() })
+                                                .coerceIn(40.dp, 10000.dp)
                                             onColumnResize(column, newWidth.value.toInt())
                                         }
                                     )
@@ -176,15 +204,25 @@ fun LogEntryRow(
     lineNumber: Int,
     filterQueries: List<String>,
     isDarkMode: Boolean,
+    viewportWidth: Dp,
+    sourceIds: List<String> = emptyList(),
     columns: List<String>,
     columnWidths: Map<String, Int>,
     isSelected: Boolean = false,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     val logColors = LogViewerTheme.logColors
+    val backgroundColor = if (isSelected) {
+        MaterialTheme.colors.primary.copy(alpha = 0.15f)
+    } else {
+        getSourceBackgroundColor(entry.sourceId, sourceIds, isDarkMode)
+    }
+
     Box(
-        modifier = Modifier
-            .background(if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.1f) else Color.Transparent)
+        modifier = modifier
+            .widthIn(min = viewportWidth)
+            .background(backgroundColor)
             .clickable(
                 onClick = onClick,
                 interactionSource = remember { MutableInteractionSource() },
@@ -197,12 +235,27 @@ fun LogEntryRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
         // Gutter / Line Number
-        Text(
-            text = lineNumber.toString().padStart(4, ' '),
-            color = MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
-            style = MaterialTheme.typography.caption,
-            modifier = Modifier.width(50.dp).padding(horizontal = 4.dp)
-        )
+        val gutterWidth = if (sourceIds.size > 1) 60.dp else 50.dp
+        Row(
+            modifier = Modifier.width(gutterWidth).padding(horizontal = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (sourceIds.size > 1) {
+                val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds)
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(badgeColor, CircleShape)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+            Text(
+                text = lineNumber.toString().padStart(4, ' '),
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
+                style = MaterialTheme.typography.caption,
+                modifier = Modifier.weight(1f)
+            )
+        }
         
         columns.forEachIndexed { index, column ->
             val isLast = index == columns.lastIndex
@@ -210,7 +263,9 @@ fun LogEntryRow(
             val isResized = columnWidths.containsKey(column)
             
             val columnModifier = if (isLast && !isResized) {
-                Modifier.widthIn(min = widthDp)
+                val otherWidths = columns.dropLast(1).sumOf { getColumnWidth(it, columnWidths).value.toDouble() }.dp + gutterWidth
+                val minWidth = if (viewportWidth - otherWidths > widthDp) viewportWidth - otherWidths else widthDp
+                Modifier.widthIn(min = minWidth, max = 10000.dp)
             } else {
                 Modifier.width(widthDp)
             }
@@ -245,9 +300,10 @@ fun LogEntryRow(
                     )
                 }
                 "Message", "Content" -> {
-                    val message = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value
+                    val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value
+                    val displayMessage = if (fullMessage.length > 10000) fullMessage.take(10000) + "..." else fullMessage
                     Text(
-                        text = LogHighlighter.highlight(message, filterQueries, isDarkMode),
+                        text = LogHighlighter.highlight(displayMessage, filterQueries, isDarkMode),
                         style = MaterialTheme.typography.body1,
                         fontSize = 12.sp,
                         softWrap = false,
@@ -292,4 +348,42 @@ private fun getLevelColor(level: LogLevel, colors: LogLevelColors): Color = when
     LogLevel.ERROR -> colors.error
     LogLevel.FATAL -> colors.fatal
     LogLevel.UNKNOWN -> colors.unknown
+}
+
+private fun getSourceBadgeColor(sourceId: String?, sourceIds: List<String>): Color {
+    if (sourceId == null || sourceIds.size <= 1) return Color.Transparent
+    val index = sourceIds.indexOf(sourceId).coerceAtLeast(0)
+    val colors = listOf(
+        Color(0xFFE57373), // Red
+        Color(0xFF81C784), // Green
+        Color(0xFF64B5F6), // Blue
+        Color(0xFFFFD54F), // Amber
+        Color(0xFFBA68C8), // Purple
+        Color(0xFF4DB6AC), // Teal
+        Color(0xFFF06292), // Pink
+        Color(0xFFAED581)  // Light Green
+    )
+    return colors[index % colors.size]
+}
+
+private fun getSourceBackgroundColor(sourceId: String?, sourceIds: List<String>, isDarkMode: Boolean): Color {
+    if (sourceId == null || sourceIds.size <= 1) return Color.Transparent
+    val index = sourceIds.indexOf(sourceId).coerceAtLeast(0)
+    return if (isDarkMode) {
+        val greys = listOf(
+            Color(0xFF1E1E1E),
+            Color(0xFF252525),
+            Color(0xFF2D2D2D),
+            Color(0xFF353535)
+        )
+        greys[index % greys.size]
+    } else {
+        val greys = listOf(
+            Color(0xFFF9F9F9),
+            Color(0xFFF2F2F2),
+            Color(0xFFEBEBEB),
+            Color(0xFFE4E4E4)
+        )
+        greys[index % greys.size]
+    }
 }
