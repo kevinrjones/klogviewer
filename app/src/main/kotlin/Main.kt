@@ -3,6 +3,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
+import com.logviewer.core.parser.HeuristicProbe
+import com.logviewer.core.parser.ParserRegistry
 import com.logviewer.core.parser.SimpleLogParser
 import com.logviewer.core.repository.PreferencesRepository
 import com.logviewer.core.source.FileLogSource
@@ -22,8 +24,10 @@ fun main() {
 
     application {
         val parser = SimpleLogParser()
+        val registry = ParserRegistry()
+        val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = LogViewerViewModel(source, prefsRepository)
+        val viewModel = LogViewerViewModel(source, prefsRepository, heuristicProbe)
 
         val windowState = rememberWindowState(
             width = initialPrefs.windowState.width.dp,

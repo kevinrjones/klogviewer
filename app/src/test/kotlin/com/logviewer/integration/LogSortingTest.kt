@@ -1,5 +1,7 @@
 package com.logviewer.integration
 
+import com.logviewer.core.parser.HeuristicProbe
+import com.logviewer.core.parser.ParserRegistry
 import com.logviewer.core.parser.SimpleLogParser
 import com.logviewer.core.repository.PreferencesRepository
 import com.logviewer.core.source.FileLogSource
@@ -18,9 +20,11 @@ class LogSortingTest {
     lateinit var tempDir: File
 
     private val parser = SimpleLogParser()
+    private val registry = ParserRegistry()
+    private val heuristicProbe = HeuristicProbe(registry)
     private val source = FileLogSource(parser)
     private val prefsRepository by lazy { PreferencesRepository(tempDir) }
-    private val viewModel by lazy { LogViewerViewModel(source, prefsRepository) }
+    private val viewModel by lazy { LogViewerViewModel(source, prefsRepository, heuristicProbe) }
 
     @Test
     fun `should reverse logs when isReversed is toggled`() = runBlocking {
@@ -37,9 +41,13 @@ class LogSortingTest {
         
         viewModel.handleIntent(LogViewerIntent.LoadFiles(listOf(file.absolutePath)))
         
-        // Wait for load
+        // Wait for load and filtering
         withTimeout(2000) {
-            viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && it.activeTab?.activeWindow?.logs?.size == 3 }
+            viewModel.state.first { 
+                it.activeTab?.activeWindow?.isLoading == false && 
+                it.activeTab?.activeWindow?.logs?.size == 3 &&
+                it.activeTab?.activeWindow?.filteredLogs?.size == 3
+            }
         }
         
         // Default order (Oldest First)

@@ -28,7 +28,9 @@ data class WindowPreference(
     val sourceIds: List<String> = emptyList(),
     val filterQueries: List<String> = emptyList(),
     val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
-    val isReversed: Boolean = false
+    val isReversed: Boolean = false,
+    val columns: List<String> = emptyList(),
+    val columnWidths: Map<String, Int> = emptyMap()
 )
 
 @Serializable

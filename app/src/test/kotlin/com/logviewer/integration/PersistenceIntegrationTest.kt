@@ -1,5 +1,7 @@
 package com.logviewer.integration
 
+import com.logviewer.core.parser.HeuristicProbe
+import com.logviewer.core.parser.ParserRegistry
 import com.logviewer.core.parser.SimpleLogParser
 import com.logviewer.core.repository.PreferencesRepository
 import com.logviewer.core.source.FileLogSource
@@ -52,8 +54,10 @@ class PersistenceIntegrationTest {
 
         // 2. Create ViewModel and verify it restores state and reloads logs
         val parser = SimpleLogParser()
+        val registry = ParserRegistry()
+        val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = LogViewerViewModel(source, prefsRepo)
+        val viewModel = LogViewerViewModel(source, prefsRepo, heuristicProbe)
 
         // Wait for logs to load
         withTimeout(5.seconds) {
@@ -84,8 +88,10 @@ class PersistenceIntegrationTest {
         val prefsDir = File(tempDir, "prefs")
         val prefsRepo = PreferencesRepository(prefsDir)
         val parser = SimpleLogParser()
+        val registry = ParserRegistry()
+        val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = LogViewerViewModel(source, prefsRepo)
+        val viewModel = LogViewerViewModel(source, prefsRepo, heuristicProbe)
 
         // Add a tab and load a file
         viewModel.handleIntent(LogViewerIntent.AddTab)
@@ -104,6 +110,41 @@ class PersistenceIntegrationTest {
         val newTabPref = savedPrefs.tabs.find { it.id == activeTabId }
         expectThat(newTabPref).isNotNull()
         expectThat(newTabPref?.windows?.get(0)?.sourceIds).isEqualTo(listOf(logFile.absolutePath))
+        Unit
+    }
+
+    @Test
+    fun `should persist column widths`(): Unit = runBlocking {
+        val prefsDir = File(tempDir, "prefs")
+        val prefsRepo = PreferencesRepository(prefsDir)
+        val parser = SimpleLogParser()
+        val registry = ParserRegistry()
+        val heuristicProbe = HeuristicProbe(registry)
+        val source = FileLogSource(parser)
+        val viewModel = LogViewerViewModel(source, prefsRepo, heuristicProbe)
+
+        // Resize a column
+        viewModel.handleIntent(LogViewerIntent.UpdateColumnWidth("Timestamp", 250))
+
+        // Verify state
+        val window = viewModel.state.value.activeTab?.activeWindow
+        expectThat(window?.columnWidths?.get("Timestamp")).isEqualTo(250)
+
+        // Verify preferences were saved (with debounce)
+        val activeTabId = viewModel.state.value.activeTabId
+        val activeWindowId = viewModel.state.value.activeTab?.activeWindowId
+        
+        val savedPrefs = withTimeout(2.seconds) {
+            var prefs = prefsRepo.load()
+            while (prefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }?.columnWidths?.get("Timestamp") != 250) {
+                kotlinx.coroutines.delay(100)
+                prefs = prefsRepo.load()
+            }
+            prefs
+        }
+        val savedWindow = savedPrefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }
+        
+        expectThat(savedWindow?.columnWidths?.get("Timestamp")).isEqualTo(250)
         Unit
     }
 }

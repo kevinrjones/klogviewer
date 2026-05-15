@@ -57,4 +57,16 @@ class LogParserTest {
             expectThat(entry.content.value).isEqualTo("Main - Starting LogViewer application")
         }
     }
+
+    @Test
+    fun `should parse log line with timezone offset`() {
+        val line = "2026-05-08 00:27:56.321 +01:00 [INF] more stuff here"
+        val result = parser.parse(line)
+
+        expectThat(result.isRight()).isTrue()
+        result.onRight { entry ->
+            expectThat(entry.level).isEqualTo(LogLevel.INFO)
+            expectThat(entry.content.value).isEqualTo("more stuff here")
+        }
+    }
 }

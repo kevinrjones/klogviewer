@@ -14,7 +14,9 @@ data class LogWindow(
     val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
     val isReversed: Boolean = false,
     val sourceIds: List<String> = emptyList(),
-    val selectedEntry: LogEntry? = null
+    val selectedEntry: LogEntry? = null,
+    val columns: List<String> = emptyList(),
+    val columnWidths: Map<String, Int> = emptyMap()
 ) {
     val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
 }

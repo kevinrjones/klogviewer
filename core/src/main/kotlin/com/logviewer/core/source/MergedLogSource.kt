@@ -3,6 +3,7 @@ package com.logviewer.core.source
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
+import com.logviewer.domain.parser.LogParser
 import com.logviewer.domain.model.LogFailure
 import com.logviewer.domain.model.LogFilePath
 import com.logviewer.domain.model.LogUpdate
@@ -14,7 +15,7 @@ import kotlinx.coroutines.launch
 private val logger = KotlinLogging.logger {}
 
 class MergedLogSource(
-    private val sources: List<Pair<LogSource, LogFilePath>>
+    private val sources: List<Triple<LogSource, LogFilePath, LogParser?>>
 ) {
     fun observeMerged(): Flow<Either<LogFailure, LogUpdate>> = channelFlow {
         logger.info { "Merging ${sources.size} log sources" }
@@ -23,7 +24,7 @@ class MergedLogSource(
             return@channelFlow
         }
 
-        val flows = sources.map { (source, path) -> source.observeLogs(path) }
+        val flows = sources.map { (source, path, parser) -> source.observeLogs(path, parser) }
         
         // Track the current entries from each source for initial merge
         val currentEntries = mutableMapOf<Int, List<com.logviewer.domain.model.LogEntry>>()

@@ -1,5 +1,7 @@
 package com.logviewer.integration
 
+import com.logviewer.core.parser.HeuristicProbe
+import com.logviewer.core.parser.ParserRegistry
 import com.logviewer.core.parser.SimpleLogParser
 import com.logviewer.core.repository.PreferencesRepository
 import com.logviewer.core.source.FileLogSource
@@ -18,9 +20,11 @@ class InterleavingIntegrationTest {
     lateinit var tempDir: File
 
     private val parser = SimpleLogParser()
+    private val registry = ParserRegistry()
+    private val heuristicProbe = HeuristicProbe(registry)
     private val source = FileLogSource(parser)
     private val prefsRepository by lazy { PreferencesRepository(tempDir) }
-    private val viewModel by lazy { LogViewerViewModel(source, prefsRepository) }
+    private val viewModel by lazy { LogViewerViewModel(source, prefsRepository, heuristicProbe) }
 
     @Test
     fun `should interleave logs when adding to workspace`() = runBlocking {

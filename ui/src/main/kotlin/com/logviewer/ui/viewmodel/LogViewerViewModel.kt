@@ -2,6 +2,8 @@ package com.logviewer.ui.viewmodel
 
 import com.logviewer.domain.model.*
 import com.logviewer.domain.repository.LogSource
+import com.logviewer.domain.parser.LogParser
+import com.logviewer.core.parser.HeuristicProbe
 import com.logviewer.core.source.MergedLogSource
 import com.logviewer.core.repository.PreferencesRepository
 import com.logviewer.ui.mvi.*
@@ -16,6 +18,7 @@ private val logger = KotlinLogging.logger {}
 class LogViewerViewModel(
     private val logSource: LogSource,
     private val prefsRepository: PreferencesRepository,
+    private val heuristicProbe: HeuristicProbe,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 ) {
     private val _state = MutableStateFlow(LogViewerState())
@@ -25,6 +28,7 @@ class LogViewerViewModel(
     val events: SharedFlow<LogViewerEvent> = _events.asSharedFlow()
 
     private val logJobs = mutableMapOf<String, Job>()
+    private var saveJob: Job? = null
 
     init {
         val prefs = prefsRepository.load()
@@ -41,7 +45,9 @@ class LogViewerViewModel(
                                 sourceIds = wp.sourceIds,
                                 filterQueries = wp.filterQueries,
                                 levelFilters = wp.levelFilters,
-                                isReversed = wp.isReversed
+                                isReversed = wp.isReversed,
+                                columns = wp.columns,
+                                columnWidths = wp.columnWidths
                             )
                         },
                         activeWindowId = tp.activeWindowId
@@ -175,6 +181,14 @@ class LogViewerViewModel(
             LogViewerIntent.SplitHorizontal -> splitHorizontal()
             is LogViewerIntent.CloseWindow -> closeWindow(intent.id)
             is LogViewerIntent.SwitchWindow -> switchWindow(intent.id)
+            is LogViewerIntent.UpdateColumnWidth -> {
+                _state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        window.copy(columnWidths = window.columnWidths + (intent.column to intent.width))
+                    }
+                }
+                savePreferences(debounce = true)
+            }
         }
     }
 
@@ -306,9 +320,36 @@ class LogViewerViewModel(
             savePreferences()
             
             val flow = if (paths.size == 1) {
-                logSource.observeLogs(LogFilePath(paths[0]))
+                val path = paths[0]
+                val sampleLines = readSampleLines(path)
+                val probeResult = heuristicProbe.detect(sampleLines)
+                
+                _state.update { currentState ->
+                    currentState.copy(tabs = currentState.tabs.map { tab ->
+                        tab.copy(windows = tab.windows.map { window ->
+                            if (window.id == windowId) window.copy(columns = probeResult.columns) else window
+                        })
+                    })
+                }
+                
+                logSource.observeLogs(LogFilePath(path), probeResult.parser)
             } else {
-                val sources = paths.map { logSource to LogFilePath(it) }
+                val results = paths.map { path ->
+                    val sampleLines = readSampleLines(path)
+                    heuristicProbe.detect(sampleLines)
+                }
+                
+                _state.update { currentState ->
+                    currentState.copy(tabs = currentState.tabs.map { tab ->
+                        tab.copy(windows = tab.windows.map { window ->
+                            if (window.id == windowId) window.copy(columns = results.firstOrNull()?.columns ?: emptyList()) else window
+                        })
+                    })
+                }
+                
+                val sources = paths.mapIndexed { index, path ->
+                    Triple(logSource, LogFilePath(path), results[index].parser)
+                }
                 MergedLogSource(sources).observeMerged()
             }
             
@@ -334,6 +375,15 @@ class LogViewerViewModel(
                     }
                 )
             }
+        }
+    }
+
+    private fun readSampleLines(path: String, limit: Int = 50): List<String> {
+        return try {
+            File(path).useLines { it.take(limit).toList() }
+        } catch (e: Exception) {
+            logger.warn { "Failed to read sample lines from $path: ${e.message}" }
+            emptyList()
         }
     }
 
@@ -402,7 +452,20 @@ class LogViewerViewModel(
         }
     }
 
-    fun savePreferences(currentState: LogViewerState = _state.value) {
+    fun savePreferences(currentState: LogViewerState = _state.value, debounce: Boolean = false) {
+        if (debounce) {
+            saveJob?.cancel()
+            saveJob = scope.launch {
+                delay(500)
+                performSave(currentState)
+            }
+        } else {
+            saveJob?.cancel()
+            performSave(currentState)
+        }
+    }
+
+    private fun performSave(currentState: LogViewerState) {
         val currentPrefs = prefsRepository.load()
         val newPrefs = currentPrefs.copy(
             isDarkMode = currentState.isDarkMode,
@@ -421,7 +484,9 @@ class LogViewerViewModel(
                             sourceIds = window.sourceIds,
                             filterQueries = window.filterQueries,
                             levelFilters = window.levelFilters,
-                            isReversed = window.isReversed
+                            isReversed = window.isReversed,
+                            columns = window.columns,
+                            columnWidths = window.columnWidths
                         )
                     }
                 )

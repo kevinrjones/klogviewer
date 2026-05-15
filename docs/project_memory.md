@@ -23,6 +23,11 @@
 - Split View: Implemented horizontal split view support with an independent window-based architecture, allowing multiple logs to be viewed, filtered, and sorted independently within a single tab.
 - Navbar Tooltips: Integrated `TooltipArea` across all primary UI icons (tabs, filters, splits, details), improving discoverability and accessibility.
 - UI Layout Persistence: Implemented full workspace restoration. The application now remembers and reloads all open tabs, split windows, active filters, and loaded files on startup.
+- Fixed a critical UI bug where log grid columns were squashed to the left in horizontal scroll mode.
+- Resolved column resizing 'snap back' issue by implementing a robust drag accumulator and using `rememberUpdatedState` in Compose.
+- Optimized performance by debouncing preference saves during rapid column resizing.
+- Added `IntrinsicSize.Min` to the log header to ensure proper vertical alignment and resize handle visibility.
+- Improved layout stability within `horizontalScroll` by removing infinite-width `fillMaxSize` constraints from `LazyColumn`.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -602,3 +607,134 @@
 
 **Test coverage areas**
 - N/A (Architecture and Documentation phase).
+
+## Task: Advanced Logging Tasks
+**Title**: Task Management for Advanced Log Formats
+**Date/time completed**: 2026-05-14 21:45
+**What was shipped**
+- `docs/tasks/TASKS-SPRINT-7-ADVANCED-LOGGING.md`: Hierarchical task list for implementing flexible level mapping, template-based parsing, multiline aggregation, and JSON support.
+- Updated `docs/tasks/TASKS-LOGGING.md` to link to the new detailed sprint tasks.
+
+**Key decisions**
+- Structured tasks to follow the architectural decisions in ADR 019 and ADR 020.
+- Organized tasks by feature areas: Level Mapping, Parser Strategy, Multiline Aggregation, JSON Support, and Heuristic Detection.
+
+**Gotchas**
+- Ensuring numbering consistency with previous sprints (starting Sprint 7 tasks at 12.x) to maintain a logical project flow.
+
+**Test coverage areas**
+- N/A (Planning and Documentation phase).
+
+## Task: Flexible Level Mapping
+**Title**: Flexible Level Mapping Implementation
+**Date/time completed**: 2026-05-15 07:15
+**What was shipped**
+- `LevelMapper` utility for normalizing external log levels (e.g., "INF" to `LogLevel.INFO`).
+- Support for common abbreviations (DBUG, INF, WRN, ERR, FTL).
+- Support for alternative terminology (TRACE, INFORMATION, WARNING, SEVERE, CRITICAL).
+- Prefix-based matching support (e.g., 'D' -> `LogLevel.DEBUG`).
+- Default level assignment for logs without explicit severity.
+
+**Key decisions**
+- Used a configurable `LevelMapper` that can be integrated into different parsers.
+- Implemented prefix matching as an optional feature to avoid false positives in strict formats.
+- Normalized all inputs to uppercase and trimmed whitespace before mapping.
+- Extended `LevelMapper` to automatically strip common wrappers like brackets `[]` and parentheses `()`, improving compatibility with diverse log headers.
+- Integrated `LevelMapper` into `SimpleLogParser` to ensure consistent level normalization across all parsing strategies.
+
+**Gotchas**
+- Prefix matching can be aggressive; it should only be enabled for formats where the level is a single character or starts with a unique character.
+
+**Test coverage areas**
+- `LevelMapperTest`: Unit tests for standard levels, abbreviations, alternative terminology, prefix matching, and default levels.
+
+## Task: Parsing Robustness Improvements
+**Title**: Parsing Robustness Improvements (Timezones and Metadata)
+**Date/time completed**: 2026-05-15 07:35
+**What was shipped**
+- Enhanced `SimpleLogParser` and "Standard" `LogTemplate` to support timezone offsets (e.g., `+01:00`) in timestamps.
+- Improved level detection in `TemplateLogParser` to handle optional fields like thread names in brackets before the log level.
+- Updated `TimestampParser` to support optional milliseconds and timezone offsets using `[ XXX]` pattern.
+- Fixed a race condition in `LogSortingTest` integration test.
+
+**Key decisions**
+- Used named groups (`metadata`) in the Standard template regex to capture optional fields between timestamp and level.
+- Updated `TemplateLogParser` to fallback to checking the `metadata` group if the `level` group doesn't contain a valid log level.
+- Switched to `XXX` in `DateTimeFormatter` to support timezone offsets with colons (like `+01:00`).
+
+**Gotchas**
+- Increased parsing complexity slightly, which exposed a race condition in an integration test that wasn't waiting for the async filtering to complete.
+
+**Test coverage areas**
+- `LogParserTest`: Added test case for timezone offsets.
+- `TemplateLogParserTest`: Added test case for `metadata` group level fallback.
+- `TimestampParserTest`: Added comprehensive tests for optional timestamp parts (millis, timezone).
+- `LogSortingTest`: Improved stability of integration test.
+
+## Task: Split Window Header Refinement
+**Title**: Split Window Header Refinement (File Path Visibility)
+**Date/time completed**: 2026-05-15 07:45
+**What was shipped**
+- Updated `LogViewerScreen.kt` to always display the fully qualified file path in each split window's header.
+- Aligned file path to the left and window controls (Active badge, Close button) to the right.
+- Ensured the header row is visible even for single splits if a file is loaded.
+
+**Key decisions**
+- Placed the file path in the same visual area as the "Active" badge to maintain UI density.
+- Used `Arrangement.SpaceBetween` to separate path info from window actions.
+- Applied `TextOverflow.Ellipsis` and `weight(1f)` to gracefully handle long file paths.
+
+**Gotchas**
+- The header row was previously hidden for single-split tabs; it is now visible when a file path is present, which is a slight change in behavior but meets the "always displayed" requirement.
+
+**Test coverage areas**
+- UI layout verified via code inspection and build consistency.
+
+## Task: Advanced Log Parsing Implementation
+**Title**: Advanced Log Parsing (Sprint 7 Core)
+**Date/time completed**: 2026-05-15 08:55
+**What was shipped**
+- Enhanced `LevelMapper` with support for `VERBOSE`, `NOTICE`, and numeric levels (0-7).
+- Added Unix Epoch support (seconds and milliseconds) to `TimestampParser`.
+- Implemented `LogfmtParser` for basic key-value log parsing.
+- Expanded `ParserRegistry` with default templates for `ISO8601`, `Apache`, and `CSV`.
+- Improved `HeuristicProbe` to automatically detect `logfmt` files.
+- Added `GapAnalysisTest.kt` covering all 14+ log variations identified in the Gap Analysis.
+
+**Key decisions**
+- Integrated Unix Epoch detection directly into `TimestampParser` by checking for numeric input.
+- Added `isLogfmt` check to `HeuristicProbe` using a regex-based heuristic.
+- Used `[X]` in `ISO8601` template to support optional `Z` suffix.
+
+**Gotchas**
+- Prefix matching in `LevelMapper` can cause false positives (e.g., "Some" mapping to `ERROR` because it starts with 'S'), so it's disabled by default or used with caution in the probe.
+
+**Test coverage areas**
+- `GapAnalysisTest`: Comprehensive coverage for diverse levels, timestamps, structures, and multiline logs.
+- `LevelMapperTest`: Updated with new level mappings.
+- `TimestampParserTest`: Updated with Unix Epoch cases.
+
+## Task: Resizable UI Columns
+**Title**: Resizable Columns and Persistence
+**Date/time completed**: 2026-05-15 09:35
+**What was shipped**
+- Implemented resizable columns in the `LogList` grid with interactive drag handles.
+- Added `columnWidths` state to `LogWindow` and `WindowPreference`.
+- Implemented persistence for custom column widths across application sessions.
+- Added `UpdateColumnWidth` intent to the MVI model.
+- Integrated resize handles into `LogListHeader` with visual cursor feedback (`E_RESIZE_CURSOR`).
+
+**Key decisions**
+- Used `pointerInput` and `detectDragGestures` in the header to handle resizing without needing a full `DataGrid` component.
+- Stored widths in a `Map<String, Int>` to allow flexible, column-specific overrides while maintaining default fallbacks.
+- Applied dynamic widths to both `LogListHeader` and `LogEntryRow` to ensure perfect column alignment.
+- Coerced minimum column width to 40dp to prevent columns from disappearing during resize.
+
+**Gotchas**
+- Resizing flexible columns (like "Message") requires assigning them an initial fixed width when the user starts dragging.
+- Column alignment between header and rows is maintained by using the same `getColumnWidth` logic and layout constraints.
+- `Modifier.weight(1f)` inside a `horizontalScroll` container results in 0-width columns; default fixed widths must be provided for unconstrained containers.
+
+**Test coverage areas**
+- `PersistenceIntegrationTest`: Added `should persist column widths` test case to verify end-to-end state preservation.
+- Regression verification: Confirmed grid alignment and column visibility across standard and custom log formats.

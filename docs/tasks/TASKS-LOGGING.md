@@ -18,6 +18,8 @@
 - [x] Verify error events are explicitly logged
 
 ## Advanced Format Support [ ]
+*Detailed tasks for this feature are tracked in [TASKS-SPRINT-7-ADVANCED-LOGGING.md](TASKS-SPRINT-7-ADVANCED-LOGGING.md)*
+
 - [ ] Implement `LevelMapper` for flexible level names (INF, ERR, etc.)
 - [ ] Support optional levels (default to UNKNOWN)
 - [ ] Add `LogTemplate` system for custom regex and date patterns

@@ -31,4 +31,5 @@ sealed interface LogViewerIntent {
     data object SplitHorizontal : LogViewerIntent
     data class CloseWindow(val id: String) : LogViewerIntent
     data class SwitchWindow(val id: String) : LogViewerIntent
+    data class UpdateColumnWidth(val column: String, val width: Int) : LogViewerIntent
 }

@@ -1,5 +1,6 @@
 package com.logviewer.core.parser
 
+import com.logviewer.domain.parser.LogParser
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
@@ -9,7 +10,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 private val logger = KotlinLogging.logger {}
 
 class SimpleLogParser : LogParser {
-    private val regex = """^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{3})?)\s+(?:\[(.*?)\]\s+)?(\S+)\s+(.*)$""".toRegex()
+    private val regex = """^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d{3})?(?:\s+[+-]\d{2}:?\d{2})?)\s+(?:\[(.*?)\]\s+)?(\S+)\s+(.*)$""".toRegex()
+    private val levelMapper = LevelMapper()
 
     override fun parse(line: String): Either<LogFailure.ParsingError, LogEntry> {
         val trimmedLine = line.trim()
@@ -23,8 +25,8 @@ class SimpleLogParser : LogParser {
         val g3 = matchResult.groups[3]?.value ?: ""
         val g4 = matchResult.groups[4]?.value ?: ""
 
-        val levelG3 = parseLogLevel(g3)
-        val levelG2 = if (levelG3 == LogLevel.UNKNOWN) parseLogLevel(g2) else LogLevel.UNKNOWN
+        val levelG3 = levelMapper.map(g3)
+        val levelG2 = if (levelG3 == LogLevel.UNKNOWN) levelMapper.map(g2) else LogLevel.UNKNOWN
 
         val (level, content) = when {
             levelG3 != LogLevel.UNKNOWN -> levelG3 to g4
@@ -37,17 +39,5 @@ class SimpleLogParser : LogParser {
             level = level,
             content = LogContent(content.trim())
         ).right()
-    }
-
-    private fun parseLogLevel(s: String?): LogLevel {
-        if (s == null) return LogLevel.UNKNOWN
-        return when (s.uppercase().trim()) {
-            "DEBUG" -> LogLevel.DEBUG
-            "INFO" -> LogLevel.INFO
-            "WARN" -> LogLevel.WARN
-            "ERROR" -> LogLevel.ERROR
-            "FATAL" -> LogLevel.FATAL
-            else -> LogLevel.UNKNOWN
-        }
     }
 }

@@ -3,7 +3,9 @@ package com.logviewer.core.source
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import com.logviewer.core.parser.LogParser
+import com.logviewer.core.parser.TemplateLogParser
+import com.logviewer.core.parser.MultilineProcessor
+import com.logviewer.domain.parser.LogParser
 import com.logviewer.domain.model.*
 import com.logviewer.domain.repository.LogSource
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -23,8 +25,13 @@ class FileLogSource(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LogSource {
 
-    override fun observeLogs(path: LogFilePath): Flow<Either<LogFailure, LogUpdate>> = flow {
-        logger.info { "Started observing log file: ${path.value}" }
+    override fun observeLogs(path: LogFilePath, requestedParser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = flow {
+        val effectiveParser = requestedParser ?: this@FileLogSource.parser
+        val multilineProcessor = if (effectiveParser is TemplateLogParser) {
+            MultilineProcessor(effectiveParser.template)
+        } else null
+
+        logger.info { "Started observing log file: ${path.value} using ${effectiveParser::class.simpleName} (multiline=${multilineProcessor != null})" }
         val file = File(path.value)
         if (!file.exists()) {
             logger.error { "Log file does not exist: ${path.value}" }
@@ -36,9 +43,18 @@ class FileLogSource(
             // Initial load
             logger.debug { "Performing initial load for ${file.name}" }
             val initialEntries = file.useLines { lines ->
-                lines.mapNotNull { line ->
-                    parser.parse(line).getOrNull()?.copy(sourceId = file.name)
-                }.toList()
+                if (multilineProcessor != null) {
+                    val entries = mutableListOf<LogEntry>()
+                    lines.forEach { line ->
+                        multilineProcessor.process(line)?.let { entries.add(it.copy(sourceId = file.name)) }
+                    }
+                    multilineProcessor.flush()?.let { entries.add(it.copy(sourceId = file.name)) }
+                    entries
+                } else {
+                    lines.mapNotNull { line ->
+                        effectiveParser.parse(line).getOrNull()?.copy(sourceId = file.name)
+                    }.toList()
+                }
             }
             logger.info { "Initial load completed for ${file.name}: ${initialEntries.size} entries found" }
             emit(LogUpdate.Initial(initialEntries).right())
@@ -62,13 +78,24 @@ class FileLogSource(
                         raf.seek(lastPosition)
                         var line = raf.readLine()
                         while (line != null) {
-                            // readLine() in RandomAccessFile uses ISO-8859-1. 
-                            // Convert to UTF-8 if necessary, though SimpleLogParser handles standard text.
                             val utf8Line = String(line.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
-                            parser.parse(utf8Line).getOrNull()?.let {
-                                newEntries.add(it.copy(sourceId = file.name))
+                            if (multilineProcessor != null) {
+                                multilineProcessor.process(utf8Line)?.let {
+                                    newEntries.add(it.copy(sourceId = file.name))
+                                }
+                            } else {
+                                effectiveParser.parse(utf8Line).getOrNull()?.let {
+                                    newEntries.add(it.copy(sourceId = file.name))
+                                }
                             }
                             line = raf.readLine()
+                        }
+                        // Note: for tailing, we might want to wait for more lines or flush on timeout
+                        // but for now we'll flush at the end of the batch
+                        if (multilineProcessor != null) {
+                            multilineProcessor.flush()?.let {
+                                newEntries.add(it.copy(sourceId = file.name))
+                            }
                         }
                         lastPosition = raf.filePointer
                     }

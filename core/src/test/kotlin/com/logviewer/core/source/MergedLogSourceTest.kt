@@ -32,8 +32,8 @@ class MergedLogSourceTest {
         }
 
         val mergedSource = MergedLogSource(listOf(
-            source to LogFilePath(file1.absolutePath),
-            source to LogFilePath(file2.absolutePath)
+            Triple(source, LogFilePath(file1.absolutePath), null),
+            Triple(source, LogFilePath(file2.absolutePath), null)
         ))
 
         val result = mergedSource.observeMerged().first()

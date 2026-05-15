@@ -130,32 +130,55 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                                 .background(if (isWindowActive) MaterialTheme.colors.onSurface.copy(alpha = 0.02f) else Color.Transparent)
                                 .padding(top = 4.dp)
                         ) {
-                            // Window Header (Close button)
-                            if ((activeTab.windows.size) > 1) {
+                            // Window Header (File path, Active badge, Close button)
+                            if (window.filePath.isNotEmpty() || activeTab.windows.size > 1) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
-                                    horizontalArrangement = Arrangement.End,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    if (isWindowActive) {
-                                        Surface(
-                                            color = MaterialTheme.colors.primary.copy(alpha = 0.1f),
-                                            shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
-                                        ) {
-                                            Text(
-                                                "Active",
-                                                style = MaterialTheme.typography.caption,
-                                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                            )
-                                        }
-                                        Spacer(modifier = Modifier.width(8.dp))
+                                    if (window.filePath.isNotEmpty()) {
+                                        Text(
+                                            text = window.filePath,
+                                            style = MaterialTheme.typography.caption.copy(
+                                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                                            ),
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f).padding(end = 8.dp)
+                                        )
+                                    } else {
+                                        Spacer(modifier = Modifier.weight(1f))
                                     }
-                                    TooltipWrapper(tooltip = "Close split") {
-                                        IconButton(
-                                            onClick = { viewModel.handleIntent(LogViewerIntent.CloseWindow(window.id)) },
-                                            modifier = Modifier.size(20.dp)
-                                        ) {
-                                            Icon(Icons.Default.Close, contentDescription = "Close Split", modifier = Modifier.size(14.dp))
+
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        if (isWindowActive && activeTab.windows.size > 1) {
+                                            Surface(
+                                                color = MaterialTheme.colors.primary.copy(alpha = 0.1f),
+                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                                            ) {
+                                                Text(
+                                                    "Active",
+                                                    style = MaterialTheme.typography.caption,
+                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.width(8.dp))
+                                        }
+
+                                        if (activeTab.windows.size > 1) {
+                                            TooltipWrapper(tooltip = "Close split") {
+                                                IconButton(
+                                                    onClick = { viewModel.handleIntent(LogViewerIntent.CloseWindow(window.id)) },
+                                                    modifier = Modifier.size(20.dp)
+                                                ) {
+                                                    Icon(
+                                                        Icons.Default.Close,
+                                                        contentDescription = "Close Split",
+                                                        modifier = Modifier.size(14.dp)
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -187,10 +210,15 @@ fun LogViewerScreen(viewModel: LogViewerViewModel) {
                                         logs = window.filteredLogs,
                                         filterQueries = window.filterQueries,
                                         isDarkMode = state.isDarkMode,
+                                        columns = window.columns,
+                                        columnWidths = window.columnWidths,
                                         selectedEntry = window.selectedEntry,
                                         onEntryClick = { 
                                             viewModel.handleIntent(LogViewerIntent.SwitchWindow(window.id))
                                             viewModel.handleIntent(LogViewerIntent.SelectEntry(it)) 
+                                        },
+                                        onColumnResize = { column, width ->
+                                            viewModel.handleIntent(LogViewerIntent.UpdateColumnWidth(column, width))
                                         }
                                     )
                                 }

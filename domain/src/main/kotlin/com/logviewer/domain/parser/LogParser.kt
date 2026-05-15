@@ -1,4 +1,4 @@
-package com.logviewer.core.parser
+package com.logviewer.domain.parser
 
 import arrow.core.Either
 import com.logviewer.domain.model.LogEntry

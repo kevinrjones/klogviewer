@@ -69,6 +69,45 @@ Finalized Sprint 1 by updating all tracking documents to reflect its completion 
 - **Status Alignment**: Ensured `TASKS.md` and project history are fully synchronized with the actual implementation state.
 
 
+# 2026-05-15
+
+## 08:55
+
+### Sprint 7 Core: Advanced Log Parsing Implementation
+
+Successfully implemented the foundational components for advanced log parsing, significantly expanding the range of supported log formats.
+
+#### Core Achievements:
+- **Flexible Level Normalization**: Enhanced `LevelMapper` to support abbreviated names (`INF`, `WRN`, `ERR`), alternative terminology (`VERBOSE`, `NOTICE`, `SEVERE`), and numeric levels (Syslog RFC 5424).
+- **Timezone & Epoch Support**: Improved `TimestampParser` to handle timezone offsets and Unix Epoch timestamps (seconds and milliseconds), providing robust time parsing for cloud and legacy logs.
+- **Pluggable Parser Strategy**: 
+    - Implemented `ParserRegistry` with default templates for `ISO8601`, `Apache`, `Syslog`, and `CSV`.
+    - Developed `LogfmtParser` for structured key-value log formats common in the Go/Heroku ecosystem.
+- **Heuristic Auto-Detection**: Enhanced `HeuristicProbe` to automatically detect `logfmt` and JSON formats, and select the best template from the registry based on file content.
+- **Multiline Aggregation**: Integrated `MultilineProcessor` to correctly group stack traces and indented content with their parent log entries.
+
+#### Quality Assurance:
+- **Comprehensive Testing**: Created `GapAnalysisTest.kt` verifying 14+ specific log variations across levels, timestamps, structures, and multiline logs, ensuring 100% coverage of identified gaps.
+- **Robustness**: Fixed level detection edge cases where metadata (like thread names) in brackets could interfere with parsing.
+- **Test Suite Pass**: All 20+ unit and integration tests across the project are passing, ensuring no regressions in the core parsing engine.
+
+## 09:35
+
+### UI Refinement: Resizable Columns and Persistence
+
+Enhanced the log viewing experience by allowing users to interactively resize column widths, with full persistence across sessions.
+
+#### Core Achievements:
+- **Interactive Resizing**: Implemented drag-to-resize functionality for the `LogList` grid. Users can now adjust column widths by dragging header edges, with visual cursor feedback.
+- **Dynamic Width Management**: Transitioned from fixed/flexible column widths to a state-driven model where `LogWindow` tracks specific widths for each column.
+- **Workspace Persistence**: Extended the user preference system to save and restore custom column widths per window, ensuring the user's workspace layout is preserved across application restarts.
+- **MVI Architecture**: Integrated the resizing logic into the MVI flow via a new `UpdateColumnWidth` intent, ensuring clean state propagation and persistence triggers.
+- **UI UX Polish**: Added minimum width constraints to prevent column disappearance and ensured perfect alignment between headers and log entry rows.
+
+#### Quality Assurance:
+- **Integration Testing**: Added a specific test case to `PersistenceIntegrationTest` to verify that column width changes are correctly saved to the preference file and restored on startup.
+- **Regression Pass**: Verified that the new resizable layout works correctly with existing features like split views, filtering, and multi-log interleaving.
+
 # 2026-05-14
 
 ## 08:11
