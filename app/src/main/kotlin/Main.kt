@@ -58,7 +58,7 @@ fun main() {
 
         Window(
             onCloseRequest = ::saveAndExit,
-            title = "LogViewer",
+            title = "KLogViewer",
             state = windowState
         ) {
             MenuBar {

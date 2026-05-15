@@ -8,6 +8,7 @@
 6. Add a user 'save' option to save and load the current setup (log files in a window)
 7. Change the 'most recent' to show the FQName of the log file
 8. UI Tests? With screenshots?
+9. Add keyboard shortcuts for common actions (Cmd+W for close on Mac)
 
 
    
