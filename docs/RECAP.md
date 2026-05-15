@@ -108,6 +108,17 @@ Enhanced the log viewing experience by allowing users to interactively resize co
 - **Integration Testing**: Added a specific test case to `PersistenceIntegrationTest` to verify that column width changes are correctly saved to the preference file and restored on startup.
 - **Regression Pass**: Verified that the new resizable layout works correctly with existing features like split views, filtering, and multi-log interleaving.
 
+## 13:48
+
+### Domain Documentation: Ubiquitous Language Formalization
+
+Established a formal Ubiquitous Language to ensure terminological consistency across the project's documentation and codebase.
+
+#### Core Achievements:
+- **Ubiquitous Language**: Created `docs/UBIQUITOUS_LANGUAGE.md` defining core domain concepts (Log Entry, Source, Parser, Template, Mapper), advanced features (Interleaving, Heuristic Probe, Structured Data), and technical architecture terms (Tiny Type, Log Update, Workspace).
+- **Architectural Decision**: Formalized the use of the Ubiquitous Language in `ADR-022`, mandating terminological alignment for all future development and documentation.
+- **Project Alignment**: Verified that existing core domain models (`LogEntry`, `LogSource`, `LogUpdate`) are already in alignment with the newly formalized language.
+
 # 2026-05-14
 
 ## 08:11

@@ -29,6 +29,7 @@
 - Added `IntrinsicSize.Min` to the log header to ensure proper vertical alignment and resize handle visibility.
 - Improved layout stability within `horizontalScroll` by removing infinite-width `fillMaxSize` constraints from `LazyColumn`.
 - Dynamic Details Pane: Redesigned the log entry details pane to adapt to different log formats. It now hides the "Level" field when unknown (common in structured logs like Nginx) and automatically displays all available fields from the `LogEntry.fields` map.
+- Formalized the Ubiquitous Language and established it as a core architectural requirement (ADR-022).
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -803,3 +804,22 @@
 **Test coverage areas**
 - Core: Updated `LogParserTest.kt` with explicit assertions for raw level strings in timezone-aware and metadata-heavy log lines.
 - UI: Verified consistency between the grid and details pane through code inspection.
+
+## Task: Domain Documentation - Ubiquitous Language
+**Title**: Ubiquitous Language Formalization
+**Date/time completed**: 2026-05-15 13:55
+**What was shipped**
+- Formal `docs/UBIQUITOUS_LANGUAGE.md` document.
+- `ADR-022: Formalization of Ubiquitous Language`.
+- Updated `RECAP.md` with the new documentation milestone.
+
+**Key decisions**
+- Centralized all domain terminology in a single, version-controlled markdown file to prevent "concept drift".
+- Mandated alignment between code (e.g., `LogEntry`, `LogSource`) and the Ubiquitous Language via ADR.
+- Chose "Interleaving" as the formal term for multi-log merging to align with industry standards and existing ADRs.
+
+**Gotchas**
+- Identifying all implicit terms (like "Update" vs "Packet") required a deep dive into both code and existing ADRs to ensure current usage was captured accurately.
+
+**Test coverage areas**
+- Documentation-only task; verified terminological alignment with existing domain model tests.
