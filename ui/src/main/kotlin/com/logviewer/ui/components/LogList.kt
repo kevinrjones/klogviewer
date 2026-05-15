@@ -226,8 +226,10 @@ fun LogEntryRow(
                 }
                 "Level" -> {
                     val displayLevel = when {
+                        entry.fields["level"] != null && entry.fields["level"] != "UNKNOWN" -> {
+                            entry.fields["level"]!!
+                        }
                         entry.level != LogLevel.UNKNOWN -> "[${entry.level}]"
-                        entry.fields["level"] != null && entry.fields["level"] != "UNKNOWN" -> entry.fields["level"]!!
                         else -> ""
                     }
                     val color = if (entry.level == LogLevel.UNKNOWN && entry.fields.containsKey("level") && entry.fields["level"] != "UNKNOWN") {

@@ -36,6 +36,7 @@ class TemplateLogParser(val template: LogTemplate) : LogParser {
         var finalLevel = LogLevel.UNKNOWN
         var finalContent = contentRaw
         var finalMetadata = metadataRaw ?: ""
+        var finalLevelRaw: String? = null
 
         val level1 = template.levelMapper.map(levelRaw)
         val level2 = if (level1 == LogLevel.UNKNOWN) template.levelMapper.map(metadataRaw) else LogLevel.UNKNOWN
@@ -44,11 +45,13 @@ class TemplateLogParser(val template: LogTemplate) : LogParser {
             level1 != LogLevel.UNKNOWN -> {
                 finalLevel = level1
                 finalContent = contentRaw
+                finalLevelRaw = levelRaw
             }
             level2 != LogLevel.UNKNOWN -> {
                 finalLevel = level2
                 finalContent = "${levelRaw?.let { if (it.isNotEmpty()) "$it " else "" } ?: ""}$contentRaw"
                 finalMetadata = ""
+                finalLevelRaw = "[$metadataRaw]"
             }
             else -> {
                 // Check if content starts with a level (look-ahead)
@@ -59,6 +62,7 @@ class TemplateLogParser(val template: LogTemplate) : LogParser {
                     if (candidate != LogLevel.UNKNOWN) {
                         finalLevel = candidate
                         finalContent = if (parts.size > 1) parts[1] else ""
+                        finalLevelRaw = parts[0]
                         val cleanLevelRaw = (levelRaw ?: "").removeSurrounding("[", "]")
                         finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw
                     } else {
@@ -84,7 +88,7 @@ class TemplateLogParser(val template: LogTemplate) : LogParser {
         }
 
         val updatedFields = fields.toMutableMap()
-        updatedFields["level"] = finalLevel.name
+        updatedFields["level"] = finalLevelRaw ?: finalLevel.name
         if (finalMetadata.isNotEmpty()) updatedFields["metadata"] = finalMetadata
         else updatedFields.remove("metadata")
 

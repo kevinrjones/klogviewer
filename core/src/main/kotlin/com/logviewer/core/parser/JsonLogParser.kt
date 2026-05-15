@@ -36,10 +36,23 @@ class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParse
                 null -> ""
             }
 
+            val mappedLevel = mapping.levelMapper.map(levelRaw)
+            val fields = mutableMapOf(
+                "timestamp" to timestampRaw,
+                "level" to (levelRaw ?: mappedLevel.name),
+                "content" to content
+            )
+            element.forEach { (key, value) ->
+                if (key != mapping.timestampKey && key != mapping.levelKey && key != mapping.contentKey) {
+                    fields[key] = value.toValueString()
+                }
+            }
+
             LogEntry(
                 timestamp = LogTimestamp(timestampRaw),
-                level = mapping.levelMapper.map(levelRaw),
+                level = mappedLevel,
                 content = LogContent(content),
+                fields = fields,
                 instant = timestampParser?.parse(timestampRaw)
             ).right()
         } catch (e: Exception) {

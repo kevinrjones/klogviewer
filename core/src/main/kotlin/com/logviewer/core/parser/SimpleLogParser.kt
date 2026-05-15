@@ -30,6 +30,7 @@ class SimpleLogParser : LogParser {
         var finalLevel = LogLevel.UNKNOWN
         var finalContent = contentRaw
         var finalMetadata = metadataRaw ?: ""
+        var finalLevelRaw: String? = null
 
         val level1 = levelMapper.map(levelRaw)
         val level2 = if (level1 == LogLevel.UNKNOWN) levelMapper.map(metadataRaw) else LogLevel.UNKNOWN
@@ -38,11 +39,13 @@ class SimpleLogParser : LogParser {
             level1 != LogLevel.UNKNOWN -> {
                 finalLevel = level1
                 finalContent = contentRaw
+                finalLevelRaw = levelRaw
             }
             level2 != LogLevel.UNKNOWN -> {
                 finalLevel = level2
                 finalContent = if (levelRaw.isNotEmpty()) "$levelRaw $contentRaw" else contentRaw
                 finalMetadata = "" // Since it was promoted to level
+                finalLevelRaw = "[$metadataRaw]"
             }
             else -> {
                 // Check if content starts with a level (look-ahead)
@@ -53,6 +56,7 @@ class SimpleLogParser : LogParser {
                     if (candidate != LogLevel.UNKNOWN) {
                         finalLevel = candidate
                         finalContent = if (parts.size > 1) parts[1] else ""
+                        finalLevelRaw = parts[0]
                         val cleanLevelRaw = levelRaw.removeSurrounding("[", "]")
                         finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw
                     } else {
@@ -79,7 +83,7 @@ class SimpleLogParser : LogParser {
 
         val fields = mutableMapOf(
             "timestamp" to timestamp,
-            "level" to finalLevel.name,
+            "level" to (finalLevelRaw ?: finalLevel.name),
             "content" to finalContent.trim()
         )
         if (finalMetadata.isNotEmpty()) fields["metadata"] = finalMetadata

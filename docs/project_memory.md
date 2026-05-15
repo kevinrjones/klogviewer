@@ -783,22 +783,23 @@
 **Test coverage areas**
 - UI: Verified through project build and code inspection of layout constraints.
 
-## Task: Unlabeled Unrecognized Levels
-**Title**: Removing Labels for Unrecognized Log Components
-**Date/time completed**: 2026-05-15 12:25
+## Task: Level Name Preservation
+**Title**: Preserving Original Level Names in UI
+**Date/time completed**: 2026-05-15 13:10
 **What was shipped**
-- Refined `SimpleLogParser` and `TemplateLogParser` to avoid "labeling" unrecognized levels (like PIDs or thread IDs).
-- When no standard log level is detected, the parsers now merge the captured metadata and level strings back into the `content` field.
-- Updated `LogList` UI to show an empty string in the Level column for `UNKNOWN` levels, rather than showing "UNKNOWN" or raw PID strings.
-- Updated `LogEntryDetails` to hide the "Level" field entirely when the level is unknown, adhering to the "don't label them with anything" constraint.
+- Updated `SimpleLogParser` and `TemplateLogParser` to store the exact string captured from the log file (e.g., `INF`, `[INF]`, `DBUG`) in the `fields["level"]` map.
+- Refined the level promotion logic to re-add brackets `[]` when a level is promoted from the metadata group, ensuring the displayed value is faithful to the original line format.
+- Updated `LogList` UI to prioritize the raw level string for display while maintaining existing color-coding based on the normalized `LogLevel`.
+- Updated `LogEntryDetails` to show the raw level name without brackets, improving readability while honoring the "as they are" requirement.
 
 **Key decisions**
-- Decided that unrecognized bracketed values in the level position should be treated as part of the message content rather than metadata or level, as this is the least "labeled" way to display them.
-- Maintained structured metadata only when a valid log level is successfully detected, ensuring a clean transition between structured and unstructured views.
+- Decided to store the raw value in the `fields` map even for standard levels, allowing the UI to bypass the normalized enum name for display purposes.
+- Maintained the use of `LogLevel` enum for internal logic (colors, filters) to ensure that `INF` and `INFO` are treated as the same category.
+- Decided that recognized levels should still be displayed in brackets in the main grid for visual consistency, using the original text inside the brackets.
 
 **Gotchas**
-- Merging metadata and level into content requires careful string joining to avoid extra or missing spaces between components.
+- When promoting a level from a bracketed metadata group, the brackets are often stripped by the regex; they must be explicitly re-added if they were intended to be part of the "raw" representation.
 
 **Test coverage areas**
-- Core: Updated `LevelParsingIssueTest.kt` to verify that PIDs are merged into content when no level is found.
-- Regression: Full test suite pass (`./gradlew test`).
+- Core: Updated `LogParserTest.kt` with explicit assertions for raw level strings in timezone-aware and metadata-heavy log lines.
+- UI: Verified consistency between the grid and details pane through code inspection.

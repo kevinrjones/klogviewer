@@ -8,6 +8,7 @@
 - [x] 12.1.3. Support alternative terminology (SEVERE, CRITICAL, WARNING, TRACE)
 - [x] 12.1.4. Implement prefix-based matching (e.g., 'D' -> DEBUG)
 - [x] 12.1.5. Allow default level assignment for logs without explicit severity
+- [x] 12.1.6. Preserve original level names in UI display while maintaining normalization
 
 ### 12.2. Pluggable Parser Strategy (ADR 019)
 - [x] 12.2.1. Create `ParserRegistry` to manage multiple `LogTemplate`s

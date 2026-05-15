@@ -26,11 +26,24 @@ class LogfmtParser(
         val timestampRaw = pairs[mapping.timestampKey] ?: ""
         val levelRaw = pairs[mapping.levelKey]
         val content = pairs[mapping.contentKey] ?: line
+        val mappedLevel = levelMapper.map(levelRaw)
+
+        val fields = mutableMapOf(
+            "timestamp" to timestampRaw,
+            "level" to (levelRaw ?: mappedLevel.name),
+            "content" to content
+        )
+        pairs.forEach { (key, value) ->
+            if (key != mapping.timestampKey && key != mapping.levelKey && key != mapping.contentKey) {
+                fields[key] = value
+            }
+        }
 
         return LogEntry(
             timestamp = LogTimestamp(timestampRaw),
-            level = levelMapper.map(levelRaw),
+            level = mappedLevel,
             content = LogContent(content),
+            fields = fields,
             instant = timestampParser.parse(timestampRaw)
         ).right()
     }

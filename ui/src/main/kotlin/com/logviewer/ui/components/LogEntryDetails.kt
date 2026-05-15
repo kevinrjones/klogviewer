@@ -52,7 +52,8 @@ fun LogEntryDetails(
                 
                 DetailItem(label = "Timestamp", value = entry.timestamp.value)
                 if (entry.level != LogLevel.UNKNOWN) {
-                    DetailItem(label = "Level", value = entry.level.name.lowercase().replaceFirstChar { it.uppercase() })
+                    val displayLevel = entry.fields["level"] ?: entry.level.name.lowercase().replaceFirstChar { it.uppercase() }
+                    DetailItem(label = "Level", value = displayLevel)
                 }
                 if (entry.sourceId != null) {
                     DetailItem(label = "Source", value = entry.sourceId!!)

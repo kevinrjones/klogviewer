@@ -66,6 +66,7 @@ class LogParserTest {
         expectThat(result.isRight()).isTrue()
         result.onRight { entry ->
             expectThat(entry.level).isEqualTo(LogLevel.INFO)
+            expectThat(entry.fields["level"]).isEqualTo("[INF]")
             expectThat(entry.content.value).isEqualTo("more stuff here")
         }
     }
@@ -77,6 +78,7 @@ class LogParserTest {
         expectThat(result.isRight()).isTrue()
         result.onRight { entry ->
             expectThat(entry.level).isEqualTo(LogLevel.INFO)
+            expectThat(entry.fields["level"]).isEqualTo("[INF]")
             expectThat(entry.content.value).isEqualTo("more stuff here")
         }
     }
@@ -89,6 +91,7 @@ class LogParserTest {
         expectThat(result.isRight()).isTrue()
         result.onRight { entry ->
             expectThat(entry.level).isEqualTo(LogLevel.DEBUG)
+            expectThat(entry.fields["level"]).isEqualTo("DEBUG")
             expectThat(entry.content.value).isEqualTo("more stuff here")
         }
     }
