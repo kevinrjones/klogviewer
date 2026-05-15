@@ -32,20 +32,67 @@ class TemplateLogParser(val template: LogTemplate) : LogParser {
         val metadataRaw = fields["metadata"]
         val contentRaw = fields["content"] ?: ""
 
-        val levelCandidate1 = template.levelMapper.map(levelRaw)
-        val levelCandidate2 = if (levelCandidate1 == LogLevel.UNKNOWN) template.levelMapper.map(metadataRaw) else LogLevel.UNKNOWN
+        // Smart level detection
+        var finalLevel = LogLevel.UNKNOWN
+        var finalContent = contentRaw
+        var finalMetadata = metadataRaw ?: ""
 
-        val (level, content) = when {
-            levelCandidate1 != LogLevel.UNKNOWN -> levelCandidate1 to contentRaw
-            levelCandidate2 != LogLevel.UNKNOWN -> levelCandidate2 to "${levelRaw?.let { if (it.isNotEmpty()) "$it " else "" } ?: ""}$contentRaw"
-            else -> LogLevel.UNKNOWN to "${metadataRaw?.let { if (it.isNotEmpty()) "[$it] " else "" } ?: ""}${levelRaw?.let { if (it.isNotEmpty()) "$it " else "" } ?: ""}$contentRaw"
+        val level1 = template.levelMapper.map(levelRaw)
+        val level2 = if (level1 == LogLevel.UNKNOWN) template.levelMapper.map(metadataRaw) else LogLevel.UNKNOWN
+
+        when {
+            level1 != LogLevel.UNKNOWN -> {
+                finalLevel = level1
+                finalContent = contentRaw
+            }
+            level2 != LogLevel.UNKNOWN -> {
+                finalLevel = level2
+                finalContent = "${levelRaw?.let { if (it.isNotEmpty()) "$it " else "" } ?: ""}$contentRaw"
+                finalMetadata = ""
+            }
+            else -> {
+                // Check if content starts with a level (look-ahead)
+                val contentTrimmed = contentRaw.trim()
+                if (contentTrimmed.isNotEmpty()) {
+                    val parts = contentTrimmed.split(Regex("\\s+"), 2)
+                    val candidate = template.levelMapper.map(parts[0])
+                    if (candidate != LogLevel.UNKNOWN) {
+                        finalLevel = candidate
+                        finalContent = if (parts.size > 1) parts[1] else ""
+                        val cleanLevelRaw = (levelRaw ?: "").removeSurrounding("[", "]")
+                        finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw
+                    } else {
+                        // No level found anywhere, merge everything into content to avoid "labeling"
+                        finalLevel = LogLevel.UNKNOWN
+                        val prefix = listOfNotNull(
+                            metadataRaw?.let { "[$it]" },
+                            levelRaw?.takeIf { it.isNotEmpty() }
+                        ).joinToString(" ")
+                        finalContent = if (prefix.isNotEmpty()) "$prefix $contentRaw" else contentRaw
+                        finalMetadata = ""
+                    }
+                } else {
+                    finalLevel = LogLevel.UNKNOWN
+                    val prefix = listOfNotNull(
+                        metadataRaw?.let { "[$it]" },
+                        levelRaw?.takeIf { it.isNotEmpty() }
+                    ).joinToString(" ")
+                    finalContent = if (prefix.isNotEmpty()) "$prefix $contentRaw" else contentRaw
+                    finalMetadata = ""
+                }
+            }
         }
+
+        val updatedFields = fields.toMutableMap()
+        updatedFields["level"] = finalLevel.name
+        if (finalMetadata.isNotEmpty()) updatedFields["metadata"] = finalMetadata
+        else updatedFields.remove("metadata")
 
         return LogEntry(
             timestamp = LogTimestamp(timestampRaw),
-            level = level,
-            content = LogContent(content.trim()),
-            fields = fields,
+            level = finalLevel,
+            content = LogContent(finalContent.trim()),
+            fields = updatedFields,
             instant = timestampParser.parse(timestampRaw)
         ).right()
     }

@@ -50,3 +50,5 @@
 - [x] 12.7.7. Improve parsing robustness against trailing whitespace in templates
 - [x] 12.7.8. Ensure `SimpleLogParser` populates `fields` map for consistent UI details
 - [x] 12.7.9. Fix false positive `logfmt` detection and improve `Standard` regex robustness
+- [x] 12.8. Ensure the last log column expands to fit its content automatically
+- [x] 12.9. Preserve raw values for unrecognized log levels and improve look-ahead detection

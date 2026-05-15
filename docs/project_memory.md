@@ -761,3 +761,44 @@
 
 **Test coverage areas**
 - UI: Verified through compilation and regression pass of existing integration tests.
+
+## Task: UI Expansion for Last Column
+**Title**: Auto-expanding Last Column for Better Content Visibility
+**Date/time completed**: 2026-05-15 12:10
+**What was shipped**
+- Implemented auto-expansion for the last column in the log grid (typically "Message").
+- Transitioned from fixed-width to `widthIn(min = defaultWidth)` for the last column, allowing it to grow based on the longest visible line.
+- Updated `LogListHeader` to accept a `Modifier` and use `fillMaxWidth()` to maintain alignment with expanded rows.
+- Enhanced `LogListHeader` to use `Modifier.weight(1f)` for the last column, ensuring the header background covers the full width of the scrollable area.
+
+**Key decisions**
+- Used `Modifier.widthIn(min = widthDp)` for the last column in `LogEntryRow` to allow natural text width to determine the row's width in a horizontal scroll container.
+- Applied `Modifier.fillMaxWidth()` to both the header and the `LazyColumn` within the shared `Column` parent of the `horizontalScroll`, causing them to share the width of the widest visible child.
+- Maintained fixed widths for all manually resized columns (including the last one if dragged) to respect user overrides.
+
+**Gotchas**
+- Using `weight(1f)` in a `horizontalScroll` container only works if the parent has a width derived from another child or a fixed constraint. By making the header `fillMaxWidth()` and the rows content-determined, the header expands to match the longest row.
+- Selection highlights in `LogEntryRow` might have slightly different widths if rows vary significantly in length, but this is a common and acceptable pattern in log viewers.
+
+**Test coverage areas**
+- UI: Verified through project build and code inspection of layout constraints.
+
+## Task: Unlabeled Unrecognized Levels
+**Title**: Removing Labels for Unrecognized Log Components
+**Date/time completed**: 2026-05-15 12:25
+**What was shipped**
+- Refined `SimpleLogParser` and `TemplateLogParser` to avoid "labeling" unrecognized levels (like PIDs or thread IDs).
+- When no standard log level is detected, the parsers now merge the captured metadata and level strings back into the `content` field.
+- Updated `LogList` UI to show an empty string in the Level column for `UNKNOWN` levels, rather than showing "UNKNOWN" or raw PID strings.
+- Updated `LogEntryDetails` to hide the "Level" field entirely when the level is unknown, adhering to the "don't label them with anything" constraint.
+
+**Key decisions**
+- Decided that unrecognized bracketed values in the level position should be treated as part of the message content rather than metadata or level, as this is the least "labeled" way to display them.
+- Maintained structured metadata only when a valid log level is successfully detected, ensuring a clean transition between structured and unstructured views.
+
+**Gotchas**
+- Merging metadata and level into content requires careful string joining to avoid extra or missing spaces between components.
+
+**Test coverage areas**
+- Core: Updated `LevelParsingIssueTest.kt` to verify that PIDs are merged into content when no level is found.
+- Regression: Full test suite pass (`./gradlew test`).

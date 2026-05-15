@@ -26,26 +26,68 @@ class SimpleLogParser : LogParser {
         val levelRaw = matchResult.groups["level"]?.value ?: ""
         val contentRaw = matchResult.groups["content"]?.value ?: ""
 
-        val levelCandidate1 = levelMapper.map(levelRaw)
-        val levelCandidate2 = if (levelCandidate1 == LogLevel.UNKNOWN) levelMapper.map(metadataRaw) else LogLevel.UNKNOWN
+        // Smart level detection
+        var finalLevel = LogLevel.UNKNOWN
+        var finalContent = contentRaw
+        var finalMetadata = metadataRaw ?: ""
 
-        val (level, content) = when {
-            levelCandidate1 != LogLevel.UNKNOWN -> levelCandidate1 to contentRaw
-            levelCandidate2 != LogLevel.UNKNOWN -> levelCandidate2 to "$levelRaw $contentRaw"
-            else -> LogLevel.UNKNOWN to "${metadataRaw?.let { "[$it] " } ?: ""}$levelRaw $contentRaw"
+        val level1 = levelMapper.map(levelRaw)
+        val level2 = if (level1 == LogLevel.UNKNOWN) levelMapper.map(metadataRaw) else LogLevel.UNKNOWN
+
+        when {
+            level1 != LogLevel.UNKNOWN -> {
+                finalLevel = level1
+                finalContent = contentRaw
+            }
+            level2 != LogLevel.UNKNOWN -> {
+                finalLevel = level2
+                finalContent = if (levelRaw.isNotEmpty()) "$levelRaw $contentRaw" else contentRaw
+                finalMetadata = "" // Since it was promoted to level
+            }
+            else -> {
+                // Check if content starts with a level (look-ahead)
+                val contentTrimmed = contentRaw.trim()
+                if (contentTrimmed.isNotEmpty()) {
+                    val parts = contentTrimmed.split(Regex("\\s+"), 2)
+                    val candidate = levelMapper.map(parts[0])
+                    if (candidate != LogLevel.UNKNOWN) {
+                        finalLevel = candidate
+                        finalContent = if (parts.size > 1) parts[1] else ""
+                        val cleanLevelRaw = levelRaw.removeSurrounding("[", "]")
+                        finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw
+                    } else {
+                        // No level found anywhere, merge everything into content to avoid "labeling"
+                        finalLevel = LogLevel.UNKNOWN
+                        val prefix = listOfNotNull(
+                            metadataRaw?.let { "[$it]" },
+                            levelRaw.takeIf { it.isNotEmpty() }
+                        ).joinToString(" ")
+                        finalContent = if (prefix.isNotEmpty()) "$prefix $contentRaw" else contentRaw
+                        finalMetadata = ""
+                    }
+                } else {
+                    finalLevel = LogLevel.UNKNOWN
+                    val prefix = listOfNotNull(
+                        metadataRaw?.let { "[$it]" },
+                        levelRaw.takeIf { it.isNotEmpty() }
+                    ).joinToString(" ")
+                    finalContent = if (prefix.isNotEmpty()) "$prefix $contentRaw" else contentRaw
+                    finalMetadata = ""
+                }
+            }
         }
 
         val fields = mutableMapOf(
             "timestamp" to timestamp,
-            "level" to level.name,
-            "content" to content.trim()
+            "level" to finalLevel.name,
+            "content" to finalContent.trim()
         )
-        metadataRaw?.let { fields["metadata"] = it }
+        if (finalMetadata.isNotEmpty()) fields["metadata"] = finalMetadata
 
         return LogEntry(
             timestamp = LogTimestamp(timestamp),
-            level = level,
-            content = LogContent(content.trim()),
+            level = finalLevel,
+            content = LogContent(finalContent.trim()),
             fields = fields,
             instant = timestampParser.parse(timestamp)
         ).right()

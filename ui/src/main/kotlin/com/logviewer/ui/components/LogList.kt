@@ -58,11 +58,12 @@ fun LogList(
                     LogListHeader(
                         columns = displayColumns,
                         columnWidths = columnWidths,
-                        onColumnResize = onColumnResize
+                        onColumnResize = onColumnResize,
+                        modifier = Modifier.fillMaxWidth()
                     )
                     LazyColumn(
                         state = verticalScrollState,
-                        modifier = Modifier.fillMaxHeight()
+                        modifier = Modifier.fillMaxHeight().fillMaxWidth()
                     ) {
                         itemsIndexed(logs) { index, entry ->
                             LogEntryRow(
@@ -95,15 +96,17 @@ fun LogList(
 fun LogListHeader(
     columns: List<String>,
     columnWidths: Map<String, Int>,
-    onColumnResize: (String, Int) -> Unit
+    onColumnResize: (String, Int) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         color = MaterialTheme.colors.surface,
         elevation = 1.dp,
-        modifier = Modifier.height(IntrinsicSize.Min)
+        modifier = modifier.height(IntrinsicSize.Min)
     ) {
         Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -113,12 +116,20 @@ fun LogListHeader(
                 modifier = Modifier.width(50.dp).padding(horizontal = 4.dp)
             )
             
-            columns.forEach { column ->
+            columns.forEachIndexed { index, column ->
+                val isLast = index == columns.lastIndex
                 val widthDp = getColumnWidth(column, columnWidths)
+                val isResized = columnWidths.containsKey(column)
                 val currentWidthState = rememberUpdatedState(widthDp)
                 
+                val columnModifier = if (isLast && !isResized) {
+                    Modifier.weight(1f).widthIn(min = widthDp)
+                } else {
+                    Modifier.width(widthDp)
+                }
+
                 Box(
-                    modifier = Modifier.width(widthDp)
+                    modifier = columnModifier
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -193,9 +204,16 @@ fun LogEntryRow(
             modifier = Modifier.width(50.dp).padding(horizontal = 4.dp)
         )
         
-        columns.forEach { column ->
+        columns.forEachIndexed { index, column ->
+            val isLast = index == columns.lastIndex
             val widthDp = getColumnWidth(column, columnWidths)
-            val modifier = Modifier.width(widthDp)
+            val isResized = columnWidths.containsKey(column)
+            
+            val columnModifier = if (isLast && !isResized) {
+                Modifier.widthIn(min = widthDp)
+            } else {
+                Modifier.width(widthDp)
+            }
 
             when (column) {
                 "Timestamp" -> {
@@ -203,15 +221,25 @@ fun LogEntryRow(
                         text = entry.timestamp.value,
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
                         style = MaterialTheme.typography.caption,
-                        modifier = modifier.padding(horizontal = 4.dp)
+                        modifier = columnModifier.padding(horizontal = 4.dp)
                     )
                 }
                 "Level" -> {
+                    val displayLevel = when {
+                        entry.level != LogLevel.UNKNOWN -> "[${entry.level}]"
+                        entry.fields["level"] != null && entry.fields["level"] != "UNKNOWN" -> entry.fields["level"]!!
+                        else -> ""
+                    }
+                    val color = if (entry.level == LogLevel.UNKNOWN && entry.fields.containsKey("level") && entry.fields["level"] != "UNKNOWN") {
+                        MaterialTheme.colors.onSurface
+                    } else {
+                        getLevelColor(entry.level, logColors)
+                    }
                     Text(
-                        text = "[${entry.level}]",
-                        color = getLevelColor(entry.level, logColors),
+                        text = displayLevel,
+                        color = color,
                         style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
-                        modifier = modifier.padding(horizontal = 4.dp)
+                        modifier = columnModifier.padding(horizontal = 4.dp)
                     )
                 }
                 "Message", "Content" -> {
@@ -222,7 +250,7 @@ fun LogEntryRow(
                         fontSize = 12.sp,
                         softWrap = false,
                         overflow = TextOverflow.Visible,
-                        modifier = modifier.padding(horizontal = 4.dp)
+                        modifier = columnModifier.padding(horizontal = 4.dp)
                     )
                 }
                 else -> {
@@ -232,7 +260,7 @@ fun LogEntryRow(
                         text = value,
                         color = MaterialTheme.colors.onSurface,
                         style = MaterialTheme.typography.caption,
-                        modifier = modifier.padding(horizontal = 4.dp),
+                        modifier = columnModifier.padding(horizontal = 4.dp),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
