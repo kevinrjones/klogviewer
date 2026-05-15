@@ -1015,3 +1015,18 @@
 **Test coverage areas**
 - Build verification: Ensured all modules compile and link correctly under the new name.
 - Integration/BDD tests: Verified that all tests pass with the new package structure.
+
+## Task: Show FQN in Recent Items
+**Title**: Show FQN in Recent Items
+**Date/time completed**: 2026-05-15 22:15
+**What was shipped**
+- Updated the "Recently Opened" menu in `Main.kt` to display the Fully Qualified Name (full path) instead of just the filename.
+- Ensured consistent use of full paths across `Main.kt` and `RecentItemsDialog`.
+
+**Key decisions**
+- Switched from `File(path).name` to raw `path` in the `MenuBar` implementation to fulfill the FQN requirement.
+- Verified that existing components like `StatusBar` and `RecentItemsDialog` already provided full path information.
+
+**Test coverage areas**
+- Integration tests: `PersistenceIntegrationTest` and `TabManagementTest` verified that path-based state management remains correct.
+- Manual verification: Checked menu rendering logic.

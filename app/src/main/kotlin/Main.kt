@@ -72,7 +72,7 @@ fun main() {
                         }
                         
                         state.recentFiles.take(5).forEach { path ->
-                            Item(File(path).name, onClick = { viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path))) })
+                            Item(path, onClick = { viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path))) })
                         }
                         
                         if (state.recentFiles.isNotEmpty() && state.recentDirectories.isNotEmpty()) {
@@ -80,7 +80,7 @@ fun main() {
                         }
                         
                         state.recentDirectories.take(5).forEach { path ->
-                            Item(File(path).name, onClick = { viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path))) })
+                            Item(path, onClick = { viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path))) })
                         }
                         
                         if (state.recentFiles.size > 5 || state.recentDirectories.size > 5) {
