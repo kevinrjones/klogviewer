@@ -1,6 +1,7 @@
 package com.klogviewer.core.parser
 
 import com.klogviewer.domain.model.LogLevel
+import org.amshove.kluent.`should not be null`
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.contains
@@ -131,13 +132,13 @@ class GapAnalysisTest {
         val probe = HeuristicProbe(registry)
         
         // JSON
-        expectThat(probe.detect(listOf("""{"ts": "2026-05-14", "msg": "json"}"""))).isNotNull()
+        expectThat(probe.detect(listOf("""{"ts": "2026-05-14", "msg": "json"}"""))).`should not be null`()
         
         // logfmt
-        expectThat(probe.detect(listOf("""time=2026-05-14 level=info msg=logfmt"""))).isNotNull()
+        expectThat(probe.detect(listOf("""time=2026-05-14 level=info msg=logfmt"""))).`should not be null`()
         
         // ISO8601 Template
-        expectThat(probe.detect(listOf("""2026-05-14T16:53:00Z INFO template"""))).isNotNull()
+        expectThat(probe.detect(listOf("""2026-05-14T16:53:00Z INFO template"""))).`should not be null`()
     }
 
     @Test

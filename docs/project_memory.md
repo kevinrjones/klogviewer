@@ -948,6 +948,30 @@
 - `InterleavingIntegrationTest` (verified no regressions in log merging)
 - Manual UI verification for icon tinting and tooltip correctness.
 
+## Task: Fix Library Upgrade Compilation Errors
+**Title**: Fix Library Upgrade Compilation Errors
+**Date/time completed**: 2026-05-15 18:05
+**What was shipped**
+- Fixed compilation error in `LogList.kt` by replacing deprecated `rememberRipple()` with the new `ripple()` API from Compose 1.7+.
+- Fixed `AwtWindow` import in `KLogViewerScreen.kt` (moved from `androidx.compose.ui.window` to `androidx.compose.ui.awt`).
+- Cleaned up redundant `else` branch in `when` expression in `KLogViewerScreen.kt` for better type safety.
+- Restored missing BDD step definitions in `app/src/test/kotlin/com/klogviewer/bdd/steps/LogLoadingSteps.kt`.
+- Added missing `kotlinx-coroutines-test` dependency to `app` module and version catalog.
+
+**Key decisions**
+- Used `UnconfinedTestDispatcher` in BDD tests to ensure predictable execution of log loading logic.
+- Leveraged `backgroundScope` in `runTest` to manage long-running coroutines like log tailing in tests.
+- Re-implemented BDD steps to use `FileLogSource` and `SimpleLogParser` directly for focused feature verification.
+
+**Gotchas**
+- Library upgrades (Compose 1.11.0, Kotlin 2.3.21) introduced strict deprecation-as-errors and moved AWT-related classes.
+- Infinite loops in log tailing caused tests to hang unless properly managed with `backgroundScope` and test dispatchers.
+
+**Test coverage areas**
+- BDD Tests: Verified log loading and entry parsing via `RunCucumberTest`.
+- Integration Tests: Verified multi-tab and interleaving logic.
+- UI Compilation: Ensured all composables compile with the latest versions.
+
 ## Task: README Spruce-up
 **Title**: README Spruce-up
 **Date/time completed**: 2026-05-15 17:40
