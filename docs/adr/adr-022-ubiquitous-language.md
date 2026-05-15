@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-As the LogViewer project grows in complexity, with features like interleaving, structured data, and heuristic template detection, it is essential to have a shared, unambiguous vocabulary. Without a formalized Ubiquitous Language, developers and stakeholders might use different terms for the same concept (e.g., "Merge" vs "Interleave", "Record" vs "Entry"), leading to confusion in communication and inconsistencies in the codebase.
+As the KLogViewer project grows in complexity, with features like interleaving, structured data, and heuristic template detection, it is essential to have a shared, unambiguous vocabulary. Without a formalized Ubiquitous Language, developers and stakeholders might use different terms for the same concept (e.g., "Merge" vs "Interleave", "Record" vs "Entry"), leading to confusion in communication and inconsistencies in the codebase.
 
 ## Decision
 We will establish and maintain a `docs/UBIQUITOUS_LANGUAGE.md` file that serves as the single source of truth for domain terminology. 

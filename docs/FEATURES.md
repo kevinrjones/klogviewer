@@ -1,6 +1,6 @@
 ### State-of-the-Art Review: Desktop Log Viewers
 
-This document reviews existing desktop log viewer applications to derive requirements for the LogViewer project, focusing on shifting from a mobile-style interface to a professional desktop "look and feel."
+This document reviews existing desktop log viewer applications to derive requirements for the KLogViewer project, focusing on shifting from a mobile-style interface to a professional desktop "look and feel."
 
 #### 1. Market Review: Leading Desktop Log Viewers
 
@@ -49,7 +49,7 @@ Based on the gap analysis, the following areas represent significant opportuniti
 4.  **Advanced Filtering:** Implementing a query builder (e.g., `level=ERROR and message contains "Auth"`) rather than simple text matches.
 5.  **Workspace Persistence:** Saving sets of open files, filters, and window positions as a "Workspace" file for rapid context switching.
 
-#### 5. Derived Requirements for LogViewer Desktop Evolution
+#### 5. Derived Requirements for KLogViewer Desktop Evolution
 
 Based on this review, the following requirements are proposed to achieve a professional desktop look and feel:
 

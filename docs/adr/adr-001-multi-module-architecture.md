@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-To ensure a clean separation of concerns and maintainability as the LogViewer project grows, we need a robust architectural structure. A single-module project can lead to tight coupling and leaked implementation details between the domain logic and the UI framework (Compose for Desktop).
+To ensure a clean separation of concerns and maintainability as the KLogViewer project grows, we need a robust architectural structure. A single-module project can lead to tight coupling and leaked implementation details between the domain logic and the UI framework (Compose for Desktop).
 
 ## Decision
 We will adopt a layered multi-module architecture consisting of four primary modules:

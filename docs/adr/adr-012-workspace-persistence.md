@@ -16,7 +16,7 @@ Create a serializable `Workspace` model that includes:
 - UI settings (sidebar state, dark mode, window size).
 
 ### 2. File Format
-Use JSON or TOML for the `.lvp` (LogViewer Project) file format for human readability and ease of versioning.
+Use JSON or TOML for the `.lvp` (KLogViewer Project) file format for human readability and ease of versioning.
 
 ### 3. Recent Workspaces
 Implement a "Recent Workspaces" list in the "File" menu and on the startup screen for quick access.

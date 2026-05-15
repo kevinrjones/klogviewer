@@ -10,7 +10,7 @@
 - [x] Add logging to `FileLogSource` (info/debug/error)
 - [x] Add logging to `SimpleLogParser` (debug)
 - [x] Add logging to `MergedLogSource` (info/error)
-- [x] Add logging to `LogViewerViewModel` (intents/errors)
+- [x] Add logging to `KLogViewerViewModel` (intents/errors)
 - [x] Add startup log to `Main.kt`
 
 ## Verification [x]

@@ -4,13 +4,13 @@
 
 ### 7.1. Foundation & Design System
 - [x] 7.1.1. Initialize Sprint 2 Documentation and Task Tracking
-- [x] 7.1.2. Define "Command-Line Chic" color palettes in `LogViewerColors.kt`
+- [x] 7.1.2. Define "Command-Line Chic" color palettes in `KLogViewerColors.kt`
     - [x] 7.1.2.1. Industrial Dark palette (Background: #121212, Accent: #00A3E0)
     - [x] 7.1.2.2. Clean Light palette
-- [x] 7.1.3. Implement `LogViewerTheme.kt` with Dark/Light mode support
+- [x] 7.1.3. Implement `KLogViewerTheme.kt` with Dark/Light mode support
 - [x] 7.1.4. Configure `JetBrains Mono` as the default monospaced font for log content
-- [x] 7.1.5. Update `LogViewerState` with `isDarkMode` flag
-- [x] 7.1.6. Update `LogViewerViewModel` with `ToggleTheme` intent
+- [x] 7.1.5. Update `KLogViewerState` with `isDarkMode` flag
+- [x] 7.1.6. Update `KLogViewerViewModel` with `ToggleTheme` intent
 - [x] 7.1.7. Refactor `LogList` and `FileSelector` to use theme tokens
 
 ### 7.2. Layout & Components
@@ -19,13 +19,13 @@
     - [x] 7.2.2.1. Display file path
     - [x] 7.2.2.2. Display line count
     - [x] 7.2.2.3. Display encoding
-- [x] 7.2.3. Update `LogViewerScreen.kt` to use `Scaffold` with sidebar and status bar
+- [x] 7.2.3. Update `KLogViewerScreen.kt` to use `Scaffold` with sidebar and status bar
 - [x] 7.2.4. Refactor Top Bar into a clean, integrated header with Search entry
 
 ### 7.3. Interactive Filtering & Search
-- [x] 7.3.1. Extend `LogViewerState` with `searchQuery` and `levelFilters`
-- [x] 7.3.2. Implement `UpdateSearch` and `ToggleLevel` intents in `LogViewerViewModel`
-- [x] 7.3.3. Implement reactive filtering logic in `LogViewerViewModel`
+- [x] 7.3.1. Extend `KLogViewerState` with `searchQuery` and `levelFilters`
+- [x] 7.3.2. Implement `UpdateSearch` and `ToggleLevel` intents in `KLogViewerViewModel`
+- [x] 7.3.3. Implement reactive filtering logic in `KLogViewerViewModel`
 - [x] 7.3.4. Add `LogLevelFilter` group to the Sidebar
 - [x] 7.3.5. Implement real-time search feedback in the Top Bar (highlight matches count)
 

@@ -1,6 +1,6 @@
 # Gap Analysis: Logging Format Support
 
-This document analyzes the differences between various logging formats and the current capabilities of LogViewer, identifying gaps and proposing strategies for handling them.
+This document analyzes the differences between various logging formats and the current capabilities of KLogViewer, identifying gaps and proposing strategies for handling them.
 
 ## 1. Current State Summary
 

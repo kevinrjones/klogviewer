@@ -7,6 +7,7 @@
 - Sprint 2: UI/UX Refinement completed (Command-Line Chic theme, Layout, Filtering).
 - Deepened architecture with reactive `LogSource` streaming.
 - Native UI enhancements for file browsing.
+- Project renamed to KLogViewer (from LogViewer) across all modules, packages, and documentation.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -48,7 +49,7 @@
 - Layered multi-module project structure (`domain`, `core`, `ui`, `app`).
 - Core domain models and Tiny Types for type safety.
 - `LogParser` and initial `LogService` for parsing and loading log files.
-- MVI-based UI layer with `LogViewerViewModel` and Compose components.
+- MVI-based UI layer with `KLogViewerViewModel` and Compose components.
 - BDD (Cucumber) and TDD (JUnit/Strikt) test suites.
 
 **Key decisions**
@@ -62,7 +63,7 @@
 
 **Test coverage areas**
 - `SimpleLogParser`: Unit tests for various log levels and invalid lines.
-- `LogViewerViewModel`: BDD test covering the end-to-end flow of loading a log file and updating the state.
+- `KLogViewerViewModel`: BDD test covering the end-to-end flow of loading a log file and updating the state.
 
 ## Task: Architectural Deepening - Streaming LogSource
 **Title**: LogSource Implementation
@@ -71,7 +72,7 @@
 - `LogSource` repository interface in `:domain`.
 - `FileLogSource` implementation in `:core` using Kotlin Flow.
 - Delta-based `LogUpdate` models for efficient UI updates.
-- Refactored `LogViewerViewModel` to consume streams instead of full lists.
+- Refactored `KLogViewerViewModel` to consume streams instead of full lists.
 
 **Key decisions**
 - Internalized concurrency (`Dispatchers.IO`) within the `LogSource` implementation.
@@ -82,7 +83,7 @@
 
 **Test coverage areas**
 - `FileLogSource`: Integration via BDD tests.
-- `LogViewerViewModel`: Updated BDD steps to handle Flow collection.
+- `KLogViewerViewModel`: Updated BDD steps to handle Flow collection.
 
 ## Task: UI Enhancements - File Browsing
 **Title**: File Browsing Implementation
@@ -100,7 +101,7 @@
 - `AwtWindow` requires careful handling of the `onCloseRequest` to ensure the dialog state is reset in the Composable.
 
 **Test coverage areas**
-- UI components: `FileSelector` and `LogViewerScreen` (verified via manual run and build).
+- UI components: `FileSelector` and `KLogViewerScreen` (verified via manual run and build).
 
 ## Sprint: UI/UX Refinement
 **Title**: Sprint 2 Completion
@@ -169,7 +170,7 @@
 **Title**: Tabs & Interleaving Implementation
 **Date/time completed**: 2026-05-13 18:30
 **What was shipped**
-- Tabbed workspace architecture with `TabState` and `LogViewerState` refactoring.
+- Tabbed workspace architecture with `TabState` and `KLogViewerState` refactoring.
 - Chronological multi-log interleaving via `MergedLogSource`.
 - Source identification badges in the log list.
 - Multi-file selection support in native `FileDialog`.
@@ -232,7 +233,7 @@
 **Key decisions**
 - Used hash-based Hue generation for stable, diverse source colors without a central registry.
 - Implemented `AddToWorkspace` by merging new paths with current tab state and reloading via `MergedLogSource`.
-- Added new integration test suite (`com.logviewer.integration`) to verify multi-tab behavior.
+- Added new integration test suite (`com.klogviewer.integration`) to verify multi-tab behavior.
 
 **Gotchas**
 - Hash-based colors can sometimes produce low-contrast combinations; added fixed saturation and value for better readability.
@@ -255,7 +256,7 @@
 - Unified dialog management via MVI state.
 
 **Key decisions**
-- Migrated FileDialog state to `LogViewerState` to allow triggering from both the Menu Bar and Ribbon.
+- Migrated FileDialog state to `KLogViewerState` to allow triggering from both the Menu Bar and Ribbon.
 - Implemented `RibbonBar` as a group of functional sections (File, View, Filters) for better discoverability.
 - Used a 250dp detail pane for log entry inspection, triggered by row clicks.
 - Reduced row padding and increased information density in `LogList` to meet power-user requirements.
@@ -266,7 +267,7 @@
 - Icons for `ViewSidebar` were deprecated; moved towards modern variants where suggested by compiler.
 
 **Test coverage areas**
-- `LogViewerViewModel`: Verified new intents for selection and dialog management.
+- `KLogViewerViewModel`: Verified new intents for selection and dialog management.
 - Integration: Verified that state changes (filtering, selection) work correctly across the new UI components.
 
 ## Task: Enhanced Grid and Tailing
@@ -296,7 +297,7 @@
 **What was shipped**
 - Integrated SLF4J + Logback + logstash-logback-encoder with kotlin-logging facade.
 - Configured `logback.xml` with console and rolling JSON appenders.
-- Instrumented `FileLogSource`, `SimpleLogParser`, `MergedLogSource`, and `LogViewerViewModel` with extensive logging.
+- Instrumented `FileLogSource`, `SimpleLogParser`, `MergedLogSource`, and `KLogViewerViewModel` with extensive logging.
 - Added explicit error logging for all failure paths in the log loading and parsing pipeline.
 - Implemented high-density UI with horizontal scrolling and consolidated sidebar filters (Sprint 6).
 
@@ -411,7 +412,7 @@
 - Reducing padding to 0dp requires adjusting line-height or font-size if text appears too cramped; maintained 12sp for legibility.
 
 **Test coverage areas**
-- `LogViewerViewModel`: Verified `levelCounts` calculation.
+- `KLogViewerViewModel`: Verified `levelCounts` calculation.
 - UI Layout: Verified through manual inspection and compilation.
 
 ## Task: UI Refinements and Polish
@@ -550,7 +551,7 @@
 - Real-time persistence: UI layout and filter changes are saved to `preferences.json` as they happen.
 
 **Key decisions**
-- Refactored `LogViewerViewModel` to support background loading of logs for all windows during initialization, ensuring a seamless startup experience.
+- Refactored `KLogViewerViewModel` to support background loading of logs for all windows during initialization, ensuring a seamless startup experience.
 - Extended `UserPreferences` with serializable `TabPreference` and `WindowPreference` structures to capture the complex UI state.
 - Decided to trigger `savePreferences` on layout and filter changes to prevent data loss in case of unexpected application closure.
 
@@ -683,7 +684,7 @@
 **Title**: Split Window Header Refinement (File Path Visibility)
 **Date/time completed**: 2026-05-15 07:45
 **What was shipped**
-- Updated `LogViewerScreen.kt` to always display the fully qualified file path in each split window's header.
+- Updated `KLogViewerScreen.kt` to always display the fully qualified file path in each split window's header.
 - Aligned file path to the left and window controls (Active badge, Close button) to the right.
 - Ensured the header row is visible even for single splits if a file is loaded.
 
@@ -763,7 +764,7 @@
 - Passed `filterQueries` and `isDarkMode` to the details pane to ensure visual consistency with the main list.
 
 **Gotchas**
-- Adding new parameters to `LogEntryDetails` required updating the call site in `LogViewerScreen` and importing `LogLevel` in the component file.
+- Adding new parameters to `LogEntryDetails` required updating the call site in `KLogViewerScreen` and importing `LogLevel` in the component file.
 - `LogHighlighter.highlight` returns an `AnnotatedString` which is correctly handled by the `Text` composable, but it needs current theme context.
 
 **Test coverage areas**
@@ -946,3 +947,26 @@
 - `PersistenceIntegrationTest` (verified state persistence)
 - `InterleavingIntegrationTest` (verified no regressions in log merging)
 - Manual UI verification for icon tinting and tooltip correctness.
+
+## Task: Project Renaming
+**Title**: Project Renaming to KLogViewer
+**Date/time completed**: 2026-05-15 17:30
+**What was shipped**
+- Renamed project to KLogViewer in `settings.gradle.kts` and `app/build.gradle.kts`.
+- Refactored package structure from `com.logviewer` to `com.klogviewer` across all modules.
+- Renamed core classes and components: `LogViewerViewModel` -> `KLogViewerViewModel`, `LogViewerState` -> `KLogViewerState`, etc.
+- Updated all references in code, tests, and documentation.
+- Renamed internal log files and preference keys where applicable.
+
+**Key decisions**
+- Chose "KLogViewer" as the new name to highlight the Kotlin-first nature of the project.
+- Performed a deep rename of packages and symbols to ensure full consistency and avoid legacy "LogViewer" references in the codebase.
+- Maintained "log viewer" as a descriptive term in prose while using "KLogViewer" as the product name.
+
+**Gotchas**
+- Renaming packages required updating `build.gradle.kts` files and all import statements across the project.
+- AWT `FileDialog` and window titles needed explicit updates to the new brand.
+
+**Test coverage areas**
+- Build verification: Ensured all modules compile and link correctly under the new name.
+- Integration/BDD tests: Verified that all tests pass with the new package structure.

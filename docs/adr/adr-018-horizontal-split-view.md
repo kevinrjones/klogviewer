@@ -16,7 +16,7 @@ We have refactored the UI state and components to support a flexible split view 
 
 2.  **UI Updates**:
     *   Added a "Split Horizontal" button to the `FilterBar`.
-    *   Updated `LogViewerScreen` to render multiple `LogWindow` instances in a vertical stack (creating horizontal splits).
+    *   Updated `KLogViewerScreen` to render multiple `LogWindow` instances in a vertical stack (creating horizontal splits).
     *   Implemented window focus logic: clicking a window makes it active, and the `FilterBar`/`Sidebar` controls are then tied to that window.
     *   Added a close button to individual split windows to allow collapsing them.
 

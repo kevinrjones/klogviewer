@@ -4,7 +4,7 @@
 Accepted
 
 ## Context
-The LogViewer application needs a robust logging mechanism to monitor its own internal state, debug issues, and track error events. Given the project's use of Kotlin and its professional aspirations, we need a logging solution that is idiomatic, high-performance, and supports structured logging for potential integration with external observability tools.
+The KLogViewer application needs a robust logging mechanism to monitor its own internal state, debug issues, and track error events. Given the project's use of Kotlin and its professional aspirations, we need a logging solution that is idiomatic, high-performance, and supports structured logging for potential integration with external observability tools.
 
 ## Decision
 We will implement logging using the following stack:

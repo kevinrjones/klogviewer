@@ -1,7 +1,7 @@
 # Sprint 8: Connectivity & Remote Sources
 
 ## 1. Goal
-Enable LogViewer to ingest logs from distributed environments by supporting SFTP/SSH, Cloud Storage, and direct network streams.
+Enable KLogViewer to ingest logs from distributed environments by supporting SFTP/SSH, Cloud Storage, and direct network streams.
 
 ## 2. Scope
 
@@ -15,7 +15,7 @@ Enable LogViewer to ingest logs from distributed environments by supporting SFTP
 
 ### 2.3. Network Appenders
 - Implement a TCP/UDP listener in `:core` to receive logs from remote appenders.
-- Define a lightweight protocol for streaming logs directly to LogViewer.
+- Define a lightweight protocol for streaming logs directly to KLogViewer.
 
 ### 2.4. Connection Manager
 - Build a UI for managing saved connections and credentials.
@@ -28,5 +28,5 @@ Enable LogViewer to ingest logs from distributed environments by supporting SFTP
 ## 4. Definition of Done
 - [ ] Users can open and tail a log file from a remote server via SFTP.
 - [ ] Logs can be read from an AWS S3 bucket.
-- [ ] LogViewer can receive and display logs sent over the network (TCP/UDP).
+- [ ] KLogViewer can receive and display logs sent over the network (TCP/UDP).
 - [ ] Connections can be saved and reused securely.

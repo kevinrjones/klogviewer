@@ -4,7 +4,7 @@
 Proposed
 
 ## Context
-As we support multiple concurrent log views, a single state for logs in `LogViewerState` is no longer sufficient. We need a way to manage multiple independent views, each with its own file(s), filters, and UI state.
+As we support multiple concurrent log views, a single state for logs in `KLogViewerState` is no longer sufficient. We need a way to manage multiple independent views, each with its own file(s), filters, and UI state.
 
 ## Decision
 We will refactor the MVI state to be "Workspace-Centric", supporting a list of tabs.
@@ -20,14 +20,14 @@ A new `TabState` data class will be introduced to encapsulate all data specific 
 - `scrollPosition: Int` (Optional enhancement)
 - `sourceIds: List<String>` (The files contributing to this tab)
 
-### 2. LogViewerState Refactoring
-`LogViewerState` will now hold:
+### 2. KLogViewerState Refactoring
+`KLogViewerState` will now hold:
 - `tabs: List<TabState>`
 - `activeTabId: String?`
 - Global settings (e.g., `isDarkMode`, `isSidebarExpanded`)
 
 ### 3. Navigation and Lifecycle
-- `LogViewerIntent` will include `AddTab`, `CloseTab`, and `SwitchTab`.
+- `KLogViewerIntent` will include `AddTab`, `CloseTab`, and `SwitchTab`.
 - Opening a new file via the UI will either create a new tab or add to the current one based on user choice (e.g., Shift+Click to interleave).
 
 ## Consequences

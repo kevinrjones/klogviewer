@@ -4,7 +4,7 @@
 Proposed
 
 ## Context
-Standard log files are often plain text, but modern application logs (e.g., Serilog, Logback with JSON encoder) are increasingly structured as JSON or XML. Currently, LogViewer treats every line as a single string, which limits the ability to filter by specific fields or inspect complex nested objects.
+Standard log files are often plain text, but modern application logs (e.g., Serilog, Logback with JSON encoder) are increasingly structured as JSON or XML. Currently, KLogViewer treats every line as a single string, which limits the ability to filter by specific fields or inspect complex nested objects.
 
 ## Decision
 We will implement first-class support for structured logs, allowing the application to parse, display, and query structured data.

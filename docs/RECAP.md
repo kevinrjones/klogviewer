@@ -4,7 +4,7 @@
 
 ### Recap of Sprint 1: Walking Skeleton Completion
 
-The first phase of the LogViewer project has been successfully completed, establishing a "Walking Skeleton" that proves the end-to-end flow from reading a log file to displaying it in a reactive UI.
+The first phase of the KLogViewer project has been successfully completed, establishing a "Walking Skeleton" that proves the end-to-end flow from reading a log file to displaying it in a reactive UI.
 
 #### Core Achievements:
 - **Architecture & Infrastructure**: 
@@ -15,7 +15,7 @@ The first phase of the LogViewer project has been successfully completed, establ
     - Implemented a `SimpleLogParser` for standard Log4j-like text formats and a `LogService` for functional file loading.
 - **UI Layer**:
     - Built a predictable UI using the MVI (Model-View-Intent) pattern with Compose for Desktop.
-    - Created a `LogViewerViewModel` that manages immutable state and processes user intents (loading files, clearing logs).
+    - Created a `KLogViewerViewModel` that manages immutable state and processes user intents (loading files, clearing logs).
     - Developed reactive UI components with support for log level color coding (e.g., Blue for INFO, Red for ERROR).
 - **Quality Assurance**:
     - Applied TDD to the log parsing logic using JUnit 5 and Strikt.
@@ -34,8 +34,8 @@ Implemented native file browsing capability to allow users to easily select log 
     - Added a "Browse" button to the `FileSelector` header.
     - Integrated `java.awt.FileDialog` using Compose's `AwtWindow` to provide a native file selection experience.
 - **MVI Architecture**:
-    - Added `LogViewerIntent.SelectPath` to handle file selection without immediate loading, keeping the UI state in sync.
-    - Updated `LogViewerViewModel` to handle the new intent and update the `filePath` in the state.
+    - Added `KLogViewerIntent.SelectPath` to handle file selection without immediate loading, keeping the UI state in sync.
+    - Updated `KLogViewerViewModel` to handle the new intent and update the `filePath` in the state.
 - **Maintenance**:
     - Updated `TASKS.md` and `project_memory.md` to reflect the completion of this feature.
 
@@ -200,10 +200,10 @@ Ensured that all log rows stretch to the width of the widest visible row, provid
 Implemented automatic scrolling to the end of the log list when new entries are added, controlled by an "Auto-scroll" toggle in the toolbar.
 
 #### Changes:
-- **LogViewerState.kt**: Added `isAutoScrollEnabled` flag to `LogWindow` (default: true).
-- **LogViewerIntent.kt**: Added `ToggleAutoScroll` intent.
+- **KLogViewerState.kt**: Added `isAutoScrollEnabled` flag to `LogWindow` (default: true).
+- **KLogViewerIntent.kt**: Added `ToggleAutoScroll` intent.
 - **UserPreferences.kt**: Updated `WindowPreference` to persist the auto-scroll state.
-- **LogViewerViewModel.kt**: Implemented logic to toggle the state and persist changes.
+- **KLogViewerViewModel.kt**: Implemented logic to toggle the state and persist changes.
 - **LogList.kt**: Added a `LaunchedEffect` that monitors `logs.size` and calls `verticalScrollState.scrollToItem(logs.size - 1)` when auto-scroll is enabled and new logs arrive.
 - **FilterBar.kt**: Added a toggle button for auto-scroll with visual feedback (tinting when active) and tooltips.
 - **PersistenceIntegrationTest.kt**: Added a test case to verify that the auto-scroll state is correctly persisted across sessions.
@@ -223,7 +223,7 @@ Completed the analysis and planning phase for the desktop transition and impleme
 
 #### Analysis & Roadmap:
 - **SOTA & Gap Analysis**: Conducted an industry review (LogViewPlus, Tailviewer, Sematext) and established a gap analysis in `docs/FEATURES.md`. Defined requirements for a professional desktop UI, including ribbon bars and high-density grids.
-- **Product Roadmap**: Defined the evolution of LogViewer through Sprints 4-8. Created comprehensive sprint plans (`docs/sprints/sprint-4.md` to `sprint-8.md`) and architectural blueprints via 5 new ADRs (`adr-009` to `adr-013`) covering structured data, connectivity, visualization, persistence, and extensibility.
+- **Product Roadmap**: Defined the evolution of KLogViewer through Sprints 4-8. Created comprehensive sprint plans (`docs/sprints/sprint-4.md` to `sprint-8.md`) and architectural blueprints via 5 new ADRs (`adr-009` to `adr-013`) covering structured data, connectivity, visualization, persistence, and extensibility.
 - **Architectural Shift**: Authored `adr-008-desktop-centric-ui.md` to guide the move from mobile Material Design to a multi-pane, ribbon-based desktop workspace.
 
 #### Core Implementation (Sprint 3):
@@ -232,7 +232,7 @@ Completed the analysis and planning phase for the desktop transition and impleme
 - **UI & UX**:
     - Added a native `TabRow` for workspace navigation.
     - Enhanced the log list with source identification badges.
-    - Updated `LogViewerViewModel` to manage concurrent loading jobs and tab lifecycle.
+    - Updated `KLogViewerViewModel` to manage concurrent loading jobs and tab lifecycle.
 - **Quality Assurance**: Verified the interleaving logic with unit tests (`MergedLogSourceTest`) and ensured regression safety by updating the BDD integration suite.
 
 ## 09:10
@@ -245,7 +245,7 @@ Completed the missing pieces of the professional desktop experience by implement
 - **Local File Tailing**: Enhanced `FileLogSource` to watch for local file changes. Implemented an efficient polling mechanism that detects appends and truncations, emitting reactive `LogUpdate` events.
 - **Real-time Multi-Log Support**: Refactored `MergedLogSource` to use `channelFlow`, enabling concurrent streaming from multiple log sources. Appends from any source are now unified in the interleaved view in real-time.
 - **Professional Grid UI**: Added visible column headers (Line #, Timestamp, Level, Message) to the `LogList` component, fulfilling the "High-Density Grid" requirement derived from the SOTA review.
-- **UI Bug Fixes**: Corrected a layout issue in `LogViewerScreen` where the main content area was not correctly utilizing remaining space in the `Row` when the sidebar was expanded.
+- **UI Bug Fixes**: Corrected a layout issue in `KLogViewerScreen` where the main content area was not correctly utilizing remaining space in the `Row` when the sidebar was expanded.
 
 #### Quality Assurance:
 - **New Unit Tests**: Implemented `FileLogTailingTest` to verify that file appends are correctly detected and emitted.
@@ -280,7 +280,7 @@ Added the ability to view log files in reverse order (newest entries at the top)
 
 #### Changes:
 - **MVI State**: Added `isReversed` flag to `TabState`.
-- **Sorting Logic**: Updated `LogViewerViewModel` to apply `reversed()` to filtered logs when the toggle is active.
+- **Sorting Logic**: Updated `KLogViewerViewModel` to apply `reversed()` to filtered logs when the toggle is active.
 - **UI**: Added a "Reverse Order" toggle button to the `RibbonBar` under the "View" group.
 - **Persistence**: The sort order is maintained per tab and respected when new logs are appended in real-time.
 

@@ -1,7 +1,7 @@
 # Sprint 11: Extensibility & Platform Maturity
 
 ## 1. Goal
-Finalize LogViewer as a stable, professional platform by implementing a plugin API, optimizing for massive datasets, and providing native installers.
+Finalize KLogViewer as a stable, professional platform by implementing a plugin API, optimizing for massive datasets, and providing native installers.
 
 ## 2. Scope
 
@@ -27,6 +27,6 @@ Finalize LogViewer as a stable, professional platform by implementing a plugin A
 
 ## 4. Definition of Done
 - [ ] Third-party plugins can be loaded and executed by the application.
-- [ ] LogViewer remains responsive when viewing files larger than 10GB.
+- [ ] KLogViewer remains responsive when viewing files larger than 10GB.
 - [ ] Native installers are generated for all three major platforms.
 - [ ] Auto-update functionality is verified.

@@ -1,6 +1,6 @@
 # Ubiquitous Language
 
-This document defines the core terminology used across the LogViewer project to ensure a shared understanding between developers, stakeholders, and the codebase.
+This document defines the core terminology used across the KLogViewer project to ensure a shared understanding between developers, stakeholders, and the codebase.
 
 ## Core Domain Concepts
 

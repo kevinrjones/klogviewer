@@ -1,4 +1,4 @@
-rootProject.name = "LogViewer"
+rootProject.name = "KLogViewer"
 
 include(":domain")
 include(":core")

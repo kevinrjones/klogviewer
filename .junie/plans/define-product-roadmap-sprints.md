@@ -5,7 +5,7 @@ sessionId: session-260513-112009-197h
 # Requirements
 
 ### Overview & Goals
-The objective is to define a clear, actionable roadmap that transitions LogViewer from its current "Desktop Transition" state (Sprint 3) to a "complete" professional desktop log analysis product. 
+The objective is to define a clear, actionable roadmap that transitions KLogViewer from its current "Desktop Transition" state (Sprint 3) to a "complete" professional desktop log analysis product. 
 
 This roadmap addresses the gaps identified in the State-of-the-Art (SOTA) review, including structured data support, remote connectivity, statistical visualization, and extensibility.
 

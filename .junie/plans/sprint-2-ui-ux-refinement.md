@@ -23,10 +23,10 @@ The third sprint introduces multi-log support, allowing users to analyze multipl
 # Technical Design
 
 ### Current Implementation
-The application currently supports viewing a single log file at a time. The `LogViewerState` holds a single list of logs, and the `LogViewerViewModel` manages a single loading job.
+The application currently supports viewing a single log file at a time. The `KLogViewerState` holds a single list of logs, and the `KLogViewerViewModel` manages a single loading job.
 
 ### Key Decisions
-- **Workspace-Centric State**: `LogViewerState` will be refactored to hold a list of `TabState` objects, each representing a Tab.
+- **Workspace-Centric State**: `KLogViewerState` will be refactored to hold a list of `TabState` objects, each representing a Tab.
 - **LogEntry Attribution**: `LogEntry` will be updated to include an optional `sourceId` (filename) to track its origin.
 - **Chronological Merging**: A chronological merge algorithm based on `LogTimestamp` will be used to interleave entries.
 - **Dynamic Coloring**: Sources in an interleaved view will be assigned colors from a predefined palette.
@@ -43,8 +43,8 @@ The application currently supports viewing a single log file at a time. The `Log
 - **Core (`core/source`)**:
     - `MergedLogSource`: A new source that combines multiple `observeLogs` streams and merges them chronologically.
 - **MVI (`ui/mvi`)**:
-    - Refactor `LogViewerState` to support `tabs: List<TabState>` and `activeTabId`.
-    - Add `LogViewerIntent.AddTab`, `LogViewerIntent.CloseTab`, `LogViewerIntent.SwitchTab`.
+    - Refactor `KLogViewerState` to support `tabs: List<TabState>` and `activeTabId`.
+    - Add `KLogViewerIntent.AddTab`, `KLogViewerIntent.CloseTab`, `KLogViewerIntent.SwitchTab`.
 - **Components (`ui/components`)**:
     - `TabRow.kt`: Header component for tab navigation.
     - `SourceBadge.kt`: Visual label for log entries.
@@ -53,10 +53,10 @@ The application currently supports viewing a single log file at a time. The `Log
 ### Architecture Diagram
 ```mermaid
 graph TD
-    UI[LogViewerScreen] --> TR[TabRow]
+    UI[KLogViewerScreen] --> TR[TabRow]
     UI --> LL[LogList]
     LL --> LB[SourceBadge]
-    UI --> VM[LogViewerViewModel]
+    UI --> VM[KLogViewerViewModel]
     VM --> TS[TabState]
     VM --> MLS[MergedLogSource]
     MLS --> FLS[FileLogSource 1..N]
@@ -87,7 +87,7 @@ Establish the formal plan and architectural foundation.
 Refactor state management and UI to support multiple concurrent views.
 
 - Define `TabState` to encapsulate tab-specific data (logs, filters).
-- Update `LogViewerState` with `tabs` list and `activeTabId`.
+- Update `KLogViewerState` with `tabs` list and `activeTabId`.
 - Create `TabRow` component for navigating between tabs.
 - Implement `AddTab`, `CloseTab`, and `SwitchTab` intents.
 
@@ -96,7 +96,7 @@ Add support for merging multiple log streams.
 
 - Update `LogEntry` to include `sourceId`.
 - Implement `MergedLogSource` in `:core` for chronological merging.
-- Update `LogViewerViewModel` to handle multi-file selection and interleaved loading.
+- Update `KLogViewerViewModel` to handle multi-file selection and interleaved loading.
 - Ensure search and filtering are applied to the merged stream.
 
 ###   Step 4: Source Identification and UI Polish

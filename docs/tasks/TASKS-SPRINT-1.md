@@ -20,8 +20,8 @@
     - [x] 3.3.2. Implement parsing logic for simple text logs `[x]`
 
 ## 4. Presentation Layer (MVI)
-- [x] 4.1. Define `LogViewerState`, `LogViewerIntent`, and `LogViewerEvent` in `ui` module `[x]`
-- [x] 4.2. Implement `LogViewerViewModel` handling log loading intents `[x]`
+- [x] 4.1. Define `KLogViewerState`, `KLogViewerIntent`, and `KLogViewerEvent` in `ui` module `[x]`
+- [x] 4.2. Implement `KLogViewerViewModel` handling log loading intents `[x]`
 - [x] 4.3. Create Compose UI components:
     - [x] 4.3.1. File selector header `[x]`
     - [x] 4.3.2. Log list with color coding `[x]`

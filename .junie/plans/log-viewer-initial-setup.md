@@ -38,7 +38,7 @@ The goal is to create a performant, cross-platform (Desktop) log viewer using Ko
 The following content will be used for the requirements file:
 
 ```markdown
-# LogViewer High-Level Requirements
+# KLogViewer High-Level Requirements
 
 ## 1. File Monitoring
 - **Read from Disk**: Ability to open and load existing log files.
