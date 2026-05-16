@@ -73,3 +73,23 @@ jobs:
       with:
         name: KLogViewer-${{ matrix.artifact-suffix }}
         path: release-artifacts/*
+
+    - name: Generate SHA256 Checksums
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      run: |
+        cd release-artifacts
+        sha256sum * > checksums.txt
+
+    - name: Publish GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v3
+      with:
+        name: KLogViewer ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+        draft: false
+        prerelease: ${{ contains(github.ref_name, '-') }}
+        files: |
+          release-artifacts/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
