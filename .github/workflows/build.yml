@@ -35,7 +35,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v5
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -69,7 +69,7 @@ jobs:
         Compress-Archive -Path ${{ matrix.dist-path }}/* -DestinationPath release-artifacts/KLogViewer-${{ matrix.artifact-suffix }}-executable.zip
 
     - name: Upload Artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: KLogViewer-${{ matrix.artifact-suffix }}
         path: release-artifacts/*
