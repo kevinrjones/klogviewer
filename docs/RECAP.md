@@ -69,150 +69,6 @@ Finalized Sprint 1 by updating all tracking documents to reflect its completion 
 - **Status Alignment**: Ensured `TASKS.md` and project history are fully synchronized with the actual implementation state.
 
 
-# 2026-05-15
-
-## 08:55
-
-### Sprint 7 Core: Advanced Log Parsing Implementation
-
-Successfully implemented the foundational components for advanced log parsing, significantly expanding the range of supported log formats.
-
-#### Core Achievements:
-- **Flexible Level Normalization**: Enhanced `LevelMapper` to support abbreviated names (`INF`, `WRN`, `ERR`), alternative terminology (`VERBOSE`, `NOTICE`, `SEVERE`), and numeric levels (Syslog RFC 5424).
-- **Timezone & Epoch Support**: Improved `TimestampParser` to handle timezone offsets and Unix Epoch timestamps (seconds and milliseconds), providing robust time parsing for cloud and legacy logs.
-- **Pluggable Parser Strategy**: 
-    - Implemented `ParserRegistry` with default templates for `ISO8601`, `Apache`, `Syslog`, and `CSV`.
-    - Developed `LogfmtParser` for structured key-value log formats common in the Go/Heroku ecosystem.
-- **Heuristic Auto-Detection**: Enhanced `HeuristicProbe` to automatically detect `logfmt` and JSON formats, and select the best template from the registry based on file content.
-- **Multiline Aggregation**: Integrated `MultilineProcessor` to correctly group stack traces and indented content with their parent log entries.
-
-#### Quality Assurance:
-- **Comprehensive Testing**: Created `GapAnalysisTest.kt` verifying 14+ specific log variations across levels, timestamps, structures, and multiline logs, ensuring 100% coverage of identified gaps.
-- **Robustness**: Fixed level detection edge cases where metadata (like thread names) in brackets could interfere with parsing.
-- **Test Suite Pass**: All 20+ unit and integration tests across the project are passing, ensuring no regressions in the core parsing engine.
-
-## 09:35
-
-### UI Refinement: Resizable Columns and Persistence
-
-Enhanced the log viewing experience by allowing users to interactively resize column widths, with full persistence across sessions.
-
-#### Core Achievements:
-- **Interactive Resizing**: Implemented drag-to-resize functionality for the `LogList` grid. Users can now adjust column widths by dragging header edges, with visual cursor feedback.
-- **Dynamic Width Management**: Transitioned from fixed/flexible column widths to a state-driven model where `LogWindow` tracks specific widths for each column.
-- **Workspace Persistence**: Extended the user preference system to save and restore custom column widths per window, ensuring the user's workspace layout is preserved across application restarts.
-- **MVI Architecture**: Integrated the resizing logic into the MVI flow via a new `UpdateColumnWidth` intent, ensuring clean state propagation and persistence triggers.
-- **UI UX Polish**: Added minimum width constraints to prevent column disappearance and ensured perfect alignment between headers and log entry rows.
-
-#### Quality Assurance:
-- **Integration Testing**: Added a specific test case to `PersistenceIntegrationTest` to verify that column width changes are correctly saved to the preference file and restored on startup.
-- **Regression Pass**: Verified that the new resizable layout works correctly with existing features like split views, filtering, and multi-log interleaving.
-
-## 14:29
-
-### UI Robustness: Large Log Entry Handling
-
-Implemented safety measures to prevent application crashes when loading log files with extremely long lines or humongous entries.
-
-#### Core Achievements:
-- **Constraint Capping**: Added a 10,000.dp maximum width constraint to the log message column in `LogList`. This prevents Compose's `Constraints` bit-packing from overflowing when rendered inside a horizontal scroll area.
-- **Intelligent Truncation**:
-    - Truncated log messages to 10,000 characters in the `LogList` view for improved performance and layout stability.
-    - Truncated log content to 50,000 characters in the `LogEntryDetails` pane to prevent vertical size overflow crashes while still providing ample detail.
-    - Truncated general metadata fields to 10,000 characters in the details pane.
-- **Resize Protection**: Capped manual column resizing to a maximum of 10,000.dp to ensure the UI remains within safe measurement limits.
-- **Performance Optimization**: Reduced the overhead of running complex regex highlighting on extremely large strings by applying truncation before processing.
-
-#### Quality Assurance:
-- **Build Verification**: Confirmed that the project builds successfully with the new safety logic.
-- **Regression Pass**: Verified that normal-sized logs continue to display correctly without any visible truncation.
-
-## 15:15
-
-### Feature: Multi-Log Visual Differentiation
-
-Implemented visual indicators to help users distinguish between different log files when they are interleaved in the same window.
-
-#### Core Achievements:
-- **Source Badges**: Added colored dots in the log grid's gutter to identify the source of each entry.
-- **Background Shading**: Implemented alternating pale grey backgrounds for log entries based on their source, facilitating visual grouping during interleaving.
-- **Dynamic Gutter**: The gutter width now adapts automatically (50dp to 60dp) to accommodate badges only when multiple sources are present, maximizing screen space for single-file views.
-- **ID Consistency**: Updated `FileLogSource` to use full file paths as `sourceId`, ensuring reliable mapping between entries and UI-defined sources even when files have identical names.
-
-#### Quality Assurance:
-- **Integration Tests**: Updated and verified `MergedLogSourceTest` and `InterleavingIntegrationTest` to account for path-based source identification.
-- **UI Alignment**: Verified that headers and rows remain perfectly aligned by using shared gutter width logic.
-- **Build Verification**: Confirmed project builds successfully.
-
-## 15:40
-
-### UI Refinement: Full-Width Log Entry Backgrounds
-
-Fixed a layout issue where log entry background colors and selection highlights would only cover the text area rather than extending to the full width of the window/scrollable area.
-
-#### Changes:
-- **LogList.kt**: Applied `Modifier.fillMaxWidth()` to the `LogEntryRow` container and its internal `Row`.
-- **LogList.kt**: Implemented `Modifier.weight(1f)` for the final column ("Message") to ensure it occupies all remaining horizontal space when not manually resized, aligning its behavior with the header.
-- **Consistency**: Verified that rows and headers now share identical width distribution logic, ensuring perfect vertical alignment and full-width background coverage.
-
-#### Verification:
-- **Build Pass**: Confirmed that the project builds successfully.
-- **Regression Pass**: Verified that existing integration tests for interleaving and sorting continue to pass.
-
-## 15:55
-
-### Fix: Message Column Visibility Regression
-
-Resolved a regression where the "Message" column would disappear when the total width of columns exceeded the viewport width.
-
-#### Changes:
-- **LogList.kt**: Introduced `BoxWithConstraints` to obtain the viewport width (`maxWidth`).
-- **LogList.kt**: Replaced `Modifier.fillMaxWidth()` with `Modifier.widthIn(min = viewportWidth)` on rows and headers. This allows items to be at least as wide as the viewport while still growing to accommodate overflowing content.
-- **LogList.kt**: Replaced `Modifier.weight(1f)` on the last column with a dynamic `widthIn(min = minWidth)` calculation. The `minWidth` is set to fill the remaining viewport space but is capped by the actual content width (via intrinsic behavior) and a safety max of 10,000dp.
-- **Robustness**: Ensured that background colors and selection highlights still cover the full scrollable width by applying the min-width constraint to the root containers of each row.
-
-#### Verification:
-- **Build Pass**: Project builds successfully.
-- **Integration Tests**: `InterleavingIntegrationTest` and `LogSortingTest` pass.
-- **Layout Logic**: Verified via code analysis that `weight(1f)` is no longer squashing columns and that `widthIn(min = viewportWidth)` maintains the full-width background requirement.
-
-## 16:15
-
-### UI Refinement: Synchronized Row Widths for Full-Width Backgrounds
-
-Ensured that all log rows stretch to the width of the widest visible row, providing consistent background color and selection highlight coverage across the entire horizontal scrollable area.
-
-#### Changes:
-- **LogList.kt**: Implemented `widestRowWidth` state in `LogList` to track the maximum width among composed log entries.
-- **LogList.kt**: Applied `onSizeChanged` to each `LogEntryRow` to dynamically update the shared `widestRowWidth`.
-- **LogList.kt**: Updated `LogListHeader` and `LogEntryRow` to use the maximum of the viewport width and the `widestRowWidth` as their minimum width.
-- **Visual Consistency**: This ensures that when a long message extends the horizontal scroll range, shorter rows grow to match, filling the background colors to the edge.
-
-#### Verification:
-- **Build Pass**: Project builds successfully.
-- **Integration Tests**: `InterleavingIntegrationTest` and `LogSortingTest` pass.
-- **Layout Verification**: Confirmed via code analysis that the "Message" column's dynamic width calculation correctly fills the expanded row width.
-
-## 15:15
-
-### Feature: Automatic Scrolling (Tail)
-
-Implemented automatic scrolling to the end of the log list when new entries are added, controlled by an "Auto-scroll" toggle in the toolbar.
-
-#### Changes:
-- **KLogViewerState.kt**: Added `isAutoScrollEnabled` flag to `LogWindow` (default: true).
-- **KLogViewerIntent.kt**: Added `ToggleAutoScroll` intent.
-- **UserPreferences.kt**: Updated `WindowPreference` to persist the auto-scroll state.
-- **KLogViewerViewModel.kt**: Implemented logic to toggle the state and persist changes.
-- **LogList.kt**: Added a `LaunchedEffect` that monitors `logs.size` and calls `verticalScrollState.scrollToItem(logs.size - 1)` when auto-scroll is enabled and new logs arrive.
-- **FilterBar.kt**: Added a toggle button for auto-scroll with visual feedback (tinting when active) and tooltips.
-- **PersistenceIntegrationTest.kt**: Added a test case to verify that the auto-scroll state is correctly persisted across sessions.
-
-#### Verification:
-- **Build Pass**: Project builds successfully.
-- **Unit/Integration Tests**: `PersistenceIntegrationTest` and `InterleavingIntegrationTest` pass.
-- **UI Logic**: Confirmed that the auto-scroll toggle correctly influences the list's scrolling behavior via state-driven `LaunchedEffect`.
-
 # 2026-05-14
 
 ## 08:11
@@ -318,3 +174,249 @@ Formalized the architectural decisions for the next phase of log parsing.
 - **ADR 019: Template-based Parsing**: Decision to use a `ParserRegistry` with regex templates, `LevelMapper`, and heuristic auto-detection.
 - **ADR 020: Multiline Aggregation**: Decision to implement a `MultilineProcessor` at the ingestion layer for stack trace support.
 - **Traceability**: Linked Sprint 7 technical tasks to these new architectural foundations.
+
+
+# 2026-05-15
+
+## 07:15
+
+### Core: Flexible Level Mapping Implementation
+
+Implemented a robust `LevelMapper` to normalize diverse log level formats from various logging frameworks.
+
+#### Core Achievements:
+- **Normalization**: Supports abbreviations (DBUG, INF, WRN, ERR, FTL), alternative terminology (TRACE, INFORMATION, WARNING, SEVERE, CRITICAL), and numeric Syslog levels (0-7).
+- **Flexibility**: Strip common wrappers like brackets `[]` and parentheses `()` automatically.
+- **Integration**: Integrated into `SimpleLogParser` to ensure consistent color-coding and filtering across all strategies.
+
+## 07:35
+
+### Core: Parsing Robustness (Timezones and Metadata)
+
+Enhanced parsing logic to handle complex log headers and ensure reliable sorting.
+
+#### Core Achievements:
+- **Timezone Support**: Added support for ISO8601 offsets (e.g., `+01:00`) in `TimestampParser`.
+- **Metadata Fallback**: Improved `TemplateLogParser` to identify log levels even when preceded by optional metadata like thread names or category tags.
+- **Stability**: Resolved a race condition in `LogSortingTest` to ensure predictable integration test results.
+
+## 07:45
+
+### UI Refinement: Split Window Header Enhancements
+
+Improved workspace context by ensuring file paths are always visible in multi-log environments.
+
+#### Changes:
+- **Visibility**: Updated `LogWindow` headers to display the fully qualified file path, ensuring users can distinguish between similar logs in different splits.
+- **Layout**: Optimized header space by left-aligning the path and right-aligning window controls.
+
+## 08:55
+
+### Sprint 7 Core: Advanced Log Parsing Implementation
+
+Successfully implemented the foundational components for advanced log parsing, significantly expanding the range of supported log formats.
+
+#### Core Achievements:
+- **Flexible Level Normalization**: Enhanced `LevelMapper` to support abbreviated names (`INF`, `WRN`, `ERR`), alternative terminology (`VERBOSE`, `NOTICE`, `SEVERE`), and numeric levels (Syslog RFC 5424).
+- **Timezone & Epoch Support**: Improved `TimestampParser` to handle timezone offsets and Unix Epoch timestamps (seconds and milliseconds), providing robust time parsing for cloud and legacy logs.
+- **Pluggable Parser Strategy**: 
+    - Implemented `ParserRegistry` with default templates for `ISO8601`, `Apache`, `Syslog`, and `CSV`.
+    - Developed `LogfmtParser` for structured key-value log formats common in the Go/Heroku ecosystem.
+- **Heuristic Auto-Detection**: Enhanced `HeuristicProbe` to automatically detect `logfmt` and JSON formats, and select the best template from the registry based on file content.
+- **Multiline Aggregation**: Integrated `MultilineProcessor` to correctly group stack traces and indented content with their parent log entries.
+
+## 09:35
+
+### UI Refinement: Resizable Columns and Persistence
+
+Enhanced the log viewing experience by allowing users to interactively resize column widths, with full persistence across sessions.
+
+#### Core Achievements:
+- **Interactive Resizing**: Implemented drag-to-resize functionality for the `LogList` grid. Users can now adjust column widths by dragging header edges, with visual cursor feedback.
+- **Dynamic Width Management**: Transitioned from fixed/flexible column widths to a state-driven model where `LogWindow` tracks specific widths for each column.
+- **Workspace Persistence**: Extended the user preference system to save and restore custom column widths per window, ensuring the user's workspace layout is preserved across application restarts.
+- **MVI Architecture**: Integrated the resizing logic into the MVI flow via a new `UpdateColumnWidth` intent, ensuring clean state propagation and persistence triggers.
+- **UI UX Polish**: Added minimum width constraints to prevent column disappearance and ensured perfect alignment between headers and log entry rows.
+
+## 11:35
+
+### Feature: Dynamic Log Entry Details
+
+Redesigned the details pane to automatically adapt to the structure of the selected log entry.
+
+#### Core Achievements:
+- **Adaptive Layout**: Automatically displays all custom fields from structured logs (JSON, Logfmt, Apache).
+- **Smart Visibility**: Conditionally hides the "Level" field when unknown and the "Content" section when empty to maximize vertical space.
+- **Highlighting**: Integrated the regex highlighting engine into the details view for visual consistency with the main grid.
+
+## 12:10
+
+### UI Refinement: Auto-expanding Last Column
+
+Improved content visibility by allowing the "Message" column to naturally expand to fit long log lines in the horizontal scroll view.
+
+#### Changes:
+- **Dynamic Sizing**: Transitioned to `widthIn(min = defaultWidth)` for the last column, allowing it to grow based on content while respecting manual user overrides.
+- **Full-Width Coverage**: Updated header and row layout constraints to ensure they share the width of the widest visible entry.
+
+## 13:10
+
+### UI Refinement: Level Name Preservation
+
+Updated the UI to prioritize the raw level string from the log file while maintaining normalized color-coding.
+
+#### Changes:
+- **Fidelity**: Stored the exact level string (e.g., `INF`, `DBUG`, `[INF]`) in the entry fields to ensure the UI remains faithful to the original source.
+- **Contextual Display**: Maintained bracketed display in the grid for visual structure while showing clean names in the details pane.
+
+## 13:55
+
+### Domain Documentation: Ubiquitous Language Formalization
+
+Established a formal "Ubiquitous Language" to ensure terminological consistency between the business domain, documentation, and codebase.
+
+#### Core Achievements:
+- **Centralization**: Created `docs/UBIQUITOUS_LANGUAGE.md` as the single source of truth for project terminology.
+- **Architecture**: Formalized this requirement via `ADR-022`, mandating that all new code and documentation align with the established language.
+
+## 14:29
+
+### UI Robustness: Large Log Entry Handling
+
+Implemented safety measures to prevent application crashes when loading log files with extremely long lines or humongous entries.
+
+#### Core Achievements:
+- **Constraint Capping**: Added a 10,000.dp maximum width constraint to the log message column in `LogList`. This prevents Compose's `Constraints` bit-packing from overflowing when rendered inside a horizontal scroll area.
+- **Intelligent Truncation**:
+    - Truncated log messages to 10,000 characters in the `LogList` view for improved performance and layout stability.
+    - Truncated log content to 50,000 characters in the `LogEntryDetails` pane to prevent vertical size overflow crashes while still providing ample detail.
+    - Truncated general metadata fields to 10,000 characters in the details pane.
+- **Resize Protection**: Capped manual column resizing to a maximum of 10,000.dp to ensure the UI remains within safe measurement limits.
+- **Performance Optimization**: Reduced the overhead of running complex regex highlighting on extremely large strings by applying truncation before processing.
+
+## 15:15
+
+### Feature: Multi-Log Visual Differentiation
+
+Implemented visual indicators to help users distinguish between different log files when they are interleaved in the same window.
+
+#### Core Achievements:
+- **Source Badges**: Added colored dots in the log grid's gutter to identify the source of each entry.
+- **Background Shading**: Implemented alternating pale grey backgrounds for log entries based on their source, facilitating visual grouping during interleaving.
+- **Dynamic Gutter**: The gutter width now adapts automatically (50dp to 60dp) to accommodate badges only when multiple sources are present, maximizing screen space for single-file views.
+- **ID Consistency**: Updated `FileLogSource` to use full file paths as `sourceId`, ensuring reliable mapping between entries and UI-defined sources even when files have identical names.
+
+## 15:40
+
+### UI Refinement: Full-Width Log Entry Backgrounds
+
+Fixed a layout issue where log entry background colors and selection highlights would only cover the text area rather than extending to the full width of the window/scrollable area.
+
+#### Changes:
+- **LogList.kt**: Applied `Modifier.fillMaxWidth()` to the `LogEntryRow` container and its internal `Row`.
+- **LogList.kt**: Implemented `Modifier.weight(1f)` for the final column ("Message") to ensure it occupies all remaining horizontal space when not manually resized, aligning its behavior with the header.
+
+## 15:55
+
+### Fix: Message Column Visibility Regression
+
+Resolved a regression where the "Message" column would disappear when the total width of columns exceeded the viewport width.
+
+#### Changes:
+- **LogList.kt**: Introduced `BoxWithConstraints` to obtain the viewport width (`maxWidth`).
+- **LogList.kt**: Replaced `Modifier.fillMaxWidth()` with `Modifier.widthIn(min = viewportWidth)` on rows and headers. This allows items to be at least as wide as the viewport while still growing to accommodate overflowing content.
+- **LogList.kt**: Replaced `Modifier.weight(1f)` on the last column with a dynamic `widthIn(min = minWidth)` calculation.
+
+## 16:15
+
+### UI Refinement: Synchronized Row Widths for Full-Width Backgrounds
+
+Ensured that all log rows stretch to the width of the widest visible row, providing consistent background color and selection highlight coverage across the entire horizontal scrollable area.
+
+#### Changes:
+- **LogList.kt**: Implemented `widestRowWidth` state in `LogList` to track the maximum width among composed log entries.
+- **LogList.kt**: Applied `onSizeChanged` to each `LogEntryRow` to dynamically update the shared `widestRowWidth`.
+- **Visual Consistency**: This ensures that when a long message extends the horizontal scroll range, shorter rows grow to match, filling the background colors to the edge.
+
+## 15:15
+
+### Feature: Automatic Scrolling (Tail)
+
+Implemented automatic scrolling to the end of the log list when new entries are added, controlled by an "Auto-scroll" toggle in the toolbar.
+
+#### Changes:
+- **KLogViewerState.kt**: Added `isAutoScrollEnabled` flag to `LogWindow` (default: true).
+- **KLogViewerIntent.kt**: Added `ToggleAutoScroll` intent.
+- **UserPreferences.kt**: Updated `WindowPreference` to persist the auto-scroll state.
+- **LogList.kt**: Added a `LaunchedEffect` that monitors `logs.size` and calls `verticalScrollState.scrollToItem(logs.size - 1)` when auto-scroll is enabled.
+
+## 17:30
+
+### Project Renaming: KLogViewer
+
+Successfully renamed the project from LogViewer to KLogViewer across the entire codebase, build system, and documentation.
+
+#### Core Achievements:
+- **Refactoring**: Renamed packages from `com.logviewer` to `com.klogviewer` across all modules.
+- **Component Renaming**: Updated core classes including `LogViewerViewModel`, `LogViewerState`, `LogViewerIntent`, and `LogViewerTheme` to their `KLogViewer` counterparts.
+- **UI & Branding**: Updated the application window title and internal log messages to reflect the new name.
+- **Consistency**: Renamed internal JSON log files to `klogviewer.json` for alignment.
+
+## 17:40
+
+### Documentation: README Spruce-up
+
+Created a professional and informative `README.md` to improve project visibility and developer onboarding.
+
+#### Core Achievements:
+- **Branding**: Added professional badges for Kotlin, Compose for Desktop, and MIT License.
+- **Feature Highlights**: Documented core capabilities including Multiple Tabs, Horizontal Split Panes, Interleaved Log Streams, and Advanced Heuristic Parsing.
+- **Onboarding**: Provided a comprehensive technology stack overview and a "Getting Started" guide for both running and packaging the application.
+
+## 18:05
+
+### Maintenance: Library Upgrade Compilation Fixes
+
+Resolved compilation errors and test regressions following the upgrade to Kotlin 2.3.21 and Compose 1.11.0.
+
+#### Core Achievements:
+- **API Migration**: Replaced deprecated `rememberRipple()` with the new `ripple()` API in `LogList.kt`.
+- **AWT Integration**: Updated `AwtWindow` imports to its new location in `androidx.compose.ui.awt`.
+- **Test Restoration**: Re-implemented BDD step definitions in `LogLoadingSteps.kt` using `UnconfinedTestDispatcher` and `backgroundScope`.
+- **Dependencies**: Added `kotlinx-coroutines-test` to the version catalog and test dependencies.
+
+## 22:15
+
+### UI Enhancement: FQN in Recently Opened List
+
+Improved the "Recently Opened" menu to provide better context by displaying the full path of files and directories.
+
+#### Changes:
+- **Main.kt**: Updated the `MenuBar` implementation to use the raw file path instead of the simple filename for "Recent Files" and "Recent Directories" items.
+- **Consistency**: Verified that the `StatusBar` and `RecentItemsDialog` already provided full path information.
+
+## 22:30
+
+### CI/CD: Automated Multi-Platform Packaging
+
+Integrated GitHub Actions to automate the build, test, and distribution process for KLogViewer.
+
+#### Core Achievements:
+- **Automated Workflow**: Created `.github/workflows/build.yml` using a matrix strategy to target macOS, Windows, and Linux.
+- **Multi-Platform Installers**: Configured automated generation of `.dmg` (macOS), `.msi` (Windows), and `.deb` (Linux) installers.
+- **Standalone Distribution**: Implemented tasks to create and upload zipped standalone executables for all three platforms.
+- **Documentation**: Updated `README.md` with build status badges and direct links to GitHub Actions artifacts.
+
+
+# 2026-05-16
+
+## 08:36
+
+### Project Documentation: RECAP Maintenance
+
+Performed a comprehensive recap of all project activities from the last entry and reorganized the `RECAP.md` file into a strict chronological order.
+
+#### Core Achievements:
+- **Audit**: Reviewed all recent git commits and `project_memory.md` entries to ensure no tasks were missed in the project history.
+- **Refactoring**: Reorganized the `RECAP.md` file to correct chronological sequencing of entries from May 12th to May 16th.
+- **Traceability**: Captured key technical decisions and achievements for Project Renaming, README enhancement, Library upgrades, and CI/CD integration.

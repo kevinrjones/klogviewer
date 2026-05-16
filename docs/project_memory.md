@@ -1030,3 +1030,26 @@
 **Test coverage areas**
 - Integration tests: `PersistenceIntegrationTest` and `TabManagementTest` verified that path-based state management remains correct.
 - Manual verification: Checked menu rendering logic.
+
+## Task: CI/CD and Packaging
+**Title**: CI/CD and Packaging with GitHub Actions
+**Date/time completed**: 2026-05-15 22:30
+**What was shipped**
+- Created `.github/workflows/build.yml` for automated multi-platform builds.
+- Configured matrix strategy for macOS, Windows, and Linux.
+- Automated generation of installers (DMG, MSI, DEB) and standalone executables (zipped app images).
+- Updated `README.md` with Build Status, Platforms, and CI/CD documentation.
+- Marked task as completed in `notes.md`.
+
+**Key decisions**
+- Used `ubuntu-latest`, `windows-latest`, and `macos-latest` to ensure native packaging for each target OS.
+- Zipped the `createDistributable` output to provide "plain executables" as requested.
+- Linked to GitHub Actions artifacts in the README for easy access to deployable units.
+
+**Gotchas**
+- Windows zipping requires `Compress-Archive` in PowerShell (`pwsh`) for a seamless CI experience.
+- The `package` task for Compose for Desktop is OS-specific, requiring the matrix build approach.
+
+**Test coverage areas**
+- CI Pipeline: Verified that `gradle test` runs before packaging on all platforms.
+- Packaging: Verified that `package` and `createDistributable` tasks are correctly invoked for each platform.

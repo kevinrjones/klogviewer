@@ -1,8 +1,10 @@
 # KLogViewer
 
+[![Build Status](https://github.com/kevinrjones/klogviewer/actions/workflows/build.yml/badge.svg)](https://github.com/kevinrjones/klogviewer/actions)
 [![Kotlin](https://img.shields.io/badge/kotlin-2.0.0-blue.svg?logo=kotlin)](https://kotlinlang.org)
 [![Compose for Desktop](https://img.shields.io/badge/Compose%20for%20Desktop-1.6.11-orange.svg)](https://www.jetbrains.com/lp/compose-multiplatform/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
 
 KLogViewer is a professional-grade, high-density desktop log viewer built with Kotlin and Compose for Desktop. It is designed to handle large log files and complex distributed system events with ease, providing a reactive and highly customizable viewing experience.
 
@@ -75,6 +77,13 @@ To create a native distribution for your operating system (DMG, MSI, or DEB):
 ./gradlew :app:package
 ```
 Distributions will be available in `app/build/compose/binaries`.
+
+### Continuous Integration & Deployment
+KLogViewer uses GitHub Actions for automated building and packaging. For every push to the `main` branch, the following are automatically generated:
+- **Installers**: DMG (macOS), MSI (Windows), and DEB (Linux).
+- **Standalone Executables**: Platform-specific zipped bundles for all three major operating systems.
+
+You can find these deployable units in the [GitHub Actions artifacts](https://github.com/kevinrjones/klogviewer/actions).
 
 ## Architecture
 
