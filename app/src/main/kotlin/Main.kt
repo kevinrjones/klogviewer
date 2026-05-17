@@ -12,10 +12,9 @@ import com.klogviewer.core.repository.PreferencesRepository
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.domain.model.WindowStatePreferences
 import com.klogviewer.ui.components.KLogViewerScreen
-import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import com.klogviewer.ui.mvi.KLogViewerIntent
+import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.io.File
 
 private val logger = KotlinLogging.logger {}
 
