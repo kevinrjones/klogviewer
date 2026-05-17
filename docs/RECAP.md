@@ -463,6 +463,32 @@ Added an 'All' option to the log level filters in the sidebar, allowing users to
 - **KLogViewerScreen.kt**: Wired the new intent to the sidebar UI.
 - **Testing**: Added integration test `should toggle all levels at once` to `TabManagementTest.kt`.
 
+## 18:45
+
+### UI: Refine Window Activation and Selection
+
+Refined the behavior of clicking on log entries in a split-pane view to decouple window activation from entry selection, preventing accidental opening of the detail panel.
+
+#### Changes:
+- **KLogViewerScreen.kt**: Modified the `onEntryClick` callback for `LogList` to perform bounds checking on the window's active state.
+- **Logic**: If a window is not active, the first click on any log entry now only activates that window (`SwitchWindow`).
+- **Logic**: If the window is already active, clicking a log entry triggers the selection intent (`SelectEntry`) and opens the detail panel.
+- **UX**: This change ensures that users can switch focus between split panes without losing their place or being interrupted by a detail panel they didn't intend to open.
+
+## 17:00
+
+### Feature: Keyboard Shortcuts and Multi-selection
+
+Added standard keyboard shortcuts and multi-selection support for improved efficiency and better clipboard integration.
+
+#### Changes:
+- **Main.kt**: Added shortcuts to `MenuBar`: Cmd+W (Close Tab), Cmd+N (New Tab), Cmd+C (Copy).
+- **KLogViewerIntent.kt**: Added `CopySelected` and `ToggleEntrySelection` intents.
+- **LogWindow**: Added `selectedIndices` and `lastSelectedIndex` to track multi-select state.
+- **KLogViewerViewModel.kt**: Implemented range selection and toggle selection logic, plus clipboard integration using AWT.
+- **LogList.kt**: Updated `LogEntryRow` to detect Shift and Cmd/Ctrl modifiers on click using `pointerInput`.
+- **Testing**: Added integration test for multi-selection logic in `TabManagementTest`.
+
 ## 18:15
 
 ### UI: Enhance Active Window Visibility

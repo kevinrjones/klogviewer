@@ -11,6 +11,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.File
 import java.util.UUID
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
@@ -192,8 +194,44 @@ class KLogViewerViewModel(
                 savePreferences()
             }
             is KLogViewerIntent.SelectEntry -> {
-                _state.update { it.updateActiveWindow { window -> window.copy(selectedEntry = intent.entry) } }
+                _state.update { currentState ->
+                    currentState.updateActiveWindow { window -> 
+                        val index = window.filteredLogs.indexOf(intent.entry)
+                        window.copy(
+                            selectedEntry = intent.entry,
+                            selectedIndices = if (intent.entry != null && index != -1) setOf(index) else emptySet(),
+                            lastSelectedIndex = if (index != -1) index else null
+                        ) 
+                    }
+                }
             }
+            is KLogViewerIntent.ToggleEntrySelection -> {
+                _state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        val newIndices = when {
+                            intent.isShiftPressed && window.lastSelectedIndex != null -> {
+                                val start = minOf(window.lastSelectedIndex, intent.index)
+                                val end = maxOf(window.lastSelectedIndex, intent.index)
+                                window.selectedIndices + (start..end).toSet()
+                            }
+                            intent.isMetaPressed -> {
+                                if (window.selectedIndices.contains(intent.index)) {
+                                    window.selectedIndices - intent.index
+                                } else {
+                                    window.selectedIndices + intent.index
+                                }
+                            }
+                            else -> setOf(intent.index)
+                        }
+                        window.copy(
+                            selectedIndices = newIndices,
+                            lastSelectedIndex = intent.index,
+                            selectedEntry = if (newIndices.size == 1) window.filteredLogs.getOrNull(intent.index) else window.selectedEntry
+                        )
+                    }
+                }
+            }
+            KLogViewerIntent.CopySelected -> copySelectedToClipboard()
             KLogViewerIntent.ShowOpenDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN) }
             KLogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD) }
             KLogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
@@ -516,5 +554,23 @@ class KLogViewerViewModel(
             activeTabId = currentState.activeTabId
         )
         prefsRepository.save(newPrefs)
+    }
+
+    private fun copySelectedToClipboard() {
+        val activeWindow = _state.value.activeTab?.activeWindow ?: return
+        val indices = activeWindow.selectedIndices.sorted()
+        if (indices.isEmpty()) return
+
+        val textToCopy = indices.mapNotNull { activeWindow.filteredLogs.getOrNull(it) }
+            .joinToString("\n") { it.content.value }
+
+        try {
+            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
+            val selection = StringSelection(textToCopy)
+            clipboard.setContents(selection, null)
+            logger.info { "Copied ${indices.size} lines to clipboard" }
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to copy to clipboard" }
+        }
     }
 }

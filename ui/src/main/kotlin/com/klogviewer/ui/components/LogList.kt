@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.*
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -39,8 +40,9 @@ fun LogList(
     columns: List<String> = emptyList(),
     columnWidths: Map<String, Int> = emptyMap(),
     isAutoScrollEnabled: Boolean = true,
-    selectedEntry: LogEntry? = null,
+    selectedIndices: Set<Int> = emptySet(),
     onEntryClick: (LogEntry) -> Unit = {},
+    onToggleSelection: (Int, Boolean, Boolean) -> Unit = { _, _, _ -> },
     onColumnResize: (String, Int) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
@@ -89,8 +91,14 @@ fun LogList(
                                 sourceIds = sourceIds,
                                 columns = displayColumns,
                                 columnWidths = columnWidths,
-                                isSelected = entry == selectedEntry,
-                                onClick = { onEntryClick(entry) },
+                                isSelected = selectedIndices.contains(index),
+                                onClick = { isShift, isMeta -> 
+                                    if (isShift || isMeta) {
+                                        onToggleSelection(index, isShift, isMeta)
+                                    } else {
+                                        onEntryClick(entry)
+                                    }
+                                },
                                 modifier = Modifier.onSizeChanged { size ->
                                     val width = with(density) { size.width.toDp() }
                                     if (width > widestRowWidth) {
@@ -209,7 +217,7 @@ fun LogEntryRow(
     columns: List<String>,
     columnWidths: Map<String, Int>,
     isSelected: Boolean = false,
-    onClick: () -> Unit = {},
+    onClick: (Boolean, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val logColors = KLogViewerTheme.logColors
@@ -223,8 +231,19 @@ fun LogEntryRow(
         modifier = modifier
             .widthIn(min = viewportWidth)
             .background(backgroundColor)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        if (event.type == PointerEventType.Release) {
+                            val modifiers = event.keyboardModifiers
+                            onClick(modifiers.isShiftPressed, modifiers.isMetaPressed || modifiers.isCtrlPressed)
+                        }
+                    }
+                }
+            }
             .clickable(
-                onClick = onClick,
+                onClick = {},
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple()
             )

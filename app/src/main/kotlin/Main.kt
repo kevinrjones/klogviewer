@@ -1,6 +1,8 @@
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
 import com.klogviewer.core.parser.HeuristicProbe
@@ -90,11 +92,15 @@ fun main() {
                     }
                     
                     Separator()
-                    Item("New Tab", onClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) })
+                    Item("New Tab", shortcut = KeyShortcut(Key.N, meta = true), onClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) })
+                    Item("Close Tab", shortcut = KeyShortcut(Key.W, meta = true), onClick = { 
+                        state.activeTabId?.let { viewModel.handleIntent(KLogViewerIntent.CloseTab(it)) }
+                    })
                     Separator()
                     Item("Exit", onClick = ::saveAndExit)
                 }
                 Menu("Edit") {
+                    Item("Copy", shortcut = KeyShortcut(Key.C, meta = true), onClick = { viewModel.handleIntent(KLogViewerIntent.CopySelected) })
                     Item("Clear Logs", onClick = { viewModel.handleIntent(KLogViewerIntent.ClearLogs) })
                 }
                 Menu("View") {

@@ -16,6 +16,8 @@ data class LogWindow(
     val isAutoScrollEnabled: Boolean = true,
     val sourceIds: List<String> = emptyList(),
     val selectedEntry: LogEntry? = null,
+    val selectedIndices: Set<Int> = emptySet(),
+    val lastSelectedIndex: Int? = null,
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap()
 ) {

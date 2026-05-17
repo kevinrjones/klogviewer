@@ -17,6 +17,8 @@ sealed interface KLogViewerIntent {
     data object ToggleSortOrder : KLogViewerIntent
     data object ToggleAutoScroll : KLogViewerIntent
     data class SelectEntry(val entry: com.klogviewer.domain.model.LogEntry?) : KLogViewerIntent
+    data class ToggleEntrySelection(val index: Int, val isShiftPressed: Boolean = false, val isMetaPressed: Boolean = false) : KLogViewerIntent
+    data object CopySelected : KLogViewerIntent
     
     // Dialogs
     data object ShowOpenDialog : KLogViewerIntent

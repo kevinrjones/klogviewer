@@ -37,10 +37,13 @@
 - Synchronized Row Widths: Implemented dynamic width tracking to ensure all rows stretch to the width of the widest row, filling the background to the edge.
 - Automatic Scrolling: Implemented auto-scroll (tailing) functionality with a persistent toggle in the toolbar.
 - Level Filtering: Added an 'All' option in the sidebar to enable or disable all log levels in one go.
+- Keyboard Shortcuts: Added Cmd+W to close active tab, Cmd+N for new tab, and Cmd+C to copy selected logs.
+- Multi-selection: Implemented multi-selection in log list (Shift+Click for range, Cmd+Click for toggle).
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
 - Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
 - Enhanced UI to make the active window more obvious by adding a subtle left border in split-pane view.
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
+- Refined window activation: Clicking a non-active window in split-pane view now only activates the window; log entry details are only shown if the window is already active.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -1132,3 +1135,44 @@
 
 **Test coverage areas**
 - UI Compilation: Verified that the new modifier and imports are correct and build successfully.
+
+## Task: Refine Window Activation and Selection
+**Title**: Refine Window Activation and Selection
+**Date/time completed**: 2026-05-17 18:45
+**What was shipped**
+- Modified `KLogViewerScreen.kt` to decouple window activation from entry selection.
+- Clicking on a log entry in a non-active window now only triggers `SwitchWindow`.
+- Clicking on a log entry in an already active window triggers `SelectEntry` to show details.
+
+**Key decisions**
+- Improved user experience in split-pane mode by preventing accidental detail panel opening when just trying to focus a window.
+- Leveraged the existing `isWindowActive` local state in the Composable to guard the `SelectEntry` intent.
+
+**Gotchas**
+- The selection in the window remains unchanged (or null) when clicking to activate, requiring a second click to view details.
+
+**Test coverage areas**
+- UI Logic: Manually verified the click handling logic in `KLogViewerScreen.kt`.
+- Regressions: Ran `TabManagementTest` to ensure general window and tab management still works.
+
+## Task: Add Keyboard Shortcuts and Multi-selection
+**Title**: Add Keyboard Shortcuts and Multi-selection
+**Date/time completed**: 2026-05-17 17:00
+**What was shipped**
+- Standard shortcuts: Cmd+W (Close Tab), Cmd+N (New Tab), Cmd+C (Copy).
+- Multi-selection support: Shift+Click for range selection and Cmd/Ctrl+Click for toggling selection.
+- Clipboard integration: Selected lines are joined with newlines and copied to the system clipboard.
+- Refactored `LogWindow` to use indices for selection to handle multi-select and avoid equality issues.
+
+**Key decisions**
+- Used `MenuBar` shortcuts for standard OS integration and discoverability.
+- Used `PointerEventType.Release` in `LogList` to detect modifiers during clicks without breaking ripple effects entirely.
+- Indices are used for selection instead of `LogEntry` objects to better support range selection.
+
+**Gotchas**
+- Range selection (Shift+Click) requires tracking the `lastSelectedIndex` to define the anchor.
+- `Modifier.clickable` swallowed modifiers, necessitating a move to `Modifier.pointerInput` for click detection in rows.
+
+**Test coverage areas**
+- `TabManagementTest`: Added `should support multi-selection via ToggleEntrySelection` to verify the logic.
+- Integration: Verified `MenuBar` shortcuts compilation and wiring.

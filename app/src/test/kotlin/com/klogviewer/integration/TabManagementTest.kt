@@ -187,4 +187,36 @@ class TabManagementTest {
         viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels)
         assertEquals(allLevels, viewModel.state.value.activeTab?.activeWindow?.levelFilters)
     }
+
+    @Test
+    fun `should support multi-selection via ToggleEntrySelection`() = runBlocking {
+        val file = File.createTempFile("log1", ".log").apply {
+            writeText("2023-10-27 10:00:00 [INFO] Line 1\n")
+            appendText("2023-10-27 10:00:01 [INFO] Line 2\n")
+            appendText("2023-10-27 10:00:02 [INFO] Line 3\n")
+            appendText("2023-10-27 10:00:03 [INFO] Line 4\n")
+            deleteOnExit()
+        }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file.absolutePath)))
+        withTimeout(2000.milliseconds) {
+            viewModel.state.first { it.activeTab?.activeWindow?.logs?.size == 4 }
+        }
+        
+        // Select first line
+        viewModel.handleIntent(KLogViewerIntent.ToggleEntrySelection(0))
+        assertEquals(setOf(0), viewModel.state.value.activeTab?.activeWindow?.selectedIndices)
+        
+        // Meta+Select third line (Toggle)
+        viewModel.handleIntent(KLogViewerIntent.ToggleEntrySelection(2, isMetaPressed = true))
+        assertEquals(setOf(0, 2), viewModel.state.value.activeTab?.activeWindow?.selectedIndices)
+        
+        // Shift+Select fourth line (Range from last clicked index 2)
+        viewModel.handleIntent(KLogViewerIntent.ToggleEntrySelection(3, isShiftPressed = true))
+        // Should select 2 and 3. Set should be {0, 2, 3}
+        assertEquals(setOf(0, 2, 3), viewModel.state.value.activeTab?.activeWindow?.selectedIndices)
+        
+        // Select without modifiers should clear others
+        viewModel.handleIntent(KLogViewerIntent.ToggleEntrySelection(1))
+        assertEquals(setOf(1), viewModel.state.value.activeTab?.activeWindow?.selectedIndices)
+    }
 }

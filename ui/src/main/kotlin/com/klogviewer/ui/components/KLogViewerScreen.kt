@@ -230,10 +230,20 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                                         columns = window.columns,
                                         columnWidths = window.columnWidths,
                                         isAutoScrollEnabled = window.isAutoScrollEnabled,
-                                        selectedEntry = window.selectedEntry,
+                                        selectedIndices = window.selectedIndices,
                                         onEntryClick = { 
-                                            viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
-                                            viewModel.handleIntent(KLogViewerIntent.SelectEntry(it))
+                                            if (isWindowActive) {
+                                                viewModel.handleIntent(KLogViewerIntent.SelectEntry(it))
+                                            } else {
+                                                viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                                            }
+                                        },
+                                        onToggleSelection = { index, isShift, isMeta ->
+                                            if (isWindowActive) {
+                                                viewModel.handleIntent(KLogViewerIntent.ToggleEntrySelection(index, isShift, isMeta))
+                                            } else {
+                                                viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                                            }
                                         },
                                         onColumnResize = { column, width ->
                                             viewModel.handleIntent(KLogViewerIntent.UpdateColumnWidth(window.id, column, width))
