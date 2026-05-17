@@ -36,6 +36,7 @@
 - Full-Width Backgrounds: Fixed log entry layout to ensure background colors and selection highlights extend to the full width of the scrollable window.
 - Synchronized Row Widths: Implemented dynamic width tracking to ensure all rows stretch to the width of the widest row, filling the background to the edge.
 - Automatic Scrolling: Implemented auto-scroll (tailing) functionality with a persistent toggle in the toolbar.
+- Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
 
 **Gotchas**
@@ -1053,3 +1054,22 @@
 **Test coverage areas**
 - CI Pipeline: Verified that `gradle test` runs before packaging on all platforms.
 - Packaging: Verified that `package` and `createDistributable` tasks are correctly invoked for each platform.
+
+## Task: Fix ScrollableTabRow IndexOutOfBoundsException (Refined)
+**Title**: Fix ScrollableTabRow IndexOutOfBoundsException (Refined)
+**Date/time completed**: 2026-05-17 17:15
+**What was shipped**
+- Implemented a custom safe `indicator` for `ScrollableTabRow` that performs bounds checking against `tabPositions`.
+- Maintained defensive indexing (`coerceIn`) for the `selectedTabIndex` calculation.
+- Ensured proper imports for `TabRowDefaults.tabIndicatorOffset`.
+
+**Key decisions**
+- Provided an explicit `indicator` lambda to `ScrollableTabRow` to prevent the default indicator from accessing out-of-sync `tabPositions`.
+- Used `if (selectedTabIndex < tabPositions.size)` check inside the indicator to gracefully handle frames where the index and positions are not yet aligned.
+
+**Gotchas**
+- Simple defensive indexing of the `selectedTabIndex` is insufficient because Compose's internal `TabRow` logic may use the new index with old children measurements during a single frame of recomposition.
+
+**Test coverage areas**
+- `TabManagementTest`: Verified that tab switching and addition still work correctly.
+- UI Compilation: Verified that custom indicator and imports are correct.

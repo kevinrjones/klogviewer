@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
+import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -258,45 +259,57 @@ private fun LogTabRow(
     val tabBackground = KLogViewerTheme.customColors.tabBackground
     Surface(elevation = 4.dp, color = tabBackground) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            ScrollableTabRow(
-                selectedTabIndex = tabs.indexOfFirst { it.id == activeTabId }.coerceAtLeast(0),
-                modifier = Modifier.weight(1f).height(32.dp),
-                edgePadding = 0.dp,
-                backgroundColor = tabBackground,
-                contentColor = MaterialTheme.colors.onSurface
-            ) {
-                tabs.forEach { tab ->
-                    Tab(
-                        selected = tab.id == activeTabId,
-                        onClick = { onTabClick(tab.id) },
-                        modifier = Modifier.height(32.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = tab.title,
-                                style = MaterialTheme.typography.button.copy(fontSize = 12.sp),
-                                maxLines = 1
+            if (tabs.isNotEmpty()) {
+                val selectedTabIndex = tabs.indexOfFirst { it.id == activeTabId }.coerceIn(0, tabs.size - 1)
+                ScrollableTabRow(
+                    selectedTabIndex = selectedTabIndex,
+                    modifier = Modifier.weight(1f).height(32.dp),
+                    edgePadding = 0.dp,
+                    backgroundColor = tabBackground,
+                    contentColor = MaterialTheme.colors.onSurface,
+                    indicator = { tabPositions ->
+                        if (selectedTabIndex < tabPositions.size) {
+                            TabRowDefaults.Indicator(
+                                Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex])
                             )
-                            Spacer(modifier = Modifier.width(8.dp))
-                            TooltipWrapper(tooltip = "Close tab") {
-                                IconButton(
-                                    onClick = { onCloseClick(tab.id) },
-                                    modifier = Modifier.size(16.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = "Close tab",
-                                        tint = if (tab.id == activeTabId) MaterialTheme.colors.onSurface else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
-                                        modifier = Modifier.size(14.dp)
-                                    )
+                        }
+                    }
+                ) {
+                    tabs.forEach { tab ->
+                        Tab(
+                            selected = tab.id == activeTabId,
+                            onClick = { onTabClick(tab.id) },
+                            modifier = Modifier.height(32.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = tab.title,
+                                    style = MaterialTheme.typography.button.copy(fontSize = 12.sp),
+                                    maxLines = 1
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                TooltipWrapper(tooltip = "Close tab") {
+                                    IconButton(
+                                        onClick = { onCloseClick(tab.id) },
+                                        modifier = Modifier.size(16.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Close tab",
+                                            tint = if (tab.id == activeTabId) MaterialTheme.colors.onSurface else MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                                            modifier = Modifier.size(14.dp)
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
                 }
+            } else {
+                Spacer(modifier = Modifier.weight(1f))
             }
             TooltipWrapper(tooltip = "Add new tab") {
                 IconButton(onClick = onAddClick, modifier = Modifier.size(32.dp)) {

@@ -420,3 +420,17 @@ Performed a comprehensive recap of all project activities from the last entry an
 - **Audit**: Reviewed all recent git commits and `project_memory.md` entries to ensure no tasks were missed in the project history.
 - **Refactoring**: Reorganized the `RECAP.md` file to correct chronological sequencing of entries from May 12th to May 16th.
 - **Traceability**: Captured key technical decisions and achievements for Project Renaming, README enhancement, Library upgrades, and CI/CD integration.
+
+
+# 2026-05-17
+
+## 17:15
+
+### Fix: ScrollableTabRow IndexOutOfBoundsException (Refined)
+
+Resolved a persistent crash in the tab bar that occurred when adding new tabs, which was caused by an out-of-sync recomposition in Compose's `ScrollableTabRow`.
+
+#### Changes:
+- **KLogViewerScreen.kt**: Implemented a custom `indicator` lambda for `ScrollableTabRow` that performs explicit bounds checking against the `tabPositions` list before accessing the `selectedTabIndex`.
+- **KLogViewerScreen.kt**: Added explicit import for `androidx.compose.material.TabRowDefaults.tabIndicatorOffset`.
+- **Robustness**: Maintained defensive `coerceIn` logic for `selectedTabIndex` to ensure it always stays within the valid range of the current tab list, providing double-layered protection.
