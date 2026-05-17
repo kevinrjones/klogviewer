@@ -462,3 +462,15 @@ Added an 'All' option to the log level filters in the sidebar, allowing users to
 - **Sidebar.kt**: Added "All" checkbox at the top of the level list with a total log count.
 - **KLogViewerScreen.kt**: Wired the new intent to the sidebar UI.
 - **Testing**: Added integration test `should toggle all levels at once` to `TabManagementTest.kt`.
+
+## 18:15
+
+### UI: Enhance Active Window Visibility
+
+Improved the visibility of the active window in split-pane mode by adding a subtle left border.
+
+#### Changes:
+- **KLogViewerScreen.kt**: Added a 3dp left border to the active window using `Modifier.drawBehind`.
+- **KLogViewerScreen.kt**: Added necessary imports for `drawBehind` and `Offset`.
+- **Visuals**: The border uses `MaterialTheme.colors.primary` with 50% alpha for a subtle yet distinct indicator.
+- **Logic**: The border only appears when a tab contains more than one window (i.e., when splits are active).

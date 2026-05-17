@@ -11,6 +11,8 @@
 7. Are there standard endpoints for log files?
 8. Add keyboard shortcuts for common actions (Cmd+W for close on Mac)
 9. Can I write an MCP server for the app?
+10. Change the list of logs in a window to a dropdown so that I can select the logs to view and delete logs from 
+    that view
 
 
    

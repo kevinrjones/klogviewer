@@ -39,6 +39,7 @@
 - Level Filtering: Added an 'All' option in the sidebar to enable or disable all log levels in one go.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
 - Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
+- Enhanced UI to make the active window more obvious by adding a subtle left border in split-pane view.
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
 
 **Gotchas**
@@ -1114,3 +1115,20 @@
 
 **Test coverage areas**
 - `TabManagementTest`: Added `should toggle all levels at once` to verify the logic for bulk selection and deselection.
+
+## Task: Enhance Active Window Visibility
+**Title**: Enhance Active Window Visibility
+**Date/time completed**: 2026-05-17 18:15
+**What was shipped**
+- Added a subtle left border (3dp width, primary color with 50% alpha) to the active window when multiple windows are open in a tab.
+- Used `Modifier.drawBehind` for efficient rendering of the targeted border.
+
+**Key decisions**
+- Chose a subtle color and width to improve focus without being visually overwhelming.
+- Only show the border when there are multiple windows (split view) to avoid clutter in single-window tabs.
+
+**Gotchas**
+- `Modifier.drawBehind` requires explicit imports for `Offset` and `drawBehind` which might not be automatically suggested in some environments.
+
+**Test coverage areas**
+- UI Compilation: Verified that the new modifier and imports are correct and build successfully.

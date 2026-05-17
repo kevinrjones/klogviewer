@@ -10,6 +10,8 @@ import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -126,11 +128,22 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                         }
                         
                         val isWindowActive = window.id == activeTab.activeWindowId
+                        val activeBorderColor = MaterialTheme.colors.primary.copy(alpha = 0.5f)
                         
                         Column(
                             modifier = Modifier
                                 .weight(1f)
                                 .background(if (isWindowActive) MaterialTheme.colors.onSurface.copy(alpha = 0.02f) else Color.Transparent)
+                                .drawBehind {
+                                    if (isWindowActive && activeTab.windows.size > 1) {
+                                        drawLine(
+                                            color = activeBorderColor,
+                                            start = Offset(0f, 0f),
+                                            end = Offset(0f, size.height),
+                                            strokeWidth = 3.dp.toPx()
+                                        )
+                                    }
+                                }
                                 .padding(top = 4.dp)
                         ) {
                             // Window Header (File path, Active badge, Close button)
@@ -153,7 +166,7 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                                     } else {
                                         Spacer(modifier = Modifier.weight(1f))
                                     }
-
+                                    
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         if (isWindowActive && activeTab.windows.size > 1) {
                                             Surface(
@@ -168,7 +181,7 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                                             }
                                             Spacer(modifier = Modifier.width(8.dp))
                                         }
-
+                                        
                                         if (activeTab.windows.size > 1) {
                                             TooltipWrapper(tooltip = "Close split") {
                                                 IconButton(
