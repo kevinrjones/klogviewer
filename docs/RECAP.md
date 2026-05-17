@@ -434,3 +434,17 @@ Resolved a persistent crash in the tab bar that occurred when adding new tabs, w
 - **KLogViewerScreen.kt**: Implemented a custom `indicator` lambda for `ScrollableTabRow` that performs explicit bounds checking against the `tabPositions` list before accessing the `selectedTabIndex`.
 - **KLogViewerScreen.kt**: Added explicit import for `androidx.compose.material.TabRowDefaults.tabIndicatorOffset`.
 - **Robustness**: Maintained defensive `coerceIn` logic for `selectedTabIndex` to ensure it always stays within the valid range of the current tab list, providing double-layered protection.
+
+
+## 17:45
+
+### Fix: Split Pane Column Resizing
+
+Fixed an issue where resizing a column in a split pane would incorrectly resize the column in the pane that currently has focus, rather than the one being interacted with.
+
+#### Changes:
+- **KLogViewerIntent.kt**: Extended `UpdateColumnWidth` intent to include `windowId`.
+- **KLogViewerState.kt**: Added `updateWindow(windowId, block)` helper to support targeted window updates across any tab.
+- **KLogViewerScreen.kt**: Updated the `onColumnResize` callback to pass the specific window's ID to the ViewModel.
+- **KLogViewerViewModel.kt**: Refactored the `UpdateColumnWidth` handler to use the new `updateWindow` helper for precise state modification.
+- **Testing**: Added an integration test in `TabManagementTest` to verify independent column resizing in multi-split layouts.

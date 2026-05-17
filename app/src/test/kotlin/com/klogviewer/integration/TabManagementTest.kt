@@ -128,4 +128,38 @@ class TabManagementTest {
         assertEquals(1, viewModel.state.value.activeTab?.windows?.size)
         assertEquals(firstWindowId, viewModel.state.value.activeTab?.activeWindowId)
     }
+
+    @Test
+    fun `should resize columns independently in different split windows`() = runBlocking {
+        // 1. Create two splits
+        viewModel.handleIntent(KLogViewerIntent.SplitHorizontal)
+        val tab = viewModel.state.value.activeTab!!
+        val firstWindowId = tab.windows[0].id
+        val secondWindowId = tab.windows[1].id
+        
+        // Focus the second window
+        viewModel.handleIntent(KLogViewerIntent.SwitchWindow(secondWindowId))
+        assertEquals(secondWindowId, viewModel.state.value.activeTab?.activeWindowId)
+        
+        // 2. Resize column in the FIRST window (which is NOT focused)
+        viewModel.handleIntent(KLogViewerIntent.UpdateColumnWidth(firstWindowId, "Level", 100))
+        
+        // 3. Verify FIRST window has the new width
+        val w1 = viewModel.state.value.activeTab?.windows?.find { it.id == firstWindowId }!!
+        assertEquals(100, w1.columnWidths["Level"])
+        
+        // 4. Verify SECOND window (focused) does NOT have that width
+        val w2 = viewModel.state.value.activeTab?.windows?.find { it.id == secondWindowId }!!
+        assertNotEquals(100, w2.columnWidths["Level"])
+        
+        // 5. Focus the first window and resize a column in the second window
+        viewModel.handleIntent(KLogViewerIntent.SwitchWindow(firstWindowId))
+        viewModel.handleIntent(KLogViewerIntent.UpdateColumnWidth(secondWindowId, "Message", 500))
+        
+        val w2Updated = viewModel.state.value.activeTab?.windows?.find { it.id == secondWindowId }!!
+        assertEquals(500, w2Updated.columnWidths["Message"])
+        
+        val w1Check = viewModel.state.value.activeTab?.windows?.find { it.id == firstWindowId }!!
+        assertNotEquals(500, w1Check.columnWidths["Message"])
+    }
 }

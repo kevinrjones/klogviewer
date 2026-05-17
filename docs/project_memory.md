@@ -37,6 +37,7 @@
 - Synchronized Row Widths: Implemented dynamic width tracking to ensure all rows stretch to the width of the widest row, filling the background to the edge.
 - Automatic Scrolling: Implemented auto-scroll (tailing) functionality with a persistent toggle in the toolbar.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
+- Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
 
 **Gotchas**
@@ -1073,3 +1074,23 @@
 **Test coverage areas**
 - `TabManagementTest`: Verified that tab switching and addition still work correctly.
 - UI Compilation: Verified that custom indicator and imports are correct.
+
+## Task: Fix Split Pane Column Resizing
+**Title**: Fix Split Pane Column Resizing
+**Date/time completed**: 2026-05-17 17:45
+**What was shipped**
+- Updated `KLogViewerIntent.UpdateColumnWidth` to include `windowId`, enabling targeted resizing.
+- Implemented `updateWindow` helper in `KLogViewerState` to allow updating any window by ID across all tabs.
+- Refactored `KLogViewerScreen` to pass the specific window ID to the resize intent.
+- Verified that resizing a column in a non-focused split pane correctly updates that pane without affecting the focused one.
+
+**Key decisions**
+- Decoupled column resizing from focus management to provide a more intuitive user experience.
+- Added a general `updateWindow` method to the state to simplify future targeted window updates.
+
+**Gotchas**
+- Changing intent constructors requires updating all call sites, including integration tests that mock or simulate user intents.
+
+**Test coverage areas**
+- `TabManagementTest`: Added `should resize columns independently in different split windows`.
+- `PersistenceIntegrationTest`: Updated to verify that resizing still persists correctly with the new intent structure.

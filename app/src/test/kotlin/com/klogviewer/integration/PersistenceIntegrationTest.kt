@@ -123,7 +123,8 @@ class PersistenceIntegrationTest {
         val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
 
         // Resize a column
-        viewModel.handleIntent(KLogViewerIntent.UpdateColumnWidth("Timestamp", 250))
+        val activeWindowId = viewModel.state.value.activeTab?.activeWindowId!!
+        viewModel.handleIntent(KLogViewerIntent.UpdateColumnWidth(activeWindowId, "Timestamp", 250))
 
         // Verify state
         val window = viewModel.state.value.activeTab?.activeWindow
@@ -131,7 +132,6 @@ class PersistenceIntegrationTest {
 
         // Verify preferences were saved (with debounce)
         val activeTabId = viewModel.state.value.activeTabId
-        val activeWindowId = viewModel.state.value.activeTab?.activeWindowId
         
         val savedPrefs = withTimeout(2.seconds) {
             var prefs = prefsRepo.load()

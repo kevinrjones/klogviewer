@@ -62,4 +62,10 @@ data class KLogViewerState(
     fun updateActiveWindow(block: (LogWindow) -> LogWindow): KLogViewerState {
         return updateActiveTab { it.updateActiveWindow(block) }
     }
+
+    fun updateWindow(windowId: String, block: (LogWindow) -> LogWindow): KLogViewerState {
+        return copy(tabs = tabs.map { tab ->
+            tab.copy(windows = tab.windows.map { if (it.id == windowId) block(it) else it })
+        })
+    }
 }

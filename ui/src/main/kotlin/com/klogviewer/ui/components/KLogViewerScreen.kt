@@ -222,7 +222,7 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                                             viewModel.handleIntent(KLogViewerIntent.SelectEntry(it))
                                         },
                                         onColumnResize = { column, width ->
-                                            viewModel.handleIntent(KLogViewerIntent.UpdateColumnWidth(column, width))
+                                            viewModel.handleIntent(KLogViewerIntent.UpdateColumnWidth(window.id, column, width))
                                         }
                                     )
                                 }

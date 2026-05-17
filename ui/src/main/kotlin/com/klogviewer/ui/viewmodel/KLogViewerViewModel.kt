@@ -190,7 +190,7 @@ class KLogViewerViewModel(
             is KLogViewerIntent.SwitchWindow -> switchWindow(intent.id)
             is KLogViewerIntent.UpdateColumnWidth -> {
                 _state.update { currentState ->
-                    currentState.updateActiveWindow { window ->
+                    currentState.updateWindow(intent.windowId) { window ->
                         window.copy(columnWidths = window.columnWidths + (intent.column to intent.width))
                     }
                 }
