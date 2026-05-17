@@ -30,6 +30,7 @@ data class WindowPreference(
     val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
     val isReversed: Boolean = false,
     val isAutoScrollEnabled: Boolean = true,
+    val showAnsiColors: Boolean = true,
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap()
 )

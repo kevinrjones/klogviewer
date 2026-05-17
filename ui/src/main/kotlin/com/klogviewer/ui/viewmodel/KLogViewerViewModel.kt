@@ -49,6 +49,7 @@ class KLogViewerViewModel(
                                 levelFilters = wp.levelFilters,
                                 isReversed = wp.isReversed,
                                 isAutoScrollEnabled = wp.isAutoScrollEnabled,
+                                showAnsiColors = wp.showAnsiColors,
                                 columns = wp.columns,
                                 columnWidths = wp.columnWidths
                             )
@@ -184,6 +185,12 @@ class KLogViewerViewModel(
             KLogViewerIntent.ToggleAutoScroll -> {
                 _state.update { currentState ->
                     currentState.updateActiveWindow { it.copy(isAutoScrollEnabled = !it.isAutoScrollEnabled) }
+                }
+                savePreferences()
+            }
+            KLogViewerIntent.ToggleAnsiColors -> {
+                _state.update { currentState ->
+                    currentState.updateActiveWindow { it.copy(showAnsiColors = !it.showAnsiColors) }
                 }
                 savePreferences()
             }
@@ -545,6 +552,7 @@ class KLogViewerViewModel(
                             levelFilters = window.levelFilters,
                             isReversed = window.isReversed,
                             isAutoScrollEnabled = window.isAutoScrollEnabled,
+                            showAnsiColors = window.showAnsiColors,
                             columns = window.columns,
                             columnWidths = window.columnWidths
                         )

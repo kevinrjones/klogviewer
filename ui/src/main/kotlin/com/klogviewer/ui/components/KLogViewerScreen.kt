@@ -95,6 +95,8 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                         onToggleSortOrder = { viewModel.handleIntent(KLogViewerIntent.ToggleSortOrder) },
                         isAutoScrollEnabled = activeWindow?.isAutoScrollEnabled ?: true,
                         onToggleAutoScroll = { viewModel.handleIntent(KLogViewerIntent.ToggleAutoScroll) },
+                        showAnsiColors = activeWindow?.showAnsiColors ?: true,
+                        onToggleAnsiColors = { viewModel.handleIntent(KLogViewerIntent.ToggleAnsiColors) },
                         onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
                         matchesCount = activeWindow?.filteredLogs?.size ?: 0,
                         totalCount = activeWindow?.logs?.size ?: 0
@@ -230,6 +232,7 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                                         columns = window.columns,
                                         columnWidths = window.columnWidths,
                                         isAutoScrollEnabled = window.isAutoScrollEnabled,
+                                        showAnsiColors = window.showAnsiColors,
                                         selectedIndices = window.selectedIndices,
                                         onEntryClick = { 
                                             if (isWindowActive) {
@@ -260,7 +263,8 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                                         entry = window.selectedEntry,
                                         onClose = { viewModel.handleIntent(KLogViewerIntent.SelectEntry(null)) },
                                         filterQueries = window.filterQueries,
-                                        isDarkMode = state.isDarkMode
+                                        isDarkMode = state.isDarkMode,
+                                        showAnsiColors = window.showAnsiColors
                                     )
                                 }
                             }

@@ -48,4 +48,22 @@ class LogHighlighterTest {
         
         expectThat(result.spanStyles.size).isEqualTo(2)
     }
+
+    @Test
+    fun `should parse ANSI SGR colors and strip codes`() {
+        val text = "\u001b[31mRed\u001b[0m Normal"
+        val result = LogHighlighter.highlight(text, emptyList(), true, true)
+        
+        expectThat(result.text).isEqualTo("Red Normal")
+        expectThat(result.spanStyles.size).isEqualTo(2)
+    }
+
+    @Test
+    fun `should NOT parse ANSI colors when disabled`() {
+        val text = "\u001b[31mRed\u001b[0m Normal"
+        val result = LogHighlighter.highlight(text, emptyList(), true, false)
+        
+        expectThat(result.text).isEqualTo(text)
+        expectThat(result.spanStyles.size).isEqualTo(0)
+    }
 }

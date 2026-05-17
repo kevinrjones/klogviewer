@@ -489,6 +489,21 @@ Added standard keyboard shortcuts and multi-selection support for improved effic
 - **LogList.kt**: Updated `LogEntryRow` to detect Shift and Cmd/Ctrl modifiers on click using `pointerInput`.
 - **Testing**: Added integration test for multi-selection logic in `TabManagementTest`.
 
+## 19:15
+
+### Feature: ANSI SGR Color Support
+
+Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
+
+#### Changes:
+- **LogHighlighter.kt**: Implemented stateful ANSI parser using `AnnotatedString.Builder`. Supports foreground colors, bright colors, bold, and reset.
+- **KLogViewerState.kt**: Added `showAnsiColors` flag to `LogWindow`.
+- **KLogViewerIntent.kt**: Added `ToggleAnsiColors` intent.
+- **FilterBar.kt**: Added a `Palette` icon to toggle ANSI colors.
+- **UserPreferences.kt**: Added `showAnsiColors` to `WindowPreference` for persistence.
+- **LogList.kt / LogEntryDetails.kt**: Passed the flag down to the highlighter.
+- **Testing**: Added unit tests in `LogHighlighterTest.kt` to verify parsing and stripping of ANSI codes.
+
 ## 18:15
 
 ### UI: Enhance Active Window Visibility

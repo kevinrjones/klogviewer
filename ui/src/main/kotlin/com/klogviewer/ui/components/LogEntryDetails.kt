@@ -18,6 +18,7 @@ fun LogEntryDetails(
     onClose: () -> Unit,
     filterQueries: List<String> = emptyList(),
     isDarkMode: Boolean = false,
+    showAnsiColors: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -81,7 +82,7 @@ fun LogEntryDetails(
                             fullContent
                         }
                         Text(
-                            text = LogHighlighter.highlight(displayContent, filterQueries, isDarkMode),
+                            text = LogHighlighter.highlight(displayContent, filterQueries, isDarkMode, showAnsiColors),
                             modifier = Modifier.padding(12.dp),
                             style = MaterialTheme.typography.body2,
                             fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace

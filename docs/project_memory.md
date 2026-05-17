@@ -39,6 +39,7 @@
 - Level Filtering: Added an 'All' option in the sidebar to enable or disable all log levels in one go.
 - Keyboard Shortcuts: Added Cmd+W to close active tab, Cmd+N for new tab, and Cmd+C to copy selected logs.
 - Multi-selection: Implemented multi-selection in log list (Shift+Click for range, Cmd+Click for toggle).
+- ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
 - Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
 - Enhanced UI to make the active window more obvious by adding a subtle left border in split-pane view.
@@ -1176,3 +1177,22 @@
 **Test coverage areas**
 - `TabManagementTest`: Added `should support multi-selection via ToggleEntrySelection` to verify the logic.
 - Integration: Verified `MenuBar` shortcuts compilation and wiring.
+
+## Task: ANSI SGR Color Support
+**Title**: ANSI SGR Color Support
+**Date/time completed**: 2026-05-17 19:15
+**What was shipped**
+- ANSI SGR Parsing: Implemented a stateful ANSI parser in `LogHighlighter` that handles foreground colors (30-37, 90-97), bold (1), and resets (0).
+- UI Toggle: Added a 'Palette' icon to the `FilterBar` to enable or disable ANSI color interpretation per window.
+- Persistence: Saved the `showAnsiColors` preference in `UserPreferences`.
+- Details Pane Support: Integrated ANSI colors into the log details view.
+
+**Key decisions**
+- Decided to strip ANSI codes from the visible text when colors are enabled, ensuring a clean reading experience while applying styles via `AnnotatedString`.
+- Used a dedicated `Palette` icon in the `FilterBar` for easy access alongside other view-related toggles.
+
+**Gotchas**
+- ANSI codes must be parsed before other highlights (like timestamps or filter queries) to ensure the indices for those highlights remain correct after the codes are stripped.
+
+**Test coverage areas**
+- `LogHighlighterTest`: Added tests for ANSI parsing with both enabled and disabled states, verifying string stripping and style application.

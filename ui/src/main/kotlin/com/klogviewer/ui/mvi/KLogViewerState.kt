@@ -14,6 +14,7 @@ data class LogWindow(
     val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
     val isReversed: Boolean = false,
     val isAutoScrollEnabled: Boolean = true,
+    val showAnsiColors: Boolean = true,
     val sourceIds: List<String> = emptyList(),
     val selectedEntry: LogEntry? = null,
     val selectedIndices: Set<Int> = emptySet(),

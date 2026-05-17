@@ -34,6 +34,8 @@ fun FilterBar(
     onToggleSortOrder: () -> Unit,
     isAutoScrollEnabled: Boolean,
     onToggleAutoScroll: () -> Unit,
+    showAnsiColors: Boolean,
+    onToggleAnsiColors: () -> Unit,
     onSplitClick: () -> Unit,
     matchesCount: Int,
     totalCount: Int,
@@ -69,6 +71,12 @@ fun FilterBar(
                 tooltip = if (isAutoScrollEnabled) "Auto-scroll ON" else "Auto-scroll OFF",
                 onClick = onToggleAutoScroll,
                 tint = if (isAutoScrollEnabled) MaterialTheme.colors.primary else LocalContentColor.current
+            )
+            FilterBarIcon(
+                icon = Icons.Default.Palette,
+                tooltip = if (showAnsiColors) "ANSI Colors ON" else "ANSI Colors OFF",
+                onClick = onToggleAnsiColors,
+                tint = if (showAnsiColors) MaterialTheme.colors.primary else LocalContentColor.current
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))

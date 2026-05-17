@@ -40,6 +40,7 @@ fun LogList(
     columns: List<String> = emptyList(),
     columnWidths: Map<String, Int> = emptyMap(),
     isAutoScrollEnabled: Boolean = true,
+    showAnsiColors: Boolean = true,
     selectedIndices: Set<Int> = emptySet(),
     onEntryClick: (LogEntry) -> Unit = {},
     onToggleSelection: (Int, Boolean, Boolean) -> Unit = { _, _, _ -> },
@@ -88,6 +89,7 @@ fun LogList(
                                 filterQueries = filterQueries,
                                 isDarkMode = isDarkMode,
                                 viewportWidth = minContentWidth,
+                                showAnsiColors = showAnsiColors,
                                 sourceIds = sourceIds,
                                 columns = displayColumns,
                                 columnWidths = columnWidths,
@@ -213,6 +215,7 @@ fun LogEntryRow(
     filterQueries: List<String>,
     isDarkMode: Boolean,
     viewportWidth: Dp,
+    showAnsiColors: Boolean = true,
     sourceIds: List<String> = emptyList(),
     columns: List<String>,
     columnWidths: Map<String, Int>,
@@ -322,7 +325,7 @@ fun LogEntryRow(
                     val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value
                     val displayMessage = if (fullMessage.length > 10000) fullMessage.take(10000) + "..." else fullMessage
                     Text(
-                        text = LogHighlighter.highlight(displayMessage, filterQueries, isDarkMode),
+                        text = LogHighlighter.highlight(displayMessage, filterQueries, isDarkMode, showAnsiColors),
                         style = MaterialTheme.typography.body1,
                         fontSize = 12.sp,
                         softWrap = false,
