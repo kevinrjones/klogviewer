@@ -162,4 +162,29 @@ class TabManagementTest {
         val w1Check = viewModel.state.value.activeTab?.windows?.find { it.id == firstWindowId }!!
         assertNotEquals(500, w1Check.columnWidths["Message"])
     }
+
+    @Test
+    fun `should toggle all levels at once`() = runBlocking {
+        val allLevels = com.klogviewer.domain.model.LogLevel.entries.toSet()
+        
+        // Initially all levels are filtered in (assuming default state)
+        assertEquals(allLevels, viewModel.state.value.activeTab?.activeWindow?.levelFilters)
+        
+        // Toggle All (to disable all)
+        viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels)
+        assertEquals(emptySet<com.klogviewer.domain.model.LogLevel>(), viewModel.state.value.activeTab?.activeWindow?.levelFilters)
+        
+        // Toggle All (to enable all)
+        viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels)
+        assertEquals(allLevels, viewModel.state.value.activeTab?.activeWindow?.levelFilters)
+        
+        // Deselect one level
+        val infoLevel = com.klogviewer.domain.model.LogLevel.INFO
+        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(infoLevel))
+        assertNotEquals(allLevels, viewModel.state.value.activeTab?.activeWindow?.levelFilters)
+        
+        // Toggle All should now enable all again because NOT all were selected
+        viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels)
+        assertEquals(allLevels, viewModel.state.value.activeTab?.activeWindow?.levelFilters)
+    }
 }

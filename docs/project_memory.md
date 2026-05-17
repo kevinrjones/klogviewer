@@ -36,6 +36,7 @@
 - Full-Width Backgrounds: Fixed log entry layout to ensure background colors and selection highlights extend to the full width of the scrollable window.
 - Synchronized Row Widths: Implemented dynamic width tracking to ensure all rows stretch to the width of the widest row, filling the background to the edge.
 - Automatic Scrolling: Implemented auto-scroll (tailing) functionality with a persistent toggle in the toolbar.
+- Level Filtering: Added an 'All' option in the sidebar to enable or disable all log levels in one go.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
 - Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
@@ -1094,3 +1095,22 @@
 **Test coverage areas**
 - `TabManagementTest`: Added `should resize columns independently in different split windows`.
 - `PersistenceIntegrationTest`: Updated to verify that resizing still persists correctly with the new intent structure.
+
+## Task: Add 'All' option for Level Filtering
+**Title**: Add 'All' option for Level Filtering
+**Date/time completed**: 2026-05-17 18:00
+**What was shipped**
+- Implemented `ToggleAllLevels` intent to allow bulk selection/deselection of log levels.
+- Updated `Sidebar.kt` to include an "All" toggle at the top of the levels list.
+- Refactored `LogLevelToggle` in `Sidebar.kt` to be more flexible, supporting both individual levels and the "All" option.
+- Synchronized "All" checkbox state with the current selection (checked only if all levels are enabled).
+
+**Key decisions**
+- "All" checkbox toggles to enabled if any levels are currently disabled, and toggles to disabled only if all are currently enabled.
+- Reused the existing custom checkbox and row style for the "All" option to maintain UI consistency.
+
+**Gotchas**
+- The "All" option's count reflects the total number of logs in the window, which is the sum of counts for all individual levels.
+
+**Test coverage areas**
+- `TabManagementTest`: Added `should toggle all levels at once` to verify the logic for bulk selection and deselection.

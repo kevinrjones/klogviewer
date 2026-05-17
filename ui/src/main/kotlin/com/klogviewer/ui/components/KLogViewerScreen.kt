@@ -115,6 +115,7 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
                     isExpanded = state.isSidebarExpanded,
                     levelFilters = activeWindow?.levelFilters ?: emptySet(),
                     onToggleLevel = { level -> viewModel.handleIntent(KLogViewerIntent.ToggleLevel(level)) },
+                    onToggleAllLevels = { viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels) },
                     levelCounts = activeWindow?.levelCounts ?: emptyMap()
                 )
 

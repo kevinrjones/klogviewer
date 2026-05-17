@@ -22,6 +22,7 @@ fun Sidebar(
     isExpanded: Boolean,
     levelFilters: Set<LogLevel>,
     onToggleLevel: (LogLevel) -> Unit,
+    onToggleAllLevels: () -> Unit,
     levelCounts: Map<LogLevel, Int> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
@@ -75,7 +76,14 @@ fun Sidebar(
                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
                     )
                 }
-                
+
+                LogLevelToggle(
+                    label = "All",
+                    isEnabled = levelFilters.size == LogLevel.entries.size,
+                    count = levelCounts.values.sum(),
+                    onToggle = onToggleAllLevels
+                )
+
                 LogLevel.entries.forEach { level ->
                     LogLevelToggle(
                         level = level,
@@ -102,6 +110,21 @@ fun Sidebar(
 @Composable
 private fun LogLevelToggle(
     level: LogLevel,
+    isEnabled: Boolean,
+    count: Int,
+    onToggle: () -> Unit
+) {
+    LogLevelToggle(
+        label = level.name.lowercase().replaceFirstChar { it.uppercase() },
+        isEnabled = isEnabled,
+        count = count,
+        onToggle = onToggle
+    )
+}
+
+@Composable
+private fun LogLevelToggle(
+    label: String,
     isEnabled: Boolean,
     count: Int,
     onToggle: () -> Unit
@@ -141,7 +164,7 @@ private fun LogLevelToggle(
         Spacer(modifier = Modifier.width(8.dp))
 
         Text(
-            text = level.name.lowercase().replaceFirstChar { it.uppercase() },
+            text = label,
             style = MaterialTheme.typography.body2,
             modifier = Modifier.weight(1f),
             maxLines = 1

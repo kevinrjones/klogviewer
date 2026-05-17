@@ -448,3 +448,17 @@ Fixed an issue where resizing a column in a split pane would incorrectly resize 
 - **KLogViewerScreen.kt**: Updated the `onColumnResize` callback to pass the specific window's ID to the ViewModel.
 - **KLogViewerViewModel.kt**: Refactored the `UpdateColumnWidth` handler to use the new `updateWindow` helper for precise state modification.
 - **Testing**: Added an integration test in `TabManagementTest` to verify independent column resizing in multi-split layouts.
+- **Robustness**: Updated `RECAP.md` and `project_memory.md` to document the fix.
+
+## 18:00
+
+### Feature: Add 'All' option for Level Filtering
+
+Added an 'All' option to the log level filters in the sidebar, allowing users to enable or disable all levels with a single click.
+
+#### Changes:
+- **KLogViewerIntent.kt**: Added `ToggleAllLevels` intent.
+- **KLogViewerViewModel.kt**: Implemented logic to bulk toggle levels.
+- **Sidebar.kt**: Added "All" checkbox at the top of the level list with a total log count.
+- **KLogViewerScreen.kt**: Wired the new intent to the sidebar UI.
+- **Testing**: Added integration test `should toggle all levels at once` to `TabManagementTest.kt`.

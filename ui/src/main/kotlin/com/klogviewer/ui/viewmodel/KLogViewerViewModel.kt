@@ -157,6 +157,21 @@ class KLogViewerViewModel(
                 filterLogs(_state.value.activeTab?.activeWindow?.id)
                 savePreferences()
             }
+            KLogViewerIntent.ToggleAllLevels -> {
+                _state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        val allLevels = LogLevel.entries.toSet()
+                        val newFilters = if (window.levelFilters.size == allLevels.size) {
+                            emptySet()
+                        } else {
+                            allLevels
+                        }
+                        window.copy(levelFilters = newFilters)
+                    }
+                }
+                filterLogs(_state.value.activeTab?.activeWindow?.id)
+                savePreferences()
+            }
             KLogViewerIntent.ToggleSortOrder -> {
                 _state.update { currentState ->
                     currentState.updateActiveWindow { it.copy(isReversed = !it.isReversed) }

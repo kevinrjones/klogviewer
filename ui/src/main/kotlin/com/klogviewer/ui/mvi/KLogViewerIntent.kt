@@ -13,6 +13,7 @@ sealed interface KLogViewerIntent {
     data class RemoveFilterQuery(val query: String) : KLogViewerIntent
     data object ClearFilterQueries : KLogViewerIntent
     data class ToggleLevel(val level: LogLevel) : KLogViewerIntent
+    data object ToggleAllLevels : KLogViewerIntent
     data object ToggleSortOrder : KLogViewerIntent
     data object ToggleAutoScroll : KLogViewerIntent
     data class SelectEntry(val entry: com.klogviewer.domain.model.LogEntry?) : KLogViewerIntent
