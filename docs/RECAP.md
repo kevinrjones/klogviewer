@@ -424,6 +424,20 @@ Performed a comprehensive recap of all project activities from the last entry an
 
 # 2026-05-17
 
+## 17:00
+
+### Feature: Keyboard Shortcuts and Multi-selection
+
+Added standard keyboard shortcuts and multi-selection support for improved efficiency and better clipboard integration.
+
+#### Changes:
+- **Main.kt**: Added shortcuts to `MenuBar`: Cmd+W (Close Tab), Cmd+N (New Tab), Cmd+C (Copy).
+- **KLogViewerIntent.kt**: Added `CopySelected` and `ToggleEntrySelection` intents.
+- **LogWindow**: Added `selectedIndices` and `lastSelectedIndex` to track multi-select state.
+- **KLogViewerViewModel.kt**: Implemented range selection and toggle selection logic, plus clipboard integration using AWT.
+- **LogList.kt**: Updated `LogEntryRow` to detect Shift and Cmd/Ctrl modifiers on click using `pointerInput`.
+- **Testing**: Added integration test for multi-selection logic in `TabManagementTest`.
+
 ## 17:15
 
 ### Fix: ScrollableTabRow IndexOutOfBoundsException (Refined)
@@ -434,7 +448,6 @@ Resolved a persistent crash in the tab bar that occurred when adding new tabs, w
 - **KLogViewerScreen.kt**: Implemented a custom `indicator` lambda for `ScrollableTabRow` that performs explicit bounds checking against the `tabPositions` list before accessing the `selectedTabIndex`.
 - **KLogViewerScreen.kt**: Added explicit import for `androidx.compose.material.TabRowDefaults.tabIndicatorOffset`.
 - **Robustness**: Maintained defensive `coerceIn` logic for `selectedTabIndex` to ensure it always stays within the valid range of the current tab list, providing double-layered protection.
-
 
 ## 17:45
 
@@ -463,6 +476,18 @@ Added an 'All' option to the log level filters in the sidebar, allowing users to
 - **KLogViewerScreen.kt**: Wired the new intent to the sidebar UI.
 - **Testing**: Added integration test `should toggle all levels at once` to `TabManagementTest.kt`.
 
+## 18:15
+
+### UI: Enhance Active Window Visibility
+
+Improved the visibility of the active window in split-pane mode by adding a subtle left border.
+
+#### Changes:
+- **KLogViewerScreen.kt**: Added a 3dp left border to the active window using `Modifier.drawBehind`.
+- **KLogViewerScreen.kt**: Added necessary imports for `drawBehind` and `Offset`.
+- **Visuals**: The border uses `MaterialTheme.colors.primary` with 50% alpha for a subtle yet distinct indicator.
+- **Logic**: The border only appears when a tab contains more than one window (i.e., when splits are active).
+
 ## 18:45
 
 ### UI: Refine Window Activation and Selection
@@ -474,20 +499,6 @@ Refined the behavior of clicking on log entries in a split-pane view to decouple
 - **Logic**: If a window is not active, the first click on any log entry now only activates that window (`SwitchWindow`).
 - **Logic**: If the window is already active, clicking a log entry triggers the selection intent (`SelectEntry`) and opens the detail panel.
 - **UX**: This change ensures that users can switch focus between split panes without losing their place or being interrupted by a detail panel they didn't intend to open.
-
-## 17:00
-
-### Feature: Keyboard Shortcuts and Multi-selection
-
-Added standard keyboard shortcuts and multi-selection support for improved efficiency and better clipboard integration.
-
-#### Changes:
-- **Main.kt**: Added shortcuts to `MenuBar`: Cmd+W (Close Tab), Cmd+N (New Tab), Cmd+C (Copy).
-- **KLogViewerIntent.kt**: Added `CopySelected` and `ToggleEntrySelection` intents.
-- **LogWindow**: Added `selectedIndices` and `lastSelectedIndex` to track multi-select state.
-- **KLogViewerViewModel.kt**: Implemented range selection and toggle selection logic, plus clipboard integration using AWT.
-- **LogList.kt**: Updated `LogEntryRow` to detect Shift and Cmd/Ctrl modifiers on click using `pointerInput`.
-- **Testing**: Added integration test for multi-selection logic in `TabManagementTest`.
 
 ## 19:15
 
@@ -504,14 +515,30 @@ Added support for parsing and displaying ANSI SGR color codes in log files, with
 - **LogList.kt / LogEntryDetails.kt**: Passed the flag down to the highlighter.
 - **Testing**: Added unit tests in `LogHighlighterTest.kt` to verify parsing and stripping of ANSI codes.
 
-## 18:15
+## 19:30
 
-### UI: Enhance Active Window Visibility
+### Planning: UI Testing Spike
 
-Improved the visibility of the active window in split-pane mode by adding a subtle left border.
+Initiated a spike to establish a formal UI testing strategy for KLogViewer, bridging the gap between ViewModel-level verification and full end-to-end UI testing.
 
-#### Changes:
-- **KLogViewerScreen.kt**: Added a 3dp left border to the active window using `Modifier.drawBehind`.
-- **KLogViewerScreen.kt**: Added necessary imports for `drawBehind` and `Offset`.
-- **Visuals**: The border uses `MaterialTheme.colors.primary` with 50% alpha for a subtle yet distinct indicator.
-- **Logic**: The border only appears when a tab contains more than one window (i.e., when splits are active).
+#### Core Achievements:
+- **Branch Creation**: Created `spike/uitesting` branch for focused experimentation.
+- **Sprint Definition**: Authored `docs/sprints/sprint-ui-testing-spike.md` detailing the roadmap from no UI testing to full coverage.
+- **Task Management**: Established `docs/tasks/TASKS-UI-TESTING-SPIKE.md` to track research, infrastructure setup, and pattern implementation.
+- **Testing Roadmap**: Defined a 4-phase plan covering Infrastructure, the Robot Pattern, Side-Effect handling, and CI/CD integration.
+
+# 2026-05-18
+
+## 07:13
+
+### Recap of UI Testing Spike Initiation and Workspace Enhancements
+
+Performed a comprehensive recap of the work completed during the recent transition to the UI Testing Spike and the final polish of the Sprint 6 workspace features.
+
+#### Key Achievements:
+- **UI Testing Framework Selection**: Committed to using **ComposeTestRule** and the **Robot Pattern** for the next phase of development.
+- **Branch Infrastructure**: Established the `spike/uitesting` branch and corresponding roadmap documentation.
+- **Workspace Interactivity**: Finalized a suite of power-user features including multi-selection, keyboard shortcuts, and bulk filtering.
+- **Visual & UX Refinement**: Enhanced active window identification and refined split-pane interaction logic for better productivity.
+- **Legacy Log Support**: Added support for ANSI SGR colors, ensuring KLogViewer can handle terminal-originated logs gracefully.
+- **Traceability**: All recent changes have been documented in `project_memory.md` and the task lists are up to date.
