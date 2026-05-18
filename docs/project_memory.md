@@ -45,6 +45,7 @@
 - Enhanced UI to make the active window more obvious by adding a subtle left border in split-pane view.
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
 - Refined window activation: Clicking a non-active window in split-pane view now only activates the window; log entry details are only shown if the window is already active.
+- Initiated UI Testing Spike to establish a formal E2E testing strategy using Compose for Desktop and the Robot Pattern.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -1196,3 +1197,79 @@
 
 **Test coverage areas**
 - `LogHighlighterTest`: Added tests for ANSI parsing with both enabled and disabled states, verifying string stripping and style application.
+
+## Task: UI Testing Spike Planning
+**Title**: UI Testing Strategy & Roadmap
+**Date/time completed**: 2026-05-17 19:30
+**What was shipped**
+- `spike/uitesting` git branch.
+- `docs/sprints/sprint-ui-testing-spike.md`: Comprehensive strategy for UI testing.
+- `docs/tasks/TASKS-UI-TESTING-SPIKE.md`: Structured task list for the spike.
+**Key decisions**
+- Adopted the **Robot Pattern** for maintainable UI tests (ADR-024).
+- Selected **ComposeTestRule** (JUnit 4) as the primary testing framework (ADR-023).
+- Committed to headless CI/CD execution using Xvfb.
+- Decided to introduce a `DialogProvider` abstraction to facilitate mocking of blocking AWT calls like `FileDialog`.
+**Gotchas**
+- Existing Cucumber BDD tests are limited to the ViewModel layer and do not exercise the actual Compose UI components or AWT integrations.
+
+## Task: UI Testing Spike - Part 1 & 2
+**Title**: UI Testing Infrastructure and Pattern Definition
+**Date/time completed**: 2026-05-18 21:45
+**What was shipped**
+- ADR-023: UI Testing Framework Selection.
+- ADR-024: Robot Pattern for UI Testing.
+- Added UI testing dependencies to `libs.versions.toml` (`ui-test-junit4`, `junit4`).
+- Configured `:ui:desktopTest` task in Gradle.
+- Integrated Xvfb setup and automated UI test execution in GitHub Actions CI/CD workflow.
+**Key decisions**
+- Standardized on `androidx.compose.ui:ui-test-junit4` despite being a Desktop project to ensure compatibility with standard Robot patterns.
+- Introduced a dedicated `desktopTest` Gradle task to isolate UI tests from faster unit tests.
+- Opted for `xvfb-run` in CI to ensure stable headless execution for Compose Desktop.
+**Gotchas**
+- Compose UI tests on Desktop still require JUnit 4, necessitating a dual-JUnit environment (JUnit 5 for unit tests, JUnit 4 for UI tests).
+- Xvfb requires additional system libraries (Mesa, GLX) on standard Ubuntu runners.
+**Test coverage areas**
+- Infrastructure: Verified CI workflow syntax and Gradle task availability.
+- Pattern: Defined the roadmap for `BaseRobot` and specific UI Robots in ADR-024.
+
+## Task: UI Testing Spike - Part 3 & 4.1
+**Title**: Robot Pattern Implementation and Smoke Testing
+**Date/time completed**: 2026-05-18 21:40
+**What was shipped**
+- `BaseRobot`, `LogListRobot`, `SidebarRobot`, and `MainRobot` for fluent UI testing.
+- `DialogProvider` abstraction and `AwtDialogProvider` implementation to allow mocking of AWT `FileDialog`.
+- `testTag` decorations across `LogList`, `Sidebar`, `FilterBar`, and `KLogViewerScreen`.
+- `KLogViewerSmokeTest` verifying application launch and component presence.
+- Added `MockK` and `JUnit Vintage` dependencies for UI testing support.
+**Key decisions**
+- Switched to `org.jetbrains.compose.ui:ui-test-junit4` for compatibility with Compose Desktop.
+- Introduced `DialogProvider` to the `KLogViewerScreen` via dependency injection (defaulting to AWT) to enable headless testing of file operations.
+- Decided to use JUnit 4 for UI tests while maintaining JUnit 5 for unit tests, enabled by the Vintage engine.
+**Gotchas**
+- `androidx.compose.ui:ui-test-junit4` contains stubs that throw `NotImplementedError` on Desktop; the JetBrains-specific version must be used.
+- Lazy components like `LazyColumn` require careful assertion of child counts as only visible items are typically present in the semantics tree.
+**Test coverage areas**
+- UI: Verified main screen components are displayed on launch.
+- Pattern: Verified Robot DSL works as intended in the smoke test.
+
+## Task: UI Testing Spike - Finalization
+**Title**: Completion of UI Testing Suite and Documentation
+**Date/time completed**: 2026-05-18 21:55
+**What was shipped**
+- Completed UI test suite covering File Loading, Level Filtering, and Search & Highlighting workflows.
+- Enhanced Robot Pattern with waiting mechanisms (`waitUntilExists`) and better element matching.
+- Added comprehensive testing guidelines in `docs/TESTING.md`.
+- Added critical `testTag` decorations to `FilterBar` (clear button) and `LogList` (LazyColumn and rows).
+**Key decisions**
+- Used `testTag` on `LogEntryRow` to enable reliable counting of log entries in `LazyColumn`.
+- Standardized on `performImeAction()` for triggering searches in UI tests.
+- Decided to maintain a single `KLogViewerUiTest.kt` for core workflows during the spike to simplify setup.
+**Gotchas**
+- The "Clear all filters" button in the search bar was missing a `testTag`, which caused selection failures in tests.
+- `LazyColumn` children counting requires the `useUnmergedTree = true` flag in some scenarios or specific child tagging.
+- UI tests involving `SideEffect` and asynchronous `ViewModel` updates require explicit `waitUntil` or `waitForIdle` to avoid race conditions.
+**Test coverage areas**
+- UI: Verified file loading from mock dialogs.
+- UI: Verified reactive filtering by log level.
+- UI: Verified regex search filtering and clearing.

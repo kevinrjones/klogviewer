@@ -21,6 +21,7 @@ import androidx.compose.ui.input.pointer.*
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -60,7 +61,7 @@ fun LogList(
 
     val displayColumns = if (columns.isEmpty()) listOf("Timestamp", "Level", "Message") else columns
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().testTag("log_list")) {
         val viewportWidth = maxWidth
         val minContentWidth = if (widestRowWidth > viewportWidth) widestRowWidth else viewportWidth
         Row(modifier = Modifier.fillMaxSize()) {
@@ -80,7 +81,7 @@ fun LogList(
                     )
                     LazyColumn(
                         state = verticalScrollState,
-                        modifier = Modifier.fillMaxHeight().fillMaxWidth()
+                        modifier = Modifier.fillMaxHeight().fillMaxWidth().testTag("log_lazy_column")
                     ) {
                         itemsIndexed(logs) { index, entry ->
                             LogEntryRow(
@@ -106,7 +107,7 @@ fun LogList(
                                     if (width > widestRowWidth) {
                                         widestRowWidth = width
                                     }
-                                }
+                                }.testTag("log_entry_row")
                             )
                         }
                     }

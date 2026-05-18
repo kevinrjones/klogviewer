@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.klogviewer.domain.model.LogLevel
@@ -29,7 +30,8 @@ fun Sidebar(
     Surface(
         modifier = modifier
             .fillMaxHeight()
-            .width(if (isExpanded) 200.dp else 56.dp),
+            .width(if (isExpanded) 200.dp else 56.dp)
+            .testTag("sidebar"),
         elevation = 4.dp,
         color = MaterialTheme.colors.surface
     ) {
@@ -134,7 +136,8 @@ private fun LogLevelToggle(
             .fillMaxWidth()
             .clickable(onClick = onToggle)
             .padding(vertical = 2.dp)
-            .padding(start = 24.dp, end = 8.dp),
+            .padding(start = 24.dp, end = 8.dp)
+            .testTag("level_toggle_$label"),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Custom square checkbox to match the requested style

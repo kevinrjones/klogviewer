@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,7 +45,7 @@ fun FilterBar(
     var textState by remember { mutableStateOf("") }
 
     Surface(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().testTag("filter_bar"),
         elevation = 2.dp,
         color = MaterialTheme.colors.surface
     ) {
@@ -101,7 +102,7 @@ fun FilterBar(
                     BasicTextField(
                         value = textState,
                         onValueChange = { textState = it },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(1f).testTag("filter_input"),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                         keyboardActions = KeyboardActions(onSearch = {
@@ -135,7 +136,7 @@ fun FilterBar(
                             IconButton(onClick = { 
                                 onClearQueries()
                                 textState = ""
-                            }, modifier = Modifier.size(20.dp)) {
+                            }, modifier = Modifier.size(20.dp).testTag("clear_all_filters")) {
                                 Icon(Icons.Default.Close, contentDescription = "Clear all filters", modifier = Modifier.size(14.dp))
                             }
                         }
@@ -162,8 +163,9 @@ private fun FilterBarIcon(
     onClick: () -> Unit,
     tint: Color = LocalContentColor.current
 ) {
+    val tag = tooltip.lowercase().replace(" ", "_")
     TooltipWrapper(tooltip = tooltip) {
-        IconButton(onClick = onClick, modifier = Modifier.size(28.dp)) {
+        IconButton(onClick = onClick, modifier = Modifier.size(28.dp).testTag(tag)) {
             Icon(icon, contentDescription = tooltip, modifier = Modifier.size(18.dp), tint = tint)
         }
     }

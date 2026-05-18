@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,7 +28,10 @@ import java.awt.FileDialog
 import java.awt.Frame
 
 @Composable
-fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
+fun KLogViewerScreen(
+    viewModel: KLogViewerViewModel,
+    dialogProvider: DialogProvider = AwtDialogProvider()
+) {
     val state by viewModel.state.collectAsState()
     val activeTab = state.activeTab
     val activeWindow = activeTab?.activeWindow
@@ -46,17 +50,22 @@ fun KLogViewerScreen(viewModel: KLogViewerViewModel) {
 
     val pendingDialog = state.pendingDialog
     if (pendingDialog != null && pendingDialog != com.klogviewer.ui.mvi.KLogViewerState.DialogType.RECENT_ITEMS) {
-        FileDialog(
-            onCloseRequest = { results ->
-                viewModel.handleIntent(KLogViewerIntent.DismissDialog)
-                if (results != null) {
-                    when (pendingDialog) {
-                        com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN -> viewModel.handleIntent(KLogViewerIntent.LoadFiles(results))
-                        com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> viewModel.handleIntent(KLogViewerIntent.AddToWorkspace(results))
-                    }
+        SideEffect {
+            val title = when (pendingDialog) {
+                com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN -> "Select Log File"
+                com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> "Add Log File"
+                else -> "Select Log File"
+            }
+            val file = dialogProvider.showOpenFileDialog(title)
+            viewModel.handleIntent(KLogViewerIntent.DismissDialog)
+            if (file != null) {
+                val paths = listOf(file.absolutePath)
+                when (pendingDialog) {
+                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN -> viewModel.handleIntent(KLogViewerIntent.LoadFiles(paths))
+                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> viewModel.handleIntent(KLogViewerIntent.AddToWorkspace(paths))
                 }
             }
-        )
+        }
     }
 
     if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.RECENT_ITEMS) {
@@ -285,7 +294,7 @@ private fun LogTabRow(
     onAddClick: () -> Unit
 ) {
     val tabBackground = KLogViewerTheme.customColors.tabBackground
-    Surface(elevation = 4.dp, color = tabBackground) {
+    Surface(elevation = 4.dp, color = tabBackground, modifier = Modifier.testTag("tab_row")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (tabs.isNotEmpty()) {
                 val selectedTabIndex = tabs.indexOfFirst { it.id == activeTabId }.coerceIn(0, tabs.size - 1)
@@ -340,7 +349,7 @@ private fun LogTabRow(
                 Spacer(modifier = Modifier.weight(1f))
             }
             TooltipWrapper(tooltip = "Add new tab") {
-                IconButton(onClick = onAddClick, modifier = Modifier.size(32.dp)) {
+                IconButton(onClick = onAddClick, modifier = Modifier.size(32.dp).testTag("add_tab_button")) {
                     Icon(Icons.Default.Add, contentDescription = "Add tab", tint = MaterialTheme.colors.onSurface, modifier = Modifier.size(18.dp))
                 }
             }

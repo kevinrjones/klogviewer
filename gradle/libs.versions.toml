@@ -5,27 +5,34 @@ compose = "1.11.0"
 coroutines = "1.11.0"
 cucumber = "7.34.3"
 junit = "6.0.3"
+junit4 = "4.13.2"
 kluent = "1.73"
 kotlin = "2.3.21"
 kotlin-logging = "8.0.02"
 kotlinx-serialization = "1.11.0"
 logback = "1.5.32"
 logstash-logback-encoder = "9.0"
+mockk = "1.13.17"
 slf4j = "2.0.18"
 strikt = "0.35.1"
 updateVersion-version = "0.54.0"
 
 [libraries]
+jetbrains-compose-ui-test-junit4 = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "compose" }
+androidx-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "compose" }
 arrow-core = { module = "io.arrow-kt:arrow-core", version.ref = "arrow" }
 cucumber-java = { module = "io.cucumber:cucumber-java", version.ref = "cucumber" }
 cucumber-junit-platform-engine = { module = "io.cucumber:cucumber-junit-platform-engine", version.ref = "cucumber" }
 junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit" }
+junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 junit-platform-suite = { module = "org.junit.platform:junit-platform-suite" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
 kluent = { module = "org.amshove.kluent:kluent", version.ref = "kluent" }
 kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 kotlinx-coroutines-swing = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-swing", version.ref = "coroutines" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }

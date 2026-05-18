@@ -51,8 +51,27 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
+    - name: Setup Xvfb (Linux only)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb libegl1-mesa libgles2-mesa libgl1-mesa-glx
+
     - name: Run Tests
-      run: ./gradlew test
+      run: |
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          xvfb-run ./gradlew test
+        else
+          ./gradlew test
+        fi
+
+    - name: Run UI Tests
+      run: |
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          xvfb-run ./gradlew :ui:desktopTest
+        else
+          ./gradlew :ui:desktopTest
+        fi
 
     - name: Package Installer
       run: ./gradlew :app:${{ matrix.package-task }}
