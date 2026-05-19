@@ -14,6 +14,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,6 +28,7 @@ import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import java.awt.FileDialog
 import java.awt.Frame
+import java.io.File
 
 @Composable
 fun KLogViewerScreen(
@@ -49,7 +52,9 @@ fun KLogViewerScreen(
     }
 
     val pendingDialog = state.pendingDialog
-    if (pendingDialog != null && pendingDialog != com.klogviewer.ui.mvi.KLogViewerState.DialogType.RECENT_ITEMS) {
+    if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN ||
+        pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY ||
+        pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD) {
         SideEffect {
             val title = when (pendingDialog) {
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN -> "Select Log File"
@@ -75,14 +80,39 @@ fun KLogViewerScreen(
         }
     }
 
+    if (state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.MISSING_FILE && state.missingPath != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
+            title = { Text("File Not Found") },
+            text = { Text("The file '${state.missingPath}' no longer exists. Would you like to remove it from the recent items list?") },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(state.missingPath!!))
+                    viewModel.handleIntent(KLogViewerIntent.DismissDialog)
+                }) {
+                    Text("Remove from List")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }) {
+                    Text("Keep in List")
+                }
+            }
+        )
+    }
+
     if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.RECENT_ITEMS) {
         RecentItemsDialog(
             recentFiles = state.recentFiles,
             recentDirectories = state.recentDirectories,
-            onSelect = { 
-                viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(it)))
-                viewModel.handleIntent(KLogViewerIntent.DismissDialog)
+            onSelect = { path ->
+                viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path)))
+                if (java.io.File(path).exists()) {
+                    viewModel.handleIntent(KLogViewerIntent.DismissDialog)
+                }
             },
+            onRemoveItem = { viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(it)) },
+            onClearMissing = { viewModel.handleIntent(KLogViewerIntent.ClearMissingRecentItems) },
             onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
         )
     }
@@ -122,7 +152,8 @@ fun KLogViewerScreen(
             bottomBar = {
                 StatusBar(
                     filePath = activeWindow?.filePath ?: "",
-                    lineCount = activeWindow?.logs?.size ?: 0
+                    lineCount = activeWindow?.logs?.size ?: 0,
+                    isMissing = activeWindow?.missingSourceIds?.isNotEmpty() ?: false
                 )
             }
         ) { padding ->
@@ -173,10 +204,12 @@ fun KLogViewerScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     if (window.filePath.isNotEmpty()) {
+                                        val isAnySourceMissing = window.missingSourceIds.isNotEmpty()
                                         Text(
                                             text = window.filePath,
                                             style = MaterialTheme.typography.caption.copy(
-                                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                                                color = if (isAnySourceMissing) Color.Red else MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                                                textDecoration = if (isAnySourceMissing) TextDecoration.LineThrough else TextDecoration.None
                                             ),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
@@ -321,6 +354,7 @@ private fun LogTabRow(
                     }
                 ) {
                     tabs.forEach { tab ->
+                        val isAnyWindowMissing = tab.windows.any { it.missingSourceIds.isNotEmpty() }
                         Tab(
                             selected = tab.id == activeTabId,
                             onClick = { onTabClick(tab.id) },
@@ -332,7 +366,11 @@ private fun LogTabRow(
                             ) {
                                 Text(
                                     text = tab.title,
-                                    style = MaterialTheme.typography.button.copy(fontSize = 12.sp),
+                                    style = MaterialTheme.typography.button.copy(
+                                        fontSize = 12.sp,
+                                        color = if (isAnyWindowMissing) Color.Red else Color.Unspecified,
+                                        textDecoration = if (isAnyWindowMissing) TextDecoration.LineThrough else TextDecoration.None
+                                    ),
                                     maxLines = 1
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
@@ -395,29 +433,44 @@ fun RecentItemsDialog(
     recentFiles: List<String>,
     recentDirectories: List<String>,
     onSelect: (String) -> Unit,
+    onRemoveItem: (String) -> Unit,
+    onClearMissing: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val hasMissing = recentFiles.any { !File(it).exists() } || recentDirectories.any { !File(it).exists() }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Recently Opened Items") },
         text = {
             Column(modifier = Modifier.width(600.dp).heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
+                if (hasMissing) {
+                    Surface(
+                        color = MaterialTheme.colors.error.copy(alpha = 0.1f),
+                        shape = MaterialTheme.shapes.small,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = "Some items no longer exist on disk.",
+                                style = MaterialTheme.typography.caption,
+                                color = MaterialTheme.colors.error
+                            )
+                            TextButton(onClick = onClearMissing) {
+                                Text("Clear Missing", style = MaterialTheme.typography.caption, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+
                 if (recentFiles.isNotEmpty()) {
                     Text("Files", style = MaterialTheme.typography.subtitle2, modifier = Modifier.padding(vertical = 8.dp))
                     recentFiles.forEach { path ->
-                        TextButton(
-                            onClick = { onSelect(path) },
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = path,
-                                style = MaterialTheme.typography.body2,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                        RecentItemRow(path, onSelect, onRemoveItem, isMissing = !File(path).exists())
                     }
                 }
                 
@@ -428,19 +481,7 @@ fun RecentItemsDialog(
                 if (recentDirectories.isNotEmpty()) {
                     Text("Directories", style = MaterialTheme.typography.subtitle2, modifier = Modifier.padding(vertical = 8.dp))
                     recentDirectories.forEach { path ->
-                        TextButton(
-                            onClick = { onSelect(path) },
-                            modifier = Modifier.fillMaxWidth(),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = path,
-                                style = MaterialTheme.typography.body2,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.fillMaxWidth()
-                            )
-                        }
+                        RecentItemRow(path, onSelect, onRemoveItem, isMissing = !File(path).exists())
                     }
                 }
                 
@@ -455,4 +496,42 @@ fun RecentItemsDialog(
             }
         }
     )
+}
+
+@Composable
+private fun RecentItemRow(
+    path: String,
+    onSelect: (String) -> Unit,
+    onRemoveItem: (String) -> Unit,
+    isMissing: Boolean = false
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        TextButton(
+            onClick = { onSelect(path) },
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+        ) {
+            Text(
+                text = path,
+                style = MaterialTheme.typography.body2.copy(
+                    textDecoration = if (isMissing) androidx.compose.ui.text.style.TextDecoration.LineThrough else androidx.compose.ui.text.style.TextDecoration.None,
+                    color = if (isMissing) MaterialTheme.colors.onSurface.copy(alpha = 0.4f) else MaterialTheme.colors.onSurface
+                ),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+        IconButton(onClick = { onRemoveItem(path) }, modifier = Modifier.size(32.dp)) {
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = "Remove from history",
+                modifier = Modifier.size(16.dp),
+                tint = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+            )
+        }
+    }
 }

@@ -27,6 +27,8 @@ sealed interface KLogViewerIntent {
     data object ShowAddDialog : KLogViewerIntent
     data object ShowRecentDialog : KLogViewerIntent
     data object DismissDialog : KLogViewerIntent
+    data class RemoveRecentItem(val path: String) : KLogViewerIntent
+    data object ClearMissingRecentItems : KLogViewerIntent
     
     // Tab Management
     data object AddTab : KLogViewerIntent

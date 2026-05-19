@@ -11,6 +11,7 @@
 - [x] 10.2.1. Update UI to allow selecting directories (Native dialog support)
 - [x] 10.2.2. Implement directory-based tab representation
 - [x] 10.2.3. Update "Recently Opened" to correctly handle directory items
+- [x] 10.2.4. Add source badges (small circles with tooltips) to LogList for distinguishing interleaved logs
 
 ### 10.3. Verification & Polish
 - [x] 10.3.1. Verify real-time discovery of new files in watched directories

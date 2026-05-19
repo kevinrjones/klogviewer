@@ -15,6 +15,7 @@
 - Selected a Layered Multi-Module structure (`domain`, `core`, `ui`, `app`) for better separation of concerns.
 - Committed to using Tiny Types for core domain concepts to enhance type safety.
 - Transitioned to a streaming Flow-based `LogSource` to support scalability and real-time monitoring.
+- Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
 - UI Simplification: Removed redundant toggles from Sidebar and unnecessary file icons from FilterBar to achieve a cleaner, content-focused interface.
@@ -32,7 +33,10 @@
 - Dynamic Details Pane: Redesigned the log entry details pane to adapt to different log formats. It now hides the "Level" field when unknown (common in structured logs like Nginx) and automatically displays all available fields from the `LogEntry.fields` map.
 - Formalized the Ubiquitous Language and established it as a core architectural requirement (ADR-022).
 - UI Robustness: Implemented truncation (10k-50k chars) and constraint capping (10k dp) for large log entries to prevent `IllegalArgumentException` in Compose `Constraints`.
-- Multi-Log Differentiation: Added colored badges (dots) and pale grey background shading to distinguish between sources in interleaved views.
+- Multi-Log Differentiation: Replaced colored dots with small circles that show the full source path on hover as a tooltip.
+- Recent Items Management: Implemented automatic filtering of non-existent files from the "Recent Items" list. Added a cleanup mechanism ("Clear Missing") and individual removal buttons for history management.
+- Robust Missing File Handling: Implemented a "File Not Found" confirmation dialog that appears when attempting to open a missing file from the history. This ensures that the current log viewer remains unchanged while offering the user an immediate way to prune broken links from their recent items list. Fixed an issue where the native system file picker would incorrectly trigger alongside this dialog.
+- Live File Deletion: Implemented a mechanism to detect when a currently viewed log file is deleted. The UI retains the existing data but highlights the filename in red with a strike-through in the window header, tab row, and status bar.
 - Full-Width Backgrounds: Fixed log entry layout to ensure background colors and selection highlights extend to the full width of the scrollable window.
 - Synchronized Row Widths: Implemented dynamic width tracking to ensure all rows stretch to the width of the widest row, filling the background to the edge.
 - Automatic Scrolling: Implemented auto-scroll (tailing) functionality with a persistent toggle in the toolbar.
@@ -1275,3 +1279,28 @@
 - UI: Independent column resizing in split panes.
 - UI: Multi-selection with Shift and Meta/Ctrl modifiers.
 - UI: Persistent state maintenance during tab switching.
+
+## Sprint: Recursive Directory Loading
+**Title**: Sprint 5 Completion
+**Date/time completed**: 2026-05-19 11:45
+**What was shipped**
+- `DirectoryScanner` for recursive log discovery with glob pattern support.
+- `DirectoryLogSource` for real-time merging and monitoring of entire directory trees.
+- Native "Open Directory" support with workspace persistence for directory paths.
+- Small circle source badges with tooltips showing the full source path in the log gutter for multi-source identification.
+- Dynamic `sourceIds` tracking in `KLogViewerViewModel`.
+- JSON schema auto-detection and key mapping integrated with directory loading.
+- Robust missing file handling with "File Not Found" confirmation dialog and history pruning.
+
+**Key decisions**
+- Chose small circles with tooltips over textual badges to keep the gutter compact while still providing full source information.
+- Decoupled `DirectoryScanner` from `LogSource` for better testability.
+
+**Gotchas**
+- Initially missed handling nullable `sourceId` in the ViewModel's unique ID extraction logic, causing a compilation error (fixed).
+- Native directory selection on macOS requires toggling the `apple.awt.fileDialogForDirectories` system property.
+
+**Test coverage areas**
+- `DirectoryScannerTest`: Recursive discovery and glob filtering.
+- `DirectoryLogSourceTest`: Initial merge of multiple files within a directory.
+- `InterleavingIntegrationTest`: Multi-source merging and chronological sorting.

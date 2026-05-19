@@ -542,3 +542,45 @@ Performed a comprehensive recap of the work completed during the recent transiti
 - **Visual & UX Refinement**: Enhanced active window identification and refined split-pane interaction logic for better productivity.
 - **Legacy Log Support**: Added support for ANSI SGR colors, ensuring KLogViewer can handle terminal-originated logs gracefully.
 - **Traceability**: All recent changes have been documented in `project_memory.md` and the task lists are up to date.
+
+# 2026-05-19
+
+## 11:45
+
+### Sprint 5 Completion and Source Badging
+
+Finalized Sprint 5 by ensuring complete directory loading support and enhancing the UI with descriptive source badges for interleaved logs.
+
+#### Core Achievements:
+- **Directory Loading**: Fully integrated `DirectoryLogSource` into the application, enabling recursive log file discovery and real-time merging of directory contents.
+- **Refined Source Badging**: 
+    - Replaced textual badges with small color-coded circles to minimize gutter width.
+    - Integrated `TooltipWrapper` to display the fully qualified file name (e.g., `/var/log/app.log`) when hovering over the source circle.
+    - Updated the `KLogViewerViewModel` to dynamically track and expose all discovered `sourceIds` to the UI, ensuring badges appear correctly even as new files are added to a watched directory.
+- **UI & Workspace Management**:
+    - Added "Open Directory..." to the main menu and integrated it with native directory selection dialogs.
+    - Updated "Recently Opened" to distinguish between files and directories.
+- **JSON Support Alignment**: Verified that `HeuristicProbe` correctly identifies JSON schemas and maps keys even when loading from directories.
+
+#### Quality Assurance:
+- **Integration Testing**: Verified the dynamic source ID tracking and badge rendering logic through the `InterleavingIntegrationTest` and manual review.
+- **Test Coverage**: Ensured all core tests for recursive scanning and merging remain passing.
+
+## 13:10
+
+### Live File Deletion Handling
+
+Implemented robust handling for scenarios where log files are deleted while being viewed, ensuring data persistence in the UI and clear visual feedback.
+
+#### Core Achievements:
+- **Deletion Detection**: Updated `FileLogSource` to check for file existence during its tailing loop and emit a new `LogUpdate.SourceMissing` event if the file disappears.
+- **State Persistence**: Enhanced `KLogViewerViewModel` to retain existing log entries even if the source is missing, fulfilling the "don't remove data" requirement.
+- **Visual Feedback**:
+    - Updated `LogWindow` to track `missingSourceIds`.
+    - Applied red color and strike-through styling to filenames in the Window Header and Status Bar when a file is missing.
+    - Updated `LogTabRow` to reflect the missing state in the tab title (red + strike-through).
+- **Architecture**: Forwarded `SourceMissing` events through `MergedLogSource` and `DirectoryLogSource` to ensure multi-file and directory views also reflect missing files correctly.
+
+#### Quality Assurance:
+- **Integration Testing**: Added `FileDeletionTest.kt` covering both single-file loading and directory-based loading scenarios. Verified that logs remain in the UI while the state correctly identifies missing sources.
+- **Verified Tailing**: Confirmed that the polling mechanism (1s for files, 5s for directories) correctly triggers the UI updates.

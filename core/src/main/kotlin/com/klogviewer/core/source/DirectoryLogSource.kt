@@ -46,6 +46,7 @@ class DirectoryLogSource(
                     activeSources[file]?.cancel()
                     activeSources.remove(file)
                     currentEntries.remove(file)
+                    send(LogUpdate.SourceMissing(file).right())
                 }
                 // For now, we don't emit a reset because we don't want to clear EVERYTHING.
                 // But in a real app, we might need a way to remove specific entries.
@@ -81,6 +82,9 @@ class DirectoryLogSource(
                                         LogUpdate.Reset -> {
                                             logger.warn { "File $file was reset" }
                                             // Handle reset?
+                                        }
+                                        is LogUpdate.SourceMissing -> {
+                                            send(update.right())
                                         }
                                     }
                                 }

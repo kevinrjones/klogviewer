@@ -13,7 +13,8 @@
 9. Can I write an MCP server for the app?
 10. Change the list of logs in a window to a dropdown so that I can select the logs to view and delete logs from 
     that view
-
+11. Highlight lines in the log and email them
+12. Add a feature to filter logs by timestamp
 
 
    

@@ -244,7 +244,25 @@ class KLogViewerViewModel(
             KLogViewerIntent.ShowOpenDirectoryDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY) }
             KLogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD) }
             KLogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
-            KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null) }
+            KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null, missingPath = null) }
+            is KLogViewerIntent.RemoveRecentItem -> {
+                _state.update { currentState ->
+                    currentState.copy(
+                        recentFiles = currentState.recentFiles - intent.path,
+                        recentDirectories = currentState.recentDirectories - intent.path
+                    )
+                }
+                savePreferences()
+            }
+            KLogViewerIntent.ClearMissingRecentItems -> {
+                _state.update { currentState ->
+                    currentState.copy(
+                        recentFiles = currentState.recentFiles.filter { File(it).exists() },
+                        recentDirectories = currentState.recentDirectories.filter { File(it).exists() }
+                    )
+                }
+                savePreferences()
+            }
             
             // Split Management
             KLogViewerIntent.SplitHorizontal -> splitHorizontal()
@@ -356,6 +374,12 @@ class KLogViewerViewModel(
     }
 
     private fun loadFilesIntoWindow(windowId: String, paths: List<String>) {
+        val missingPaths = paths.filter { !File(it).exists() }
+        if (missingPaths.isNotEmpty()) {
+            _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.MISSING_FILE, missingPath = missingPaths.first()) }
+            return
+        }
+
         logJobs[windowId]?.cancel()
         logJobs[windowId] = scope.launch {
             val fileName = if (paths.size == 1) File(paths[0]).name else "${paths.size} files"
@@ -485,11 +509,36 @@ class KLogViewerViewModel(
             currentState.copy(tabs = currentState.tabs.map { tab ->
                 tab.copy(windows = tab.windows.map { window ->
                     if (window.id == windowId) {
-                        when (update) {
-                            is LogUpdate.Initial -> window.copy(isLoading = false, logs = update.entries)
-                            is LogUpdate.Appended -> window.copy(logs = window.logs + update.entries)
-                            LogUpdate.Reset -> window.copy(logs = emptyList())
+                        val newLogs = when (update) {
+                            is LogUpdate.Initial -> update.entries
+                            is LogUpdate.Appended -> window.logs + update.entries
+                            LogUpdate.Reset -> emptyList()
+                            is LogUpdate.SourceMissing -> window.logs
                         }
+                        
+                        val newMissingSourceIds = when (update) {
+                            is LogUpdate.SourceMissing -> window.missingSourceIds + update.sourceId
+                            is LogUpdate.Initial -> {
+                                val incoming = update.entries.mapNotNull { it.sourceId }.toSet()
+                                window.missingSourceIds - incoming
+                            }
+                            is LogUpdate.Appended -> {
+                                val incoming = update.entries.mapNotNull { it.sourceId }.toSet()
+                                window.missingSourceIds - incoming
+                            }
+                            LogUpdate.Reset -> emptySet()
+                        }
+                        
+                        // Extract unique source IDs from the logs to ensure badges are shown for all discovered files
+                        val discoveredSourceIds = newLogs.mapNotNull { it.sourceId }.distinct().filter { it.isNotEmpty() }
+                        val mergedSourceIds = (window.sourceIds + discoveredSourceIds).distinct()
+                        
+                        window.copy(
+                            isLoading = false, 
+                            logs = newLogs,
+                            sourceIds = mergedSourceIds,
+                            missingSourceIds = newMissingSourceIds
+                        )
                     } else window
                 })
             })
