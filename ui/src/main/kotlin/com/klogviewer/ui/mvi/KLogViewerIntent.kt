@@ -23,6 +23,7 @@ sealed interface KLogViewerIntent {
     
     // Dialogs
     data object ShowOpenDialog : KLogViewerIntent
+    data object ShowOpenDirectoryDialog : KLogViewerIntent
     data object ShowAddDialog : KLogViewerIntent
     data object ShowRecentDialog : KLogViewerIntent
     data object DismissDialog : KLogViewerIntent

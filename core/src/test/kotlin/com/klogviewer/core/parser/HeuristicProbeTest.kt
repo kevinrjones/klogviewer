@@ -11,13 +11,25 @@ class HeuristicProbeTest {
     private val probe = HeuristicProbe(registry)
 
     @Test
-    fun `should detect JSON parser`() {
+    fun `should detect JSON parser and columns`() {
         val lines = listOf(
-            """{"timestamp": "2024-05-14", "message": "one"}""",
-            """{"timestamp": "2024-05-14", "message": "two"}"""
+            """{"timestamp": "2024-05-14", "message": "one", "user": "alice", "action": "login"}""",
+            """{"timestamp": "2024-05-14", "message": "two", "user": "bob", "action": "logout"}"""
         )
         val result = probe.detect(lines)
         expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.columns).isEqualTo(listOf("Timestamp", "Content", "Action", "User"))
+    }
+
+    @Test
+    fun `should detect custom JSON keys`() {
+        val lines = listOf(
+            """{"time": "2024-05-14", "msg": "one", "lvl": "INFO"}""",
+            """{"time": "2024-05-14", "msg": "two", "lvl": "WARN"}"""
+        )
+        val result = probe.detect(lines)
+        expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.columns).isEqualTo(listOf("Timestamp", "Level", "Content"))
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.klogviewer.ui.viewmodel
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.core.parser.HeuristicProbe
+import com.klogviewer.core.source.DirectoryLogSource
 import com.klogviewer.core.source.MergedLogSource
 import com.klogviewer.core.repository.PreferencesRepository
 import com.klogviewer.ui.mvi.*
@@ -240,6 +241,7 @@ class KLogViewerViewModel(
             }
             KLogViewerIntent.CopySelected -> copySelectedToClipboard()
             KLogViewerIntent.ShowOpenDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN) }
+            KLogViewerIntent.ShowOpenDirectoryDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY) }
             KLogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD) }
             KLogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
             KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null) }
@@ -387,36 +389,61 @@ class KLogViewerViewModel(
             
             val flow = if (paths.size == 1) {
                 val path = paths[0]
-                val sampleLines = readSampleLines(path)
-                val probeResult = heuristicProbe.detect(sampleLines)
-                
-                _state.update { currentState ->
-                    currentState.copy(tabs = currentState.tabs.map { tab ->
-                        tab.copy(windows = tab.windows.map { window ->
-                            if (window.id == windowId) window.copy(columns = probeResult.columns) else window
+                if (File(path).isDirectory) {
+                    DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
+                } else {
+                    val sampleLines = readSampleLines(path)
+                    val probeResult = heuristicProbe.detect(sampleLines)
+                    
+                    _state.update { currentState ->
+                        currentState.copy(tabs = currentState.tabs.map { tab ->
+                            tab.copy(windows = tab.windows.map { window ->
+                                if (window.id == windowId) window.copy(columns = probeResult.columns) else window
+                            })
                         })
-                    })
+                    }
+                    
+                    logSource.observeLogs(LogFilePath(path), probeResult.parser)
                 }
-                
-                logSource.observeLogs(LogFilePath(path), probeResult.parser)
             } else {
                 val results = paths.map { path ->
-                    val sampleLines = readSampleLines(path)
-                    heuristicProbe.detect(sampleLines)
+                    if (File(path).isDirectory) {
+                        // For directory in a merged view, we just use a default result for now
+                        // or we could potentially merge its files here too.
+                        // But for simplicity, let's treat directories in multi-select as something to expand.
+                        null
+                    } else {
+                        val sampleLines = readSampleLines(path)
+                        heuristicProbe.detect(sampleLines)
+                    }
                 }
                 
                 _state.update { currentState ->
                     currentState.copy(tabs = currentState.tabs.map { tab ->
                         tab.copy(windows = tab.windows.map { window ->
-                            if (window.id == windowId) window.copy(columns = results.firstOrNull()?.columns ?: emptyList()) else window
+                            if (window.id == windowId) window.copy(columns = results.firstNotNullOfOrNull { it?.columns } ?: emptyList()) else window
                         })
                     })
                 }
                 
                 val sources = paths.mapIndexed { index, path ->
-                    Triple(logSource, LogFilePath(path), results[index].parser)
+                    if (File(path).isDirectory) {
+                        DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
+                    } else {
+                        logSource.observeLogs(LogFilePath(path), results[index]?.parser)
+                    }
                 }
-                MergedLogSource(sources).observeMerged()
+                
+                // If we have mixed flows, MergedLogSource needs to be updated or we use flow.merge()
+                // For now, let's just use merge() if any is a directory.
+                if (paths.any { File(it).isDirectory }) {
+                    sources.merge()
+                } else {
+                    val legacySources = paths.mapIndexed { index, path ->
+                        Triple(logSource, LogFilePath(path), results[index]?.parser)
+                    }
+                    MergedLogSource(legacySources).observeMerged()
+                }
             }
             
             flow.collect { result ->

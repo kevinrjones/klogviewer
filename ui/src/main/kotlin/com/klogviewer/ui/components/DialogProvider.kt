@@ -9,6 +9,10 @@ interface DialogProvider {
         title: String,
         allowedExtensions: List<String> = emptyList()
     ): File?
+    
+    fun showOpenDirectoryDialog(
+        title: String
+    ): File?
 }
 
 class AwtDialogProvider(private val parent: Frame? = null) : DialogProvider {
@@ -23,6 +27,28 @@ class AwtDialogProvider(private val parent: Frame? = null) : DialogProvider {
         
         return if (dialog.directory != null && dialog.file != null) {
             File(dialog.directory, dialog.file)
+        } else {
+            null
+        }
+    }
+
+    override fun showOpenDirectoryDialog(title: String): File? {
+        val isMac = System.getProperty("os.name").lowercase().contains("mac")
+        if (isMac) {
+            System.setProperty("apple.awt.fileDialogForDirectories", "true")
+        }
+        
+        val dialog = FileDialog(parent, title, FileDialog.LOAD)
+        dialog.isVisible = true
+        
+        if (isMac) {
+            System.setProperty("apple.awt.fileDialogForDirectories", "false")
+        }
+        
+        return if (dialog.directory != null && dialog.file != null) {
+            File(dialog.directory, dialog.file)
+        } else if (dialog.directory != null) {
+            File(dialog.directory)
         } else {
             null
         }

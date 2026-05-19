@@ -2,6 +2,7 @@ package com.klogviewer.core.parser
 
 import com.klogviewer.domain.parser.LogParser
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.serialization.json.*
 
 private val logger = KotlinLogging.logger {}
 
@@ -23,7 +24,26 @@ class HeuristicProbe(private val registry: ParserRegistry) {
         val jsonCount = lines.count { isJson(it) }
         if (jsonCount > lines.size / 2) {
             logger.info { "Heuristic: Detected JSON log format" }
-            return ProbeResult(JsonLogParser())
+            val mapping = detectJsonMapping(lines)
+            val firstJson = lines.firstOrNull { isJson(it) }
+            val columns = if (firstJson != null) {
+                try {
+                    val element = Json.parseToJsonElement(firstJson).jsonObject
+                    val keys = element.keys.toMutableSet()
+                    val resultColumns = mutableListOf<String>()
+                    
+                    if (keys.remove(mapping.timestampKey)) resultColumns.add("Timestamp")
+                    if (keys.remove(mapping.levelKey)) resultColumns.add("Level")
+                    if (keys.remove(mapping.contentKey)) resultColumns.add("Content")
+                    
+                    resultColumns.addAll(keys.sorted().map { it.replaceFirstChar { c -> c.uppercase() } })
+                    resultColumns
+                } catch (e: Exception) {
+                    listOf("Timestamp", "Level", "Content")
+                }
+            } else listOf("Timestamp", "Level", "Content")
+            
+            return ProbeResult(JsonLogParser(mapping), columns)
         }
 
         // 2. Template Matching (Prefer specific templates over generic logfmt)
@@ -59,6 +79,31 @@ class HeuristicProbe(private val registry: ParserRegistry) {
     private fun isJson(line: String): Boolean {
         val trimmed = line.trim()
         return trimmed.startsWith("{") && trimmed.endsWith("}")
+    }
+
+    private fun detectJsonMapping(lines: List<String>): JsonMapping {
+        val firstJson = lines.firstOrNull { isJson(it) } ?: return JsonMapping()
+        return try {
+            val element = Json.parseToJsonElement(firstJson).jsonObject
+            var timestampKey = "timestamp"
+            var levelKey = "level"
+            var contentKey = "message"
+            
+            val keys = element.keys
+            if ("time" in keys && "timestamp" !in keys) timestampKey = "time"
+            if ("ts" in keys && "timestamp" !in keys && "time" !in keys) timestampKey = "ts"
+            
+            if ("lvl" in keys && "level" !in keys) levelKey = "lvl"
+            if ("severity" in keys && "level" !in keys && "lvl" !in keys) levelKey = "severity"
+            
+            if ("msg" in keys && "message" !in keys) contentKey = "msg"
+            if ("content" in keys && "message" !in keys && "msg" !in keys) contentKey = "content"
+            if ("body" in keys && "message" !in keys && "msg" !in keys && "content" !in keys) contentKey = "body"
+            
+            JsonMapping(timestampKey, levelKey, contentKey)
+        } catch (e: Exception) {
+            JsonMapping()
+        }
     }
 
     private fun isLogfmt(line: String): Boolean {

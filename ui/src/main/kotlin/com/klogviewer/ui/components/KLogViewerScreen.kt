@@ -53,16 +53,23 @@ fun KLogViewerScreen(
         SideEffect {
             val title = when (pendingDialog) {
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN -> "Select Log File"
+                com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY -> "Select Log Directory"
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> "Add Log File"
                 else -> "Select Log File"
             }
-            val file = dialogProvider.showOpenFileDialog(title)
+            val file = if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY) {
+                dialogProvider.showOpenDirectoryDialog(title)
+            } else {
+                dialogProvider.showOpenFileDialog(title)
+            }
             viewModel.handleIntent(KLogViewerIntent.DismissDialog)
             if (file != null) {
                 val paths = listOf(file.absolutePath)
                 when (pendingDialog) {
-                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN -> viewModel.handleIntent(KLogViewerIntent.LoadFiles(paths))
+                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN,
+                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY -> viewModel.handleIntent(KLogViewerIntent.LoadFiles(paths))
                     com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> viewModel.handleIntent(KLogViewerIntent.AddToWorkspace(paths))
+                    else -> {}
                 }
             }
         }
