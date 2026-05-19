@@ -1304,3 +1304,87 @@
 - `DirectoryScannerTest`: Recursive discovery and glob filtering.
 - `DirectoryLogSourceTest`: Initial merge of multiple files within a directory.
 - `InterleavingIntegrationTest`: Multi-source merging and chronological sorting.
+
+## Task: Fix GitHub Actions Build Failure (Mesa/GLX)
+**Title**: Update Linux Dependencies for GitHub Actions
+**Date/time completed**: 2026-05-19 12:40
+**What was shipped**
+- Updated `.github/workflows/build.yml` to replace obsolete Mesa package names with their modern equivalents.
+- Replaced `libegl1-mesa`, `libgles2-mesa`, and `libgl1-mesa-glx` with `libegl1`, `libgles2`, and `libgl1`.
+**Key decisions**
+- Switched to generic library names (`libgl1`, etc.) which are standard in Ubuntu 22.04+ (used by `ubuntu-latest`).
+**Gotchas**
+- Recent Ubuntu versions have restructured the Mesa package distribution, removing the `-mesa` suffix from many library packages and obsoleting `libgl1-mesa-glx`.
+**Test coverage areas**
+- CI Pipeline: Resolved the `apt-get install` failure on Linux runners.
+
+## Task: Fix GitHub Actions Build Failure (Windows Shell)
+**Title**: Fix PowerShell Syntax Error on Windows CI
+**Date/time completed**: 2026-05-19 12:45
+**What was shipped**
+- Updated `.github/workflows/build.yml` to set `shell: bash` as the default for the build job.
+- This ensures that Bash-style `if` statements and `./gradlew` calls work consistently across Linux, macOS, and Windows.
+**Key decisions**
+- Chose to set a job-level default shell to minimize boilerplate and ensure all current and future scripts use a consistent Bash environment.
+**Gotchas**
+- GitHub Actions defaults to PowerShell (`pwsh`) on Windows runners, which is incompatible with Bash syntax like `if [ ... ]; then`.
+**Test coverage areas**
+- CI Pipeline: Resolved the `ParserError` on Windows runners.
+
+## Task: Fix UI Test Failures (CI/CD)
+**Title**: Fix UI Test Timeouts and Assertions
+**Date/time completed**: 2026-05-19 13:00
+**What was shipped**
+- Updated `KLogViewerUiTest.kt` and `KLogViewerComplexUiTest.kt` to use real temporary files, ensuring they pass the ViewModel's existence checks.
+- Refactored `KLogViewerScreen.kt` to use `LaunchedEffect` for dialog handling, improving reliability and idiomatic Compose usage.
+- Resolved `ComposeTimeoutException` caused by empty log lists and `AssertionError` caused by clicking non-existent rows.
+**Key decisions**
+- Switched to `LaunchedEffect(pendingDialog)` to ensure dialog logic runs correctly in response to state changes and doesn't block the main thread unnecessarily.
+- Used `File.createTempFile` in tests to guarantee file existence without relying on hardcoded paths.
+**Gotchas**
+- The ViewModel's `loadFilesIntoWindow` returns early if files do not exist, which was causing tests to wait for UI elements that would never appear.
+**Test coverage areas**
+- UI: Verified `KLogViewerUiTest` and `KLogViewerComplexUiTest` pass locally with the new infrastructure.
+
+## Task: Fix Intermittent Test Failures (CI/CD)
+**Title**: Fix Race Conditions and Resource Leaks in Integration Tests
+**Date/time completed**: 2026-05-19 13:45
+**What was shipped**
+- Added `KLogViewerViewModel.clear()` to cancel its coroutine scope, ensuring that background file-tailing jobs are stopped when tests finish.
+- Updated `TabManagementTest.kt`, `PersistenceIntegrationTest.kt`, and `RecentItemsTest.kt` with `@AfterEach` hooks to clean up ViewModels.
+- Fixed race conditions in `TabManagementTest.kt` and `PersistenceIntegrationTest.kt` by replacing immediate assertions with `withTimeout` and `first` blocks to wait for asynchronous updates.
+**Key decisions**
+- Decided to add a `clear()` method to the ViewModel to handle cleanup of its internal scope, which is a standard pattern for desktop ViewModels.
+- Improved test robustness by waiting for specific state changes (e.g., filtered logs count, preferences saved) instead of using arbitrary delays or immediate checks.
+**Gotchas**
+- Active file tailing jobs were holding file handles on Windows, preventing JUnit from deleting the temporary test directories and causing `IOException`.
+- Asynchronous filtering on `Dispatchers.Default` was causing intermittent assertion failures when tests checked `filteredLogs` too quickly.
+**Test coverage areas**
+- Integration: `PersistenceIntegrationTest`, `TabManagementTest`, `RecentItemsTest`, `LogSortingTest`, `InterleavingIntegrationTest`.
+
+## Task: Code Review Fixes
+**Title**: Address Code Review Feedback
+**Date/time completed**: 2026-05-19 14:05
+**What was shipped**
+- Fixed non-exhaustive `when` expressions and statements in `KLogViewerScreen.kt` by adding `else` branches.
+- Removed redundant `@OptIn(ExperimentalTestApi::class)` annotations in `KLogViewerComplexUiTest.kt`.
+**Key decisions**
+- Used `else` branches in `when` blocks to satisfy exhaustiveness requirements in stricter Kotlin environments, while accepting redundant code warnings in others.
+**Gotchas**
+- Kotlin's smart-casting can make `when` appear exhaustive to some compilers but not others, especially when used in combination with nullability and enums.
+
+## Task: Update Deprecated Testing API
+**Title**: Migrate from `createComposeRule()` to `runComposeUiTest`
+**Date/time completed**: 2026-05-19 13:55
+**What was shipped**
+- Replaced deprecated `createComposeRule()` (JUnit 4 rule) with `androidx.compose.ui.test.v2.runComposeUiTest` (functional API) in all UI tests.
+- Updated `BaseRobot` and all derived robots (`MainRobot`, `LogListRobot`, `SidebarRobot`, `WindowRobot`) to use the `ComposeUiTest` interface.
+- Migrated `KLogViewerUiTest.kt`, `KLogViewerComplexUiTest.kt`, and `KLogViewerSmokeTest.kt` to the new testing pattern.
+**Key decisions**
+- Decided to use the `v2` version of `runComposeUiTest` to align with the latest Compose recommendations and ensure future compatibility.
+- Added `@OptIn(ExperimentalTestApi::class)` to handle the experimental status of the new testing API.
+**Gotchas**
+- The new `runComposeUiTest` API has a slightly different signature for some methods like `waitUntil` (parameter order changed), which required minor adjustments in `BaseRobot.kt`.
+- `ComposeUiTest` is still experimental, necessitating opt-in annotations.
+**Test coverage areas**
+- UI: All desktop UI tests in `:ui` module (15 tests total).

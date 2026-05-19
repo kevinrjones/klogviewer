@@ -1,9 +1,9 @@
 package com.klogviewer.ui.robot
 
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.ComposeTestRule
 
-class WindowRobot(composeTestRule: ComposeTestRule, private val windowId: String) : BaseRobot(composeTestRule) {
+@OptIn(ExperimentalTestApi::class)
+class WindowRobot(composeTestRule: ComposeUiTest, private val windowId: String) : BaseRobot(composeTestRule) {
     
     fun logList(block: LogListRobot.() -> Unit) {
         // Scoped LogListRobot
@@ -24,5 +24,6 @@ class WindowRobot(composeTestRule: ComposeTestRule, private val windowId: String
     }
 }
 
-fun ComposeTestRule.window(windowId: String, block: WindowRobot.() -> Unit) = 
+@OptIn(ExperimentalTestApi::class)
+fun ComposeUiTest.window(windowId: String, block: WindowRobot.() -> Unit) = 
     WindowRobot(this, windowId).apply(block)

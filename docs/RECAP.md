@@ -1,3 +1,16 @@
+# 2026-05-19
+
+## 14:05
+
+### Code Review: Exhaustiveness and Testing Cleanup
+
+Addressed critical feedback from code review to improve build reliability and test maintainability.
+
+#### Changes:
+- **UI Code**: Fixed non-exhaustive `when` expressions and statements in `KLogViewerScreen.kt` by adding `else` branches. This ensures the application compiles correctly in environments with stricter Kotlin compiler settings for enums.
+- **UI Tests**: Refactored `KLogViewerComplexUiTest.kt` to remove redundant `@OptIn(ExperimentalTestApi::class)` annotations. Since the class was already annotated, method-level annotations were unnecessary and cluttered the code.
+- **Verification**: Executed the `:ui:desktopTest` suite to confirm that the changes did not introduce regressions and that all UI tests continue to pass.
+
 # 2026-05-12
 
 ## 11:38
@@ -476,6 +489,19 @@ Added an 'All' option to the log level filters in the sidebar, allowing users to
 - **KLogViewerScreen.kt**: Wired the new intent to the sidebar UI.
 - **Testing**: Added integration test `should toggle all levels at once` to `TabManagementTest.kt`.
 
+## 13:00
+
+### Fix: UI Test Failures and Dialog Logic
+
+Resolved persistent UI test failures (timeouts and assertions) on both local and CI environments, while improving the robustness of the dialog handling logic.
+
+#### Changes:
+- **KLogViewerUiTest.kt**: Switched from hardcoded non-existent paths to `File.createTempFile` for reliable test execution.
+- **KLogViewerComplexUiTest.kt**: Implemented temporary file usage to satisfy file existence checks during multi-selection tests.
+- **KLogViewerScreen.kt**: Refactored dialog handling from `SideEffect` to `LaunchedEffect(pendingDialog)`, ensuring actions are triggered once per state change and are better integrated with the Compose lifecycle.
+- **Cleanup**: Removed redundant `else` branches in exhaustive `when` expressions for `DialogType`.
+- **Verification**: Confirmed that `:ui:desktopTest` now passes successfully (14 tests completed).
+
 ## 18:15
 
 ### UI: Enhance Active Window Visibility
@@ -566,21 +592,28 @@ Finalized Sprint 5 by ensuring complete directory loading support and enhancing 
 - **Integration Testing**: Verified the dynamic source ID tracking and badge rendering logic through the `InterleavingIntegrationTest` and manual review.
 - **Test Coverage**: Ensured all core tests for recursive scanning and merging remain passing.
 
-## 13:10
+## 13:45
 
-### Live File Deletion Handling
+### Fix: Intermittent Test Failures and Resource Leaks
 
-Implemented robust handling for scenarios where log files are deleted while being viewed, ensuring data persistence in the UI and clear visual feedback.
+Resolved intermittent integration test failures (race conditions and IOExceptions) across Ubuntu and Windows CI runners while improving overall test robustness.
 
-#### Core Achievements:
-- **Deletion Detection**: Updated `FileLogSource` to check for file existence during its tailing loop and emit a new `LogUpdate.SourceMissing` event if the file disappears.
-- **State Persistence**: Enhanced `KLogViewerViewModel` to retain existing log entries even if the source is missing, fulfilling the "don't remove data" requirement.
-- **Visual Feedback**:
-    - Updated `LogWindow` to track `missingSourceIds`.
-    - Applied red color and strike-through styling to filenames in the Window Header and Status Bar when a file is missing.
-    - Updated `LogTabRow` to reflect the missing state in the tab title (red + strike-through).
-- **Architecture**: Forwarded `SourceMissing` events through `MergedLogSource` and `DirectoryLogSource` to ensure multi-file and directory views also reflect missing files correctly.
+#### Changes:
+- **ViewModel**: Added `KLogViewerViewModel.clear()` to cancel its internal coroutine scope, ensuring that background tasks (like file tailing) are stopped when tests or components are disposed.
+- **Integration Tests**: Updated `TabManagementTest`, `PersistenceIntegrationTest`, `RecentItemsTest`, `LogSortingTest`, and `InterleavingIntegrationTest` to use `@AfterEach` hooks for ViewModel cleanup.
+- **Race Condition Fixes**: Refactored `TabManagementTest.kt` and `PersistenceIntegrationTest.kt` to wait for asynchronous operations (log filtering and preference saving) using `withTimeout` and `first { ... }` blocks, ensuring assertions run only after state changes are complete.
+- **Windows Support**: Fixed `IOException` during `@TempDir` cleanup on Windows by ensuring all file handles held by tailing jobs are released before the test finishes.
+- **Verification**: Confirmed all integration tests (16 tests) and UI tests (14 tests) pass successfully in a single local run.
 
-#### Quality Assurance:
-- **Integration Testing**: Added `FileDeletionTest.kt` covering both single-file loading and directory-based loading scenarios. Verified that logs remain in the UI while the state correctly identifies missing sources.
-- **Verified Tailing**: Confirmed that the polling mechanism (1s for files, 5s for directories) correctly triggers the UI updates.
+## 13:55
+
+### Migration: Modern Testing API
+
+Migrated all UI tests from the deprecated JUnit 4 `createComposeRule()` to the modern `androidx.compose.ui.test.v2.runComposeUiTest` functional API.
+
+#### Changes:
+- **Test Infrastructure**: Updated `BaseRobot`, `MainRobot`, `LogListRobot`, `SidebarRobot`, and `WindowRobot` to use the `ComposeUiTest` interface instead of `ComposeTestRule`.
+- **Test Suites**: Refactored `KLogViewerUiTest.kt`, `KLogViewerComplexUiTest.kt`, and `KLogViewerSmokeTest.kt` to follow the `runComposeUiTest { ... }` pattern.
+- **Experimental API**: Added `@OptIn(ExperimentalTestApi::class)` to handle the experimental status of the new multiplatform-ready testing API.
+- **Robustness**: Fixed parameter mismatch in `waitUntil` calls within `BaseRobot.kt` caused by API changes in the new testing framework.
+- **Verification**: Executed `./gradlew :ui:desktopTest` and confirmed that all 15 UI tests pass successfully without deprecation warnings regarding the rule.

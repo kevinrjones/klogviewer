@@ -1,10 +1,10 @@
 package com.klogviewer.ui.robot
 
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.ComposeTestRule
 import com.klogviewer.domain.model.LogLevel
 
-class SidebarRobot(composeTestRule: ComposeTestRule) : BaseRobot(composeTestRule) {
+@OptIn(ExperimentalTestApi::class)
+class SidebarRobot(composeTestRule: ComposeUiTest) : BaseRobot(composeTestRule) {
     
     fun toggleLevel(level: LogLevel) {
         val label = level.name.lowercase().replaceFirstChar { it.uppercase() }
@@ -20,4 +20,5 @@ class SidebarRobot(composeTestRule: ComposeTestRule) : BaseRobot(composeTestRule
     }
 }
 
-fun ComposeTestRule.sidebar(block: SidebarRobot.() -> Unit) = SidebarRobot(this).apply(block)
+@OptIn(ExperimentalTestApi::class)
+fun ComposeUiTest.sidebar(block: SidebarRobot.() -> Unit) = SidebarRobot(this).apply(block)

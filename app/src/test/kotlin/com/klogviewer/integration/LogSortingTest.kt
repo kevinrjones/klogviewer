@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -26,6 +27,11 @@ class LogSortingTest {
     private val source = FileLogSource(parser)
     private val prefsRepository by lazy { PreferencesRepository(tempDir) }
     private val viewModel by lazy { KLogViewerViewModel(source, prefsRepository, heuristicProbe) }
+
+    @AfterEach
+    fun tearDown() {
+        viewModel.clear()
+    }
 
     @Test
     fun `should reverse logs when isReversed is toggled`() = runBlocking {

@@ -1,6 +1,7 @@
 package com.klogviewer.ui.test
 
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.v2.runComposeUiTest
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.repository.PreferencesRepository
 import com.klogviewer.domain.model.UserPreferences
@@ -10,29 +11,26 @@ import com.klogviewer.ui.robot.mainRobot
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.Rule
 import org.junit.Test
 
+@OptIn(ExperimentalTestApi::class)
 class KLogViewerSmokeTest {
-
-    @get:Rule
-    val composeTestRule = createComposeRule()
 
     private val logSource = mockk<LogSource>(relaxed = true)
     private val prefsRepository = mockk<PreferencesRepository>(relaxed = true)
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
 
     @Test
-    fun app_launches_and_shows_main_components() {
+    fun app_launches_and_shows_main_components() = runComposeUiTest {
         every { prefsRepository.load() } returns UserPreferences()
 
         val viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe)
 
-        composeTestRule.setContent {
+        setContent {
             KLogViewerScreen(viewModel)
         }
 
-        composeTestRule.mainRobot {
+        mainRobot {
             assertIsDisplayed("tab_row")
             assertIsDisplayed("add_tab_button")
             assertIsDisplayed("sidebar")
