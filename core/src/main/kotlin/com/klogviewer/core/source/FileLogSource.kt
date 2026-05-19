@@ -64,6 +64,16 @@ class FileLogSource(
             var lastPosition = file.length()
             while (true) {
                 delay(1000.milliseconds) // Poll every second
+                
+                if (!file.exists()) {
+                    logger.warn { "Log file disappeared: ${path.value}" }
+                    emit(LogUpdate.SourceMissing(path.value).right())
+                    // We continue polling in case it reappears? 
+                    // The requirement says "don't remove data", so we just signal it's missing.
+                    // If it reappears, we might want to resume.
+                    continue
+                }
+
                 val currentLength = file.length()
                 
                 if (currentLength < lastPosition) {

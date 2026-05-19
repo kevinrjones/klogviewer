@@ -3,6 +3,7 @@ package com.klogviewer.ui.components
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,6 +34,7 @@ import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.ui.theme.LogLevelColors
 import com.klogviewer.ui.theme.KLogViewerTheme
+import com.klogviewer.ui.components.TooltipWrapper
 
 @Composable
 fun LogList(
@@ -269,12 +271,14 @@ fun LogEntryRow(
         ) {
             if (sourceIds.size > 1) {
                 val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds)
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(badgeColor, CircleShape)
-                )
-                Spacer(modifier = Modifier.width(4.dp))
+                TooltipWrapper(tooltip = entry.sourceId ?: "Unknown Source") {
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(badgeColor, CircleShape)
+                    )
+                }
+                Spacer(modifier = Modifier.width(6.dp))
             }
             Text(
                 text = lineNumber.toString().padStart(4, ' '),
@@ -414,3 +418,4 @@ private fun getSourceBackgroundColor(sourceId: String?, sourceIds: List<String>,
         greys[index % greys.size]
     }
 }
+

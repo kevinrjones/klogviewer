@@ -58,6 +58,9 @@ class MergedLogSource(
                                 LogUpdate.Reset -> {
                                     send(LogUpdate.Reset.right())
                                 }
+                                is LogUpdate.SourceMissing -> {
+                                    send(update.right())
+                                }
                             }
                         }
                     )

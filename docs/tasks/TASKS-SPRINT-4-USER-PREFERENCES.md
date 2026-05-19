@@ -24,6 +24,7 @@
 - [x] 9.5.2. Update `MenuBar` to include "Recently Opened" sub-menu
 - [x] 9.5.3. Implement intent to open a recently used item
 - [x] 9.5.4. Implement "Show All" recent items dialog
+- [x] 9.5.5. Hide non-existent items from recent list and offer cleanup
 
 ### 9.6. Verification & Polish
 - [x] 9.6.1. Unit tests for `PreferencesRepository`

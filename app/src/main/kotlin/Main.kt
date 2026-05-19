@@ -64,7 +64,8 @@ fun main() {
         ) {
             MenuBar {
                 Menu("File") {
-                    Item("Open...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) })
+                    Item("Open File...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) })
+                    Item("Open Directory...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) })
                     Item("Add to Workspace...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) })
                     
                     Menu("Recently Opened") {

@@ -16,6 +16,7 @@ data class LogWindow(
     val isAutoScrollEnabled: Boolean = true,
     val showAnsiColors: Boolean = true,
     val sourceIds: List<String> = emptyList(),
+    val missingSourceIds: Set<String> = emptySet(),
     val selectedEntry: LogEntry? = null,
     val selectedIndices: Set<Int> = emptySet(),
     val lastSelectedIndex: Int? = null,
@@ -53,9 +54,10 @@ data class KLogViewerState(
     val isSidebarExpanded: Boolean = true,
     val recentFiles: List<String> = emptyList(),
     val recentDirectories: List<String> = emptyList(),
-    val pendingDialog: DialogType? = null
+    val pendingDialog: DialogType? = null,
+    val missingPath: String? = null
 ) {
-    enum class DialogType { OPEN, ADD, RECENT_ITEMS }
+    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, RECENT_ITEMS, MISSING_FILE }
     val activeTab: TabState? get() = tabs.find { it.id == activeTabId }
 
     fun updateActiveTab(block: (TabState) -> TabState): KLogViewerState {

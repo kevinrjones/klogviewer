@@ -3,6 +3,7 @@ package com.klogviewer.ui.viewmodel
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.core.parser.HeuristicProbe
+import com.klogviewer.core.source.DirectoryLogSource
 import com.klogviewer.core.source.MergedLogSource
 import com.klogviewer.core.repository.PreferencesRepository
 import com.klogviewer.ui.mvi.*
@@ -240,9 +241,28 @@ class KLogViewerViewModel(
             }
             KLogViewerIntent.CopySelected -> copySelectedToClipboard()
             KLogViewerIntent.ShowOpenDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN) }
+            KLogViewerIntent.ShowOpenDirectoryDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY) }
             KLogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD) }
             KLogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
-            KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null) }
+            KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null, missingPath = null) }
+            is KLogViewerIntent.RemoveRecentItem -> {
+                _state.update { currentState ->
+                    currentState.copy(
+                        recentFiles = currentState.recentFiles - intent.path,
+                        recentDirectories = currentState.recentDirectories - intent.path
+                    )
+                }
+                savePreferences()
+            }
+            KLogViewerIntent.ClearMissingRecentItems -> {
+                _state.update { currentState ->
+                    currentState.copy(
+                        recentFiles = currentState.recentFiles.filter { File(it).exists() },
+                        recentDirectories = currentState.recentDirectories.filter { File(it).exists() }
+                    )
+                }
+                savePreferences()
+            }
             
             // Split Management
             KLogViewerIntent.SplitHorizontal -> splitHorizontal()
@@ -354,6 +374,12 @@ class KLogViewerViewModel(
     }
 
     private fun loadFilesIntoWindow(windowId: String, paths: List<String>) {
+        val missingPaths = paths.filter { !File(it).exists() }
+        if (missingPaths.isNotEmpty()) {
+            _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.MISSING_FILE, missingPath = missingPaths.first()) }
+            return
+        }
+
         logJobs[windowId]?.cancel()
         logJobs[windowId] = scope.launch {
             val fileName = if (paths.size == 1) File(paths[0]).name else "${paths.size} files"
@@ -387,36 +413,61 @@ class KLogViewerViewModel(
             
             val flow = if (paths.size == 1) {
                 val path = paths[0]
-                val sampleLines = readSampleLines(path)
-                val probeResult = heuristicProbe.detect(sampleLines)
-                
-                _state.update { currentState ->
-                    currentState.copy(tabs = currentState.tabs.map { tab ->
-                        tab.copy(windows = tab.windows.map { window ->
-                            if (window.id == windowId) window.copy(columns = probeResult.columns) else window
+                if (File(path).isDirectory) {
+                    DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
+                } else {
+                    val sampleLines = readSampleLines(path)
+                    val probeResult = heuristicProbe.detect(sampleLines)
+                    
+                    _state.update { currentState ->
+                        currentState.copy(tabs = currentState.tabs.map { tab ->
+                            tab.copy(windows = tab.windows.map { window ->
+                                if (window.id == windowId) window.copy(columns = probeResult.columns) else window
+                            })
                         })
-                    })
+                    }
+                    
+                    logSource.observeLogs(LogFilePath(path), probeResult.parser)
                 }
-                
-                logSource.observeLogs(LogFilePath(path), probeResult.parser)
             } else {
                 val results = paths.map { path ->
-                    val sampleLines = readSampleLines(path)
-                    heuristicProbe.detect(sampleLines)
+                    if (File(path).isDirectory) {
+                        // For directory in a merged view, we just use a default result for now
+                        // or we could potentially merge its files here too.
+                        // But for simplicity, let's treat directories in multi-select as something to expand.
+                        null
+                    } else {
+                        val sampleLines = readSampleLines(path)
+                        heuristicProbe.detect(sampleLines)
+                    }
                 }
                 
                 _state.update { currentState ->
                     currentState.copy(tabs = currentState.tabs.map { tab ->
                         tab.copy(windows = tab.windows.map { window ->
-                            if (window.id == windowId) window.copy(columns = results.firstOrNull()?.columns ?: emptyList()) else window
+                            if (window.id == windowId) window.copy(columns = results.firstNotNullOfOrNull { it?.columns } ?: emptyList()) else window
                         })
                     })
                 }
                 
                 val sources = paths.mapIndexed { index, path ->
-                    Triple(logSource, LogFilePath(path), results[index].parser)
+                    if (File(path).isDirectory) {
+                        DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
+                    } else {
+                        logSource.observeLogs(LogFilePath(path), results[index]?.parser)
+                    }
                 }
-                MergedLogSource(sources).observeMerged()
+                
+                // If we have mixed flows, MergedLogSource needs to be updated or we use flow.merge()
+                // For now, let's just use merge() if any is a directory.
+                if (paths.any { File(it).isDirectory }) {
+                    sources.merge()
+                } else {
+                    val legacySources = paths.mapIndexed { index, path ->
+                        Triple(logSource, LogFilePath(path), results[index]?.parser)
+                    }
+                    MergedLogSource(legacySources).observeMerged()
+                }
             }
             
             flow.collect { result ->
@@ -458,11 +509,36 @@ class KLogViewerViewModel(
             currentState.copy(tabs = currentState.tabs.map { tab ->
                 tab.copy(windows = tab.windows.map { window ->
                     if (window.id == windowId) {
-                        when (update) {
-                            is LogUpdate.Initial -> window.copy(isLoading = false, logs = update.entries)
-                            is LogUpdate.Appended -> window.copy(logs = window.logs + update.entries)
-                            LogUpdate.Reset -> window.copy(logs = emptyList())
+                        val newLogs = when (update) {
+                            is LogUpdate.Initial -> update.entries
+                            is LogUpdate.Appended -> window.logs + update.entries
+                            LogUpdate.Reset -> emptyList()
+                            is LogUpdate.SourceMissing -> window.logs
                         }
+                        
+                        val newMissingSourceIds = when (update) {
+                            is LogUpdate.SourceMissing -> window.missingSourceIds + update.sourceId
+                            is LogUpdate.Initial -> {
+                                val incoming = update.entries.mapNotNull { it.sourceId }.toSet()
+                                window.missingSourceIds - incoming
+                            }
+                            is LogUpdate.Appended -> {
+                                val incoming = update.entries.mapNotNull { it.sourceId }.toSet()
+                                window.missingSourceIds - incoming
+                            }
+                            LogUpdate.Reset -> emptySet()
+                        }
+                        
+                        // Extract unique source IDs from the logs to ensure badges are shown for all discovered files
+                        val discoveredSourceIds = newLogs.mapNotNull { it.sourceId }.distinct().filter { it.isNotEmpty() }
+                        val mergedSourceIds = (window.sourceIds + discoveredSourceIds).distinct()
+                        
+                        window.copy(
+                            isLoading = false, 
+                            logs = newLogs,
+                            sourceIds = mergedSourceIds,
+                            missingSourceIds = newMissingSourceIds
+                        )
                     } else window
                 })
             })
