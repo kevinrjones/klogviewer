@@ -29,8 +29,9 @@ class PersistenceIntegrationTest {
     private var viewModel: KLogViewerViewModel? = null
 
     @AfterEach
-    fun tearDown() {
+    fun tearDown() = runBlocking {
         viewModel?.clear()
+        kotlinx.coroutines.delay(200)
     }
 
     @Test
@@ -116,7 +117,7 @@ class PersistenceIntegrationTest {
 
         // Verify preferences were saved
         withTimeout(2.seconds) {
-            while (prefsRepo.load().tabs.size < 2) {
+            while (prefsRepo.load().tabs.find { it.id == activeTabId }?.windows?.firstOrNull()?.sourceIds?.isNotEmpty() != true) {
                 kotlinx.coroutines.delay(100.milliseconds)
             }
         }

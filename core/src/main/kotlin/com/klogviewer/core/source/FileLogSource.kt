@@ -12,6 +12,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
@@ -117,6 +118,7 @@ class FileLogSource(
                 }
             }
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             logger.error(e) { "Error tailing log file: ${path.value}" }
             emit(LogFailure.FileError("Error tailing log file: ${e.message}", e).left())
         }
