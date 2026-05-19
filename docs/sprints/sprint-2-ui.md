@@ -22,10 +22,10 @@ Transform the "Walking Skeleton" into a professional-grade log viewer. Prioritiz
 - Line numbering in a gutter.
 
 ## 3. Key Decisions
-- **Theme**: Custom `LogViewerTheme` defaulting to Dark Mode.
+- **Theme**: Custom `KLogViewerTheme` defaulting to Dark Mode.
 - **Typography**: `JetBrains Mono` for tabular alignment.
 - **Highlighting Engine**: Regex-based `LogHighlighter` using `AnnotatedString`.
-- **State Management**: Extend `LogViewerState` for search/filter; background processing in `ViewModel`.
+- **State Management**: Extend `KLogViewerState` for search/filter; background processing in `ViewModel`.
 
 ## 4. Definition of Done
 - [ ] "Command-Line Chic" aesthetic verified in Light and Dark modes.

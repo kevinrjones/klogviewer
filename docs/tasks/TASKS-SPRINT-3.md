@@ -9,15 +9,15 @@
 
 ### 8.2. Implement Tabbed Infrastructure
 - [x] 8.2.1. Define `TabState` in `:ui` module
-- [x] 8.2.2. Refactor `LogViewerState` to support `List<TabState>`
-- [x] 8.2.3. Update `LogViewerViewModel` to manage multiple `TabState` instances
+- [x] 8.2.2. Refactor `KLogViewerState` to support `List<TabState>`
+- [x] 8.2.3. Update `KLogViewerViewModel` to manage multiple `TabState` instances
 - [x] 8.2.4. Implement `TabRow` component for tab switching
 - [x] 8.2.5. Implement `AddTab`, `CloseTab`, and `SwitchTab` intents
 
 ### 8.3. Implement Multi-File Loading and Interleaving
 - [x] 8.3.1. Update `LogEntry` domain model with `sourceId: String?`
 - [x] 8.3.2. Implement `MergedLogSource` in `:core`
-- [x] 8.3.3. Update `LogViewerViewModel` to handle multi-file selection
+- [x] 8.3.3. Update `KLogViewerViewModel` to handle multi-file selection
 - [x] 8.3.4. Implement chronological merging logic
 
 ### 8.4. Source Identification and UI Polish

@@ -52,7 +52,7 @@
 - [x] 11.11.1. Refactor `TabState` to support multiple `LogWindow` instances
 - [x] 11.11.2. Add "Split Horizontal" button to `FilterBar`
 - [x] 11.11.3. Implement window focus and independent filtering/sorting per split
-- [x] 11.11.4. Update `LogViewerScreen` to render vertical stacks of splits
+- [x] 11.11.4. Update `KLogViewerScreen` to render vertical stacks of splits
 - [x] 11.11.5. Display fully qualified file path in split window header
 
 ### 11.12. UI Interactivity & Polish
@@ -60,7 +60,7 @@
 
 ### 11.13. Workspace Persistence
 - [x] 11.13.1. Extend `UserPreferences` to include tab and split window configuration
-- [x] 11.13.2. Implement UI state restoration in `LogViewerViewModel` on startup
+- [x] 11.13.2. Implement UI state restoration in `KLogViewerViewModel` on startup
 - [x] 11.13.3. Implement automatic log reloading for all open windows
 - [x] 11.13.4. Ensure real-time persistence of layout and filter changes
 - [x] 11.14. Resizable Columns

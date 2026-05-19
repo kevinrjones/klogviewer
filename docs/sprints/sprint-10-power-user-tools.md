@@ -6,7 +6,7 @@ Optimize the developer experience by providing advanced querying capabilities, c
 ## 2. Scope
 
 ### 2.1. Workspace Persistence
-- Implement saving and loading of `.lvp` (LogViewer Project) files.
+- Implement saving and loading of `.lvp` (KLogViewer Project) files.
 - Persist tabs, filters, search history, and remote connection references.
 - Implement "Open Recent" functionality.
 

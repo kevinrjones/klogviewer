@@ -1,24 +1,25 @@
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyShortcut
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.*
-import com.logviewer.core.parser.HeuristicProbe
-import com.logviewer.core.parser.ParserRegistry
-import com.logviewer.core.parser.SimpleLogParser
-import com.logviewer.core.repository.PreferencesRepository
-import com.logviewer.core.source.FileLogSource
-import com.logviewer.domain.model.WindowStatePreferences
-import com.logviewer.ui.components.LogViewerScreen
-import com.logviewer.ui.viewmodel.LogViewerViewModel
-import com.logviewer.ui.mvi.LogViewerIntent
+import com.klogviewer.core.parser.HeuristicProbe
+import com.klogviewer.core.parser.ParserRegistry
+import com.klogviewer.core.parser.SimpleLogParser
+import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.source.FileLogSource
+import com.klogviewer.domain.model.WindowStatePreferences
+import com.klogviewer.ui.components.KLogViewerScreen
+import com.klogviewer.ui.mvi.KLogViewerIntent
+import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
-import java.io.File
 
 private val logger = KotlinLogging.logger {}
 
 fun main() {
-    logger.info { "Starting LogViewer application" }
+    logger.info { "Starting KLogViewer application" }
     val prefsRepository = PreferencesRepository()
     val initialPrefs = prefsRepository.load()
 
@@ -27,7 +28,7 @@ fun main() {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = LogViewerViewModel(source, prefsRepository, heuristicProbe)
+        val viewModel = KLogViewerViewModel(source, prefsRepository, heuristicProbe)
 
         val windowState = rememberWindowState(
             width = initialPrefs.windowState.width.dp,
@@ -58,13 +59,13 @@ fun main() {
 
         Window(
             onCloseRequest = ::saveAndExit,
-            title = "LogViewer",
+            title = "KLogViewer",
             state = windowState
         ) {
             MenuBar {
                 Menu("File") {
-                    Item("Open...", onClick = { viewModel.handleIntent(LogViewerIntent.ShowOpenDialog) })
-                    Item("Add to Workspace...", onClick = { viewModel.handleIntent(LogViewerIntent.ShowAddDialog) })
+                    Item("Open...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) })
+                    Item("Add to Workspace...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) })
                     
                     Menu("Recently Opened") {
                         if (state.recentFiles.isEmpty() && state.recentDirectories.isEmpty()) {
@@ -72,7 +73,7 @@ fun main() {
                         }
                         
                         state.recentFiles.take(5).forEach { path ->
-                            Item(File(path).name, onClick = { viewModel.handleIntent(LogViewerIntent.LoadFiles(listOf(path))) })
+                            Item(path, onClick = { viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path))) })
                         }
                         
                         if (state.recentFiles.isNotEmpty() && state.recentDirectories.isNotEmpty()) {
@@ -80,29 +81,33 @@ fun main() {
                         }
                         
                         state.recentDirectories.take(5).forEach { path ->
-                            Item(File(path).name, onClick = { viewModel.handleIntent(LogViewerIntent.LoadFiles(listOf(path))) })
+                            Item(path, onClick = { viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path))) })
                         }
                         
                         if (state.recentFiles.size > 5 || state.recentDirectories.size > 5) {
                             Separator()
-                            Item("More...", onClick = { viewModel.handleIntent(LogViewerIntent.ShowRecentDialog) })
+                            Item("More...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowRecentDialog) })
                         }
                     }
                     
                     Separator()
-                    Item("New Tab", onClick = { viewModel.handleIntent(LogViewerIntent.AddTab) })
+                    Item("New Tab", shortcut = KeyShortcut(Key.N, meta = true), onClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) })
+                    Item("Close Tab", shortcut = KeyShortcut(Key.W, meta = true), onClick = { 
+                        state.activeTabId?.let { viewModel.handleIntent(KLogViewerIntent.CloseTab(it)) }
+                    })
                     Separator()
                     Item("Exit", onClick = ::saveAndExit)
                 }
                 Menu("Edit") {
-                    Item("Clear Logs", onClick = { viewModel.handleIntent(LogViewerIntent.ClearLogs) })
+                    Item("Copy", shortcut = KeyShortcut(Key.C, meta = true), onClick = { viewModel.handleIntent(KLogViewerIntent.CopySelected) })
+                    Item("Clear Logs", onClick = { viewModel.handleIntent(KLogViewerIntent.ClearLogs) })
                 }
                 Menu("View") {
-                    Item("Toggle Dark Mode", onClick = { viewModel.handleIntent(LogViewerIntent.ToggleTheme) })
-                    Item("Toggle Sidebar", onClick = { viewModel.handleIntent(LogViewerIntent.ToggleSidebar) })
+                    Item("Toggle Dark Mode", onClick = { viewModel.handleIntent(KLogViewerIntent.ToggleTheme) })
+                    Item("Toggle Sidebar", onClick = { viewModel.handleIntent(KLogViewerIntent.ToggleSidebar) })
                 }
             }
-            LogViewerScreen(viewModel)
+            KLogViewerScreen(viewModel)
         }
     }
 }

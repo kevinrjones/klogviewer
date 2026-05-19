@@ -7,6 +7,7 @@
 - Sprint 2: UI/UX Refinement completed (Command-Line Chic theme, Layout, Filtering).
 - Deepened architecture with reactive `LogSource` streaming.
 - Native UI enhancements for file browsing.
+- Project renamed to KLogViewer (from LogViewer) across all modules, packages, and documentation.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -29,6 +30,22 @@
 - Added `IntrinsicSize.Min` to the log header to ensure proper vertical alignment and resize handle visibility.
 - Improved layout stability within `horizontalScroll` by removing infinite-width `fillMaxSize` constraints from `LazyColumn`.
 - Dynamic Details Pane: Redesigned the log entry details pane to adapt to different log formats. It now hides the "Level" field when unknown (common in structured logs like Nginx) and automatically displays all available fields from the `LogEntry.fields` map.
+- Formalized the Ubiquitous Language and established it as a core architectural requirement (ADR-022).
+- UI Robustness: Implemented truncation (10k-50k chars) and constraint capping (10k dp) for large log entries to prevent `IllegalArgumentException` in Compose `Constraints`.
+- Multi-Log Differentiation: Added colored badges (dots) and pale grey background shading to distinguish between sources in interleaved views.
+- Full-Width Backgrounds: Fixed log entry layout to ensure background colors and selection highlights extend to the full width of the scrollable window.
+- Synchronized Row Widths: Implemented dynamic width tracking to ensure all rows stretch to the width of the widest row, filling the background to the edge.
+- Automatic Scrolling: Implemented auto-scroll (tailing) functionality with a persistent toggle in the toolbar.
+- Level Filtering: Added an 'All' option in the sidebar to enable or disable all log levels in one go.
+- Keyboard Shortcuts: Added Cmd+W to close active tab, Cmd+N for new tab, and Cmd+C to copy selected logs.
+- Multi-selection: Implemented multi-selection in log list (Shift+Click for range, Cmd+Click for toggle).
+- ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
+- Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
+- Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
+- Enhanced UI to make the active window more obvious by adding a subtle left border in split-pane view.
+- Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
+- Refined window activation: Clicking a non-active window in split-pane view now only activates the window; log entry details are only shown if the window is already active.
+- Initiated UI Testing Spike to establish a formal E2E testing strategy using Compose for Desktop and the Robot Pattern.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -41,7 +58,7 @@
 - Layered multi-module project structure (`domain`, `core`, `ui`, `app`).
 - Core domain models and Tiny Types for type safety.
 - `LogParser` and initial `LogService` for parsing and loading log files.
-- MVI-based UI layer with `LogViewerViewModel` and Compose components.
+- MVI-based UI layer with `KLogViewerViewModel` and Compose components.
 - BDD (Cucumber) and TDD (JUnit/Strikt) test suites.
 
 **Key decisions**
@@ -55,7 +72,7 @@
 
 **Test coverage areas**
 - `SimpleLogParser`: Unit tests for various log levels and invalid lines.
-- `LogViewerViewModel`: BDD test covering the end-to-end flow of loading a log file and updating the state.
+- `KLogViewerViewModel`: BDD test covering the end-to-end flow of loading a log file and updating the state.
 
 ## Task: Architectural Deepening - Streaming LogSource
 **Title**: LogSource Implementation
@@ -64,7 +81,7 @@
 - `LogSource` repository interface in `:domain`.
 - `FileLogSource` implementation in `:core` using Kotlin Flow.
 - Delta-based `LogUpdate` models for efficient UI updates.
-- Refactored `LogViewerViewModel` to consume streams instead of full lists.
+- Refactored `KLogViewerViewModel` to consume streams instead of full lists.
 
 **Key decisions**
 - Internalized concurrency (`Dispatchers.IO`) within the `LogSource` implementation.
@@ -75,7 +92,7 @@
 
 **Test coverage areas**
 - `FileLogSource`: Integration via BDD tests.
-- `LogViewerViewModel`: Updated BDD steps to handle Flow collection.
+- `KLogViewerViewModel`: Updated BDD steps to handle Flow collection.
 
 ## Task: UI Enhancements - File Browsing
 **Title**: File Browsing Implementation
@@ -93,7 +110,7 @@
 - `AwtWindow` requires careful handling of the `onCloseRequest` to ensure the dialog state is reset in the Composable.
 
 **Test coverage areas**
-- UI components: `FileSelector` and `LogViewerScreen` (verified via manual run and build).
+- UI components: `FileSelector` and `KLogViewerScreen` (verified via manual run and build).
 
 ## Sprint: UI/UX Refinement
 **Title**: Sprint 2 Completion
@@ -162,7 +179,7 @@
 **Title**: Tabs & Interleaving Implementation
 **Date/time completed**: 2026-05-13 18:30
 **What was shipped**
-- Tabbed workspace architecture with `TabState` and `LogViewerState` refactoring.
+- Tabbed workspace architecture with `TabState` and `KLogViewerState` refactoring.
 - Chronological multi-log interleaving via `MergedLogSource`.
 - Source identification badges in the log list.
 - Multi-file selection support in native `FileDialog`.
@@ -225,7 +242,7 @@
 **Key decisions**
 - Used hash-based Hue generation for stable, diverse source colors without a central registry.
 - Implemented `AddToWorkspace` by merging new paths with current tab state and reloading via `MergedLogSource`.
-- Added new integration test suite (`com.logviewer.integration`) to verify multi-tab behavior.
+- Added new integration test suite (`com.klogviewer.integration`) to verify multi-tab behavior.
 
 **Gotchas**
 - Hash-based colors can sometimes produce low-contrast combinations; added fixed saturation and value for better readability.
@@ -248,7 +265,7 @@
 - Unified dialog management via MVI state.
 
 **Key decisions**
-- Migrated FileDialog state to `LogViewerState` to allow triggering from both the Menu Bar and Ribbon.
+- Migrated FileDialog state to `KLogViewerState` to allow triggering from both the Menu Bar and Ribbon.
 - Implemented `RibbonBar` as a group of functional sections (File, View, Filters) for better discoverability.
 - Used a 250dp detail pane for log entry inspection, triggered by row clicks.
 - Reduced row padding and increased information density in `LogList` to meet power-user requirements.
@@ -259,7 +276,7 @@
 - Icons for `ViewSidebar` were deprecated; moved towards modern variants where suggested by compiler.
 
 **Test coverage areas**
-- `LogViewerViewModel`: Verified new intents for selection and dialog management.
+- `KLogViewerViewModel`: Verified new intents for selection and dialog management.
 - Integration: Verified that state changes (filtering, selection) work correctly across the new UI components.
 
 ## Task: Enhanced Grid and Tailing
@@ -289,7 +306,7 @@
 **What was shipped**
 - Integrated SLF4J + Logback + logstash-logback-encoder with kotlin-logging facade.
 - Configured `logback.xml` with console and rolling JSON appenders.
-- Instrumented `FileLogSource`, `SimpleLogParser`, `MergedLogSource`, and `LogViewerViewModel` with extensive logging.
+- Instrumented `FileLogSource`, `SimpleLogParser`, `MergedLogSource`, and `KLogViewerViewModel` with extensive logging.
 - Added explicit error logging for all failure paths in the log loading and parsing pipeline.
 - Implemented high-density UI with horizontal scrolling and consolidated sidebar filters (Sprint 6).
 
@@ -404,7 +421,7 @@
 - Reducing padding to 0dp requires adjusting line-height or font-size if text appears too cramped; maintained 12sp for legibility.
 
 **Test coverage areas**
-- `LogViewerViewModel`: Verified `levelCounts` calculation.
+- `KLogViewerViewModel`: Verified `levelCounts` calculation.
 - UI Layout: Verified through manual inspection and compilation.
 
 ## Task: UI Refinements and Polish
@@ -543,7 +560,7 @@
 - Real-time persistence: UI layout and filter changes are saved to `preferences.json` as they happen.
 
 **Key decisions**
-- Refactored `LogViewerViewModel` to support background loading of logs for all windows during initialization, ensuring a seamless startup experience.
+- Refactored `KLogViewerViewModel` to support background loading of logs for all windows during initialization, ensuring a seamless startup experience.
 - Extended `UserPreferences` with serializable `TabPreference` and `WindowPreference` structures to capture the complex UI state.
 - Decided to trigger `savePreferences` on layout and filter changes to prevent data loss in case of unexpected application closure.
 
@@ -676,7 +693,7 @@
 **Title**: Split Window Header Refinement (File Path Visibility)
 **Date/time completed**: 2026-05-15 07:45
 **What was shipped**
-- Updated `LogViewerScreen.kt` to always display the fully qualified file path in each split window's header.
+- Updated `KLogViewerScreen.kt` to always display the fully qualified file path in each split window's header.
 - Aligned file path to the left and window controls (Active badge, Close button) to the right.
 - Ensured the header row is visible even for single splits if a file is loaded.
 
@@ -756,7 +773,7 @@
 - Passed `filterQueries` and `isDarkMode` to the details pane to ensure visual consistency with the main list.
 
 **Gotchas**
-- Adding new parameters to `LogEntryDetails` required updating the call site in `LogViewerScreen` and importing `LogLevel` in the component file.
+- Adding new parameters to `LogEntryDetails` required updating the call site in `KLogViewerScreen` and importing `LogLevel` in the component file.
 - `LogHighlighter.highlight` returns an `AnnotatedString` which is correctly handled by the `Text` composable, but it needs current theme context.
 
 **Test coverage areas**
@@ -803,3 +820,458 @@
 **Test coverage areas**
 - Core: Updated `LogParserTest.kt` with explicit assertions for raw level strings in timezone-aware and metadata-heavy log lines.
 - UI: Verified consistency between the grid and details pane through code inspection.
+
+## Task: Domain Documentation - Ubiquitous Language
+**Title**: Ubiquitous Language Formalization
+**Date/time completed**: 2026-05-15 13:55
+**What was shipped**
+- Formal `docs/UBIQUITOUS_LANGUAGE.md` document.
+- `ADR-022: Formalization of Ubiquitous Language`.
+- Updated `RECAP.md` with the new documentation milestone.
+
+**Key decisions**
+- Centralized all domain terminology in a single, version-controlled markdown file to prevent "concept drift".
+- Mandated alignment between code (e.g., `LogEntry`, `LogSource`) and the Ubiquitous Language via ADR.
+- Chose "Interleaving" as the formal term for multi-log merging to align with industry standards and existing ADRs.
+
+**Gotchas**
+- Identifying all implicit terms (like "Update" vs "Packet") required a deep dive into both code and existing ADRs to ensure current usage was captured accurately.
+
+**Test coverage areas**
+- Documentation-only task; verified terminological alignment with existing domain model tests.
+
+## Task: UI Robustness - Large Log Entry Handling
+**Title**: Large Log Entry Handling
+**Date/time completed**: 2026-05-15 14:40
+**What was shipped**
+- Truncation logic in `LogList` (10k chars) and `LogEntryDetails` (50k chars).
+- Maximum width constraint (10k dp) for log columns in `LogList`.
+- Resize protection cap (10k dp) for manual column dragging.
+
+**Key decisions**
+- Chose truncation as a primary defense to ensure both measurement safety and rendering performance.
+- Selected 10,000.dp as a safe upper bound for Compose's bit-packed `Constraints` system while still allowing for very wide log lines.
+- Decided to truncate in the UI layer to maintain full search/filter capabilities in the ViewModel layer.
+
+**Gotchas**
+- `horizontalScroll` with `softWrap = false` is a "perfect storm" for Compose crashes as it invites infinite measurement.
+- Vertical overflow is also possible in the details pane if entries are extremely large (multi-megabyte single lines), requiring similar truncation there.
+
+**Test coverage areas**
+- Build verification and manual inspection of truncation logic.
+
+## Task: Multi-Log Visual Differentiation
+**Title**: Multi-Log Visual Differentiation
+**Date/time completed**: 2026-05-15 15:20
+**What was shipped**
+- Colored badges (dots) in the gutter for source identification.
+- Pale grey background shading based on `sourceId` for interleaved entries.
+- Dynamic gutter sizing (50dp/60dp) based on source count.
+- Path-based `sourceId` in `FileLogSource` for reliable differentiation.
+
+**Key decisions**
+- Used full paths for `sourceId` to ensure uniqueness across different directories.
+- Implemented dynamic gutter width to keep the UI clean when viewing only a single log.
+- Selected subtle grey shades to provide grouping without competing with level-based text colors.
+
+**Gotchas**
+- Changing `sourceId` from filename to full path requires updating all tests that assert on this field.
+- Misalignment between header and rows can easily occur if gutter width is not kept in sync.
+
+**Test coverage areas**
+- `MergedLogSourceTest` (unit)
+- `InterleavingIntegrationTest` (integration)
+- `LogSortingTest` (integration)
+
+## Task: Full-Width Log Entry Backgrounds
+**Title**: Full-Width Log Entry Backgrounds
+**Date/time completed**: 2026-05-15 15:45
+**What was shipped**
+- Full-width background coverage for log entries in `LogList`.
+- Automatic expansion of the "Message" column to fill viewport width.
+
+**Key decisions**
+- Applied `Modifier.fillMaxWidth()` to both the container `Box` and the child `Row` of each log entry to ensure they stretch to the full width provided by the `LazyColumn` (which itself fills the scrollable viewport).
+- Added `Modifier.weight(1f)` to the final column to ensure it matches the header's layout logic, preventing the background from terminating at the end of the text.
+
+**Gotchas**
+- In a `horizontalScroll` context, `fillMaxWidth()` on an item inside `LazyColumn` results in the item being as wide as the viewport or the widest item, ensuring full-width backgrounds even if the content is short.
+
+**Test coverage areas**
+- Build verification and UI alignment inspection.
+
+## Task: Fix Message Column Visibility
+**Title**: Fix Message Column Visibility
+**Date/time completed**: 2026-05-15 16:00
+**What was shipped**
+- Fixed regression where "Message" column was hidden by `weight(1f)` squashing.
+- Dynamic layout in `LogList` that respects both viewport width and content width.
+- Use of `BoxWithConstraints` to ensure background colors cover the full viewport even with short content.
+
+**Key decisions**
+- Used `widthIn(min = viewportWidth)` instead of `fillMaxWidth()` to allow expansion beyond viewport.
+- Replaced `weight(1f)` with manual `minWidth` calculation for the last column to prevent squashing.
+- Maintained 10,000dp safety cap for horizontal measurement.
+
+**Gotchas**
+- `fillMaxWidth()` inside `horizontalScroll` restricts width to viewport, which is fatal for weighted columns when fixed columns already consume significant space.
+
+**Test coverage areas**
+- `InterleavingIntegrationTest`
+- `LogSortingTest`
+
+## Task: Synchronized Row Widths
+**Title**: Synchronized Row Widths for Full-Width Backgrounds
+**Date/time completed**: 2026-05-15 16:20
+**What was shipped**
+- Dynamic row width synchronization in `LogList`.
+- Consistent background coverage for short rows in horizontally scrolled views.
+
+**Key decisions**
+- Used `onSizeChanged` on each row to track the maximum width encountered during composition.
+- Applied `max(viewportWidth, widestSeenWidth)` as a minimum width constraint for both rows and the header.
+- Passed `widestRowWidth` state down to children to ensure immediate alignment upon recomposition.
+
+**Test coverage areas**
+- `InterleavingIntegrationTest`
+- `LogSortingTest`
+
+## Task: Automatic Scrolling
+**Title**: Automatic Scrolling (Log Tailing)
+**Date/time completed**: 2026-05-15 15:20
+**What was shipped**
+- Automatic scrolling to the end of the log list when new entries are added.
+- Persistent "Auto-scroll" toggle in the toolbar for user control.
+
+**Key decisions**
+- Used `LaunchedEffect(logs.size)` in `LogList` to trigger scroll actions whenever the log count changes.
+- Chose `scrollToItem` for immediate jumping to the end, ensuring users always see the latest logs when auto-scroll is active.
+- Integrated the toggle into `FilterBar` for easy access alongside other view controls.
+- Persisted the `isAutoScrollEnabled` flag in `UserPreferences` to maintain user choice across application restarts.
+
+**Gotchas**
+- Initially used `animateScrollToItem`, but switched to `scrollToItem` to ensure performance and immediate feedback on high-frequency log updates.
+
+**Test coverage areas**
+- `PersistenceIntegrationTest` (verified state persistence)
+- `InterleavingIntegrationTest` (verified no regressions in log merging)
+- Manual UI verification for icon tinting and tooltip correctness.
+
+## Task: Fix Library Upgrade Compilation Errors
+**Title**: Fix Library Upgrade Compilation Errors
+**Date/time completed**: 2026-05-15 18:05
+**What was shipped**
+- Fixed compilation error in `LogList.kt` by replacing deprecated `rememberRipple()` with the new `ripple()` API from Compose 1.7+.
+- Fixed `AwtWindow` import in `KLogViewerScreen.kt` (moved from `androidx.compose.ui.window` to `androidx.compose.ui.awt`).
+- Cleaned up redundant `else` branch in `when` expression in `KLogViewerScreen.kt` for better type safety.
+- Restored missing BDD step definitions in `app/src/test/kotlin/com/klogviewer/bdd/steps/LogLoadingSteps.kt`.
+- Added missing `kotlinx-coroutines-test` dependency to `app` module and version catalog.
+
+**Key decisions**
+- Used `UnconfinedTestDispatcher` in BDD tests to ensure predictable execution of log loading logic.
+- Leveraged `backgroundScope` in `runTest` to manage long-running coroutines like log tailing in tests.
+- Re-implemented BDD steps to use `FileLogSource` and `SimpleLogParser` directly for focused feature verification.
+
+**Gotchas**
+- Library upgrades (Compose 1.11.0, Kotlin 2.3.21) introduced strict deprecation-as-errors and moved AWT-related classes.
+- Infinite loops in log tailing caused tests to hang unless properly managed with `backgroundScope` and test dispatchers.
+
+**Test coverage areas**
+- BDD Tests: Verified log loading and entry parsing via `RunCucumberTest`.
+- Integration Tests: Verified multi-tab and interleaving logic.
+- UI Compilation: Ensured all composables compile with the latest versions.
+
+## Task: README Spruce-up
+**Title**: README Spruce-up
+**Date/time completed**: 2026-05-15 17:40
+**What was shipped**
+- Created a comprehensive `README.md` in the root directory.
+- Added professional badges (Kotlin, Compose for Desktop, License).
+- Highlighted core application features: multiple tabs, horizontal split panes, interleaved logs, real-time tailing, and advanced parsing.
+- Included placeholders and descriptions for screenshots in `docs/images/screenshots`.
+- Provided clear "Getting Started" instructions for running and building the application.
+
+**Key decisions**
+- Chose a professional, "senior project manager" tone for the README.
+- Organized features into logical sections to highlight the desktop-centric nature of KLogViewer.
+- Included a technology stack section to provide immediate context for developers.
+
+**Gotchas**
+- The project lacked a root README, so it was created from scratch using information gathered from `docs/RECAP.md` and `docs/FEATURES.md`.
+
+**Test coverage areas**
+- N/A (Documentation change).
+
+## Task: Project Renaming
+**Title**: Project Renaming to KLogViewer
+**Date/time completed**: 2026-05-15 17:30
+**What was shipped**
+- Renamed project to KLogViewer in `settings.gradle.kts` and `app/build.gradle.kts`.
+- Refactored package structure from `com.logviewer` to `com.klogviewer` across all modules.
+- Renamed core classes and components: `LogViewerViewModel` -> `KLogViewerViewModel`, `LogViewerState` -> `KLogViewerState`, etc.
+- Updated all references in code, tests, and documentation.
+- Renamed internal log files and preference keys where applicable.
+
+**Key decisions**
+- Chose "KLogViewer" as the new name to highlight the Kotlin-first nature of the project.
+- Performed a deep rename of packages and symbols to ensure full consistency and avoid legacy "LogViewer" references in the codebase.
+- Maintained "log viewer" as a descriptive term in prose while using "KLogViewer" as the product name.
+
+**Gotchas**
+- Renaming packages required updating `build.gradle.kts` files and all import statements across the project.
+- AWT `FileDialog` and window titles needed explicit updates to the new brand.
+
+**Test coverage areas**
+- Build verification: Ensured all modules compile and link correctly under the new name.
+- Integration/BDD tests: Verified that all tests pass with the new package structure.
+
+## Task: Show FQN in Recent Items
+**Title**: Show FQN in Recent Items
+**Date/time completed**: 2026-05-15 22:15
+**What was shipped**
+- Updated the "Recently Opened" menu in `Main.kt` to display the Fully Qualified Name (full path) instead of just the filename.
+- Ensured consistent use of full paths across `Main.kt` and `RecentItemsDialog`.
+
+**Key decisions**
+- Switched from `File(path).name` to raw `path` in the `MenuBar` implementation to fulfill the FQN requirement.
+- Verified that existing components like `StatusBar` and `RecentItemsDialog` already provided full path information.
+
+**Test coverage areas**
+- Integration tests: `PersistenceIntegrationTest` and `TabManagementTest` verified that path-based state management remains correct.
+- Manual verification: Checked menu rendering logic.
+
+## Task: CI/CD and Packaging
+**Title**: CI/CD and Packaging with GitHub Actions
+**Date/time completed**: 2026-05-15 22:30
+**What was shipped**
+- Created `.github/workflows/build.yml` for automated multi-platform builds.
+- Configured matrix strategy for macOS, Windows, and Linux.
+- Automated generation of installers (DMG, MSI, DEB) and standalone executables (zipped app images).
+- Updated `README.md` with Build Status, Platforms, and CI/CD documentation.
+- Marked task as completed in `notes.md`.
+
+**Key decisions**
+- Used `ubuntu-latest`, `windows-latest`, and `macos-latest` to ensure native packaging for each target OS.
+- Zipped the `createDistributable` output to provide "plain executables" as requested.
+- Linked to GitHub Actions artifacts in the README for easy access to deployable units.
+
+**Gotchas**
+- Windows zipping requires `Compress-Archive` in PowerShell (`pwsh`) for a seamless CI experience.
+- The `package` task for Compose for Desktop is OS-specific, requiring the matrix build approach.
+
+**Test coverage areas**
+- CI Pipeline: Verified that `gradle test` runs before packaging on all platforms.
+- Packaging: Verified that `package` and `createDistributable` tasks are correctly invoked for each platform.
+
+## Task: Fix ScrollableTabRow IndexOutOfBoundsException (Refined)
+**Title**: Fix ScrollableTabRow IndexOutOfBoundsException (Refined)
+**Date/time completed**: 2026-05-17 17:15
+**What was shipped**
+- Implemented a custom safe `indicator` for `ScrollableTabRow` that performs bounds checking against `tabPositions`.
+- Maintained defensive indexing (`coerceIn`) for the `selectedTabIndex` calculation.
+- Ensured proper imports for `TabRowDefaults.tabIndicatorOffset`.
+
+**Key decisions**
+- Provided an explicit `indicator` lambda to `ScrollableTabRow` to prevent the default indicator from accessing out-of-sync `tabPositions`.
+- Used `if (selectedTabIndex < tabPositions.size)` check inside the indicator to gracefully handle frames where the index and positions are not yet aligned.
+
+**Gotchas**
+- Simple defensive indexing of the `selectedTabIndex` is insufficient because Compose's internal `TabRow` logic may use the new index with old children measurements during a single frame of recomposition.
+
+**Test coverage areas**
+- `TabManagementTest`: Verified that tab switching and addition still work correctly.
+- UI Compilation: Verified that custom indicator and imports are correct.
+
+## Task: Fix Split Pane Column Resizing
+**Title**: Fix Split Pane Column Resizing
+**Date/time completed**: 2026-05-17 17:45
+**What was shipped**
+- Updated `KLogViewerIntent.UpdateColumnWidth` to include `windowId`, enabling targeted resizing.
+- Implemented `updateWindow` helper in `KLogViewerState` to allow updating any window by ID across all tabs.
+- Refactored `KLogViewerScreen` to pass the specific window ID to the resize intent.
+- Verified that resizing a column in a non-focused split pane correctly updates that pane without affecting the focused one.
+
+**Key decisions**
+- Decoupled column resizing from focus management to provide a more intuitive user experience.
+- Added a general `updateWindow` method to the state to simplify future targeted window updates.
+
+**Gotchas**
+- Changing intent constructors requires updating all call sites, including integration tests that mock or simulate user intents.
+
+**Test coverage areas**
+- `TabManagementTest`: Added `should resize columns independently in different split windows`.
+- `PersistenceIntegrationTest`: Updated to verify that resizing still persists correctly with the new intent structure.
+
+## Task: Add 'All' option for Level Filtering
+**Title**: Add 'All' option for Level Filtering
+**Date/time completed**: 2026-05-17 18:00
+**What was shipped**
+- Implemented `ToggleAllLevels` intent to allow bulk selection/deselection of log levels.
+- Updated `Sidebar.kt` to include an "All" toggle at the top of the levels list.
+- Refactored `LogLevelToggle` in `Sidebar.kt` to be more flexible, supporting both individual levels and the "All" option.
+- Synchronized "All" checkbox state with the current selection (checked only if all levels are enabled).
+
+**Key decisions**
+- "All" checkbox toggles to enabled if any levels are currently disabled, and toggles to disabled only if all are currently enabled.
+- Reused the existing custom checkbox and row style for the "All" option to maintain UI consistency.
+
+**Gotchas**
+- The "All" option's count reflects the total number of logs in the window, which is the sum of counts for all individual levels.
+
+**Test coverage areas**
+- `TabManagementTest`: Added `should toggle all levels at once` to verify the logic for bulk selection and deselection.
+
+## Task: Enhance Active Window Visibility
+**Title**: Enhance Active Window Visibility
+**Date/time completed**: 2026-05-17 18:15
+**What was shipped**
+- Added a subtle left border (3dp width, primary color with 50% alpha) to the active window when multiple windows are open in a tab.
+- Used `Modifier.drawBehind` for efficient rendering of the targeted border.
+
+**Key decisions**
+- Chose a subtle color and width to improve focus without being visually overwhelming.
+- Only show the border when there are multiple windows (split view) to avoid clutter in single-window tabs.
+
+**Gotchas**
+- `Modifier.drawBehind` requires explicit imports for `Offset` and `drawBehind` which might not be automatically suggested in some environments.
+
+**Test coverage areas**
+- UI Compilation: Verified that the new modifier and imports are correct and build successfully.
+
+## Task: Refine Window Activation and Selection
+**Title**: Refine Window Activation and Selection
+**Date/time completed**: 2026-05-17 18:45
+**What was shipped**
+- Modified `KLogViewerScreen.kt` to decouple window activation from entry selection.
+- Clicking on a log entry in a non-active window now only triggers `SwitchWindow`.
+- Clicking on a log entry in an already active window triggers `SelectEntry` to show details.
+
+**Key decisions**
+- Improved user experience in split-pane mode by preventing accidental detail panel opening when just trying to focus a window.
+- Leveraged the existing `isWindowActive` local state in the Composable to guard the `SelectEntry` intent.
+
+**Gotchas**
+- The selection in the window remains unchanged (or null) when clicking to activate, requiring a second click to view details.
+
+**Test coverage areas**
+- UI Logic: Manually verified the click handling logic in `KLogViewerScreen.kt`.
+- Regressions: Ran `TabManagementTest` to ensure general window and tab management still works.
+
+## Task: Add Keyboard Shortcuts and Multi-selection
+**Title**: Add Keyboard Shortcuts and Multi-selection
+**Date/time completed**: 2026-05-17 17:00
+**What was shipped**
+- Standard shortcuts: Cmd+W (Close Tab), Cmd+N (New Tab), Cmd+C (Copy).
+- Multi-selection support: Shift+Click for range selection and Cmd/Ctrl+Click for toggling selection.
+- Clipboard integration: Selected lines are joined with newlines and copied to the system clipboard.
+- Refactored `LogWindow` to use indices for selection to handle multi-select and avoid equality issues.
+
+**Key decisions**
+- Used `MenuBar` shortcuts for standard OS integration and discoverability.
+- Used `PointerEventType.Release` in `LogList` to detect modifiers during clicks without breaking ripple effects entirely.
+- Indices are used for selection instead of `LogEntry` objects to better support range selection.
+
+**Gotchas**
+- Range selection (Shift+Click) requires tracking the `lastSelectedIndex` to define the anchor.
+- `Modifier.clickable` swallowed modifiers, necessitating a move to `Modifier.pointerInput` for click detection in rows.
+
+**Test coverage areas**
+- `TabManagementTest`: Added `should support multi-selection via ToggleEntrySelection` to verify the logic.
+- Integration: Verified `MenuBar` shortcuts compilation and wiring.
+
+## Task: ANSI SGR Color Support
+**Title**: ANSI SGR Color Support
+**Date/time completed**: 2026-05-17 19:15
+**What was shipped**
+- ANSI SGR Parsing: Implemented a stateful ANSI parser in `LogHighlighter` that handles foreground colors (30-37, 90-97), bold (1), and resets (0).
+- UI Toggle: Added a 'Palette' icon to the `FilterBar` to enable or disable ANSI color interpretation per window.
+- Persistence: Saved the `showAnsiColors` preference in `UserPreferences`.
+- Details Pane Support: Integrated ANSI colors into the log details view.
+
+**Key decisions**
+- Decided to strip ANSI codes from the visible text when colors are enabled, ensuring a clean reading experience while applying styles via `AnnotatedString`.
+- Used a dedicated `Palette` icon in the `FilterBar` for easy access alongside other view-related toggles.
+
+**Gotchas**
+- ANSI codes must be parsed before other highlights (like timestamps or filter queries) to ensure the indices for those highlights remain correct after the codes are stripped.
+
+**Test coverage areas**
+- `LogHighlighterTest`: Added tests for ANSI parsing with both enabled and disabled states, verifying string stripping and style application.
+
+## Task: UI Testing Spike Planning
+**Title**: UI Testing Strategy & Roadmap
+**Date/time completed**: 2026-05-17 19:30
+**What was shipped**
+- `spike/uitesting` git branch.
+- `docs/sprints/sprint-ui-testing-spike.md`: Comprehensive strategy for UI testing.
+- `docs/tasks/TASKS-UI-TESTING-SPIKE.md`: Structured task list for the spike.
+**Key decisions**
+- Adopted the **Robot Pattern** for maintainable UI tests (ADR-024).
+- Selected **ComposeTestRule** (JUnit 4) as the primary testing framework (ADR-023).
+- Committed to headless CI/CD execution using Xvfb.
+- Decided to introduce a `DialogProvider` abstraction to facilitate mocking of blocking AWT calls like `FileDialog`.
+**Gotchas**
+- Existing Cucumber BDD tests are limited to the ViewModel layer and do not exercise the actual Compose UI components or AWT integrations.
+
+## Task: UI Testing Spike - Part 1 & 2
+**Title**: UI Testing Infrastructure and Pattern Definition
+**Date/time completed**: 2026-05-18 21:45
+**What was shipped**
+- ADR-023: UI Testing Framework Selection.
+- ADR-024: Robot Pattern for UI Testing.
+- Added UI testing dependencies to `libs.versions.toml` (`ui-test-junit4`, `junit4`).
+- Configured `:ui:desktopTest` task in Gradle.
+- Integrated Xvfb setup and automated UI test execution in GitHub Actions CI/CD workflow.
+**Key decisions**
+- Standardized on `androidx.compose.ui:ui-test-junit4` despite being a Desktop project to ensure compatibility with standard Robot patterns.
+- Introduced a dedicated `desktopTest` Gradle task to isolate UI tests from faster unit tests.
+- Opted for `xvfb-run` in CI to ensure stable headless execution for Compose Desktop.
+**Gotchas**
+- Compose UI tests on Desktop still require JUnit 4, necessitating a dual-JUnit environment (JUnit 5 for unit tests, JUnit 4 for UI tests).
+- Xvfb requires additional system libraries (Mesa, GLX) on standard Ubuntu runners.
+**Test coverage areas**
+- Infrastructure: Verified CI workflow syntax and Gradle task availability.
+- Pattern: Defined the roadmap for `BaseRobot` and specific UI Robots in ADR-024.
+
+## Task: UI Testing Spike - Part 3 & 4.1
+**Title**: Robot Pattern Implementation and Smoke Testing
+**Date/time completed**: 2026-05-18 21:40
+**What was shipped**
+- `BaseRobot`, `LogListRobot`, `SidebarRobot`, and `MainRobot` for fluent UI testing.
+- `DialogProvider` abstraction and `AwtDialogProvider` implementation to allow mocking of AWT `FileDialog`.
+- `testTag` decorations across `LogList`, `Sidebar`, `FilterBar`, and `KLogViewerScreen`.
+- `KLogViewerSmokeTest` verifying application launch and component presence.
+- Added `MockK` and `JUnit Vintage` dependencies for UI testing support.
+**Key decisions**
+- Switched to `org.jetbrains.compose.ui:ui-test-junit4` for compatibility with Compose Desktop.
+- Introduced `DialogProvider` to the `KLogViewerScreen` via dependency injection (defaulting to AWT) to enable headless testing of file operations.
+- Decided to use JUnit 4 for UI tests while maintaining JUnit 5 for unit tests, enabled by the Vintage engine.
+**Gotchas**
+- `androidx.compose.ui:ui-test-junit4` contains stubs that throw `NotImplementedError` on Desktop; the JetBrains-specific version must be used.
+- Lazy components like `LazyColumn` require careful assertion of child counts as only visible items are typically present in the semantics tree.
+**Test coverage areas**
+- UI: Verified main screen components are displayed on launch.
+- Pattern: Verified Robot DSL works as intended in the smoke test.
+
+## Task: UI Testing Expansion - Complex Behaviors
+**Title**: Extended UI Test Suite for Split Panes and Multi-selection
+**Date/time completed**: 2026-05-19 10:40
+**What was shipped**
+- Extended UI testing framework to cover complex UI behaviors (splits, multi-selection, resizing).
+- Added `WindowRobot` to the Robot Pattern for scoped interactions within specific split windows.
+- Implemented `KLogViewerComplexUiTest.kt` with tests for Independent Column Resizing, Multi-selection (Shift/Meta), and Tab switching.
+- Enhanced `LogList.kt` with `selected` semantics and `column_header_$column` tags for better testability.
+- Added comprehensive guidance in `docs/TESTING.md` comparing Functional UI Tests and Visual Regression.
+**Key decisions**
+- Scoped robots using `hasAnyAncestor(hasTestTag("window_$windowId"))` to ensure interactions target the correct pane in split views.
+- Used `performKeyInput` to simulate modifier keys (Shift, Meta) during mouse clicks for multi-selection tests.
+- Implemented custom `assertWidthIsNotEqualTo` and `SemanticsMatcher` for identifying windows to overcome limitations in standard `androidx.compose.ui.test` matchers.
+- Decided to stick with Functional UI tests for resizing logic instead of screenshots, as they are more robust and directly verify model state updates.
+**Gotchas**
+- Compose Testing's `click()` in `performMouseInput` does not consistently support `keyboardModifiers` across all versions; manual `keyDown/Up` via `performKeyInput` is more reliable.
+- Some nodes in the LogList (headers, handles) require `useUnmergedTree = true` to be found because they are part of complex, non-interactive semantics nodes.
+- `onNodeWithTag` with `substring = true` is not available in the current Compose version; used a custom `SemanticsMatcher` with `startsWith` instead.
+**Test coverage areas**
+- UI: Independent column resizing in split panes.
+- UI: Multi-selection with Shift and Meta/Ctrl modifiers.
+- UI: Persistent state maintenance during tab switching.

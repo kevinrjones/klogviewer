@@ -1,7 +1,7 @@
 # Sprint 7: Advanced Log Formats & Flexible Parsing
 
 ## 1. Goal
-Transition LogViewer from a rigid single-format parser to a flexible, template-based engine capable of handling diverse real-world logs (abbreviated levels, varying timestamps, multiline stacks, and structured JSON).
+Transition KLogViewer from a rigid single-format parser to a flexible, template-based engine capable of handling diverse real-world logs (abbreviated levels, varying timestamps, multiline stacks, and structured JSON).
 
 ## 2. Scope
 

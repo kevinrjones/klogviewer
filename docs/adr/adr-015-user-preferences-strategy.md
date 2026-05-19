@@ -12,9 +12,9 @@ We will use a JSON-based configuration file stored in platform-specific applicat
 ### Persistence Mechanism
 - **Format**: JSON (using `kotlinx-serialization`) for its readability, standard support, and ease of use with Kotlin data classes.
 - **Storage Locations**:
-    - **macOS**: `~/Library/Application Support/com.logviewer.app/preferences.json`
-    - **Windows**: `%APPDATA%\LogViewer\preferences.json`
-    - **Linux**: `~/.config/logviewer/preferences.json` (following XDG Base Directory Specification)
+    - **macOS**: `~/Library/Application Support/com.klogviewer.app/preferences.json`
+    - **Windows**: `%APPDATA%\KLogViewer\preferences.json`
+    - **Linux**: `~/.config/klogviewer/preferences.json` (following XDG Base Directory Specification)
 
 ### Key Data to Persist
 - **Window State**: Width, height, X position, Y position.
@@ -30,7 +30,7 @@ We will use a JSON-based configuration file stored in platform-specific applicat
 - A `UserPreferences` data class in the `domain` module.
 - A `PreferencesRepository` in the `core` module responsible for I/O and path resolution.
 - The `Main.kt` will load preferences on startup to configure the initial window state.
-- `LogViewerViewModel` will load and restore the UI layout (tabs/splits) and trigger automatic log reloading.
+- `KLogViewerViewModel` will load and restore the UI layout (tabs/splits) and trigger automatic log reloading.
 - Preferences are saved automatically whenever the UI configuration changes (e.g., adding a tab, splitting a window, loading a file, changing a filter).
 
 ## Consequences

@@ -1,7 +1,7 @@
-# LogViewer High-Level Requirements
+# KLogViewer High-Level Requirements
 
 ## 1. Overview
-LogViewer is a desktop application designed to provide a rich, interactive experience for viewing and analyzing log files. The application will be built using Kotlin and Compose for Desktop.
+KLogViewer is a desktop application designed to provide a rich, interactive experience for viewing and analyzing log files. The application will be built using Kotlin and Compose for Desktop.
 
 ## 2. Functional Requirements
 
@@ -24,8 +24,8 @@ LogViewer is a desktop application designed to provide a rich, interactive exper
 - **Log Templates:** Implement templates that allow the application to parse and break down log messages into structured components for better analysis and decision-making.
 
 ### 3.2. Direct Integration (Appenders)
-- **Java Appender:** Develop a custom appender for Java logging frameworks (e.g., Log4j, Logback) to stream logs directly to the LogViewer application.
-- **.NET Serilog Appender:** Develop a custom sink for .NET Serilog to stream logs directly to the LogViewer application.
+- **Java Appender:** Develop a custom appender for Java logging frameworks (e.g., Log4j, Logback) to stream logs directly to the KLogViewer application.
+- **.NET Serilog Appender:** Develop a custom sink for .NET Serilog to stream logs directly to the KLogViewer application.
 
 ## 4. Proposed Technical Stack
 - **Language:** Kotlin

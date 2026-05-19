@@ -21,10 +21,27 @@ dependencies {
     
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.junit.vintage.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.strikt.core)
+    testImplementation(libs.jetbrains.compose.ui.test.junit4)
+    testImplementation(libs.junit4)
+    testImplementation(libs.mockk)
 }
 
 tasks.test {
     useJUnitPlatform()
+}
+
+tasks.register<Test>("desktopTest") {
+    description = "Runs the desktop UI tests."
+    group = "verification"
+    
+    testClassesDirs = tasks.test.get().testClassesDirs
+    classpath = tasks.test.get().classpath
+    
+    useJUnitPlatform()
+    
+    // UI tests often need more memory
+    jvmArgs("-Xmx2g")
 }

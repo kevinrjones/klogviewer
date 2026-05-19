@@ -35,7 +35,7 @@ Introduce the ability to view multiple log files simultaneously through a tabbed
 - Ensure performance remains stable with long-running tail jobs.
 
 ## 3. Key Decisions
-- **Workspace-Centric State**: Refactor `LogViewerState` to manage a collection of `TabState` objects.
+- **Workspace-Centric State**: Refactor `KLogViewerState` to manage a collection of `TabState` objects.
 - **LogEntry Attribution**: Add `sourceId` to `LogEntry` to track origin.
 - **Chronological Merging**: Implement a merge algorithm in `MergedLogSource` to combine multiple streams.
 - **MVI Extension**: Add new intents for tab management (`AddTab`, `CloseTab`, `SwitchTab`).

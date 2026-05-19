@@ -4,7 +4,7 @@
 Proposed
 
 ## Context
-Many log files contain entries that span multiple lines, most notably Java stack traces, indented JSON fragments, or multi-line log messages. Currently, LogViewer treats every line as a separate entry, which breaks the context of stack traces and makes searching and filtering difficult.
+Many log files contain entries that span multiple lines, most notably Java stack traces, indented JSON fragments, or multi-line log messages. Currently, KLogViewer treats every line as a separate entry, which breaks the context of stack traces and makes searching and filtering difficult.
 
 ## Decision
 We will implement a `MultilineProcessor` within the `LogSource` ingestion layer to aggregate related lines into single `LogEntry` objects.

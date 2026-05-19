@@ -34,7 +34,7 @@
 - [x] 12.5.1. Implement "Heuristic Probe" to test templates against the first few lines of a file
 - [x] 12.5.2. Automatically detect JSON format (starts with `{`)
 - [x] 12.5.3. Rank templates based on match quality and select the best candidate
-- [x] 12.5.4. Update `LogViewerViewModel` to use the heuristic probe when opening new files
+- [x] 12.5.4. Update `KLogViewerViewModel` to use the heuristic probe when opening new files
 
 ### 12.6. UI Integration & Feedback
 - [ ] 12.6.1. Update UI to indicate which parser is being used for a file

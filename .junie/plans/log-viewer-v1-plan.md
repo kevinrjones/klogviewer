@@ -6,7 +6,7 @@ isActive: true
 # Requirements
 
 ### Overview & Goals
-LogViewer is a high-performance desktop application for analyzing large log files and live log streams. It focuses on being "intelligent" by parsing raw text into structured data, allowing for advanced filtering, interleaving, and semantic interaction.
+KLogViewer is a high-performance desktop application for analyzing large log files and live log streams. It focuses on being "intelligent" by parsing raw text into structured data, allowing for advanced filtering, interleaving, and semantic interaction.
 
 ### Scope
 - **In Scope:**

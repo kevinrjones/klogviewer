@@ -4,7 +4,7 @@
 Proposed
 
 ## Context
-The current implementation of LogViewer uses a "Mobile Chic" aesthetic, heavily influenced by Material Design patterns common in mobile and web applications (e.g., `Scaffold`, top bars with limited actions, and simplified layouts). While functional, this approach does not align with the power-user expectations of a professional desktop log analysis tool.
+The current implementation of KLogViewer uses a "Mobile Chic" aesthetic, heavily influenced by Material Design patterns common in mobile and web applications (e.g., `Scaffold`, top bars with limited actions, and simplified layouts). While functional, this approach does not align with the power-user expectations of a professional desktop log analysis tool.
 
 Desktop users typically require:
 1.  **High Information Density**: Maximizing the number of log entries visible on screen.

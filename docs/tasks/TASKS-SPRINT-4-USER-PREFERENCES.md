@@ -9,7 +9,7 @@
 ### 9.2. User Preferences Persistence
 - [x] 9.2.1. Define `UserPreferences` data model (WindowState, MRU lists)
 - [x] 9.2.2. Implement `PreferencesRepository` with platform-specific paths
-- [x] 9.2.3. Integrate preferences into `LogViewerViewModel`
+- [x] 9.2.3. Integrate preferences into `KLogViewerViewModel`
 - [x] 9.2.4. Save window state (size/position) on close and restore on startup
 - [x] 9.2.5. Implement `kotlinx-serialization` for JSON-based storage
 

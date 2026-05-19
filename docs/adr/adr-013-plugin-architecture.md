@@ -4,7 +4,7 @@
 Proposed
 
 ## Context
-As LogViewer grows, it is impossible to support every proprietary log format, specialized data source, or custom analysis visualization natively in the core product. A plugin system is needed to allow third-party developers and users to extend the application's capabilities.
+As KLogViewer grows, it is impossible to support every proprietary log format, specialized data source, or custom analysis visualization natively in the core product. A plugin system is needed to allow third-party developers and users to extend the application's capabilities.
 
 ## Decision
 We will implement a modular plugin architecture based on a Service Provider Interface (SPI) pattern.

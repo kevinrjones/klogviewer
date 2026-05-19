@@ -20,6 +20,7 @@ dependencies {
     testImplementation(libs.cucumber.junit.platform.engine)
     testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.junit.platform.suite)
+    testImplementation(libs.kotlinx.coroutines.test)
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
 }
@@ -29,7 +30,7 @@ compose.desktop {
         mainClass = "MainKt"
         nativeDistributions {
             targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
-            packageName = "LogViewer"
+            packageName = "KLogViewer"
             packageVersion = "1.0.0"
         }
     }

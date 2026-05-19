@@ -4,7 +4,7 @@
 Proposed
 
 ## Context
-LogViewer currently only supports loading logs from the local file system. In distributed environments, logs are often stored on remote servers (accessible via SFTP/SSH), in cloud storage (S3), or streamed directly over the network via logging appenders.
+KLogViewer currently only supports loading logs from the local file system. In distributed environments, logs are often stored on remote servers (accessible via SFTP/SSH), in cloud storage (S3), or streamed directly over the network via logging appenders.
 
 ## Decision
 We will expand the `LogSource` abstraction to support remote and streaming sources.

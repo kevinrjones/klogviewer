@@ -1,0 +1,121 @@
+name: CI/CD Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    tags: [ "v*" ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Package (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    permissions:
+      contents: write
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact-suffix: linux
+            package-task: packageDeb
+            dist-path: app/build/compose/binaries/main/app
+            installer-path: app/build/compose/binaries/main/deb/*.deb
+          - os: windows-latest
+            artifact-suffix: windows
+            package-task: packageMsi
+            dist-path: app/build/compose/binaries/main/app
+            installer-path: app/build/compose/binaries/main/msi/*.msi
+          - os: macos-latest
+            artifact-suffix: macos
+            package-task: packageDmg
+            dist-path: app/build/compose/binaries/main/app
+            installer-path: app/build/compose/binaries/main/dmg/*.dmg
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: 'gradle'
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Setup Xvfb (Linux only)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb libegl1-mesa libgles2-mesa libgl1-mesa-glx
+
+    - name: Run Tests
+      run: |
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          xvfb-run ./gradlew test
+        else
+          ./gradlew test
+        fi
+
+    - name: Run UI Tests
+      run: |
+        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+          xvfb-run ./gradlew :ui:desktopTest
+        else
+          ./gradlew :ui:desktopTest
+        fi
+
+    - name: Package Installer
+      run: ./gradlew :app:${{ matrix.package-task }}
+
+    - name: Create Distributable (Plain Executable)
+      run: ./gradlew :app:createDistributable
+
+    - name: Prepare Artifacts (Linux/macOS)
+      if: matrix.os != 'windows-latest'
+      run: |
+        mkdir -p release-artifacts
+        cp ${{ matrix.installer-path }} release-artifacts/
+        cd ${{ matrix.dist-path }} && zip -r $GITHUB_WORKSPACE/release-artifacts/KLogViewer-${{ matrix.artifact-suffix }}-executable.zip .
+
+    - name: Prepare Artifacts (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path release-artifacts
+        Copy-Item -Path ${{ matrix.installer-path }} -Destination release-artifacts/
+        Compress-Archive -Path ${{ matrix.dist-path }}/* -DestinationPath release-artifacts/KLogViewer-${{ matrix.artifact-suffix }}-executable.zip
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v7
+      with:
+        name: KLogViewer-${{ matrix.artifact-suffix }}
+        path: release-artifacts/*
+
+    - name: Generate SHA256 Checksums
+      if: startsWith(github.ref, 'refs/tags/')
+      shell: bash
+      run: |
+        cd release-artifacts
+        sha256sum * > checksums.txt
+
+    - name: Publish GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v3
+      with:
+        name: KLogViewer ${{ github.ref_name }}
+        tag_name: ${{ github.ref_name }}
+        draft: false
+        prerelease: ${{ contains(github.ref_name, '-') }}
+        files: |
+          release-artifacts/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

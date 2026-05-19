@@ -13,7 +13,7 @@ We will use the Model-View-Intent (MVI) architecture for the UI layer.
 - **Intent (Action)**: User actions (e.g., `LoadFile`, `Search`) that are sent to the ViewModel.
 - **Event (Side Effect)**: One-time events (e.g., `ShowToast`, `Navigate`) that don't change the state directly.
 
-The `LogViewerViewModel` will process Intents and produce new States in a unidirectional data flow.
+The `KLogViewerViewModel` will process Intents and produce new States in a unidirectional data flow.
 
 ## Consequences
 - **Pros**:
