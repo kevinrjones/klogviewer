@@ -20,6 +20,7 @@ data class LogWindow(
     val selectedEntry: LogEntry? = null,
     val selectedIndices: Set<Int> = emptySet(),
     val lastSelectedIndex: Int? = null,
+    val parserName: String? = null,
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap()
 ) {

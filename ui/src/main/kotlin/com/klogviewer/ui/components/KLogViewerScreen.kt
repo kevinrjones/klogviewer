@@ -158,9 +158,19 @@ fun KLogViewerScreen(
                 }
             },
             bottomBar = {
+                val availableParsers = remember {
+                    listOf("Simple", "JSON", "logfmt") + viewModel.heuristicProbe.registry.getAllTemplates().map { it.name }
+                }
                 StatusBar(
                     filePath = activeWindow?.filePath ?: "",
                     lineCount = activeWindow?.logs?.size ?: 0,
+                    parserName = activeWindow?.parserName,
+                    availableParsers = availableParsers,
+                    onParserSelect = { name ->
+                        activeWindow?.id?.let { id ->
+                            viewModel.handleIntent(KLogViewerIntent.ChangeParser(id, name))
+                        }
+                    },
                     isMissing = activeWindow?.missingSourceIds?.isNotEmpty() ?: false
                 )
             }

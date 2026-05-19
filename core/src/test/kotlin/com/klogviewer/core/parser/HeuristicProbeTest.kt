@@ -18,6 +18,7 @@ class HeuristicProbeTest {
         )
         val result = probe.detect(lines)
         expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.parserName).isEqualTo("JSON")
         expectThat(result.columns).isEqualTo(listOf("Timestamp", "Content", "Action", "User"))
     }
 
@@ -29,6 +30,7 @@ class HeuristicProbeTest {
         )
         val result = probe.detect(lines)
         expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.parserName).isEqualTo("JSON")
         expectThat(result.columns).isEqualTo(listOf("Timestamp", "Level", "Content"))
     }
 
@@ -40,6 +42,7 @@ class HeuristicProbeTest {
         )
         val result = probe.detect(lines)
         expectThat(result.parser).isA<TemplateLogParser>()
+        expectThat(result.parserName).isEqualTo("Syslog")
         expectThat(result.columns).isEqualTo(listOf("Timestamp", "Hostname", "Process", "Content"))
     }
 
@@ -51,6 +54,7 @@ class HeuristicProbeTest {
         )
         val result = probe.detect(lines)
         expectThat(result.parser).isA<TemplateLogParser>()
+        expectThat(result.parserName).isEqualTo("Standard")
         val parser = result.parser as TemplateLogParser
         expectThat(parser.template.name).isEqualTo("Standard")
     }
@@ -63,5 +67,6 @@ class HeuristicProbeTest {
         )
         val result = probe.detect(lines)
         expectThat(result.parser).isA<SimpleLogParser>()
+        expectThat(result.parserName).isEqualTo("Simple")
     }
 }

@@ -40,4 +40,5 @@ sealed interface KLogViewerIntent {
     data class CloseWindow(val id: String) : KLogViewerIntent
     data class SwitchWindow(val id: String) : KLogViewerIntent
     data class UpdateColumnWidth(val windowId: String, val column: String, val width: Int) : KLogViewerIntent
+    data class ChangeParser(val windowId: String, val parserName: String) : KLogViewerIntent
 }

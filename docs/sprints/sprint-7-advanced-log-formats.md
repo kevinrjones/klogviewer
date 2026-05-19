@@ -32,8 +32,8 @@ Transition KLogViewer from a rigid single-format parser to a flexible, template-
 - **Level Normalization**: Internally map all external level variations to the core `LogLevel` domain model (See ADR 019).
 
 ## 4. Definition of Done
-- [ ] Users can parse logs with abbreviated levels like `INF` or `ERR`.
-- [ ] Custom regex templates can be defined to handle non-standard text formats.
-- [ ] Stack traces are correctly grouped with their parent log entry.
-- [ ] JSON-formatted logs are automatically detected and parsed into columns.
-- [ ] All new parsing logic is covered by unit tests in `:core`.
+- [x] Users can parse logs with abbreviated levels like `INF` or `ERR`.
+- [x] Custom regex templates can be defined to handle non-standard text formats.
+- [x] Stack traces are correctly grouped with their parent log entry.
+- [x] JSON-formatted logs are automatically detected and parsed into columns.
+- [x] All new parsing logic is covered by unit tests in `:core`.
