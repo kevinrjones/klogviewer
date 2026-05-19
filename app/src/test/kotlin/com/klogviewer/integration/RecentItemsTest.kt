@@ -45,8 +45,8 @@ class RecentItemsTest {
         val vm = viewModel!!
 
         // 1. Add both to recent items while they exist
-        vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
+        vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath))) // Load existing last so missing is not locked
 
         expectThat(vm.state.value.recentFiles).hasSize(2)
         expectThat(vm.state.value.recentFiles).contains(existingFile.absolutePath)

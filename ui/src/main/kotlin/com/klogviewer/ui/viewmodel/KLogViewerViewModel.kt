@@ -384,13 +384,14 @@ class KLogViewerViewModel(
     }
 
     private fun loadFilesIntoWindow(windowId: String, paths: List<String>, overrideParserName: String? = null) {
+        logJobs[windowId]?.cancel()
+
         val missingPaths = paths.filter { !File(it).exists() }
         if (missingPaths.isNotEmpty()) {
             _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.MISSING_FILE, missingPath = missingPaths.first()) }
             return
         }
 
-        logJobs[windowId]?.cancel()
         logJobs[windowId] = scope.launch {
             val fileName = if (paths.size == 1) File(paths[0]).name else "${paths.size} files"
             

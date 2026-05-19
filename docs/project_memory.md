@@ -48,6 +48,7 @@
 - ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
 - Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
+- Fixed a resource leak in `KLogViewerViewModel` where background log observation jobs were not cancelled when a load intent for a missing file was processed, causing file locks and test failures on Windows.
 - Enhanced UI to make the active window more obvious by adding a subtle left border in split-pane view.
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
 - Refined window activation: Clicking a non-active window in split-pane view now only activates the window; log entry details are only shown if the window is already active.
