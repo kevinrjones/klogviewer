@@ -21,6 +21,14 @@ class MainRobot(composeTestRule: ComposeTestRule) : BaseRobot(composeTestRule) {
     fun clickAddFile() {
         onNodeWithTag("add_file_to_workspace").performClick()
     }
+
+    fun splitHorizontal() {
+        onNodeWithTag("split_horizontal").performClick()
+    }
+
+    fun switchWindow(windowId: String) {
+        onNodeWithTag("window_$windowId").performClick()
+    }
 }
 
 fun ComposeTestRule.mainRobot(block: MainRobot.() -> Unit) = MainRobot(this).apply(block)

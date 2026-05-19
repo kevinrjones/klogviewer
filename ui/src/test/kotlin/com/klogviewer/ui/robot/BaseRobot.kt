@@ -1,5 +1,7 @@
 package com.klogviewer.ui.robot
 
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeTestRule
 
@@ -45,5 +47,24 @@ abstract class BaseRobot(protected val composeTestRule: ComposeTestRule) {
 
     fun assertTextDoesNotExist(text: String) {
         onNodeWithText(text).assertDoesNotExist()
+    }
+
+    fun performMouseDrag(tag: String, startOffset: Offset, endOffset: Offset) {
+        onNodeWithTag(tag).performMouseInput {
+            moveTo(startOffset)
+            press()
+            moveTo(endOffset)
+            release()
+        }
+    }
+
+    fun clickWithModifiers(tag: String, shift: Boolean = false, meta: Boolean = false) {
+        if (shift) composeTestRule.onRoot().performKeyInput { keyDown(Key.ShiftLeft) }
+        if (meta) composeTestRule.onRoot().performKeyInput { keyDown(Key.MetaLeft) }
+        
+        onNodeWithTag(tag).performMouseInput { click() }
+        
+        if (meta) composeTestRule.onRoot().performKeyInput { keyUp(Key.MetaLeft) }
+        if (shift) composeTestRule.onRoot().performKeyInput { keyUp(Key.ShiftLeft) }
     }
 }

@@ -144,6 +144,7 @@ fun KLogViewerScreen(
                         Column(
                             modifier = Modifier
                                 .weight(1f)
+                                .testTag("window_${window.id}")
                                 .background(if (isWindowActive) MaterialTheme.colors.onSurface.copy(alpha = 0.02f) else Color.Transparent)
                                 .drawBehind {
                                     if (isWindowActive && activeTab.windows.size > 1) {

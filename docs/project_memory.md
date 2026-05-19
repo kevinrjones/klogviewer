@@ -1253,23 +1253,25 @@
 - UI: Verified main screen components are displayed on launch.
 - Pattern: Verified Robot DSL works as intended in the smoke test.
 
-## Task: UI Testing Spike - Finalization
-**Title**: Completion of UI Testing Suite and Documentation
-**Date/time completed**: 2026-05-18 21:55
+## Task: UI Testing Expansion - Complex Behaviors
+**Title**: Extended UI Test Suite for Split Panes and Multi-selection
+**Date/time completed**: 2026-05-19 10:40
 **What was shipped**
-- Completed UI test suite covering File Loading, Level Filtering, and Search & Highlighting workflows.
-- Enhanced Robot Pattern with waiting mechanisms (`waitUntilExists`) and better element matching.
-- Added comprehensive testing guidelines in `docs/TESTING.md`.
-- Added critical `testTag` decorations to `FilterBar` (clear button) and `LogList` (LazyColumn and rows).
+- Extended UI testing framework to cover complex UI behaviors (splits, multi-selection, resizing).
+- Added `WindowRobot` to the Robot Pattern for scoped interactions within specific split windows.
+- Implemented `KLogViewerComplexUiTest.kt` with tests for Independent Column Resizing, Multi-selection (Shift/Meta), and Tab switching.
+- Enhanced `LogList.kt` with `selected` semantics and `column_header_$column` tags for better testability.
+- Added comprehensive guidance in `docs/TESTING.md` comparing Functional UI Tests and Visual Regression.
 **Key decisions**
-- Used `testTag` on `LogEntryRow` to enable reliable counting of log entries in `LazyColumn`.
-- Standardized on `performImeAction()` for triggering searches in UI tests.
-- Decided to maintain a single `KLogViewerUiTest.kt` for core workflows during the spike to simplify setup.
+- Scoped robots using `hasAnyAncestor(hasTestTag("window_$windowId"))` to ensure interactions target the correct pane in split views.
+- Used `performKeyInput` to simulate modifier keys (Shift, Meta) during mouse clicks for multi-selection tests.
+- Implemented custom `assertWidthIsNotEqualTo` and `SemanticsMatcher` for identifying windows to overcome limitations in standard `androidx.compose.ui.test` matchers.
+- Decided to stick with Functional UI tests for resizing logic instead of screenshots, as they are more robust and directly verify model state updates.
 **Gotchas**
-- The "Clear all filters" button in the search bar was missing a `testTag`, which caused selection failures in tests.
-- `LazyColumn` children counting requires the `useUnmergedTree = true` flag in some scenarios or specific child tagging.
-- UI tests involving `SideEffect` and asynchronous `ViewModel` updates require explicit `waitUntil` or `waitForIdle` to avoid race conditions.
+- Compose Testing's `click()` in `performMouseInput` does not consistently support `keyboardModifiers` across all versions; manual `keyDown/Up` via `performKeyInput` is more reliable.
+- Some nodes in the LogList (headers, handles) require `useUnmergedTree = true` to be found because they are part of complex, non-interactive semantics nodes.
+- `onNodeWithTag` with `substring = true` is not available in the current Compose version; used a custom `SemanticsMatcher` with `startsWith` instead.
 **Test coverage areas**
-- UI: Verified file loading from mock dialogs.
-- UI: Verified reactive filtering by log level.
-- UI: Verified regex search filtering and clearing.
+- UI: Independent column resizing in split panes.
+- UI: Multi-selection with Shift and Meta/Ctrl modifiers.
+- UI: Persistent state maintenance during tab switching.

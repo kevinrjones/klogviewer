@@ -22,6 +22,8 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -167,7 +169,7 @@ fun LogListHeader(
                 }
 
                 Box(
-                    modifier = columnModifier
+                    modifier = columnModifier.testTag("column_header_$column")
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -183,6 +185,7 @@ fun LogListHeader(
                             modifier = Modifier
                                 .width(8.dp)
                                 .fillMaxHeight()
+                                .testTag("resize_handle_$column")
                                 .pointerHoverIcon(PointerIcon(java.awt.Cursor(java.awt.Cursor.E_RESIZE_CURSOR)))
                                 .pointerInput(column) {
                                     var startWidth = 0.dp
@@ -235,6 +238,7 @@ fun LogEntryRow(
         modifier = modifier
             .widthIn(min = viewportWidth)
             .background(backgroundColor)
+            .semantics { selected = isSelected }
             .pointerInput(Unit) {
                 awaitPointerEventScope {
                     while (true) {

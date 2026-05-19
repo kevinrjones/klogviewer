@@ -86,7 +86,29 @@ To support CI and headless environments, we mock AWT-based dialogs using the `Di
 ./gradlew :app:test --tests "com.klogviewer.bdd.*"
 ```
 
-## 7. Best Practices
+## 8. Functional UI Tests vs. Visual Regression
+
+When deciding how to test a complex UI behavior, consider the following:
+
+### Functional UI Tests (Recommended for most cases)
+*   **What**: Verify state changes, logic, and interactions (e.g., "resizing this column updates the model").
+*   **Pros**: Fast, reliable, easier to debug, runs in CI without GPU.
+*   **Use for**: Filtering, searching, multi-selection, independent column resizing, tab management.
+
+### Visual Regression (Screenshots)
+*   **What**: Verify exact pixel-perfect rendering.
+*   **Pros**: Catches CSS/Layout regressions, ANSI color rendering issues.
+*   **Cons**: Flaky (font rendering, OS differences), slow, requires baseline management.
+*   **Use for**: ANSI color themes, complex layout spacing, icon rendering.
+
+### Lightweight Screenshot Checks
+You can perform basic visual checks in a regular UI test using `captureToImage()`:
+```kotlin
+onNodeWithTag("log_list").captureToImage().asSkiaBitmap().save("screenshot.png")
+```
+Note: This requires specific setup for saving files in CI and is generally discouraged for logic verification.
+
+## 9. Best Practices
 
 - **Tiny Types**: Use Tiny Types (e.g., `LogFilePath`, `LogContent`) in tests to ensure type safety.
 - **Test Tags**: Use `Modifier.testTag("tag_name")` sparingly but consistently for stable UI element matching.
