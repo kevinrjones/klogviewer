@@ -52,7 +52,8 @@ class KLogViewerUiTest {
         val mockParser = mockk<com.klogviewer.domain.parser.LogParser>()
         every { heuristicProbe.detect(any()) } returns com.klogviewer.core.parser.ProbeResult(
             parser = mockParser,
-            columns = listOf("Timestamp", "Level", "Message")
+            columns = listOf("Timestamp", "Level", "Message"),
+            parserName = "Simple"
         )
 
         val viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe)

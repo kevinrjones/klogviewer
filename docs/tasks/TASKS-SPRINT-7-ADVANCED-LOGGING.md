@@ -37,9 +37,9 @@
 - [x] 12.5.4. Update `KLogViewerViewModel` to use the heuristic probe when opening new files
 
 ### 12.6. UI Integration & Feedback
-- [ ] 12.6.1. Update UI to indicate which parser is being used for a file
-- [ ] 12.6.2. Ensure the "Entry Detail Pane" correctly renders multiline content with preserved formatting
-- [ ] 12.6.3. Add basic UI for selecting/confirming the detected log format
+- [x] 12.6.1. Update UI to indicate which parser is being used for a file
+- [x] 12.6.2. Ensure the "Entry Detail Pane" correctly renders multiline content with preserved formatting
+- [x] 12.6.3. Add basic UI for selecting/confirming the detected log format
 
 ### 12.7. Verification & Testing
 - [x] 12.7.1. Unit tests in `:core` for `LevelMapper`

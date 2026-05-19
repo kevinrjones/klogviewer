@@ -8,17 +8,18 @@ private val logger = KotlinLogging.logger {}
 
 data class ProbeResult(
     val parser: LogParser,
+    val parserName: String,
     val columns: List<String> = emptyList()
 )
 
-class HeuristicProbe(private val registry: ParserRegistry) {
+class HeuristicProbe(val registry: ParserRegistry) {
     
     /**
      * Attempts to detect the best parser for the given sample lines.
      * Defaults to [SimpleLogParser] if no better match is found.
      */
     fun detect(lines: List<String>): ProbeResult {
-        if (lines.isEmpty()) return ProbeResult(SimpleLogParser())
+        if (lines.isEmpty()) return ProbeResult(SimpleLogParser(), "Simple")
 
         // 1. JSON Detection (High confidence if it matches)
         val jsonCount = lines.count { isJson(it) }
@@ -43,7 +44,7 @@ class HeuristicProbe(private val registry: ParserRegistry) {
                 }
             } else listOf("Timestamp", "Level", "Content")
             
-            return ProbeResult(JsonLogParser(mapping), columns)
+            return ProbeResult(JsonLogParser(mapping), "JSON", columns)
         }
 
         // 2. Template Matching (Prefer specific templates over generic logfmt)
@@ -56,23 +57,23 @@ class HeuristicProbe(private val registry: ParserRegistry) {
         val bestMatch = matchCounts.maxByOrNull { it.value }
         if (bestMatch != null && bestMatch.value > lines.size / 2) {
             logger.info { "Heuristic: Detected template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }
-            return ProbeResult(TemplateLogParser(bestMatch.key), bestMatch.key.columns)
+            return ProbeResult(TemplateLogParser(bestMatch.key), bestMatch.key.name, bestMatch.key.columns)
         }
 
         // 3. logfmt Detection
         val logfmtCount = lines.count { isLogfmt(it) }
         if (logfmtCount > lines.size / 2) {
             logger.info { "Heuristic: Detected logfmt log format" }
-            return ProbeResult(LogfmtParser())
+            return ProbeResult(LogfmtParser(), "logfmt")
         }
         
         // 4. Fallback to best template match if any, or SimpleLogParser
         return if (bestMatch != null && bestMatch.value > 0) {
             logger.info { "Heuristic: Falling back to template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }
-            ProbeResult(TemplateLogParser(bestMatch.key), bestMatch.key.columns)
+            ProbeResult(TemplateLogParser(bestMatch.key), bestMatch.key.name, bestMatch.key.columns)
         } else {
             logger.info { "Heuristic: No match found, falling back to SimpleLogParser" }
-            ProbeResult(SimpleLogParser())
+            ProbeResult(SimpleLogParser(), "Simple")
         }
     }
 

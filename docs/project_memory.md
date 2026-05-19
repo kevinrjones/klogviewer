@@ -25,6 +25,8 @@
 - Split View: Implemented horizontal split view support with an independent window-based architecture, allowing multiple logs to be viewed, filtered, and sorted independently within a single tab.
 - Navbar Tooltips: Integrated `TooltipArea` across all primary UI icons (tabs, filters, splits, details), improving discoverability and accessibility.
 - UI Layout Persistence: Implemented full workspace restoration. The application now remembers and reloads all open tabs, split windows, active filters, and loaded files on startup.
+- Sprint 7: Advanced Log Formats & Flexible Parsing completed (Template-based parsing, Multiline support, JSON, Heuristic detection).
+- UI Integration: Added active parser indication and selection menu to the status bar, and ensured monospace rendering for multiline content in the details pane.
 - Fixed a critical UI bug where log grid columns were squashed to the left in horizontal scroll mode.
 - Resolved column resizing 'snap back' issue by implementing a robust drag accumulator and using `rememberUpdatedState` in Compose.
 - Optimized performance by debouncing preference saves during rapid column resizing.
@@ -1388,3 +1390,33 @@
 - `ComposeUiTest` is still experimental, necessitating opt-in annotations.
 **Test coverage areas**
 - UI: All desktop UI tests in `:ui` module (15 tests total).
+
+
+## Sprint: Advanced Log Formats & Flexible Parsing
+**Title**: Sprint 7 Completion
+**Date/time completed**: 2026-05-19 15:30
+**What was shipped**
+- Template-based parsing engine with regex support and named capture groups.
+- `ParserRegistry` with default templates for Standard, Syslog, Apache, ISO8601, and CSV.
+- `MultilineProcessor` for aggregating stack traces and indented logs.
+- `JsonLogParser` with automatic field mapping and structured data support.
+- `HeuristicProbe` for automatic detection of log formats and column layout.
+- UI Indication: Displayed the active parser name in the `StatusBar`.
+- UI Selection: Added a dropdown menu with an arrow indicator to the `StatusBar` for manual parser selection/confirmation.
+- Enhanced `LogEntryDetails` with monospace formatting and high-density field display.
+
+**Key decisions**
+- Used `ProbeResult` to carry both the parser and its human-readable name for UI display.
+- Implemented `ChangeParser` intent to allow users to override heuristic detection.
+- Decided to reuse `HeuristicProbe` logic for JSON mapping even when manually selected to ensure correct columns.
+
+**Gotchas**
+- Changing the `ProbeResult` data class required updating several test cases to include the `parserName` assertion.
+- `StatusBar` height (24dp) is tight for `DropdownMenu` triggers; ensured the click target covers the full text area.
+
+**Test coverage areas**
+- `LevelMapper`: Comprehensive normalization tests.
+- `HeuristicProbe`: Detection accuracy for JSON, Syslog, and Standard formats.
+- `MultilineProcessor`: Buffer limits and header detection.
+- `JsonLogParser`: Mapping and nested object serialization.
+- `TemplateLogParser`: Capture group extraction and level fallback logic.

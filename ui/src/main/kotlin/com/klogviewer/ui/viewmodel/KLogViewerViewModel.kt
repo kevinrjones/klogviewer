@@ -2,7 +2,7 @@ package com.klogviewer.ui.viewmodel
 
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
-import com.klogviewer.core.parser.HeuristicProbe
+import com.klogviewer.core.parser.*
 import com.klogviewer.core.source.DirectoryLogSource
 import com.klogviewer.core.source.MergedLogSource
 import com.klogviewer.core.repository.PreferencesRepository
@@ -21,7 +21,7 @@ private val logger = KotlinLogging.logger {}
 class KLogViewerViewModel(
     private val logSource: LogSource,
     private val prefsRepository: PreferencesRepository,
-    private val heuristicProbe: HeuristicProbe,
+    val heuristicProbe: HeuristicProbe,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 ) {
     private val _state = MutableStateFlow(KLogViewerState())
@@ -280,6 +280,12 @@ class KLogViewerViewModel(
                 }
                 savePreferences(debounce = true)
             }
+            is KLogViewerIntent.ChangeParser -> {
+                val window = _state.value.tabs.flatMap { it.windows }.find { it.id == intent.windowId }
+                if (window != null && window.sourceIds.isNotEmpty()) {
+                    loadFilesIntoWindow(intent.windowId, window.sourceIds, intent.parserName)
+                }
+            }
         }
     }
 
@@ -377,7 +383,7 @@ class KLogViewerViewModel(
         savePreferences()
     }
 
-    private fun loadFilesIntoWindow(windowId: String, paths: List<String>) {
+    private fun loadFilesIntoWindow(windowId: String, paths: List<String>, overrideParserName: String? = null) {
         val missingPaths = paths.filter { !File(it).exists() }
         if (missingPaths.isNotEmpty()) {
             _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.MISSING_FILE, missingPath = missingPaths.first()) }
@@ -421,12 +427,21 @@ class KLogViewerViewModel(
                     DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
                 } else {
                     val sampleLines = readSampleLines(path)
-                    val probeResult = heuristicProbe.detect(sampleLines)
+                    val probeResult = if (overrideParserName != null) {
+                        getParserResultByName(overrideParserName, sampleLines)
+                    } else {
+                        heuristicProbe.detect(sampleLines)
+                    }
                     
                     _state.update { currentState ->
                         currentState.copy(tabs = currentState.tabs.map { tab ->
                             tab.copy(windows = tab.windows.map { window ->
-                                if (window.id == windowId) window.copy(columns = probeResult.columns) else window
+                                if (window.id == windowId) {
+                                    window.copy(
+                                        columns = probeResult.columns,
+                                        parserName = probeResult.parserName
+                                    )
+                                } else window
                             })
                         })
                     }
@@ -436,20 +451,26 @@ class KLogViewerViewModel(
             } else {
                 val results = paths.map { path ->
                     if (File(path).isDirectory) {
-                        // For directory in a merged view, we just use a default result for now
-                        // or we could potentially merge its files here too.
-                        // But for simplicity, let's treat directories in multi-select as something to expand.
                         null
                     } else {
                         val sampleLines = readSampleLines(path)
-                        heuristicProbe.detect(sampleLines)
+                        if (overrideParserName != null) {
+                            getParserResultByName(overrideParserName, sampleLines)
+                        } else {
+                            heuristicProbe.detect(sampleLines)
+                        }
                     }
                 }
                 
                 _state.update { currentState ->
                     currentState.copy(tabs = currentState.tabs.map { tab ->
                         tab.copy(windows = tab.windows.map { window ->
-                            if (window.id == windowId) window.copy(columns = results.firstNotNullOfOrNull { it?.columns } ?: emptyList()) else window
+                            if (window.id == windowId) {
+                                window.copy(
+                                    columns = results.firstNotNullOfOrNull { it?.columns } ?: emptyList(),
+                                    parserName = if (results.size > 1 && overrideParserName == null) "Multiple" else (overrideParserName ?: results.firstOrNull()?.parserName ?: "Auto")
+                                )
+                            } else window
                         })
                     })
                 }
@@ -495,6 +516,23 @@ class KLogViewerViewModel(
                         handleLogUpdate(windowId, update)
                     }
                 )
+            }
+        }
+    }
+
+    private fun getParserResultByName(name: String, sampleLines: List<String>): ProbeResult {
+        return when (name) {
+            "JSON" -> {
+                val detected = heuristicProbe.detect(sampleLines)
+                if (detected.parser is JsonLogParser) detected
+                else ProbeResult(JsonLogParser(), "JSON", listOf("Timestamp", "Level", "Content"))
+            }
+            "logfmt" -> ProbeResult(LogfmtParser(), "logfmt", listOf("Timestamp", "Level", "Content"))
+            "Simple" -> ProbeResult(SimpleLogParser(), "Simple", listOf("Timestamp", "Level", "Content"))
+            else -> {
+                val template = heuristicProbe.registry.getTemplate(name)
+                if (template != null) ProbeResult(TemplateLogParser(template), template.name, template.columns)
+                else ProbeResult(SimpleLogParser(), "Simple", listOf("Timestamp", "Level", "Content"))
             }
         }
     }

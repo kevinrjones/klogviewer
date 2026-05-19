@@ -1,8 +1,11 @@
 package com.klogviewer.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,9 +17,14 @@ fun StatusBar(
     filePath: String,
     lineCount: Int,
     encoding: String = "UTF-8",
+    parserName: String? = null,
+    availableParsers: List<String> = emptyList(),
+    onParserSelect: (String) -> Unit = {},
     isMissing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    var showParserMenu by remember { mutableStateOf(false) }
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -37,6 +45,38 @@ fun StatusBar(
                 maxLines = 1
             )
             Row {
+                if (parserName != null) {
+                    Box {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable { showParserMenu = true }
+                        ) {
+                            Text(
+                                text = "Format: $parserName",
+                                style = MaterialTheme.typography.caption
+                            )
+                            Icon(
+                                imageVector = Icons.Default.ArrowDropDown,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showParserMenu,
+                            onDismissRequest = { showParserMenu = false }
+                        ) {
+                            availableParsers.forEach { name ->
+                                DropdownMenuItem(onClick = {
+                                    onParserSelect(name)
+                                    showParserMenu = false
+                                }) {
+                                    Text(name, style = MaterialTheme.typography.caption)
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(16.dp))
+                }
                 Text(
                     text = "Lines: $lineCount",
                     style = MaterialTheme.typography.caption
