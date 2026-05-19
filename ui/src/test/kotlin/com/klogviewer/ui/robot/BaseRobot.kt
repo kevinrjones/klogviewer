@@ -3,9 +3,9 @@ package com.klogviewer.ui.robot
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.ComposeTestRule
 
-abstract class BaseRobot(protected val composeTestRule: ComposeTestRule) {
+@OptIn(ExperimentalTestApi::class)
+abstract class BaseRobot(protected val composeTestRule: ComposeUiTest) {
     
     fun waitForIdle() {
         composeTestRule.waitForIdle()
@@ -32,7 +32,7 @@ abstract class BaseRobot(protected val composeTestRule: ComposeTestRule) {
     }
 
     fun waitUntilExists(tag: String, timeout: Long = 5000) {
-        composeTestRule.waitUntil(timeout) {
+        composeTestRule.waitUntil(timeoutMillis = timeout) {
             composeTestRule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
         }
     }

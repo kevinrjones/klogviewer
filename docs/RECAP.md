@@ -1,3 +1,16 @@
+# 2026-05-19
+
+## 14:05
+
+### Code Review: Exhaustiveness and Testing Cleanup
+
+Addressed critical feedback from code review to improve build reliability and test maintainability.
+
+#### Changes:
+- **UI Code**: Fixed non-exhaustive `when` expressions and statements in `KLogViewerScreen.kt` by adding `else` branches. This ensures the application compiles correctly in environments with stricter Kotlin compiler settings for enums.
+- **UI Tests**: Refactored `KLogViewerComplexUiTest.kt` to remove redundant `@OptIn(ExperimentalTestApi::class)` annotations. Since the class was already annotated, method-level annotations were unnecessary and cluttered the code.
+- **Verification**: Executed the `:ui:desktopTest` suite to confirm that the changes did not introduce regressions and that all UI tests continue to pass.
+
 # 2026-05-12
 
 ## 11:38
@@ -591,3 +604,16 @@ Resolved intermittent integration test failures (race conditions and IOException
 - **Race Condition Fixes**: Refactored `TabManagementTest.kt` and `PersistenceIntegrationTest.kt` to wait for asynchronous operations (log filtering and preference saving) using `withTimeout` and `first { ... }` blocks, ensuring assertions run only after state changes are complete.
 - **Windows Support**: Fixed `IOException` during `@TempDir` cleanup on Windows by ensuring all file handles held by tailing jobs are released before the test finishes.
 - **Verification**: Confirmed all integration tests (16 tests) and UI tests (14 tests) pass successfully in a single local run.
+
+## 13:55
+
+### Migration: Modern Testing API
+
+Migrated all UI tests from the deprecated JUnit 4 `createComposeRule()` to the modern `androidx.compose.ui.test.v2.runComposeUiTest` functional API.
+
+#### Changes:
+- **Test Infrastructure**: Updated `BaseRobot`, `MainRobot`, `LogListRobot`, `SidebarRobot`, and `WindowRobot` to use the `ComposeUiTest` interface instead of `ComposeTestRule`.
+- **Test Suites**: Refactored `KLogViewerUiTest.kt`, `KLogViewerComplexUiTest.kt`, and `KLogViewerSmokeTest.kt` to follow the `runComposeUiTest { ... }` pattern.
+- **Experimental API**: Added `@OptIn(ExperimentalTestApi::class)` to handle the experimental status of the new multiplatform-ready testing API.
+- **Robustness**: Fixed parameter mismatch in `waitUntil` calls within `BaseRobot.kt` caused by API changes in the new testing framework.
+- **Verification**: Executed `./gradlew :ui:desktopTest` and confirmed that all 15 UI tests pass successfully without deprecation warnings regarding the rule.

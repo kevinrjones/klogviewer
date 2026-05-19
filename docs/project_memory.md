@@ -1361,3 +1361,30 @@
 - Asynchronous filtering on `Dispatchers.Default` was causing intermittent assertion failures when tests checked `filteredLogs` too quickly.
 **Test coverage areas**
 - Integration: `PersistenceIntegrationTest`, `TabManagementTest`, `RecentItemsTest`, `LogSortingTest`, `InterleavingIntegrationTest`.
+
+## Task: Code Review Fixes
+**Title**: Address Code Review Feedback
+**Date/time completed**: 2026-05-19 14:05
+**What was shipped**
+- Fixed non-exhaustive `when` expressions and statements in `KLogViewerScreen.kt` by adding `else` branches.
+- Removed redundant `@OptIn(ExperimentalTestApi::class)` annotations in `KLogViewerComplexUiTest.kt`.
+**Key decisions**
+- Used `else` branches in `when` blocks to satisfy exhaustiveness requirements in stricter Kotlin environments, while accepting redundant code warnings in others.
+**Gotchas**
+- Kotlin's smart-casting can make `when` appear exhaustive to some compilers but not others, especially when used in combination with nullability and enums.
+
+## Task: Update Deprecated Testing API
+**Title**: Migrate from `createComposeRule()` to `runComposeUiTest`
+**Date/time completed**: 2026-05-19 13:55
+**What was shipped**
+- Replaced deprecated `createComposeRule()` (JUnit 4 rule) with `androidx.compose.ui.test.v2.runComposeUiTest` (functional API) in all UI tests.
+- Updated `BaseRobot` and all derived robots (`MainRobot`, `LogListRobot`, `SidebarRobot`, `WindowRobot`) to use the `ComposeUiTest` interface.
+- Migrated `KLogViewerUiTest.kt`, `KLogViewerComplexUiTest.kt`, and `KLogViewerSmokeTest.kt` to the new testing pattern.
+**Key decisions**
+- Decided to use the `v2` version of `runComposeUiTest` to align with the latest Compose recommendations and ensure future compatibility.
+- Added `@OptIn(ExperimentalTestApi::class)` to handle the experimental status of the new testing API.
+**Gotchas**
+- The new `runComposeUiTest` API has a slightly different signature for some methods like `waitUntil` (parameter order changed), which required minor adjustments in `BaseRobot.kt`.
+- `ComposeUiTest` is still experimental, necessitating opt-in annotations.
+**Test coverage areas**
+- UI: All desktop UI tests in `:ui` module (15 tests total).

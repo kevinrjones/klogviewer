@@ -3,7 +3,7 @@ package com.klogviewer.ui.test
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import arrow.core.right
@@ -18,21 +18,18 @@ import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
-import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
+@OptIn(ExperimentalTestApi::class)
 class KLogViewerComplexUiTest {
-
-    @get:Rule
-    val composeTestRule = createComposeRule()
 
     private val logSource = mockk<LogSource>(relaxed = true)
     private val prefsRepository = mockk<PreferencesRepository>(relaxed = true)
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
     private val dialogProvider = mockk<DialogProvider>(relaxed = true)
 
-    private fun setupApp(initialState: UserPreferences? = null) {
+    private fun ComposeUiTest.setupApp(initialState: UserPreferences? = null) {
         val prefs = initialState ?: UserPreferences(
             tabs = listOf(
                 TabPreference(
@@ -48,32 +45,32 @@ class KLogViewerComplexUiTest {
         
         val viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe)
 
-        composeTestRule.setContent {
+        setContent {
             KLogViewerScreen(viewModel, dialogProvider)
         }
     }
 
-    private fun SemanticsNodeInteraction.assertWidthIsNotEqualTo(expectedWidth: Dp) {
-        val node = fetchSemanticsNode()
-        val width = with(composeTestRule.density) { node.size.width.toDp() }
+    private fun ComposeUiTest.assertWidthIsNotEqualTo(interaction: SemanticsNodeInteraction, expectedWidth: Dp) {
+        val node = interaction.fetchSemanticsNode()
+        val width = with(density) { node.size.width.toDp() }
         if (width == expectedWidth) {
             throw AssertionError("Width $width is equal to $expectedWidth")
         }
     }
 
     @Test
-    fun givenSplitPane_whenColumnResized_thenOnlyTargetWindowIsAffected() {
+    fun givenSplitPane_whenColumnResized_thenOnlyTargetWindowIsAffected() = runComposeUiTest {
         setupApp()
 
         // 1. Split horizontally
-        composeTestRule.mainRobot {
+        mainRobot {
             splitHorizontal()
         }
         
-        composeTestRule.waitForIdle()
+        waitForIdle()
 
         // 2. Identify windows
-        val windowNodes = composeTestRule.onAllNodes(
+        val windowNodes = onAllNodes(
             SemanticsMatcher("Has window tag") { node ->
                 node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("window_") == true
             }
@@ -87,28 +84,28 @@ class KLogViewerComplexUiTest {
         val window2Id = windowIds.find { it != "window1" }!!
 
         // 3. Verify initial width (Level = 80dp)
-        composeTestRule.window(window1Id) {
+        window(window1Id) {
             logList { assertColumnWidth("Level", 80.dp) }
         }
-        composeTestRule.window(window2Id) {
+        window(window2Id) {
             logList { assertColumnWidth("Level", 80.dp) }
         }
 
         // 4. Resize window 1
-        composeTestRule.window(window1Id) {
+        window(window1Id) {
             logList {
                 resizeColumn("Level", 50f)
             }
         }
         
-        composeTestRule.waitForIdle()
+        waitForIdle()
 
         // 5. Verify window 1 has changed
-        composeTestRule.onNode(hasTestTag("column_header_Level") and hasAnyAncestor(hasTestTag("window_$window1Id")), useUnmergedTree = true)
-            .assertWidthIsNotEqualTo(80.dp)
+        val interaction = onNode(hasTestTag("column_header_Level") and hasAnyAncestor(hasTestTag("window_$window1Id")), useUnmergedTree = true)
+        assertWidthIsNotEqualTo(interaction, 80.dp)
             
         // 6. Verify window 2 is STILL 80.dp
-        composeTestRule.window(window2Id) {
+        window(window2Id) {
             logList { assertColumnWidth("Level", 80.dp) }
         }
     }
@@ -116,7 +113,7 @@ class KLogViewerComplexUiTest {
     private val testLogFile = File.createTempFile("test", ".log").apply { deleteOnExit() }
 
     @Test
-    fun givenLogsLoaded_whenMultiSelected_thenCorrectRowsAreSelected() {
+    fun givenLogsLoaded_whenMultiSelected_thenCorrectRowsAreSelected() = runComposeUiTest {
         val testEntries = (1..5).map { 
             LogEntry(LogTimestamp("10:00:0$it"), LogLevel.INFO, LogContent("Message $it")) 
         }
@@ -125,11 +122,11 @@ class KLogViewerComplexUiTest {
         
         setupApp()
 
-        composeTestRule.mainRobot {
+        mainRobot {
             clickAddFile()
         }
 
-        composeTestRule.logList {
+        logList {
             // Click row 0
             clickOnRow(0)
             assertRowSelected(0, true)
@@ -159,21 +156,21 @@ class KLogViewerComplexUiTest {
     }
 
     @Test
-    fun givenMultipleTabs_whenSwitching_thenStateIsMaintained() {
+    fun givenMultipleTabs_whenSwitching_thenStateIsMaintained() = runComposeUiTest {
         setupApp()
         
         // Add tab
-        composeTestRule.mainRobot {
+        mainRobot {
             clickAddTab()
         }
         
-        composeTestRule.waitForIdle()
+        waitForIdle()
         
         // We should have 2 tabs now. Test Tab and New Tab.
-        composeTestRule.onNodeWithText("New Tab").assertExists().assertIsSelected()
+        onNodeWithText("New Tab").assertExists().assertIsSelected()
         
         // Switch back to Test Tab
-        composeTestRule.onNodeWithText("Test Tab").performClick()
-        composeTestRule.onNodeWithText("Test Tab").assertIsSelected()
+        onNodeWithText("Test Tab").performClick()
+        onNodeWithText("Test Tab").assertIsSelected()
     }
 }

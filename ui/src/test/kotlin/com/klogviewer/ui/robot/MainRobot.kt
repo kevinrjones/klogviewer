@@ -1,9 +1,9 @@
 package com.klogviewer.ui.robot
 
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.ComposeTestRule
 
-class MainRobot(composeTestRule: ComposeTestRule) : BaseRobot(composeTestRule) {
+@OptIn(ExperimentalTestApi::class)
+class MainRobot(composeTestRule: ComposeUiTest) : BaseRobot(composeTestRule) {
     
     fun clickAddTab() {
         onNodeWithTag("add_tab_button").performClick()
@@ -31,4 +31,5 @@ class MainRobot(composeTestRule: ComposeTestRule) : BaseRobot(composeTestRule) {
     }
 }
 
-fun ComposeTestRule.mainRobot(block: MainRobot.() -> Unit) = MainRobot(this).apply(block)
+@OptIn(ExperimentalTestApi::class)
+fun ComposeUiTest.mainRobot(block: MainRobot.() -> Unit) = MainRobot(this).apply(block)

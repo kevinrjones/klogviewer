@@ -3,10 +3,10 @@ package com.klogviewer.ui.robot
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.unit.Dp
 
-class LogListRobot(composeTestRule: ComposeTestRule, private val windowId: String? = null) : BaseRobot(composeTestRule) {
+@OptIn(ExperimentalTestApi::class)
+class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String? = null) : BaseRobot(composeTestRule) {
     
     private fun matcher(tag: String): SemanticsMatcher {
         val tagMatcher = hasTestTag(tag)
@@ -72,5 +72,6 @@ class LogListRobot(composeTestRule: ComposeTestRule, private val windowId: Strin
     }
 }
 
-fun ComposeTestRule.logList(windowId: String? = null, block: LogListRobot.() -> Unit) = 
+@OptIn(ExperimentalTestApi::class)
+fun ComposeUiTest.logList(windowId: String? = null, block: LogListRobot.() -> Unit) = 
     LogListRobot(this, windowId).apply(block)

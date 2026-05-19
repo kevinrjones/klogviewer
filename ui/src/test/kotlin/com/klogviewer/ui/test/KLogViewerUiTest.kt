@@ -1,6 +1,7 @@
 package com.klogviewer.ui.test
 
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.*
+import androidx.compose.ui.test.v2.runComposeUiTest
 import arrow.core.right
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.repository.PreferencesRepository
@@ -15,14 +16,11 @@ import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
-import org.junit.Rule
 import org.junit.Test
 import java.io.File
 
+@OptIn(ExperimentalTestApi::class)
 class KLogViewerUiTest {
-
-    @get:Rule
-    val composeTestRule = createComposeRule()
 
     private val logSource = mockk<LogSource>()
     private val prefsRepository = mockk<PreferencesRepository>(relaxed = true)
@@ -37,7 +35,7 @@ class KLogViewerUiTest {
         LogEntry(LogTimestamp("2023-01-01 10:00:02"), LogLevel.DEBUG, LogContent("Third log message (debug)"))
     )
 
-    private fun setupApp() {
+    private fun ComposeUiTest.setupApp() {
         every { prefsRepository.load() } returns UserPreferences(
             tabs = listOf(
                 TabPreference(
@@ -59,13 +57,13 @@ class KLogViewerUiTest {
 
         val viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe)
 
-        composeTestRule.setContent {
+        setContent {
             KLogViewerScreen(viewModel, dialogProvider)
         }
     }
 
     @Test
-    fun givenFileSelected_whenLoaded_thenLogsAreDisplayed() {
+    fun givenFileSelected_whenLoaded_thenLogsAreDisplayed() = runComposeUiTest {
         setupApp()
         
         // Mock file selection
@@ -76,11 +74,11 @@ class KLogViewerUiTest {
             LogUpdate.Initial(testEntries).right()
         )
 
-        composeTestRule.mainRobot {
+        mainRobot {
             clickAddFile()
         }
 
-        composeTestRule.logList {
+        logList {
             assertLogCount(3)
             assertHasText("First log message")
             assertHasText("Second log message (error)")
@@ -89,7 +87,7 @@ class KLogViewerUiTest {
     }
 
     @Test
-    fun givenLogsLoaded_whenLevelFiltered_thenListIsUpdated() {
+    fun givenLogsLoaded_whenLevelFiltered_thenListIsUpdated() = runComposeUiTest {
         setupApp()
         
         every { dialogProvider.showOpenFileDialog(any(), any()) } returns File(testLogPath)
@@ -97,22 +95,22 @@ class KLogViewerUiTest {
             LogUpdate.Initial(testEntries).right()
         )
 
-        composeTestRule.mainRobot {
+        mainRobot {
             clickAddFile()
         }
 
         // Verify initial state
-        composeTestRule.logList {
+        logList {
             assertLogCount(3)
         }
 
         // Toggle DEBUG off
-        composeTestRule.sidebar {
+        sidebar {
             toggleLevel(LogLevel.DEBUG)
         }
 
         // Verify DEBUG log is gone
-        composeTestRule.logList {
+        logList {
             assertLogCount(2)
             assertTextExists("First log message")
             assertTextExists("Second log message (error)")
@@ -121,7 +119,7 @@ class KLogViewerUiTest {
     }
 
     @Test
-    fun givenLogsLoaded_whenSearchTermEntered_thenLogsAreFiltered() {
+    fun givenLogsLoaded_whenSearchTermEntered_thenLogsAreFiltered() = runComposeUiTest {
         setupApp()
         
         every { dialogProvider.showOpenFileDialog(any(), any()) } returns File(testLogPath)
@@ -129,29 +127,29 @@ class KLogViewerUiTest {
             LogUpdate.Initial(testEntries).right()
         )
 
-        composeTestRule.mainRobot {
+        mainRobot {
             clickAddFile()
         }
 
         // Search for "error"
-        composeTestRule.mainRobot {
+        mainRobot {
             typeFilter("error")
         }
 
         // Verify only error log remains
-        composeTestRule.logList {
+        logList {
             assertLogCount(1)
             assertTextExists("Second log message (error)")
             assertTextDoesNotExist("First log message")
         }
         
         // Clear filter
-        composeTestRule.mainRobot {
+        mainRobot {
             clearFilter()
         }
         
         // Verify all logs are back
-        composeTestRule.logList {
+        logList {
             assertLogCount(3)
         }
     }
