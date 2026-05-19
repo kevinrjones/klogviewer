@@ -1304,3 +1304,16 @@
 - `DirectoryScannerTest`: Recursive discovery and glob filtering.
 - `DirectoryLogSourceTest`: Initial merge of multiple files within a directory.
 - `InterleavingIntegrationTest`: Multi-source merging and chronological sorting.
+
+## Task: Fix GitHub Actions Build Failure (Mesa/GLX)
+**Title**: Update Linux Dependencies for GitHub Actions
+**Date/time completed**: 2026-05-19 12:40
+**What was shipped**
+- Updated `.github/workflows/build.yml` to replace obsolete Mesa package names with their modern equivalents.
+- Replaced `libegl1-mesa`, `libgles2-mesa`, and `libgl1-mesa-glx` with `libegl1`, `libgles2`, and `libgl1`.
+**Key decisions**
+- Switched to generic library names (`libgl1`, etc.) which are standard in Ubuntu 22.04+ (used by `ubuntu-latest`).
+**Gotchas**
+- Recent Ubuntu versions have restructured the Mesa package distribution, removing the `-mesa` suffix from many library packages and obsoleting `libgl1-mesa-glx`.
+**Test coverage areas**
+- CI Pipeline: Resolved the `apt-get install` failure on Linux runners.
