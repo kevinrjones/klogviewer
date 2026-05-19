@@ -113,13 +113,15 @@ class KLogViewerComplexUiTest {
         }
     }
 
+    private val testLogFile = File.createTempFile("test", ".log").apply { deleteOnExit() }
+
     @Test
     fun givenLogsLoaded_whenMultiSelected_thenCorrectRowsAreSelected() {
         val testEntries = (1..5).map { 
             LogEntry(LogTimestamp("10:00:0$it"), LogLevel.INFO, LogContent("Message $it")) 
         }
         every { logSource.observeLogs(any(), any()) } returns flowOf(LogUpdate.Initial(testEntries).right())
-        every { dialogProvider.showOpenFileDialog(any(), any()) } returns File("test.log")
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogFile
         
         setupApp()
 

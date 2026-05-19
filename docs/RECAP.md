@@ -476,6 +476,19 @@ Added an 'All' option to the log level filters in the sidebar, allowing users to
 - **KLogViewerScreen.kt**: Wired the new intent to the sidebar UI.
 - **Testing**: Added integration test `should toggle all levels at once` to `TabManagementTest.kt`.
 
+## 13:00
+
+### Fix: UI Test Failures and Dialog Logic
+
+Resolved persistent UI test failures (timeouts and assertions) on both local and CI environments, while improving the robustness of the dialog handling logic.
+
+#### Changes:
+- **KLogViewerUiTest.kt**: Switched from hardcoded non-existent paths to `File.createTempFile` for reliable test execution.
+- **KLogViewerComplexUiTest.kt**: Implemented temporary file usage to satisfy file existence checks during multi-selection tests.
+- **KLogViewerScreen.kt**: Refactored dialog handling from `SideEffect` to `LaunchedEffect(pendingDialog)`, ensuring actions are triggered once per state change and are better integrated with the Compose lifecycle.
+- **Cleanup**: Removed redundant `else` branches in exhaustive `when` expressions for `DialogType`.
+- **Verification**: Confirmed that `:ui:desktopTest` now passes successfully (14 tests completed).
+
 ## 18:15
 
 ### UI: Enhance Active Window Visibility

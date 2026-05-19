@@ -29,7 +29,8 @@ class KLogViewerUiTest {
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
     private val dialogProvider = mockk<DialogProvider>()
 
-    private val testLogPath = "/path/to/test.log"
+    private val testLogFile = File.createTempFile("test", ".log").apply { deleteOnExit() }
+    private val testLogPath = testLogFile.absolutePath
     private val testEntries = listOf(
         LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("First log message")),
         LogEntry(LogTimestamp("2023-01-01 10:00:01"), LogLevel.ERROR, LogContent("Second log message (error)")),

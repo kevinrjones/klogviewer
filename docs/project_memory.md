@@ -1330,3 +1330,18 @@
 - GitHub Actions defaults to PowerShell (`pwsh`) on Windows runners, which is incompatible with Bash syntax like `if [ ... ]; then`.
 **Test coverage areas**
 - CI Pipeline: Resolved the `ParserError` on Windows runners.
+
+## Task: Fix UI Test Failures (CI/CD)
+**Title**: Fix UI Test Timeouts and Assertions
+**Date/time completed**: 2026-05-19 13:00
+**What was shipped**
+- Updated `KLogViewerUiTest.kt` and `KLogViewerComplexUiTest.kt` to use real temporary files, ensuring they pass the ViewModel's existence checks.
+- Refactored `KLogViewerScreen.kt` to use `LaunchedEffect` for dialog handling, improving reliability and idiomatic Compose usage.
+- Resolved `ComposeTimeoutException` caused by empty log lists and `AssertionError` caused by clicking non-existent rows.
+**Key decisions**
+- Switched to `LaunchedEffect(pendingDialog)` to ensure dialog logic runs correctly in response to state changes and doesn't block the main thread unnecessarily.
+- Used `File.createTempFile` in tests to guarantee file existence without relying on hardcoded paths.
+**Gotchas**
+- The ViewModel's `loadFilesIntoWindow` returns early if files do not exist, which was causing tests to wait for UI elements that would never appear.
+**Test coverage areas**
+- UI: Verified `KLogViewerUiTest` and `KLogViewerComplexUiTest` pass locally with the new infrastructure.
