@@ -617,3 +617,50 @@ Migrated all UI tests from the deprecated JUnit 4 `createComposeRule()` to the m
 - **Experimental API**: Added `@OptIn(ExperimentalTestApi::class)` to handle the experimental status of the new multiplatform-ready testing API.
 - **Robustness**: Fixed parameter mismatch in `waitUntil` calls within `BaseRobot.kt` caused by API changes in the new testing framework.
 - **Verification**: Executed `./gradlew :ui:desktopTest` and confirmed that all 15 UI tests pass successfully without deprecation warnings regarding the rule.
+
+## 14:05
+
+### Task: Code Review Fixes
+
+Addressed code review feedback and improved code quality in the UI layer.
+
+#### Changes:
+- **KLogViewerScreen.kt**: Fixed non-exhaustive `when` expressions by adding `else` branches to satisfy stricter compiler requirements.
+- **KLogViewerComplexUiTest.kt**: Removed redundant `@OptIn(ExperimentalTestApi::class)` annotations where they were no longer needed after the API migration.
+
+## 15:30
+
+### Sprint 7: Advanced Log Formats & Flexible Parsing
+
+Successfully completed Sprint 7, introducing a highly flexible and powerful log parsing engine that supports a wide variety of industry-standard and custom log formats.
+
+#### Core Achievements:
+- **Template-Based Parsing**: Implemented a regex-driven `ParserRegistry` allowing for easy extension and support for Standard, Syslog, Apache, ISO8601, and CSV formats.
+- **Structured Data (JSON)**: Added `JsonLogParser` with automatic field mapping, providing deep visibility into cloud-native and structured logs.
+- **Multiline Support**: Integrated `MultilineProcessor` to correctly aggregate stack traces and indented content, ensuring search and filtering work on complete log events.
+- **Heuristic Detection**: Developed `HeuristicProbe` to automatically identify the most appropriate parser for a given file, providing a "zero-config" experience.
+- **UI Integration**: Added active parser name indication and a manual override menu to the status bar, and ensured monospace rendering for complex log content.
+
+## 21:55
+
+### CI/CD Stability: Resource Management and Race Conditions
+
+Resolved persistent cross-platform test failures (particularly on Windows) by improving coroutine management and resource cleanup.
+
+#### Core Achievements:
+- **Coroutine Safety**: Updated `KLogViewerViewModel` to use `cancelAndJoin()` for log observation jobs, ensuring file handles are fully released before new ones are opened.
+- **Exception Handling**: Modified `FileLogSource` to correctly propagate `CancellationException`, preventing erroneous error logging during job cancellation.
+- **Test Robustness**: Enhanced integration tests with explicit wait loops and `tearDown` delays, specifically addressing Windows-only file locking issues during `@TempDir` cleanup.
+- **Race Condition Resolution**: Fixed a race condition in `PersistenceIntegrationTest` by verifying actual data presence in saved preferences rather than relying on side-effects like tab count.
+
+# 2026-05-20
+
+## 07:40
+
+### UI Polish: Status Bar Enhancements
+
+Improved the discoverability and usability of the log format selection menu.
+
+#### Changes:
+- **Visual Cues**: Added a Material Design `ArrowDropDown` icon next to the active parser name in the `StatusBar`.
+- **UX**: Unified the format label and arrow into a single clickable row, providing a larger target area for triggering the parser selection menu.

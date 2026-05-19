@@ -34,6 +34,8 @@ class KLogViewerViewModel(
     private var saveJob: Job? = null
     
     fun clear() {
+        logJobs.values.forEach { it.cancel() }
+        saveJob?.cancel()
         scope.cancel()
     }
 
@@ -384,15 +386,17 @@ class KLogViewerViewModel(
     }
 
     private fun loadFilesIntoWindow(windowId: String, paths: List<String>, overrideParserName: String? = null) {
-        logJobs[windowId]?.cancel()
+        val oldJob = logJobs[windowId]
 
         val missingPaths = paths.filter { !File(it).exists() }
         if (missingPaths.isNotEmpty()) {
             _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.MISSING_FILE, missingPath = missingPaths.first()) }
+            oldJob?.cancel()
             return
         }
 
         logJobs[windowId] = scope.launch {
+            oldJob?.cancelAndJoin()
             val fileName = if (paths.size == 1) File(paths[0]).name else "${paths.size} files"
             
             _state.update { currentState ->

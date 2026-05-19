@@ -23,8 +23,9 @@ class RecentItemsTest {
     private var viewModel: KLogViewerViewModel? = null
 
     @AfterEach
-    fun tearDown() {
+    fun tearDown() = runBlocking {
         viewModel?.clear()
+        kotlinx.coroutines.delay(200) // Give Windows time to release file handles
     }
 
     @Test
@@ -46,7 +47,11 @@ class RecentItemsTest {
 
         // 1. Add both to recent items while they exist
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
+        // Wait for the job to start and the file to be opened
+        kotlinx.coroutines.delay(100)
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath))) // Load existing last so missing is not locked
+        // Wait for the job to start and the file to be opened
+        kotlinx.coroutines.delay(100)
 
         expectThat(vm.state.value.recentFiles).hasSize(2)
         expectThat(vm.state.value.recentFiles).contains(existingFile.absolutePath)
@@ -108,16 +113,13 @@ class RecentItemsTest {
 
         // 1. Load existing file
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))
-        
-        // Wait for logs to load (simulated) - we need to wait for the job
-        // In this simple integration test, it might be immediate or we might need to wait
-        // But the important part is that we have SOME logs.
-        
-        // Let's assume logs are loaded if they are in the state
-        // (In a real test we might need to collect the state flow)
+        // Wait for logs to load and file to be opened
+        kotlinx.coroutines.delay(200)
         
         // 2. Try to load missing file
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
+        // Wait for cancellation to propagate
+        kotlinx.coroutines.delay(200)
 
         // 3. Verify dialog is shown and path is set
         expectThat(vm.state.value.pendingDialog).isEqualTo(KLogViewerState.DialogType.MISSING_FILE)

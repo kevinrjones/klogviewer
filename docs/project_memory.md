@@ -1349,21 +1349,23 @@
 **Test coverage areas**
 - UI: Verified `KLogViewerUiTest` and `KLogViewerComplexUiTest` pass locally with the new infrastructure.
 
-## Task: Fix Intermittent Test Failures (CI/CD)
-**Title**: Fix Race Conditions and Resource Leaks in Integration Tests
-**Date/time completed**: 2026-05-19 13:45
+## Task: Fix Intermittent Test Failures (CI/CD) - Resource Leaks & Race Conditions
+**Title**: Fix File Locking and Race Conditions in Integration Tests
+**Date/time completed**: 2026-05-19 21:55
 **What was shipped**
-- Added `KLogViewerViewModel.clear()` to cancel its coroutine scope, ensuring that background file-tailing jobs are stopped when tests finish.
-- Updated `TabManagementTest.kt`, `PersistenceIntegrationTest.kt`, and `RecentItemsTest.kt` with `@AfterEach` hooks to clean up ViewModels.
-- Fixed race conditions in `TabManagementTest.kt` and `PersistenceIntegrationTest.kt` by replacing immediate assertions with `withTimeout` and `first` blocks to wait for asynchronous updates.
+- Updated `KLogViewerViewModel` to use `cancelAndJoin()` for log observation jobs, ensuring that background file-tailing jobs are fully stopped before starting new ones or finishing tests.
+- Updated `FileLogSource` to rethrow `CancellationException`, preventing unnecessary error logging and ensuring clean coroutine termination.
+- Enhanced `RecentItemsTest.kt` and `PersistenceIntegrationTest.kt` with robust `tearDown` methods that wait for background resource release.
+- Fixed a race condition in `PersistenceIntegrationTest.kt` by updating the preference save wait loop to verify actual data presence rather than just tab count.
 **Key decisions**
-- Decided to add a `clear()` method to the ViewModel to handle cleanup of its internal scope, which is a standard pattern for desktop ViewModels.
-- Improved test robustness by waiting for specific state changes (e.g., filtered logs count, preferences saved) instead of using arbitrary delays or immediate checks.
+- Used `cancelAndJoin()` instead of just `cancel()` to avoid file handle leaks on Windows where background jobs might still hold a `RandomAccessFile` lock.
+- Added explicit `delay` in tests to provide a buffer for OS-level file releases, which is sometimes necessary on Windows runners.
 **Gotchas**
-- Active file tailing jobs were holding file handles on Windows, preventing JUnit from deleting the temporary test directories and causing `IOException`.
-- Asynchronous filtering on `Dispatchers.Default` was causing intermittent assertion failures when tests checked `filteredLogs` too quickly.
+- The `isLoading` state flag in `KLogViewerViewModel` was being set before `savePreferences()` was called, leading to a race condition where tests would check the saved preferences file before it was written.
+- JUnit 5's `@TempDir` cleanup was failing on Windows because `RandomAccessFile` holds a hard lock that persists until the coroutine reaches its next suspension point (like `delay`).
 **Test coverage areas**
-- Integration: `PersistenceIntegrationTest`, `TabManagementTest`, `RecentItemsTest`, `LogSortingTest`, `InterleavingIntegrationTest`.
+- Integration: `PersistenceIntegrationTest`, `RecentItemsTest`.
+- Core: `FileLogSource` (cancellation safety).
 
 ## Task: Code Review Fixes
 **Title**: Address Code Review Feedback
