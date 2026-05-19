@@ -12,6 +12,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -27,6 +28,11 @@ class TabManagementTest {
     private val source = FileLogSource(parser)
     private val prefsRepository by lazy { PreferencesRepository(tempDir) }
     private val viewModel by lazy { KLogViewerViewModel(source, prefsRepository, heuristicProbe) }
+
+    @AfterEach
+    fun tearDown() {
+        viewModel.clear()
+    }
 
     @Test
     fun `should maintain independent filter queries and logs per tab`() = runBlocking {
@@ -44,6 +50,9 @@ class TabManagementTest {
         }
         
         viewModel.handleIntent(KLogViewerIntent.AddFilterQuery("entry one"))
+        withTimeout(2000.milliseconds) {
+            viewModel.state.first { it.activeTab?.activeWindow?.filteredLogs?.size == 1 }
+        }
         assertEquals(1, viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.size)
 
         // Add second tab
@@ -64,6 +73,9 @@ class TabManagementTest {
         }
         
         viewModel.handleIntent(KLogViewerIntent.AddFilterQuery("failed"))
+        withTimeout(2000.milliseconds) {
+            viewModel.state.first { it.activeTab?.activeWindow?.filteredLogs?.size == 1 }
+        }
         assertEquals(1, viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.size)
         
         // Switch back to tab 1

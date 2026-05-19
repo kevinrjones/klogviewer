@@ -11,6 +11,7 @@ import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import strikt.api.expectThat
@@ -24,6 +25,13 @@ import kotlin.time.Duration.Companion.seconds
 class PersistenceIntegrationTest {
     @TempDir
     lateinit var tempDir: File
+
+    private var viewModel: KLogViewerViewModel? = null
+
+    @AfterEach
+    fun tearDown() {
+        viewModel?.clear()
+    }
 
     @Test
     fun `should restore tabs and windows and reload logs on startup`(): Unit = runBlocking {
@@ -58,17 +66,18 @@ class PersistenceIntegrationTest {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        val vm = viewModel!!
 
         // Wait for logs to load
         withTimeout(5.seconds) {
-            viewModel.state.first { state ->
+            vm.state.first { state ->
                 val window = state.tabs.find { it.id == "tab-1" }?.windows?.find { it.id == "win-1" }
                 window != null && !window.isLoading && window.logs.isNotEmpty()
             }
         }
 
-        val state = viewModel.state.value
+        val state = vm.state.value
         expectThat(state.tabs).hasSize(1)
         val tab = state.tabs[0]
         expectThat(tab.id).isEqualTo("tab-1")
@@ -91,20 +100,26 @@ class PersistenceIntegrationTest {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        val vm = viewModel!!
 
         // Add a tab and load a file
-        viewModel.handleIntent(KLogViewerIntent.AddTab)
-        val activeTabId = viewModel.state.value.activeTabId!!
+        vm.handleIntent(KLogViewerIntent.AddTab)
+        val activeTabId = vm.state.value.activeTabId!!
         
-        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(logFile.absolutePath)))
+        vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(logFile.absolutePath)))
 
         // Wait for loading to start (so savePreferences is called)
         withTimeout(2.seconds) {
-            viewModel.state.first { it.activeTab?.activeWindow?.isLoading == true || it.activeTab?.activeWindow?.logs?.isNotEmpty() == true }
+            vm.state.first { it.activeTab?.activeWindow?.isLoading == true || it.activeTab?.activeWindow?.logs?.isNotEmpty() == true }
         }
 
         // Verify preferences were saved
+        withTimeout(2.seconds) {
+            while (prefsRepo.load().tabs.size < 2) {
+                kotlinx.coroutines.delay(100.milliseconds)
+            }
+        }
         val savedPrefs = prefsRepo.load()
         expectThat(savedPrefs.tabs).hasSize(2) // Default + New Tab
         val newTabPref = savedPrefs.tabs.find { it.id == activeTabId }
@@ -120,18 +135,19 @@ class PersistenceIntegrationTest {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        val vm = viewModel!!
 
         // Resize a column
-        val activeWindowId = viewModel.state.value.activeTab?.activeWindowId!!
-        viewModel.handleIntent(KLogViewerIntent.UpdateColumnWidth(activeWindowId, "Timestamp", 250))
+        val activeWindowId = vm.state.value.activeTab?.activeWindowId!!
+        vm.handleIntent(KLogViewerIntent.UpdateColumnWidth(activeWindowId, "Timestamp", 250))
 
         // Verify state
-        val window = viewModel.state.value.activeTab?.activeWindow
+        val window = vm.state.value.activeTab?.activeWindow
         expectThat(window?.columnWidths?.get("Timestamp")).isEqualTo(250)
 
         // Verify preferences were saved (with debounce)
-        val activeTabId = viewModel.state.value.activeTabId
+        val activeTabId = vm.state.value.activeTabId
         
         val savedPrefs = withTimeout(2.seconds) {
             var prefs = prefsRepo.load()
@@ -154,18 +170,19 @@ class PersistenceIntegrationTest {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        val vm = viewModel!!
 
         // Toggle auto-scroll (default is true, so toggle to false)
-        viewModel.handleIntent(KLogViewerIntent.ToggleAutoScroll)
+        vm.handleIntent(KLogViewerIntent.ToggleAutoScroll)
 
         // Verify state
-        val window = viewModel.state.value.activeTab?.activeWindow
+        val window = vm.state.value.activeTab?.activeWindow
         expectThat(window?.isAutoScrollEnabled).isEqualTo(false)
 
         // Verify preferences were saved
-        val activeTabId = viewModel.state.value.activeTabId
-        val activeWindowId = viewModel.state.value.activeTab?.activeWindowId
+        val activeTabId = vm.state.value.activeTabId
+        val activeWindowId = vm.state.value.activeTab?.activeWindowId
         
         val savedPrefs = withTimeout(2.seconds) {
             var prefs = prefsRepo.load()

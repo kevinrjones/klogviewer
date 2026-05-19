@@ -1345,3 +1345,19 @@
 - The ViewModel's `loadFilesIntoWindow` returns early if files do not exist, which was causing tests to wait for UI elements that would never appear.
 **Test coverage areas**
 - UI: Verified `KLogViewerUiTest` and `KLogViewerComplexUiTest` pass locally with the new infrastructure.
+
+## Task: Fix Intermittent Test Failures (CI/CD)
+**Title**: Fix Race Conditions and Resource Leaks in Integration Tests
+**Date/time completed**: 2026-05-19 13:45
+**What was shipped**
+- Added `KLogViewerViewModel.clear()` to cancel its coroutine scope, ensuring that background file-tailing jobs are stopped when tests finish.
+- Updated `TabManagementTest.kt`, `PersistenceIntegrationTest.kt`, and `RecentItemsTest.kt` with `@AfterEach` hooks to clean up ViewModels.
+- Fixed race conditions in `TabManagementTest.kt` and `PersistenceIntegrationTest.kt` by replacing immediate assertions with `withTimeout` and `first` blocks to wait for asynchronous updates.
+**Key decisions**
+- Decided to add a `clear()` method to the ViewModel to handle cleanup of its internal scope, which is a standard pattern for desktop ViewModels.
+- Improved test robustness by waiting for specific state changes (e.g., filtered logs count, preferences saved) instead of using arbitrary delays or immediate checks.
+**Gotchas**
+- Active file tailing jobs were holding file handles on Windows, preventing JUnit from deleting the temporary test directories and causing `IOException`.
+- Asynchronous filtering on `Dispatchers.Default` was causing intermittent assertion failures when tests checked `filteredLogs` too quickly.
+**Test coverage areas**
+- Integration: `PersistenceIntegrationTest`, `TabManagementTest`, `RecentItemsTest`, `LogSortingTest`, `InterleavingIntegrationTest`.

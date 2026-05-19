@@ -579,21 +579,15 @@ Finalized Sprint 5 by ensuring complete directory loading support and enhancing 
 - **Integration Testing**: Verified the dynamic source ID tracking and badge rendering logic through the `InterleavingIntegrationTest` and manual review.
 - **Test Coverage**: Ensured all core tests for recursive scanning and merging remain passing.
 
-## 13:10
+## 13:45
 
-### Live File Deletion Handling
+### Fix: Intermittent Test Failures and Resource Leaks
 
-Implemented robust handling for scenarios where log files are deleted while being viewed, ensuring data persistence in the UI and clear visual feedback.
+Resolved intermittent integration test failures (race conditions and IOExceptions) across Ubuntu and Windows CI runners while improving overall test robustness.
 
-#### Core Achievements:
-- **Deletion Detection**: Updated `FileLogSource` to check for file existence during its tailing loop and emit a new `LogUpdate.SourceMissing` event if the file disappears.
-- **State Persistence**: Enhanced `KLogViewerViewModel` to retain existing log entries even if the source is missing, fulfilling the "don't remove data" requirement.
-- **Visual Feedback**:
-    - Updated `LogWindow` to track `missingSourceIds`.
-    - Applied red color and strike-through styling to filenames in the Window Header and Status Bar when a file is missing.
-    - Updated `LogTabRow` to reflect the missing state in the tab title (red + strike-through).
-- **Architecture**: Forwarded `SourceMissing` events through `MergedLogSource` and `DirectoryLogSource` to ensure multi-file and directory views also reflect missing files correctly.
-
-#### Quality Assurance:
-- **Integration Testing**: Added `FileDeletionTest.kt` covering both single-file loading and directory-based loading scenarios. Verified that logs remain in the UI while the state correctly identifies missing sources.
-- **Verified Tailing**: Confirmed that the polling mechanism (1s for files, 5s for directories) correctly triggers the UI updates.
+#### Changes:
+- **ViewModel**: Added `KLogViewerViewModel.clear()` to cancel its internal coroutine scope, ensuring that background tasks (like file tailing) are stopped when tests or components are disposed.
+- **Integration Tests**: Updated `TabManagementTest`, `PersistenceIntegrationTest`, `RecentItemsTest`, `LogSortingTest`, and `InterleavingIntegrationTest` to use `@AfterEach` hooks for ViewModel cleanup.
+- **Race Condition Fixes**: Refactored `TabManagementTest.kt` and `PersistenceIntegrationTest.kt` to wait for asynchronous operations (log filtering and preference saving) using `withTimeout` and `first { ... }` blocks, ensuring assertions run only after state changes are complete.
+- **Windows Support**: Fixed `IOException` during `@TempDir` cleanup on Windows by ensuring all file handles held by tailing jobs are released before the test finishes.
+- **Verification**: Confirmed all integration tests (16 tests) and UI tests (14 tests) pass successfully in a single local run.

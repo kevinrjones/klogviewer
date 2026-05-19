@@ -32,6 +32,10 @@ class KLogViewerViewModel(
 
     private val logJobs = mutableMapOf<String, Job>()
     private var saveJob: Job? = null
+    
+    fun clear() {
+        scope.cancel()
+    }
 
     init {
         val prefs = prefsRepository.load()

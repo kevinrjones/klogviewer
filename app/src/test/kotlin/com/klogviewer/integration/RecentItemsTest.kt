@@ -9,6 +9,7 @@ import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import com.klogviewer.ui.mvi.KLogViewerState
 import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import strikt.api.expectThat
@@ -18,6 +19,13 @@ import java.io.File
 class RecentItemsTest {
     @TempDir
     lateinit var tempDir: File
+
+    private var viewModel: KLogViewerViewModel? = null
+
+    @AfterEach
+    fun tearDown() {
+        viewModel?.clear()
+    }
 
     @Test
     fun `should filter missing items and offer to delete them`(): Unit = runBlocking {
@@ -33,25 +41,26 @@ class RecentItemsTest {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        val vm = viewModel!!
 
         // 1. Add both to recent items while they exist
-        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))
-        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
+        vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))
+        vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
 
-        expectThat(viewModel.state.value.recentFiles).hasSize(2)
-        expectThat(viewModel.state.value.recentFiles).contains(existingFile.absolutePath)
-        expectThat(viewModel.state.value.recentFiles).contains(missingFile.absolutePath)
+        expectThat(vm.state.value.recentFiles).hasSize(2)
+        expectThat(vm.state.value.recentFiles).contains(existingFile.absolutePath)
+        expectThat(vm.state.value.recentFiles).contains(missingFile.absolutePath)
 
         // 2. Delete one file
         missingFile.delete()
 
         // 3. Clear missing items (this mimics the "Offer to delete")
-        viewModel.handleIntent(KLogViewerIntent.ClearMissingRecentItems)
+        vm.handleIntent(KLogViewerIntent.ClearMissingRecentItems)
 
-        expectThat(viewModel.state.value.recentFiles).hasSize(1)
-        expectThat(viewModel.state.value.recentFiles).contains(existingFile.absolutePath)
-        expectThat(viewModel.state.value.recentFiles.contains(missingFile.absolutePath)).isFalse()
+        expectThat(vm.state.value.recentFiles).hasSize(1)
+        expectThat(vm.state.value.recentFiles).contains(existingFile.absolutePath)
+        expectThat(vm.state.value.recentFiles.contains(missingFile.absolutePath)).isFalse()
     }
 
     @Test
@@ -67,17 +76,18 @@ class RecentItemsTest {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        val vm = viewModel!!
 
-        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file1.absolutePath, file2.absolutePath)))
+        vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(file1.absolutePath, file2.absolutePath)))
 
-        expectThat(viewModel.state.value.recentFiles).hasSize(2)
+        expectThat(vm.state.value.recentFiles).hasSize(2)
 
-        viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(file1.absolutePath))
+        vm.handleIntent(KLogViewerIntent.RemoveRecentItem(file1.absolutePath))
 
-        expectThat(viewModel.state.value.recentFiles).hasSize(1)
-        expectThat(viewModel.state.value.recentFiles).contains(file2.absolutePath)
-        expectThat(viewModel.state.value.recentFiles.contains(file1.absolutePath)).isFalse()
+        expectThat(vm.state.value.recentFiles).hasSize(1)
+        expectThat(vm.state.value.recentFiles).contains(file2.absolutePath)
+        expectThat(vm.state.value.recentFiles.contains(file1.absolutePath)).isFalse()
     }
 
     @Test
@@ -93,10 +103,11 @@ class RecentItemsTest {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        val vm = viewModel!!
 
         // 1. Load existing file
-        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))
+        vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))
         
         // Wait for logs to load (simulated) - we need to wait for the job
         // In this simple integration test, it might be immediate or we might need to wait
@@ -106,11 +117,11 @@ class RecentItemsTest {
         // (In a real test we might need to collect the state flow)
         
         // 2. Try to load missing file
-        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
+        vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
 
         // 3. Verify dialog is shown and path is set
-        expectThat(viewModel.state.value.pendingDialog).isEqualTo(KLogViewerState.DialogType.MISSING_FILE)
-        expectThat(viewModel.state.value.missingPath).isEqualTo(missingFile.absolutePath)
+        expectThat(vm.state.value.pendingDialog).isEqualTo(KLogViewerState.DialogType.MISSING_FILE)
+        expectThat(vm.state.value.missingPath).isEqualTo(missingFile.absolutePath)
         
         // 4. Verify logs are UNCHANGED (they should still be from existingFile if we had any, or at least not cleared for the missing file)
         // Wait, if I hadn't changed KLogViewerViewModel, it would have cleared logs first.
