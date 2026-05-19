@@ -1317,3 +1317,16 @@
 - Recent Ubuntu versions have restructured the Mesa package distribution, removing the `-mesa` suffix from many library packages and obsoleting `libgl1-mesa-glx`.
 **Test coverage areas**
 - CI Pipeline: Resolved the `apt-get install` failure on Linux runners.
+
+## Task: Fix GitHub Actions Build Failure (Windows Shell)
+**Title**: Fix PowerShell Syntax Error on Windows CI
+**Date/time completed**: 2026-05-19 12:45
+**What was shipped**
+- Updated `.github/workflows/build.yml` to set `shell: bash` as the default for the build job.
+- This ensures that Bash-style `if` statements and `./gradlew` calls work consistently across Linux, macOS, and Windows.
+**Key decisions**
+- Chose to set a job-level default shell to minimize boilerplate and ensure all current and future scripts use a consistent Bash environment.
+**Gotchas**
+- GitHub Actions defaults to PowerShell (`pwsh`) on Windows runners, which is incompatible with Bash syntax like `if [ ... ]; then`.
+**Test coverage areas**
+- CI Pipeline: Resolved the `ParserError` on Windows runners.

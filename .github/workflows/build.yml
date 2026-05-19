@@ -12,6 +12,9 @@ jobs:
   build:
     name: Build and Package (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
 
     permissions:
       contents: write
