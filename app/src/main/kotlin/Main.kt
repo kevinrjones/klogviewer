@@ -67,6 +67,7 @@ fun main() {
                     Item("Open File...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) })
                     Item("Open Directory...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) })
                     Item("Add to Workspace...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) })
+                    Item("Connect to SFTP...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowSftpDialog) })
                     
                     Menu("Recently Opened") {
                         if (state.recentFiles.isEmpty() && state.recentDirectories.isEmpty()) {

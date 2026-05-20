@@ -664,3 +664,52 @@ Improved the discoverability and usability of the log format selection menu.
 #### Changes:
 - **Visual Cues**: Added a Material Design `ArrowDropDown` icon next to the active parser name in the `StatusBar`.
 - **UX**: Unified the format label and arrow into a single clickable row, providing a larger target area for triggering the parser selection menu.
+
+## 07:48
+
+### Branch Creation: Sprint 8 - Connectivity & Remote Sources
+
+Initiated Sprint 8 by creating the dedicated feature branch and initializing task tracking for the connectivity features.
+
+#### Changes:
+- **Git**: Created and checked out the `feature/connectivity` branch.
+- **Documentation**: Created `docs/tasks/TASKS-SPRINT-8-CONNECTIVITY.md` with the full task breakdown for SFTP, S3, and Network log sources.
+
+## 11:15
+
+### SFTP Remote Log Source Implementation
+
+Implemented the first major feature of Sprint 8: real-time log tailing from remote servers via SFTP.
+
+#### Changes:
+- **Core Engine**: Developed `SftpLogSource` using the `sshj` library. It implements the `LogSource` interface and supports real-time tailing using `tail -f` over SSH.
+- **Authentication**: Added support for both Password and Key-Pair authentication. Key-Pair support includes optional passphrase handling for encrypted keys.
+- **UI**: Created a new `SftpConnectionDialog` accessible via **File > Connect to SFTP...**. The dialog supports host, port, username, and flexible authentication selection.
+- **Robustness**: Fixed a `NullPointerException` in `sshj` when using key-pairs without passphrases and standardized error reporting across the log source pipeline.
+- **Documentation**: Updated `README.md` with detailed instructions on how to connect to SFTP sources and specifically what key files to select.
+- **Verification**: Verified the implementation with a comprehensive suite of unit tests in `SftpLogSourceTest.kt` using mocked SSH clients.
+
+## 11:25
+
+### Fixed SFTP Silent Failures
+
+Addressed an issue where invalid SFTP log paths caused the UI to hang with a spinner.
+
+#### Changes:
+- **Core**: Updated `SftpLogSource` to monitor the SSH command's `exitStatus` and `stderr`.
+- **Robustness**: If `tail` fails (e.g., file not found), the error is now captured and emitted as a `LogFailure.FileError`, allowing the UI to show a descriptive message.
+- **State Management**: Ensured that an `Initial` log update is emitted even for empty files, which correctly stops the loading spinner in the UI.
+- **Testing**: Added unit tests to `SftpLogSourceTest.kt` to verify error propagation for missing files and correct handling of empty remote files.
+
+## 11:35
+
+### Dialog Focus Management
+
+Implemented explicit focus management and Tab navigation for all custom dialogs.
+
+#### Changes:
+- **Core UI**: Added `FocusManager` and `FocusRequester` to `SftpConnectionDialog`, `RecentItemsDialog`, and the missing file dialog.
+- **Navigation**: Implemented `onPreviewKeyEvent` handlers to intercept Tab/Shift+Tab and move focus manually, ensuring standard desktop behavior.
+- **UX**: Ensured all dialogs get initial focus when opened.
+- **Architecture**: Created **ADR 025** to document the strategy for focus management in the application.
+- **Tracking**: Updated Sprint 8 tasks and project memory to reflect completion of this UX refinement.

@@ -22,6 +22,9 @@ Merge multiple log files into a single, chronologically sorted view. Visual sour
 ### Real-time Log Tailing
 Monitor your logs as they grow. KLogViewer uses an efficient polling mechanism to detect file appends and automatically scrolls to the latest entries.
 
+### Remote Log Streams (SFTP)
+Connect to remote servers and tail logs in real-time over SSH. Supports both password and public-key authentication (RSA, Ed25519, etc.) with optional passphrase support for encrypted keys.
+
 ### Advanced Heuristic Parsing
 Supports a wide variety of log formats out-of-the-box, including:
 - **Standard Text**: ISO8601, Apache, Syslog, CSV.
@@ -77,6 +80,23 @@ To create a native distribution for your operating system (DMG, MSI, or DEB):
 ./gradlew :app:package
 ```
 Distributions will be available in `app/build/compose/binaries`.
+
+## Usage
+
+### Connecting to SFTP Log Sources
+KLogViewer allows you to tail logs from remote servers via SFTP.
+
+1. Go to **File > Connect to SFTP...**
+2. Enter the **Host**, **Port** (default 22), and **Username**.
+3. Choose your **Authentication** method:
+   - **Password**: Enter your SFTP password.
+   - **Key Pair**: 
+     - Click **Browse** to select your **Private Key file**. You should select your **private** key (e.g., `id_rsa`, `id_ed25519`), not the public `.pub` file.
+     - If your private key is protected by a password, enter it in the **Passphrase (Optional)** field.
+4. Enter the **Log File Path** on the remote server (e.g., `/var/log/syslog`).
+5. Click **Connect**.
+
+KLogViewer uses `tail -f` over SSH to provide efficient, real-time updates for remote files.
 
 ### Continuous Integration & Deployment
 KLogViewer uses GitHub Actions for automated building and packaging. For every push to the `main` branch, the following are automatically generated:

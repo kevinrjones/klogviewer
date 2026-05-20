@@ -46,6 +46,10 @@
 - Keyboard Shortcuts: Added Cmd+W to close active tab, Cmd+N for new tab, and Cmd+C to copy selected logs.
 - Multi-selection: Implemented multi-selection in log list (Shift+Click for range, Cmd+Click for toggle).
 - ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
+- Sprint 8: Connectivity & Remote Sources initiated with dedicated feature branch and task tracking.
+- SFTP Support: Implemented real-time log tailing over SFTP with support for password and key-pair authentication.
+- Dialog Focus Management: Implemented explicit Tab navigation and initial focus for all application dialogs (ADR-025).
+- Documentation: Updated README.md with detailed SFTP usage instructions and key file requirements.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
 - Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
 - Fixed a resource leak in `KLogViewerViewModel` where background log observation jobs were not cancelled when a load intent for a missing file was processed, causing file locks and test failures on Windows.
@@ -1423,3 +1427,69 @@
 - `MultilineProcessor`: Buffer limits and header detection.
 - `JsonLogParser`: Mapping and nested object serialization.
 - `TemplateLogParser`: Capture group extraction and level fallback logic.
+
+## Task: Sprint 8 Initiation - Connectivity & Remote Sources
+**Title**: Sprint 8 Initiation
+**Date/time completed**: 2026-05-20 07:50
+**What was shipped**
+- Created `feature/connectivity` branch.
+- Initialized Sprint 8 task list in `docs/tasks/TASKS-SPRINT-8-CONNECTIVITY.md`.
+- Defined hierarchical tasks for SFTP/SSH, S3, and Network log sources.
+
+**Key decisions**
+- Followed the existing pattern of sprint-specific task files.
+- Aligned task structure with ADR 010 and the sprint 8 scope document.
+
+**Gotchas**
+- None.
+
+**Test coverage areas**
+- N/A (Project management and documentation phase).
+
+## Task: SFTP Remote Log Source Implementation
+**Title**: SFTP Implementation & Documentation
+**Date/time completed**: 2026-05-20 11:15
+**What was shipped**
+- `SftpLogSource` for real-time log tailing over SSH.
+- Support for Password and Key-Pair authentication.
+- Key-Pair support with optional passphrase for encrypted private keys.
+- `SftpConnectionDialog` UI for connecting to remote servers.
+- Improved error handling for SFTP: detects non-existent files and remote command failures.
+- Updated `README.md` with detailed SFTP usage instructions and key file requirements.
+- Standardized `LogFailure` with a `message` property for better UI error reporting.
+
+**Key decisions**
+- Used `sshj` for SSH/SFTP implementation due to its modern API and Ed25519 support.
+- Implemented `tail -f` over SSH to achieve efficient real-time updates for remote files.
+- Added optional passphrase support to handle encrypted private keys (ADR-010 refinement).
+- Implemented exit status and stderr monitoring for remote commands to provide clear feedback on failures.
+- Ensured `Initial` load is always emitted (even if empty) to correctly manage UI state (e.g., hiding spinners).
+- Documented that users must select the **private** key file (not public) in the connection dialog.
+
+**Gotchas**
+- `sshj`'s `loadKeys` throws `NullPointerException` if a null passphrase is passed to the two-argument version; solved by conditionally calling the single-argument overload.
+- `tail -f` might hang or exit without output if the file is missing; needed to monitor `exitStatus` and `stderr`.
+- Integration tests for SFTP can be slow; used `MockK` and `PipedInputStream` for fast, reliable unit testing of the streaming logic.
+
+**Test coverage areas**
+- `SftpLogSourceTest`: Unit tests for connection, password/key auth (with/without passphrase), error handling (invalid paths), and real-time log streaming from empty/non-empty files.
+
+## Task: Dialog Focus Management (UX Refinement)
+**Title**: Dialog Focus Management
+**Date/time completed**: 2026-05-20 11:35
+**What was shipped**
+- Explicit Tab and Shift+Tab navigation in all `AlertDialog` based dialogs.
+- Initial focus for the first input field or primary button when dialogs open.
+- Enhanced `SftpConnectionDialog` with `FocusManager` and `KeyboardActions`.
+- ADR-025 documenting the dialog focus management strategy.
+
+**Key decisions**
+- Used `onPreviewKeyEvent` on root dialog containers to capture and manually move focus with `FocusManager.moveFocus()`.
+- Implemented `FocusRequester` for consistent initial focus across different dialog types.
+- Standardized `ImeAction.Next` and `onNext` actions for all `TextField` components in dialogs.
+
+**Gotchas**
+- In `RecentItemsDialog`, focus should only be requested on the first item of the first non-empty list (Files or Directories).
+
+**Test coverage areas**
+- N/A (UI behavior refinement, manual verification required).

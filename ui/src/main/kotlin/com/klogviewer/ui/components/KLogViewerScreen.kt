@@ -14,8 +14,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.*
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -89,20 +94,49 @@ fun KLogViewerScreen(
     }
 
     if (state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.MISSING_FILE && state.missingPath != null) {
+        val focusRequester = remember { FocusRequester() }
+        
         AlertDialog(
             onDismissRequest = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
             title = { Text("File Not Found") },
-            text = { Text("The file '${state.missingPath}' no longer exists. Would you like to remove it from the recent items list?") },
+            text = { 
+                Text(text = "The file '${state.missingPath}' no longer exists. Would you like to remove it from the recent items list?")
+            },
             confirmButton = {
-                Button(onClick = {
-                    viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(state.missingPath!!))
-                    viewModel.handleIntent(KLogViewerIntent.DismissDialog)
-                }) {
+                val focusManager = LocalFocusManager.current
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
+                }
+                Button(
+                    onClick = {
+                        viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(state.missingPath!!))
+                        viewModel.handleIntent(KLogViewerIntent.DismissDialog)
+                    },
+                    modifier = Modifier.focusRequester(focusRequester).onPreviewKeyEvent { event ->
+                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                ) {
                     Text("Remove from List")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }) {
+                val focusManager = LocalFocusManager.current
+                TextButton(
+                    onClick = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
+                    modifier = Modifier.onPreviewKeyEvent { event ->
+                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                ) {
                     Text("Keep in List")
                 }
             }
@@ -122,6 +156,16 @@ fun KLogViewerScreen(
             onRemoveItem = { viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(it)) },
             onClearMissing = { viewModel.handleIntent(KLogViewerIntent.ClearMissingRecentItems) },
             onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
+        )
+    }
+
+    if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_CONNECT) {
+        SftpConnectionDialog(
+            onConnect = { host, port, user, auth, path ->
+                viewModel.handleIntent(KLogViewerIntent.ConnectSftp(host, port, user, auth, path))
+            },
+            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
+            dialogProvider = dialogProvider
         )
     }
 
@@ -460,13 +504,33 @@ fun RecentItemsDialog(
     onClearMissing: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val focusRequester = remember { FocusRequester() }
+    
     val hasMissing = recentFiles.any { !File(it).exists() } || recentDirectories.any { !File(it).exists() }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Recently Opened Items") },
         text = {
-            Column(modifier = Modifier.width(600.dp).heightIn(max = 400.dp).verticalScroll(rememberScrollState())) {
+            val focusManager = LocalFocusManager.current
+            LaunchedEffect(Unit) {
+                focusRequester.requestFocus()
+            }
+
+            Column(
+                modifier = Modifier
+                    .width(600.dp)
+                    .heightIn(max = 400.dp)
+                    .verticalScroll(rememberScrollState())
+                    .onPreviewKeyEvent { event ->
+                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
+                            true
+                        } else {
+                            false
+                        }
+                    }
+            ) {
                 if (hasMissing) {
                     Surface(
                         color = MaterialTheme.colors.error.copy(alpha = 0.1f),
@@ -500,8 +564,14 @@ fun RecentItemsDialog(
                         style = MaterialTheme.typography.subtitle2,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
-                    recentFiles.forEach { path ->
-                        RecentItemRow(path, onSelect, onRemoveItem, isMissing = !File(path).exists())
+                    recentFiles.forEachIndexed { index, path ->
+                        RecentItemRow(
+                            path, 
+                            onSelect, 
+                            onRemoveItem, 
+                            isMissing = !File(path).exists(),
+                            modifier = if (index == 0) Modifier.focusRequester(focusRequester) else Modifier
+                        )
                     }
                 }
 
@@ -515,8 +585,14 @@ fun RecentItemsDialog(
                         style = MaterialTheme.typography.subtitle2,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
-                    recentDirectories.forEach { path ->
-                        RecentItemRow(path, onSelect, onRemoveItem, isMissing = !File(path).exists())
+                    recentDirectories.forEachIndexed { index, path ->
+                        RecentItemRow(
+                            path, 
+                            onSelect, 
+                            onRemoveItem, 
+                            isMissing = !File(path).exists(),
+                            modifier = if (index == 0 && recentFiles.isEmpty()) Modifier.focusRequester(focusRequester) else Modifier
+                        )
                     }
                 }
 
@@ -526,7 +602,18 @@ fun RecentItemsDialog(
             }
         },
         confirmButton = {
-            Button(onClick = onDismiss) {
+            val focusManager = LocalFocusManager.current
+            Button(
+                onClick = onDismiss,
+                modifier = Modifier.onPreviewKeyEvent { event ->
+                    if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                        focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
+                        true
+                    } else {
+                        false
+                    }
+                }
+            ) {
                 Text("Close")
             }
         }
@@ -538,10 +625,11 @@ private fun RecentItemRow(
     path: String,
     onSelect: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
-    isMissing: Boolean = false
+    isMissing: Boolean = false,
+    modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         TextButton(

@@ -10,6 +10,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlin.logging)
     implementation(libs.slf4j.api)
+    implementation(libs.sshj)
     
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
@@ -18,6 +19,8 @@ dependencies {
     testImplementation(libs.kluent)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.sshd.core)
+    testImplementation(libs.sshd.sftp)
     testRuntimeOnly(libs.logback.classic)
 }
 
