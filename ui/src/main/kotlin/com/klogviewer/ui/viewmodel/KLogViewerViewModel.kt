@@ -1,11 +1,11 @@
 package com.klogviewer.ui.viewmodel
 
+import arrow.core.left
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
+import com.klogviewer.domain.repository.RemoteFileSystem
 import com.klogviewer.core.parser.*
-import com.klogviewer.core.source.DirectoryLogSource
-import com.klogviewer.core.source.MergedLogSource
-import com.klogviewer.core.source.SftpLogSource
+import com.klogviewer.core.source.*
 import com.klogviewer.core.repository.PreferencesRepository
 import com.klogviewer.ui.mvi.*
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -23,7 +23,9 @@ class KLogViewerViewModel(
     private val logSource: LogSource,
     private val prefsRepository: PreferencesRepository,
     val heuristicProbe: HeuristicProbe,
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
+    private val remoteFileSystem: RemoteFileSystem = SftpFileSystem(),
+    private val sftpSourceFactory: (SftpConfig) -> LogSource = { SftpLogSource(it, SimpleLogParser()) }
 ) {
     private val _state = MutableStateFlow(KLogViewerState())
     val state: StateFlow<KLogViewerState> = _state.asStateFlow()
@@ -78,7 +80,7 @@ class KLogViewerViewModel(
             initialState.tabs.forEach { tab ->
                 tab.windows.forEach { window ->
                     if (window.sourceIds.isNotEmpty()) {
-                        loadFilesIntoWindow(window.id, window.sourceIds)
+                        loadFilesIntoWindow(window.id, window.sourceIds, window.parserName)
                     }
                 }
             }
@@ -257,18 +259,83 @@ class KLogViewerViewModel(
             is KLogViewerIntent.ConnectSftp -> {
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
                 if (activeWindowId != null) {
-                    connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
+                    val config = SftpConfig(intent.name, Host(intent.host), Port(intent.port), Username(intent.user), intent.auth, intent.path)
                     
                     // Automatically save connection details
-                    val config = SftpConfig(intent.name, Host(intent.host), Port(intent.port), Username(intent.user), intent.auth, intent.path)
                     _state.update { currentState ->
                         val updatedList = (currentState.sftpConnections.filter { it.name != config.name } + config)
                             .sortedBy { it.name }
                         currentState.copy(sftpConnections = updatedList)
                     }
                     savePreferences()
+
+                    // Check if it's a directory or a file
+                    scope.launch {
+                        _state.update { it.copy(isRemoteLoading = true) }
+                        val result = remoteFileSystem.listFiles(config, intent.path)
+                        _state.update { it.copy(isRemoteLoading = false) }
+                        
+                        result.fold(
+                            { _ ->
+                                // If listFiles fails, it might be a file or just permission error.
+                                // We try to connect as a file anyway.
+                                connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
+                                _state.update { it.copy(pendingDialog = null) }
+                            },
+                            { files ->
+                                val exactMatch = files.find { it.path == intent.path || it.path == intent.path.removeSuffix("/") + "/" + it.name }
+                                
+                                if (files.size == 1 && exactMatch != null && !exactMatch.isDirectory) {
+                                    connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
+                                    _state.update { it.copy(pendingDialog = null) }
+                                } else {
+                                    // It's a directory or multiple files
+                                    _state.update { 
+                                        it.copy(
+                                            remoteFiles = files.filter { f -> f.name != "." && f.name != ".." },
+                                            remoteBrowsePath = intent.path,
+                                            currentSftpConfig = config,
+                                            pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE
+                                        ) 
+                                    }
+                                }
+                            }
+                        )
+                    }
+                }
+            }
+            is KLogViewerIntent.ConnectMultipleSftp -> {
+                val activeWindowId = _state.value.activeTab?.activeWindow?.id
+                if (activeWindowId != null) {
+                    connectMultipleSftp(activeWindowId, intent.config, intent.paths)
                 }
                 _state.update { it.copy(pendingDialog = null) }
+            }
+            is KLogViewerIntent.ConnectSftpDirectory -> {
+                val activeWindowId = _state.value.activeTab?.activeWindow?.id
+                if (activeWindowId != null) {
+                    connectSftpDirectory(activeWindowId, intent.config, intent.path)
+                }
+                _state.update { it.copy(pendingDialog = null) }
+            }
+            is KLogViewerIntent.BrowseSftp -> {
+                scope.launch {
+                    _state.update { it.copy(isRemoteLoading = true, pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE, currentSftpConfig = intent.config) }
+                    val result = remoteFileSystem.listFiles(intent.config, intent.path)
+                    _state.update { 
+                        it.copy(
+                            isRemoteLoading = false,
+                            remoteFiles = result.getOrNull()?.filter { f -> f.name != "." && f.name != ".." } ?: emptyList(),
+                            remoteBrowsePath = intent.path
+                        )
+                    }
+                }
+            }
+            is KLogViewerIntent.NavigateRemote -> {
+                val config = _state.value.currentSftpConfig
+                if (config != null) {
+                    handleIntent(KLogViewerIntent.BrowseSftp(config, intent.path))
+                }
             }
             is KLogViewerIntent.SaveSftpConnection -> {
                 _state.update { currentState ->
@@ -419,9 +486,116 @@ class KLogViewerViewModel(
         savePreferences()
     }
 
+    private fun connectSftpDirectory(windowId: String, config: SftpConfig, path: String) {
+        val oldJob = logJobs[windowId]
+        
+        logJobs[windowId] = scope.launch {
+            oldJob?.cancelAndJoin()
+            
+            val sourceId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}$path"
+            
+            _state.update { currentState ->
+                currentState.updateWindow(windowId) { window ->
+                    window.copy(
+                        isLoading = true,
+                        error = null,
+                        filePath = sourceId,
+                        sourceIds = listOf(sourceId),
+                        logs = emptyList(),
+                        columns = listOf("Timestamp", "Level", "Content")
+                    )
+                }
+            }
+
+            // Update tab title
+            val title = path.substringAfterLast('/').ifEmpty { path }
+            _state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) {
+                        tab.copy(title = title)
+                    } else tab
+                })
+            }
+            
+            val sftpDirectorySource = SftpDirectoryLogSource(config, remoteFileSystem)
+            
+            sftpDirectorySource.observeLogs(LogFilePath(path)).collect { result ->
+                result.fold(
+                    { error ->
+                        _state.update { it.updateWindow(windowId) { w -> w.copy(error = error.message, isLoading = false) } }
+                    },
+                    { update ->
+                        handleLogUpdate(windowId, update)
+                    }
+                )
+            }
+        }
+    }
+
+    private fun connectMultipleSftp(windowId: String, config: SftpConfig, paths: List<String>) {
+        val oldJob = logJobs[windowId]
+        
+        logJobs[windowId] = scope.launch {
+            oldJob?.cancelAndJoin()
+            
+            val sourceId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}${if (paths.size == 1) paths[0] else " (${paths.size} files)"}"
+            
+            _state.update { currentState ->
+                currentState.updateWindow(windowId) { window ->
+                    window.copy(
+                        isLoading = true,
+                        error = null,
+                        filePath = sourceId,
+                        sourceIds = paths.map { "sftp://${config.username.value}@${config.host.value}:${config.port.value}$it" },
+                        logs = emptyList(),
+                        columns = listOf("Timestamp", "Level", "Content")
+                    )
+                }
+            }
+
+            // Update tab title
+            val title = if (paths.size == 1) paths[0].substringAfterLast('/') else "${paths.size} remote files"
+            _state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) {
+                        tab.copy(title = title)
+                    } else tab
+                })
+            }
+            
+            val parser = SimpleLogParser()
+            
+            // Create a flow for each path and merge them
+            val flows = paths.map { path ->
+                val source = sftpSourceFactory(config)
+                source.observeLogs(LogFilePath(path), parser)
+            }
+            
+            flows.merge().collect { result ->
+                result.fold(
+                    { error ->
+                        _state.update { it.updateWindow(windowId) { w -> w.copy(error = error.message, isLoading = false) } }
+                    },
+                    { update ->
+                        handleLogUpdate(windowId, update)
+                    }
+                )
+            }
+        }
+    }
+
+    private fun findSftpConfig(uri: String): SftpConfig? {
+        val sftpUri = SftpUri.parse(uri) ?: return null
+        return _state.value.sftpConnections.find {
+            it.username.value == sftpUri.username &&
+            it.host.value == sftpUri.host &&
+            it.port.value == sftpUri.port
+        }
+    }
+
     private fun connectSftp(windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) {
         val config = SftpConfig(name, Host(host), Port(port), Username(user), auth, path)
-        val sftpSource = SftpLogSource(config, SimpleLogParser())
+        val sftpSource = sftpSourceFactory(config)
         
         val oldJob = logJobs[windowId]
         
@@ -459,7 +633,13 @@ class KLogViewerViewModel(
                 .collect { result ->
                     result.fold(
                         { error ->
-                            _state.update { it.updateWindow(windowId) { w -> w.copy(error = error.message, isLoading = false) } }
+                            _state.update { it.updateWindow(windowId) { w -> 
+                                w.copy(
+                                    error = error.message, 
+                                    isLoading = false,
+                                    missingSourceIds = w.missingSourceIds + sourceId
+                                ) 
+                            } }
                         },
                         { update ->
                             _state.update { it.updateWindow(windowId) { w -> 
@@ -481,11 +661,35 @@ class KLogViewerViewModel(
     private fun loadFilesIntoWindow(windowId: String, paths: List<String>, overrideParserName: String? = null) {
         val oldJob = logJobs[windowId]
 
-        val missingPaths = paths.filter { !File(it).exists() }
-        if (missingPaths.isNotEmpty()) {
-            _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.MISSING_FILE, missingPath = missingPaths.first()) }
+        val localPaths = paths.filter { !it.startsWith("sftp://") }
+        val sftpPaths = paths.filter { it.startsWith("sftp://") }
+
+        val missingLocalPaths = localPaths.filter { !File(it).exists() }
+        if (missingLocalPaths.isNotEmpty()) {
+            _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.MISSING_FILE, missingPath = missingLocalPaths.first()) }
             oldJob?.cancel()
             return
+        }
+
+        // If it's a single SFTP path, handle it separately to reuse connectSftp logic
+        if (paths.size == 1 && sftpPaths.size == 1) {
+            val uri = sftpPaths[0]
+            val config = findSftpConfig(uri)
+            val sftpUri = SftpUri.parse(uri)
+            if (config != null && sftpUri != null) {
+                connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path)
+                return
+            } else if (sftpUri != null) {
+                _state.update { it.updateWindow(windowId) { w ->
+                    w.copy(
+                        filePath = uri,
+                        sourceIds = listOf(uri),
+                        missingSourceIds = setOf(uri),
+                        error = "SFTP connection not found in preferences"
+                    )
+                } }
+                return
+            }
         }
 
         logJobs[windowId] = scope.launch {
@@ -519,78 +723,52 @@ class KLogViewerViewModel(
             
             savePreferences()
             
-            val flow = if (paths.size == 1) {
-                val path = paths[0]
-                if (File(path).isDirectory) {
-                    DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
+            val results = paths.map { path ->
+                if (path.startsWith("sftp://") || (File(path).exists() && File(path).isDirectory)) {
+                    null
                 } else {
                     val sampleLines = readSampleLines(path)
-                    val probeResult = if (overrideParserName != null) {
+                    if (overrideParserName != null) {
                         getParserResultByName(overrideParserName, sampleLines)
                     } else {
                         heuristicProbe.detect(sampleLines)
                     }
-                    
-                    _state.update { currentState ->
-                        currentState.copy(tabs = currentState.tabs.map { tab ->
-                            tab.copy(windows = tab.windows.map { window ->
-                                if (window.id == windowId) {
-                                    window.copy(
-                                        columns = probeResult.columns,
-                                        parserName = probeResult.parserName
-                                    )
-                                } else window
-                            })
-                        })
-                    }
-                    
-                    logSource.observeLogs(LogFilePath(path), probeResult.parser)
                 }
-            } else {
-                val results = paths.map { path ->
-                    if (File(path).isDirectory) {
-                        null
-                    } else {
-                        val sampleLines = readSampleLines(path)
-                        if (overrideParserName != null) {
-                            getParserResultByName(overrideParserName, sampleLines)
-                        } else {
-                            heuristicProbe.detect(sampleLines)
-                        }
-                    }
-                }
-                
-                _state.update { currentState ->
-                    currentState.copy(tabs = currentState.tabs.map { tab ->
-                        tab.copy(windows = tab.windows.map { window ->
-                            if (window.id == windowId) {
-                                window.copy(
-                                    columns = results.firstNotNullOfOrNull { it?.columns } ?: emptyList(),
-                                    parserName = if (results.size > 1 && overrideParserName == null) "Multiple" else (overrideParserName ?: results.firstOrNull()?.parserName ?: "Auto")
-                                )
-                            } else window
-                        })
+            }
+            
+            _state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    tab.copy(windows = tab.windows.map { window ->
+                        if (window.id == windowId) {
+                            window.copy(
+                                columns = results.firstNotNullOfOrNull { it?.columns } ?: listOf("Timestamp", "Level", "Content"),
+                                parserName = if (results.size > 1 && overrideParserName == null) "Multiple" else (overrideParserName ?: results.firstOrNull()?.parserName ?: "Auto")
+                            )
+                        } else window
                     })
-                }
-                
-                val sources = paths.mapIndexed { index, path ->
-                    if (File(path).isDirectory) {
-                        DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
+                })
+            }
+            
+            val flows = paths.mapIndexed { index, path ->
+                if (path.startsWith("sftp://")) {
+                    val config = findSftpConfig(path)
+                    val sftpUri = SftpUri.parse(path)
+                    if (config != null && sftpUri != null) {
+                        sftpSourceFactory(config).observeLogs(LogFilePath(sftpUri.path))
                     } else {
-                        logSource.observeLogs(LogFilePath(path), results[index]?.parser)
+                        flowOf(LogFailure.FileError("SFTP connection not found for $path", sourceId = path).left())
                     }
-                }
-                
-                // If we have mixed flows, MergedLogSource needs to be updated or we use flow.merge()
-                // For now, let's just use merge() if any is a directory.
-                if (paths.any { File(it).isDirectory }) {
-                    sources.merge()
+                } else if (File(path).isDirectory) {
+                    DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
                 } else {
-                    val legacySources = paths.mapIndexed { index, path ->
-                        Triple(logSource, LogFilePath(path), results[index]?.parser)
-                    }
-                    MergedLogSource(legacySources).observeMerged()
+                    logSource.observeLogs(LogFilePath(path), results[index]?.parser)
                 }
+            }
+
+            val flow = if (flows.size == 1) {
+                flows[0]
+            } else {
+                MergedLogSource(flows).observeMerged()
             }
             
             flow.collect { result ->
@@ -604,7 +782,10 @@ class KLogViewerViewModel(
                         _state.update { currentState ->
                             currentState.copy(tabs = currentState.tabs.map { tab ->
                                 tab.copy(windows = tab.windows.map { window ->
-                                    if (window.id == windowId) window.copy(isLoading = false, error = message) else window
+                                    if (window.id == windowId) {
+                                        val newMissing = if (failure.sourceId != null) window.missingSourceIds + failure.sourceId!! else window.missingSourceIds
+                                        window.copy(isLoading = false, error = message, missingSourceIds = newMissing)
+                                    } else window
                                 })
                             })
                         }

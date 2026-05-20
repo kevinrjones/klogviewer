@@ -3,28 +3,24 @@ package com.klogviewer.core.source
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import com.klogviewer.domain.parser.LogParser
 import com.klogviewer.domain.model.LogFailure
-import com.klogviewer.domain.model.LogFilePath
 import com.klogviewer.domain.model.LogUpdate
-import com.klogviewer.domain.repository.LogSource
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 
 private val logger = KotlinLogging.logger {}
 
 class MergedLogSource(
-    private val sources: List<Triple<LogSource, LogFilePath, LogParser?>>
+    private val flows: List<Flow<Either<LogFailure, LogUpdate>>>
 ) {
     fun observeMerged(): Flow<Either<LogFailure, LogUpdate>> = channelFlow {
-        logger.info { "Merging ${sources.size} log sources" }
-        if (sources.isEmpty()) {
+        logger.info { "Merging ${flows.size} log sources" }
+        if (flows.isEmpty()) {
             send(LogUpdate.Initial(emptyList()).right())
             return@channelFlow
         }
-
-        val flows = sources.map { (source, path, parser) -> source.observeLogs(path, parser) }
         
         // Track the current entries from each source for initial merge
         val currentEntries = mutableMapOf<Int, List<com.klogviewer.domain.model.LogEntry>>()
@@ -36,6 +32,14 @@ class MergedLogSource(
                     result.fold(
                         ifLeft = { 
                             logger.error { "Error in one of the merged sources: ${it}" }
+                            if (currentEntries[index] == null) {
+                                currentEntries[index] = emptyList()
+                                initializedCount++
+                                if (initializedCount == flows.size) {
+                                    val all = currentEntries.values.flatten().sortedBy { it.timestamp.value }
+                                    send(LogUpdate.Initial(all).right())
+                                }
+                            }
                             send(it.left()) 
                         },
                         ifRight = { update ->
@@ -43,7 +47,7 @@ class MergedLogSource(
                                 is LogUpdate.Initial -> {
                                     currentEntries[index] = update.entries
                                     initializedCount++
-                                    if (initializedCount == sources.size) {
+                                    if (initializedCount == flows.size) {
                                         val all = currentEntries.values.flatten().sortedBy { it.timestamp.value }
                                         send(LogUpdate.Initial(all).right())
                                     }

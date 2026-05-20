@@ -1,6 +1,7 @@
 package com.klogviewer.ui.mvi
 
 import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.SftpConfig
 
 sealed interface KLogViewerIntent {
     data class LoadFiles(val paths: List<String>) : KLogViewerIntent
@@ -35,7 +36,17 @@ sealed interface KLogViewerIntent {
         val auth: com.klogviewer.domain.model.SftpAuth,
         val path: String
     ) : KLogViewerIntent
-    data class SaveSftpConnection(val config: com.klogviewer.domain.model.SftpConfig) : KLogViewerIntent
+    data class ConnectMultipleSftp(
+        val config: SftpConfig,
+        val paths: List<String>
+    ) : KLogViewerIntent
+    data class ConnectSftpDirectory(
+        val config: SftpConfig,
+        val path: String
+    ) : KLogViewerIntent
+    data class BrowseSftp(val config: SftpConfig, val path: String) : KLogViewerIntent
+    data class NavigateRemote(val path: String) : KLogViewerIntent
+    data class SaveSftpConnection(val config: SftpConfig) : KLogViewerIntent
     data class DeleteSftpConnection(val name: String) : KLogViewerIntent
     data object DismissDialog : KLogViewerIntent
     data class RemoveRecentItem(val path: String) : KLogViewerIntent

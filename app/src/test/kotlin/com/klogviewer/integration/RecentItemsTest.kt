@@ -15,6 +15,7 @@ import org.junit.jupiter.api.io.TempDir
 import strikt.api.expectThat
 import strikt.assertions.*
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 class RecentItemsTest {
     @TempDir
@@ -25,7 +26,7 @@ class RecentItemsTest {
     @AfterEach
     fun tearDown() = runBlocking {
         viewModel?.clear()
-        kotlinx.coroutines.delay(200) // Give Windows time to release file handles
+        kotlinx.coroutines.delay(200.milliseconds) // Give Windows time to release file handles
     }
 
     @Test
@@ -48,10 +49,10 @@ class RecentItemsTest {
         // 1. Add both to recent items while they exist
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
         // Wait for the job to start and the file to be opened
-        kotlinx.coroutines.delay(100)
+        kotlinx.coroutines.delay(100.milliseconds)
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath))) // Load existing last so missing is not locked
         // Wait for the job to start and the file to be opened
-        kotlinx.coroutines.delay(100)
+        kotlinx.coroutines.delay(100.milliseconds)
 
         expectThat(vm.state.value.recentFiles).hasSize(2)
         expectThat(vm.state.value.recentFiles).contains(existingFile.absolutePath)
@@ -114,12 +115,12 @@ class RecentItemsTest {
         // 1. Load existing file
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))
         // Wait for logs to load and file to be opened
-        kotlinx.coroutines.delay(200)
+        kotlinx.coroutines.delay(200.milliseconds)
         
         // 2. Try to load missing file
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
         // Wait for cancellation to propagate
-        kotlinx.coroutines.delay(200)
+        kotlinx.coroutines.delay(200.milliseconds)
 
         // 3. Verify dialog is shown and path is set
         expectThat(vm.state.value.pendingDialog).isEqualTo(KLogViewerState.DialogType.MISSING_FILE)

@@ -37,7 +37,7 @@ class FileLogSource(
         val file = File(path.value)
         if (!file.exists()) {
             logger.error { "Log file does not exist: ${path.value}" }
-            emit(LogFailure.FileError("File does not exist: ${path.value}").left())
+            emit(LogFailure.FileError("File does not exist: ${path.value}", sourceId = path.value).left())
             return@flow
         }
 
@@ -120,7 +120,7 @@ class FileLogSource(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             logger.error(e) { "Error tailing log file: ${path.value}" }
-            emit(LogFailure.FileError("Error tailing log file: ${e.message}", e).left())
+            emit(LogFailure.FileError("Error tailing log file: ${e.message}", sourceId = path.value, cause = e).left())
         }
     }.flowOn(dispatcher)
 }

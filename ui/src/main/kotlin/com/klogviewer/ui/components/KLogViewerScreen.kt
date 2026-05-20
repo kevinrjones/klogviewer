@@ -28,6 +28,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.ui.mvi.KLogViewerIntent
+import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import java.io.File
@@ -171,8 +172,34 @@ fun KLogViewerScreen(
             onDelete = { name ->
                 viewModel.handleIntent(KLogViewerIntent.DeleteSftpConnection(name))
             },
+            onBrowse = { host, port, user, auth, path ->
+                val config = SftpConfig("Temporary", com.klogviewer.domain.model.Host(host), com.klogviewer.domain.model.Port(port), com.klogviewer.domain.model.Username(user), auth)
+                viewModel.handleIntent(KLogViewerIntent.BrowseSftp(config, path))
+            },
             onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
             dialogProvider = dialogProvider
+        )
+    }
+
+    if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_BROWSE) {
+        RemoteFileBrowserDialog(
+            files = state.remoteFiles,
+            currentPath = state.remoteBrowsePath,
+            isLoading = state.isRemoteLoading,
+            onNavigate = { path -> viewModel.handleIntent(KLogViewerIntent.NavigateRemote(path)) },
+            onSelectFiles = { paths ->
+                val config = state.currentSftpConfig
+                if (config != null) {
+                    viewModel.handleIntent(KLogViewerIntent.ConnectMultipleSftp(config, paths))
+                }
+            },
+            onSelectDirectory = { path ->
+                val config = state.currentSftpConfig
+                if (config != null) {
+                    viewModel.handleIntent(KLogViewerIntent.ConnectSftpDirectory(config, path))
+                }
+            },
+            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
         )
     }
 
