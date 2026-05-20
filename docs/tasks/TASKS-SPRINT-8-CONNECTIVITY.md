@@ -43,6 +43,7 @@
 - [x] 13.4.10. Persist connection state in user preferences
 - [x] 13.4.11. Fix SFTP directory restoration and parser name persistence on startup
 - [x] 13.4.12. Ensure all remote connections are auto-saved and persisted when first opened
+- [x] 13.4.13. Support adding remote SFTP logs to existing workspace via "+" button dropdown
 
 ### 13.5. Verification & Testing
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server

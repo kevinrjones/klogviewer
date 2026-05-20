@@ -258,11 +258,13 @@ class KLogViewerViewModel(
                 }
             }
             KLogViewerIntent.CopySelected -> copySelectedToClipboard()
-            KLogViewerIntent.ShowOpenDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN) }
-            KLogViewerIntent.ShowOpenDirectoryDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY) }
-            KLogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD) }
+            KLogViewerIntent.ShowOpenDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN, isAddMode = false) }
+            KLogViewerIntent.ShowOpenDirectoryDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY, isAddMode = false) }
+            KLogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD, isAddMode = true) }
+            KLogViewerIntent.ShowAddDirectoryDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD_DIRECTORY, isAddMode = true) }
+            KLogViewerIntent.ShowAddSftpDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_ADD, isAddMode = true) }
             KLogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
-            KLogViewerIntent.ShowSftpDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_CONNECT) }
+            KLogViewerIntent.ShowSftpDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_CONNECT, isAddMode = false) }
             is KLogViewerIntent.ConnectSftp -> {
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
                 if (activeWindowId != null) {
@@ -270,38 +272,46 @@ class KLogViewerViewModel(
                     
                     saveSftpConnection(config)
 
-                    // Check if it's a directory or a file
-                    scope.launch {
-                        _state.update { it.copy(isRemoteLoading = true) }
-                        val result = remoteFileSystem.listFiles(config, intent.path)
-                        _state.update { it.copy(isRemoteLoading = false) }
-                        
-                        result.fold(
-                            { _ ->
-                                // If listFiles fails, it might be a file or just permission error.
-                                // We try to connect as a file anyway.
-                                connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
-                                _state.update { it.copy(pendingDialog = null) }
-                            },
-                            { files ->
-                                val exactMatch = files.find { it.path == intent.path || it.path == intent.path.removeSuffix("/") + "/" + it.name }
-                                
-                                if (files.size == 1 && exactMatch != null && !exactMatch.isDirectory) {
+                    if (intent.addToWorkspace) {
+                        // For adding to workspace, we skip directory discovery and just add the path
+                        // If it's a directory, SftpDirectoryLogSource will be handled in loadFilesIntoWindow
+                        val sftpUri = SftpUri(config.username.value, config.host.value, config.port.value, intent.path).toString()
+                        val currentPaths = _state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
+                        val newPaths = (currentPaths + sftpUri).distinct()
+                        loadFilesIntoWindow(activeWindowId, newPaths)
+                        _state.update { it.copy(pendingDialog = null) }
+                    } else {
+                        // Check if it's a directory or a file for replacement mode
+                        scope.launch {
+                            _state.update { it.copy(isRemoteLoading = true) }
+                            val result = remoteFileSystem.listFiles(config, intent.path)
+                            _state.update { it.copy(isRemoteLoading = false) }
+                            
+                            result.fold(
+                                { _ ->
                                     connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
                                     _state.update { it.copy(pendingDialog = null) }
-                                } else {
-                                    // It's a directory or multiple files
-                                    _state.update { 
-                                        it.copy(
-                                            remoteFiles = files.filter { f -> f.name != "." && f.name != ".." },
-                                            remoteBrowsePath = intent.path,
-                                            currentSftpConfig = config,
-                                            pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE
-                                        ) 
+                                },
+                                { files ->
+                                    val exactMatch = files.find { it.path == intent.path || it.path == intent.path.removeSuffix("/") + "/" + it.name }
+                                    
+                                    if (files.size == 1 && exactMatch != null && !exactMatch.isDirectory) {
+                                        connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
+                                        _state.update { it.copy(pendingDialog = null) }
+                                    } else {
+                                        _state.update { 
+                                            it.copy(
+                                                remoteFiles = files.filter { f -> f.name != "." && f.name != ".." },
+                                                remoteBrowsePath = intent.path,
+                                                currentSftpConfig = config,
+                                                pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE,
+                                                isAddMode = intent.addToWorkspace
+                                            ) 
+                                        }
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }
@@ -309,7 +319,14 @@ class KLogViewerViewModel(
                 saveSftpConnection(intent.config)
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
                 if (activeWindowId != null) {
-                    connectMultipleSftp(activeWindowId, intent.config, intent.paths)
+                    if (intent.addToWorkspace) {
+                        val newUris = intent.paths.map { "sftp://${intent.config.username.value}@${intent.config.host.value}:${intent.config.port.value}$it" }
+                        val currentPaths = _state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
+                        val newPaths = (currentPaths + newUris).distinct()
+                        loadFilesIntoWindow(activeWindowId, newPaths)
+                    } else {
+                        connectMultipleSftp(activeWindowId, intent.config, intent.paths)
+                    }
                 }
                 _state.update { it.copy(pendingDialog = null) }
             }
@@ -317,7 +334,14 @@ class KLogViewerViewModel(
                 saveSftpConnection(intent.config)
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
                 if (activeWindowId != null) {
-                    connectSftpDirectory(activeWindowId, intent.config, intent.path)
+                    if (intent.addToWorkspace) {
+                        val sftpUri = SftpUri(intent.config.username.value, intent.config.host.value, intent.config.port.value, intent.path, isDirectory = true).toString()
+                        val currentPaths = _state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
+                        val newPaths = (currentPaths + sftpUri).distinct()
+                        loadFilesIntoWindow(activeWindowId, newPaths)
+                    } else {
+                        connectSftpDirectory(activeWindowId, intent.config, intent.path)
+                    }
                 }
                 _state.update { it.copy(pendingDialog = null) }
             }

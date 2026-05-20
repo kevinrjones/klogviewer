@@ -29,6 +29,8 @@ fun FilterBar(
     onRemoveQuery: (String) -> Unit,
     onClearQueries: () -> Unit,
     onAddClick: () -> Unit,
+    onAddDirectoryClick: () -> Unit,
+    onAddSftpClick: () -> Unit,
     onToggleTheme: () -> Unit,
     onToggleSidebar: () -> Unit,
     isReversed: Boolean,
@@ -56,7 +58,60 @@ fun FilterBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // File Actions
-            FilterBarIcon(icon = Icons.Default.AddCircle, tooltip = "Add File to Workspace", onClick = onAddClick)
+            Box {
+                var menuExpanded by remember { mutableStateOf(false) }
+                FilterBarIcon(
+                    icon = Icons.Default.AddCircle, 
+                    tooltip = "Add Logs to Workspace", 
+                    onClick = { menuExpanded = true },
+                    testTag = "add_file_to_workspace"
+                )
+                
+                DropdownMenu(
+                    expanded = menuExpanded,
+                    onDismissRequest = { menuExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        onClick = {
+                            menuExpanded = false
+                            onAddClick() // This still triggers ShowAddDialog (Local File)
+                        },
+                        modifier = Modifier.testTag("add_local_file_item")
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Add Local File...")
+                        }
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            menuExpanded = false
+                            onAddDirectoryClick()
+                        },
+                        modifier = Modifier.testTag("add_local_directory_item")
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Add Local Directory...")
+                        }
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            menuExpanded = false
+                            onAddSftpClick()
+                        },
+                        modifier = Modifier.testTag("add_remote_sftp_item")
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Cloud, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Add Remote SFTP...")
+                        }
+                    }
+                }
+            }
             
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
             
@@ -169,9 +224,10 @@ private fun FilterBarIcon(
     icon: ImageVector,
     tooltip: String,
     onClick: () -> Unit,
-    tint: Color = LocalContentColor.current
+    tint: Color = LocalContentColor.current,
+    testTag: String? = null
 ) {
-    val tag = tooltip.lowercase().replace(" ", "_")
+    val tag = testTag ?: tooltip.lowercase().replace(" ", "_")
     TooltipWrapper(tooltip = tooltip) {
         IconButton(onClick = onClick, modifier = Modifier.size(28.dp).testTag(tag)) {
             Icon(icon, contentDescription = tooltip, modifier = Modifier.size(18.dp), tint = tint)
