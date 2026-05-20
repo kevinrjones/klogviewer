@@ -26,6 +26,14 @@ sealed interface KLogViewerIntent {
     data object ShowOpenDirectoryDialog : KLogViewerIntent
     data object ShowAddDialog : KLogViewerIntent
     data object ShowRecentDialog : KLogViewerIntent
+    data object ShowSftpDialog : KLogViewerIntent
+    data class ConnectSftp(
+        val host: String,
+        val port: Int,
+        val user: String,
+        val auth: com.klogviewer.domain.model.SftpAuth,
+        val path: String
+    ) : KLogViewerIntent
     data object DismissDialog : KLogViewerIntent
     data class RemoveRecentItem(val path: String) : KLogViewerIntent
     data object ClearMissingRecentItems : KLogViewerIntent

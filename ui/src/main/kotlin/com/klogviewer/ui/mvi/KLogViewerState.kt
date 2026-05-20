@@ -58,7 +58,7 @@ data class KLogViewerState(
     val pendingDialog: DialogType? = null,
     val missingPath: String? = null
 ) {
-    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, RECENT_ITEMS, MISSING_FILE }
+    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, RECENT_ITEMS, MISSING_FILE, SFTP_CONNECT }
     val activeTab: TabState? get() = tabs.find { it.id == activeTabId }
 
     fun updateActiveTab(block: (TabState) -> TabState): KLogViewerState {

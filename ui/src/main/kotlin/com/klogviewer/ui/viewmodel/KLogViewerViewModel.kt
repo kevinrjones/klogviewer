@@ -5,6 +5,7 @@ import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.core.parser.*
 import com.klogviewer.core.source.DirectoryLogSource
 import com.klogviewer.core.source.MergedLogSource
+import com.klogviewer.core.source.SftpLogSource
 import com.klogviewer.core.repository.PreferencesRepository
 import com.klogviewer.ui.mvi.*
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -250,6 +251,14 @@ class KLogViewerViewModel(
             KLogViewerIntent.ShowOpenDirectoryDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY) }
             KLogViewerIntent.ShowAddDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD) }
             KLogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
+            KLogViewerIntent.ShowSftpDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_CONNECT) }
+            is KLogViewerIntent.ConnectSftp -> {
+                val activeWindowId = _state.value.activeTab?.activeWindow?.id
+                if (activeWindowId != null) {
+                    connectSftp(activeWindowId, intent.host, intent.port, intent.user, intent.auth, intent.path)
+                }
+                _state.update { it.copy(pendingDialog = null) }
+            }
             KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null, missingPath = null) }
             is KLogViewerIntent.RemoveRecentItem -> {
                 _state.update { currentState ->
@@ -383,6 +392,55 @@ class KLogViewerViewModel(
         }
         filterLogs(activeWindow.id)
         savePreferences()
+    }
+
+    private fun connectSftp(windowId: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) {
+        val config = SftpConfig(Host(host), Port(port), Username(user), auth)
+        val sftpSource = SftpLogSource(config, SimpleLogParser())
+        
+        val oldJob = logJobs[windowId]
+        
+        logJobs[windowId] = scope.launch {
+            oldJob?.cancelAndJoin()
+            
+            val sourceId = "sftp://$user@$host:$port$path"
+            
+            _state.update { currentState ->
+                currentState.updateWindow(windowId) { window ->
+                    window.copy(
+                        isLoading = true,
+                        error = null,
+                        filePath = sourceId,
+                        sourceIds = listOf(sourceId),
+                        logs = emptyList(),
+                        columns = listOf("Timestamp", "Level", "Content")
+                    )
+                }
+            }
+            
+            val parser = SimpleLogParser()
+            
+            sftpSource.observeLogs(LogFilePath(path), parser)
+                .collect { result ->
+                    result.fold(
+                        { error ->
+                            _state.update { it.updateWindow(windowId) { w -> w.copy(error = error.message, isLoading = false) } }
+                        },
+                        { update ->
+                            _state.update { it.updateWindow(windowId) { w -> 
+                                val newLogs = when (update) {
+                                    is LogUpdate.Initial -> update.entries
+                                    is LogUpdate.Appended -> w.logs + update.entries
+                                    LogUpdate.Reset -> emptyList()
+                                    is LogUpdate.SourceMissing -> w.logs // Handle appropriately
+                                }
+                                w.copy(logs = newLogs, isLoading = false) 
+                            } }
+                            filterLogs(windowId)
+                        }
+                    )
+                }
+        }
     }
 
     private fun loadFilesIntoWindow(windowId: String, paths: List<String>, overrideParserName: String? = null) {

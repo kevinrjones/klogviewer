@@ -7,6 +7,8 @@ cucumber = "7.34.3"
 junit = "6.0.3"
 junit4 = "4.13.2"
 kluent = "1.73"
+sshj = "0.40.0"
+sshd = "2.17.1"
 kotlin = "2.3.21"
 kotlin-logging = "8.0.02"
 kotlinx-serialization = "1.11.0"
@@ -30,6 +32,9 @@ junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher
 junit-platform-suite = { module = "org.junit.platform:junit-platform-suite" }
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 kluent = { module = "org.amshove.kluent:kluent", version.ref = "kluent" }
+sshj = { module = "com.hierynomus:sshj", version.ref = "sshj" }
+sshd-core = { module = "org.apache.sshd:sshd-core", version.ref = "sshd" }
+sshd-sftp = { module = "org.apache.sshd:sshd-sftp", version.ref = "sshd" }
 kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
