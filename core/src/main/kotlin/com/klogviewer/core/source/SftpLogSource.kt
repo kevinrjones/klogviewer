@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.klogviewer.core.parser.MultilineProcessor
 import com.klogviewer.core.parser.TemplateLogParser
+import com.klogviewer.core.util.withRetry
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.parser.LogParser
 import com.klogviewer.domain.repository.LogSource
@@ -17,6 +18,7 @@ import net.schmizz.sshj.SSHClient
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -36,26 +38,33 @@ class SftpLogSource(
         val sourceId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}${path.value}"
         logger.info { "Started observing remote log file: $sourceId using ${effectiveParser::class.simpleName}" }
 
-        val client = sshClientProvider.createClient()
-        client.addHostKeyVerifier(PromiscuousVerifier())
-        
-        try {
+        val client = withRetry(maxRetries = 3) {
+            val c = sshClientProvider.createClient()
+            c.addHostKeyVerifier(PromiscuousVerifier())
             withContext(Dispatchers.IO) {
-                client.connect(config.host.value, config.port.value)
+                c.connect(config.host.value, config.port.value)
                 
-                when (val auth = config.auth) {
-                    is SftpAuth.Password -> client.authPassword(config.username.value, auth.password)
-                    is SftpAuth.KeyPair -> {
-                        val keyProvider = if (!auth.passphrase.isNullOrBlank()) {
-                            client.loadKeys(auth.privateKeyPath, auth.passphrase)
-                        } else {
-                            client.loadKeys(auth.privateKeyPath)
+                try {
+                    when (val auth = config.auth) {
+                        is SftpAuth.Password -> c.authPassword(config.username.value, auth.password)
+                        is SftpAuth.KeyPair -> {
+                            val keyProvider = if (!auth.passphrase.isNullOrBlank()) {
+                                c.loadKeys(auth.privateKeyPath, auth.passphrase)
+                            } else {
+                                c.loadKeys(auth.privateKeyPath)
+                            }
+                            c.authPublickey(config.username.value, keyProvider)
                         }
-                        client.authPublickey(config.username.value, keyProvider)
                     }
+                } catch (e: Exception) {
+                    try { c.disconnect(); c.close() } catch (_: Exception) {}
+                    throw e
                 }
             }
-
+            c
+        }
+        
+        try {
             client.startSession().use { session ->
                 val command = session.exec("tail -n +1 -f \"${path.value}\"")
                 val errorReader = BufferedReader(InputStreamReader(command.errorStream))
@@ -76,7 +85,7 @@ class SftpLogSource(
                                 val error = withContext(Dispatchers.IO) { 
                                     if (errorReader.ready()) errorReader.readLine() else null 
                                 } ?: "Remote process exited with status $exitStatus"
-                                emit(LogFailure.FileError("Remote error: $error").left())
+                                emit(LogFailure.FileError("Remote error: $error", sourceId = sourceId).left())
                                 return@use
                             }
                             
@@ -91,7 +100,7 @@ class SftpLogSource(
                             }
                             
                             // Small delay to avoid tight loop when no data is available
-                            delay(100)
+                            delay(100.milliseconds)
                             if (withContext(Dispatchers.IO) { reader.ready() }) {
                                 withContext(Dispatchers.IO) { reader.readLine() }
                             } else null
@@ -102,14 +111,14 @@ class SftpLogSource(
                                 val error = withContext(Dispatchers.IO) {
                                     if (errorReader.ready()) errorReader.readLine() else null
                                 } ?: "File not found or inaccessible"
-                                emit(LogFailure.FileError("Remote file not found or inaccessible: ${path.value} ($error)").left())
-                            } else if (isInitial) {
+                                emit(LogFailure.FileError("Remote file not found or inaccessible: ${path.value} ($error)", sourceId = sourceId).left())
+                            } else {
                                 // If we are still in initial phase and stream closed, check if anything on stderr
                                 val error = withContext(Dispatchers.IO) {
                                     if (errorReader.ready()) errorReader.readLine() else null
                                 }
                                 if (error != null) {
-                                    emit(LogFailure.FileError("Remote error: $error").left())
+                                    emit(LogFailure.FileError("Remote error: $error", sourceId = sourceId).left())
                                 } else {
                                     // Just emit empty initial if we didn't find anything
                                     emit(LogUpdate.Initial(emptyList<LogEntry>()).right())
@@ -138,7 +147,7 @@ class SftpLogSource(
         } catch (e: Exception) {
             if (e is CancellationException || e.cause is InterruptedException) throw e
             logger.error(e) { "Error tailing remote log file: $sourceId" }
-            emit(LogFailure.FileError("Error tailing remote log file: ${e.message}", e).left())
+            emit(LogFailure.FileError("Error tailing remote log file: ${e.message}", sourceId = sourceId, cause = e).left())
         } finally {
             withContext(NonCancellable) {
                 try {

@@ -7,6 +7,9 @@
 - [x] 13.1.2. Support for SSH key-based authentication
 - [x] 13.1.3. Support for password authentication
 - [x] 13.1.4. Use SSH tailing (`tail -f`) for real-time remote updates
+- [x] 13.1.5. Implement remote directory browsing and multi-file selection
+- [x] 13.1.6. Support loading all logs from a remote subdirectory
+- [x] 13.1.7. Implement connection retry and staggered loading for robustness
 
 ### 13.2. Cloud Integration (ADR 010)
 - [ ] 13.2.1. Implement `S3LogSource` for reading logs from AWS S3 buckets
@@ -25,6 +28,8 @@
 - [x] 13.4.4. Implement Tab navigation in all application dialogs (UX refinement)
 - [x] 13.4.5. Update tab title when connecting to remote log sources
 - [x] 13.4.6. Automatically save SFTP connection details upon connecting
+- [x] 13.4.7. Restore SFTP log sources on application startup
+- [x] 13.4.8. Mark failed/missing remote sources in UI (red bar, strike-through)
 
 ### 13.5. Verification & Testing
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server

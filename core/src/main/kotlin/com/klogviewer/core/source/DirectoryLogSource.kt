@@ -11,6 +11,7 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -25,7 +26,7 @@ class DirectoryLogSource(
     override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = channelFlow {
         val root = File(path.value)
         if (!root.exists() || !root.isDirectory) {
-            send(LogFailure.FileError("Not a directory: ${path.value}").left())
+            send(LogFailure.FileError("Not a directory: ${path.value}", sourceId = path.value).left())
             return@channelFlow
         }
 
@@ -58,8 +59,8 @@ class DirectoryLogSource(
                     activeSources[file] = launch {
                         val sampleLines = try {
                             File(file).useLines { it.take(50).toList() }
-                        } catch (e: Exception) {
-                            emptyList<String>()
+                        } catch (_: Exception) {
+                            emptyList()
                         }
                         val effectiveParser = parser ?: heuristicProbe.detect(sampleLines).parser
                         
@@ -104,7 +105,7 @@ class DirectoryLogSource(
                 initialized = true
             }
 
-            delay(rescanIntervalMs)
+            delay(rescanIntervalMs.milliseconds)
         }
     }.flowOn(dispatcher)
 }

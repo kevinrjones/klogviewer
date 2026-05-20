@@ -1,3 +1,32 @@
+# 2026-05-20
+
+## 13:10
+
+### SFTP Session Restoration and Missing File Indicators
+
+Implemented automatic reloading of SFTP log sources on application startup and added visual indicators for missing or failed log sources.
+
+#### Changes:
+- **SFTP Restoration**: Updated `KLogViewerViewModel` to parse SFTP URIs and match them against saved configurations during initialization. This allows previously open remote log streams to be restored automatically.
+- **Missing File Indicators**: 
+    - Enhanced `LogFailure` with `sourceId` to track which specific source failed to load.
+    - Updated `KLogViewerViewModel` to populate `missingSourceIds` when a `LogFailure` occurs.
+    - Ensured that both local and remote files that fail to load are marked in the UI with a red bar and strike-through text decoration.
+- **MergedLogSource**: Refactored to be more generic, accepting a list of flows, and improved robustness to proceed with partial results if some sources fail during initial merge.
+- **Verification**: Added `SftpReloadTest.kt` integration test and confirmed that failed remote connections are correctly signaled in the application state.
+
+## 12:45
+
+### Robust SFTP Connections: Retry Mechanism and Staggered Loading
+
+Addressed `TransportException`s during SFTP connections by implementing a retry mechanism and optimizing simultaneous connection attempts.
+
+#### Changes:
+- **Core Utility**: Created `RetryUtils.kt` providing a generic `withRetry` helper with exponential backoff for suspend functions.
+- **SFTP Stability**: Updated `SftpLogSource` and `SftpFileSystem` to use the retry mechanism for initial SSH connections and authentication. This mitigates transient network issues and server-side rate limiting (e.g., `Connection reset` or `Server closed connection during identification exchange`).
+- **Directory Loading Optimization**: Added a staggered delay (200ms per file) when discovering multiple files in `SftpDirectoryLogSource`. This prevents hammering the SSH server with dozens of simultaneous connection requests, which previously triggered server-side safety limits.
+- **Verification**: Verified the implementation with new `RetryUtilsTest` and confirmed that existing SFTP unit and integration tests continue to pass.
+
 # 2026-05-19
 
 ## 14:05

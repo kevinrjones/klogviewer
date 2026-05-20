@@ -19,6 +19,7 @@ import strikt.assertions.isA
 import strikt.assertions.isEqualTo
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
+import kotlin.time.Duration.Companion.milliseconds
 
 class SftpLogSourceTest {
 
@@ -51,12 +52,12 @@ class SftpLogSourceTest {
             pipedOut.flush()
             
             // Give it a moment to process initial
-            delay(50)
+            delay(50.milliseconds)
             
             pipedOut.write("2026-05-20 08:00:01 INFO Appended\n".toByteArray())
             pipedOut.flush()
             
-            delay(50)
+            delay(50.milliseconds)
             pipedOut.close() // Close pipe to end the flow
         }
 

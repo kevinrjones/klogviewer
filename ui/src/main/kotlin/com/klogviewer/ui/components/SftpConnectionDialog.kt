@@ -4,21 +4,20 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import com.klogviewer.domain.model.*
 
 @Composable
@@ -27,6 +26,7 @@ fun SftpConnectionDialog(
     onConnect: (name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -> Unit,
     onSave: (SftpConfig) -> Unit,
     onDelete: (String) -> Unit,
+    onBrowse: (host: String, port: Int, user: String, auth: SftpAuth, path: String) -> Unit,
     onDismiss: () -> Unit,
     dialogProvider: DialogProvider = AwtDialogProvider()
 ) {
@@ -228,15 +228,32 @@ fun SftpConnectionDialog(
                 }
                 
                 Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = path,
-                    onValueChange = { path = it },
-                    label = { Text("Log File Path") },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    OutlinedTextField(
+                        value = path,
+                        onValueChange = { path = it },
+                        label = { Text("Log File Path") },
+                        modifier = Modifier.weight(1f),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() })
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = {
+                            val auth = if (authType == 0) {
+                                SftpAuth.Password(password)
+                            } else {
+                                SftpAuth.KeyPair(keyPath, passphrase.takeIf { it.isNotBlank() })
+                            }
+                            onBrowse(host, port.toIntOrNull() ?: 22, user, auth, path)
+                        },
+                        enabled = host.isNotBlank() && user.isNotBlank(),
+                        modifier = Modifier.padding(top = 8.dp)
+                    ) {
+                        Text("Browse")
+                    }
+                }
             }
         },
         confirmButton = {

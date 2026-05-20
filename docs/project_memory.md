@@ -46,6 +46,9 @@
 - Keyboard Shortcuts: Added Cmd+W to close active tab, Cmd+N for new tab, and Cmd+C to copy selected logs.
 - Multi-selection: Implemented multi-selection in log list (Shift+Click for range, Cmd+Click for toggle).
 - ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
+- SFTP Session Restoration: Implemented automatic reloading of SFTP log sources on startup by matching stored URIs with connection profiles.
+- Missing File Indicators: Added visual indicators (red text, strike-through) for both local and remote files that fail to load or disappear.
+- Robust SFTP Connections: Implemented a retry mechanism with exponential backoff for SSH connections and authentication. Added staggered connection loading (200ms delay) in `SftpDirectoryLogSource` to prevent server-side rate limiting when observing multiple remote files.
 - Sprint 8: Connectivity & Remote Sources initiated with dedicated feature branch and task tracking.
 - SFTP Support: Implemented real-time log tailing over SFTP with support for password and key-pair authentication.
 - SFTP Connection Management: Added support for saving, loading, and deleting SFTP connection profiles in user preferences.

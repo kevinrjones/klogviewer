@@ -31,7 +31,7 @@ class PersistenceIntegrationTest {
     @AfterEach
     fun tearDown() = runBlocking {
         viewModel?.clear()
-        kotlinx.coroutines.delay(200)
+        kotlinx.coroutines.delay(200.milliseconds)
     }
 
     @Test
