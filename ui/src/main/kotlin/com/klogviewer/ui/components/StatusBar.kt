@@ -21,6 +21,7 @@ fun StatusBar(
     availableParsers: List<String> = emptyList(),
     onParserSelect: (String) -> Unit = {},
     isMissing: Boolean = false,
+    isConnected: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     var showParserMenu by remember { mutableStateOf(false) }
@@ -29,7 +30,11 @@ fun StatusBar(
         modifier = modifier
             .fillMaxWidth()
             .height(24.dp),
-        color = if (isMissing) Color.Red else MaterialTheme.colors.primary,
+        color = when {
+            isMissing -> Color.Red
+            !isConnected -> Color.Gray
+            else -> MaterialTheme.colors.primary
+        },
         contentColor = MaterialTheme.colors.onPrimary
     ) {
         Row(
@@ -38,7 +43,11 @@ fun StatusBar(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = if (filePath.isEmpty()) "No file loaded" else filePath,
+                text = when {
+                    filePath.isEmpty() -> "No file loaded"
+                    !isConnected -> "$filePath (Disconnected)"
+                    else -> filePath
+                },
                 style = MaterialTheme.typography.caption.copy(
                     textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
                 ),

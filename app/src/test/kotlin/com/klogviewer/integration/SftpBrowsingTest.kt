@@ -7,6 +7,7 @@ import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.PreferencesRepository
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.domain.model.*
+import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.domain.repository.RemoteFileSystem
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
@@ -37,7 +38,16 @@ class SftpBrowsingTest {
     private val source = FileLogSource(parser)
     private val prefsRepository by lazy { PreferencesRepository(tempDir) }
     private val remoteFileSystem = mockk<RemoteFileSystem>()
-    private val viewModel by lazy { KLogViewerViewModel(source, prefsRepository, heuristicProbe, remoteFileSystem = remoteFileSystem) }
+    private val mockSftpSource = mockk<LogSource>(relaxed = true)
+    private val viewModel by lazy { 
+        KLogViewerViewModel(
+            source, 
+            prefsRepository, 
+            heuristicProbe, 
+            remoteFileSystem = remoteFileSystem,
+            sftpSourceFactory = { _, _ -> mockSftpSource }
+        ) 
+    }
 
     @BeforeEach
     fun setup() {

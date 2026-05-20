@@ -24,7 +24,14 @@ class SftpPersistenceTest {
     private val heuristicProbe = HeuristicProbe(registry)
     private val source = FileLogSource(parser)
     private val prefsRepository by lazy { PreferencesRepository(tempDir) }
-    private val viewModel by lazy { KLogViewerViewModel(source, prefsRepository, heuristicProbe) }
+    private val viewModel by lazy { 
+        KLogViewerViewModel(
+            source, 
+            prefsRepository, 
+            heuristicProbe,
+            sftpSourceFactory = { _, _ -> io.mockk.mockk(relaxed = true) }
+        ) 
+    }
 
     @AfterEach
     fun tearDown() {

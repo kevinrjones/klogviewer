@@ -43,15 +43,17 @@ class SftpFileSystem(
 
                     client.newSFTPClient().use { sftp ->
                         val entries = sftp.ls(path)
-                        entries.map { entry ->
-                            RemoteFile(
-                                name = entry.name,
-                                path = if (path.endsWith("/")) "$path${entry.name}" else "$path/${entry.name}",
-                                isDirectory = entry.isDirectory,
-                                size = entry.attributes.size,
-                                lastModified = entry.attributes.mtime
-                            )
-                        }
+                        entries
+                            .filter { it.name != "." && it.name != ".." }
+                            .map { entry ->
+                                RemoteFile(
+                                    name = entry.name,
+                                    path = if (path.endsWith("/")) "$path${entry.name}" else "$path/${entry.name}",
+                                    isDirectory = entry.isDirectory,
+                                    size = entry.attributes.size,
+                                    lastModified = entry.attributes.mtime
+                                )
+                            }
                     }
                 } finally {
                     try {

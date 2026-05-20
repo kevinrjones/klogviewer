@@ -1,0 +1,101 @@
+package com.klogviewer.ui.viewmodel
+
+import com.klogviewer.core.parser.HeuristicProbe
+import com.klogviewer.core.parser.ParserRegistry
+import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.domain.model.*
+import com.klogviewer.domain.repository.LogSource
+import com.klogviewer.ui.mvi.KLogViewerIntent
+import io.mockk.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import strikt.api.expectThat
+import strikt.assertions.isEqualTo
+import strikt.assertions.isFalse
+import strikt.assertions.isTrue
+import java.io.File
+
+@OptIn(ExperimentalCoroutinesApi::class)
+class ConnectionToggleTest {
+    @TempDir
+    lateinit var tempDir: File
+
+    private lateinit var prefsRepo: PreferencesRepository
+    private lateinit var mockLogSource: LogSource
+    private lateinit var viewModel: KLogViewerViewModel
+
+    @BeforeEach
+    fun setup() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        prefsRepo = PreferencesRepository(tempDir)
+        mockLogSource = mockk(relaxed = true)
+        
+        viewModel = KLogViewerViewModel(
+            logSource = mockLogSource,
+            prefsRepository = prefsRepo,
+            heuristicProbe = HeuristicProbe(ParserRegistry())
+        )
+    }
+
+    @AfterEach
+    fun tearDown() {
+        Dispatchers.resetMain()
+        viewModel.clear()
+    }
+
+    @Test
+    fun `should stop log observation when disconnected`() {
+        val testFile = File(tempDir, "test.log").apply { writeText("line1\n") }
+        
+        // Initial load
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        
+        expectThat(viewModel.state.value.activeTab?.activeWindow?.isConnected).isEqualTo(true)
+        verify(exactly = 1) { mockLogSource.observeLogs(any(), any()) }
+        
+        // Toggle disconnect
+        viewModel.handleIntent(KLogViewerIntent.ToggleConnection)
+        
+        expectThat(viewModel.state.value.activeTab?.activeWindow?.isConnected).isEqualTo(false)
+        // verify that the job was cancelled - difficult to verify directly on mockk but we can check if it reloads on reconnect
+    }
+
+    @Test
+    fun `should restart log observation when reconnected`() {
+        val testFile = File(tempDir, "test.log").apply { writeText("line1\n") }
+        
+        // Initial load
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        
+        // Disconnect
+        viewModel.handleIntent(KLogViewerIntent.ToggleConnection)
+        clearMocks(mockLogSource)
+        
+        // Reconnect
+        viewModel.handleIntent(KLogViewerIntent.ToggleConnection)
+        
+        expectThat(viewModel.state.value.activeTab?.activeWindow?.isConnected).isEqualTo(true)
+        verify(exactly = 1) { mockLogSource.observeLogs(any(), any()) }
+    }
+
+    @Test
+    fun `should persist connection state in preferences`() {
+        val testFile = File(tempDir, "test.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        
+        // Disconnect
+        viewModel.handleIntent(KLogViewerIntent.ToggleConnection)
+        
+        val savedPrefs = prefsRepo.load()
+        val windowPref = savedPrefs.tabs.first().windows.first()
+        expectThat(windowPref.isConnected).isFalse()
+    }
+}

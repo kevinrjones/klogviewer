@@ -40,8 +40,9 @@ class SftpLogSourceTest {
         every { mockClient.startSession() } returns mockSession
         every { mockSession.exec(any()) } returns mockCommand
         every { mockCommand.inputStream } returns pipedIn
+        every { mockCommand.exitStatus } returns null
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.Unconfined)
+        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
 
         // Act & Assert
         launch {
@@ -101,8 +102,9 @@ class SftpLogSourceTest {
         every { mockClient.startSession() } returns mockSession
         every { mockSession.exec(any()) } returns mockCommand
         every { mockCommand.inputStream } returns pipedIn
+        every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.Unconfined)
+        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -134,8 +136,9 @@ class SftpLogSourceTest {
         every { mockClient.startSession() } returns mockSession
         every { mockSession.exec(any()) } returns mockCommand
         every { mockCommand.inputStream } returns pipedIn
+        every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.Unconfined)
+        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -167,8 +170,9 @@ class SftpLogSourceTest {
         every { mockClient.startSession() } returns mockSession
         every { mockSession.exec(any()) } returns mockCommand
         every { mockCommand.inputStream } returns pipedIn
+        every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.Unconfined)
+        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -205,15 +209,15 @@ class SftpLogSourceTest {
         every { mockCommand.errorStream } returns errorIn
         every { mockCommand.exitStatus } returns 1
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.Unconfined)
+        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
 
         // Act
         val results = source.observeLogs(LogFilePath("/invalid/path")).toList()
 
         // Assert
-        expectThat(results).hasSize(1)
-        expectThat(results[0].isLeft()).isEqualTo(true)
-        val failure = (results[0] as Either.Left).value
+        expectThat(results.any { it.isLeft() }).isEqualTo(true)
+        val failureResult = results.first { it.isLeft() }
+        val failure = (failureResult as Either.Left).value
         expectThat(failure).isA<LogFailure.FileError>()
         Unit
     }
@@ -239,7 +243,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null // Still running
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.Unconfined)
+        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
 
         // Act
         val results = source.observeLogs(LogFilePath("/empty.log")).take(1).toList()

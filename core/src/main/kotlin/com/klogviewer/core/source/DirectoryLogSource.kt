@@ -23,7 +23,7 @@ class DirectoryLogSource(
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LogSource {
 
-    override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = channelFlow {
+    override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = channelFlow<Either<LogFailure, LogUpdate>> {
         val root = File(path.value)
         if (!root.exists() || !root.isDirectory) {
             send(LogFailure.FileError("Not a directory: ${path.value}", sourceId = path.value).left())
@@ -36,8 +36,15 @@ class DirectoryLogSource(
         val currentEntries = mutableMapOf<String, List<LogEntry>>()
         var initialized = false
 
+        val directorySourceId = path.value
         while (isActive) {
-            val discoveredFiles = scanner.scan(path.value)
+            val discoveredFiles = try {
+                scanner.scan(path.value)
+            } catch (e: Exception) {
+                logger.error(e) { "Error scanning directory: ${path.value}" }
+                send(LogFailure.FileError("Error scanning directory: ${e.message}", sourceId = directorySourceId, cause = e).left())
+                emptyList()
+            }
             val newFiles = discoveredFiles.filter { !activeSources.containsKey(it) }
             val removedFiles = activeSources.keys.filter { !discoveredFiles.contains(it) }
 
