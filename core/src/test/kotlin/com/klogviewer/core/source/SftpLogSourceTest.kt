@@ -7,6 +7,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import net.schmizz.sshj.SSHClient
@@ -42,27 +43,33 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null
         
+        val initialReceived = CompletableDeferred<Unit>()
+        
         val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
 
         // Act & Assert
         launch {
             // Write some logs to the pipe
             pipedOut.write("2026-05-20 08:00:00 INFO Initial\n".toByteArray())
-            // Small delay to let the flow detect "initial" end via reader.ready()
-            // In unit test with piped streams, ready() might be false immediately after write if not flushed
             pipedOut.flush()
             
-            // Give it a moment to process initial
-            delay(50.milliseconds)
+            // Wait for initial to be received
+            initialReceived.await()
             
             pipedOut.write("2026-05-20 08:00:01 INFO Appended\n".toByteArray())
             pipedOut.flush()
             
             delay(50.milliseconds)
             pipedOut.close() // Close pipe to end the flow
+            
+            // After close, make exitStatus return 0
+            every { mockCommand.exitStatus } returns 0
         }
 
-        val results = source.observeLogs(LogFilePath("/var/log/test.log")).take(2).toList()
+        val results = source.observeLogs(LogFilePath("/var/log/test.log"))
+            .onEach { if (it.getOrNull() is LogUpdate.Initial) initialReceived.complete(Unit) }
+            .take(2)
+            .toList()
 
         // Assert
         expectThat(results).hasSize(2)

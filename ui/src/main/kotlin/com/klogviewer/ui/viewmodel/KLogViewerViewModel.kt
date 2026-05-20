@@ -1015,12 +1015,7 @@ class KLogViewerViewModel(
                         val currentMissing = if (sourceId != null) window.missingSourceIds - sourceId else window.missingSourceIds
                         val newMissingSourceIds = when (update) {
                             is LogUpdate.SourceMissing -> {
-                                val isDirectorySubSource = sourceId != null && sourceId != update.sourceId
-                                if (isDirectorySubSource) {
-                                    currentMissing
-                                } else {
-                                    currentMissing + update.sourceId
-                                }
+                                currentMissing + update.sourceId
                             }
                             is LogUpdate.Initial -> {
                                 val incoming = update.entries.mapNotNull { it.sourceId }.toSet()
