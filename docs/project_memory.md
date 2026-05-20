@@ -47,6 +47,7 @@
 - Multi-selection: Implemented multi-selection in log list (Shift+Click for range, Cmd+Click for toggle).
 - ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
 - SFTP Session Restoration: Fixed a critical bug where remote directories were not reloaded correctly on startup. Improved `loadFilesIntoWindow` to correctly handle SFTP directory URIs and prevent double-tailing of sub-files. Added missing `savePreferences` calls to ensure remote source state is persisted immediately when opened.
+- Remote File Deletion Detection: Enhanced `SftpDirectoryLogSource` to detect file removal from monitored directories. Implemented UI feedback using red badges and strike-through text for logs from missing sources.
 - Auto-Save Connection Details: Centralized SFTP connection persistence to ensure that any connection established (via direct connect, browsing, or directory selection) is automatically added to the user's saved connections list.
 - Multi-Source Interleaving: Enhanced `handleLogUpdate` to merge initial logs from multiple sources and ensure chronological interleaving via automatic sorting.
 - Dependency Injection for Remote Sources: Refactored ViewModel and SFTP log sources to allow full dependency injection (Dispatcher, Client Provider), enabling fast and reliable automated testing of remote log flows.
