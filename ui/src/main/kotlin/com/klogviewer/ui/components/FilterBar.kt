@@ -37,6 +37,8 @@ fun FilterBar(
     onToggleAutoScroll: () -> Unit,
     showAnsiColors: Boolean,
     onToggleAnsiColors: () -> Unit,
+    isConnected: Boolean,
+    onToggleConnection: () -> Unit,
     onSplitClick: () -> Unit,
     matchesCount: Int,
     totalCount: Int,
@@ -78,6 +80,12 @@ fun FilterBar(
                 tooltip = if (showAnsiColors) "ANSI Colors ON" else "ANSI Colors OFF",
                 onClick = onToggleAnsiColors,
                 tint = if (showAnsiColors) MaterialTheme.colors.primary else LocalContentColor.current
+            )
+            FilterBarIcon(
+                icon = if (isConnected) Icons.Default.Link else Icons.Default.LinkOff,
+                tooltip = if (isConnected) "Connected (Click to Disconnect)" else "Disconnected (Click to Connect)",
+                onClick = onToggleConnection,
+                tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))

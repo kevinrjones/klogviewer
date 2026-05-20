@@ -32,8 +32,10 @@ data class WindowPreference(
     val isReversed: Boolean = false,
     val isAutoScrollEnabled: Boolean = true,
     val showAnsiColors: Boolean = true,
+    val parserName: String? = null,
     val columns: List<String> = emptyList(),
-    val columnWidths: Map<String, Int> = emptyMap()
+    val columnWidths: Map<String, Int> = emptyMap(),
+    val isConnected: Boolean = true
 )
 
 @Serializable

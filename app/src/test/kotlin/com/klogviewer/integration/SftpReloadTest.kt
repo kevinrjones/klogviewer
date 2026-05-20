@@ -90,7 +90,7 @@ class SftpReloadTest {
             prefsRepository = prefsRepo,
             heuristicProbe = HeuristicProbe(ParserRegistry()),
             remoteFileSystem = remoteFileSystem,
-            sftpSourceFactory = { mockSftpSource }
+            sftpSourceFactory = { _, _ -> mockSftpSource }
         )
         
         // Wait for it to fail and mark as missing

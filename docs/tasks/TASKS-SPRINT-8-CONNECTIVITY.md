@@ -10,6 +10,12 @@
 - [x] 13.1.5. Implement remote directory browsing and multi-file selection
 - [x] 13.1.6. Support loading all logs from a remote subdirectory
 - [x] 13.1.7. Implement connection retry and staggered loading for robustness
+- [x] 13.1.8. Automatically detect and add new files in monitored remote directories
+- [x] 13.1.9. Fix tailing loop premature exit in `SftpLogSource`
+- [x] 13.1.10. Improve robustness and responsiveness of `SftpDirectoryLogSource`
+- [x] 13.1.11. Refine directory-level error handling and UI indicators
+- [x] 13.1.12. Fix data loss during remote directory initialization
+- [x] 13.1.13. Implement SSH connection sharing for remote directories
 
 ### 13.2. Cloud Integration (ADR 010)
 - [ ] 13.2.1. Implement `S3LogSource` for reading logs from AWS S3 buckets
@@ -30,6 +36,10 @@
 - [x] 13.4.6. Automatically save SFTP connection details upon connecting
 - [x] 13.4.7. Restore SFTP log sources on application startup
 - [x] 13.4.8. Mark failed/missing remote sources in UI (red bar, strike-through)
+- [x] 13.4.9. Implement Disconnect/Reconnect button in toolbar
+- [x] 13.4.10. Persist connection state in user preferences
+- [x] 13.4.11. Fix SFTP directory restoration and parser name persistence on startup
+- [x] 13.4.12. Ensure all remote connections are auto-saved and persisted when first opened
 
 ### 13.5. Verification & Testing
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server

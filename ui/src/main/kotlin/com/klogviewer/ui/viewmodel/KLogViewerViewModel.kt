@@ -1,6 +1,6 @@
 package com.klogviewer.ui.viewmodel
 
-import arrow.core.left
+import arrow.core.*
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.domain.repository.RemoteFileSystem
@@ -25,7 +25,11 @@ class KLogViewerViewModel(
     val heuristicProbe: HeuristicProbe,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
     private val remoteFileSystem: RemoteFileSystem = SftpFileSystem(),
-    private val sftpSourceFactory: (SftpConfig) -> LogSource = { SftpLogSource(it, SimpleLogParser()) }
+    private val sftpDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val sshClientProvider: SshClientProvider = DefaultSshClientProvider(),
+    private val sftpSourceFactory: (SftpConfig, net.schmizz.sshj.SSHClient?) -> LogSource = { config, client -> 
+        SftpLogSource(config, SimpleLogParser(), sshClientProvider = sshClientProvider, existingClient = client, dispatcher = sftpDispatcher) 
+    }
 ) {
     private val _state = MutableStateFlow(KLogViewerState())
     val state: StateFlow<KLogViewerState> = _state.asStateFlow()
@@ -60,8 +64,10 @@ class KLogViewerViewModel(
                                 isReversed = wp.isReversed,
                                 isAutoScrollEnabled = wp.isAutoScrollEnabled,
                                 showAnsiColors = wp.showAnsiColors,
+                                parserName = wp.parserName,
                                 columns = wp.columns,
-                                columnWidths = wp.columnWidths
+                                columnWidths = wp.columnWidths,
+                                isConnected = wp.isConnected
                             )
                         },
                         activeWindowId = tp.activeWindowId
@@ -76,10 +82,10 @@ class KLogViewerViewModel(
             )
             _state.value = initialState
             
-            // Reload logs for all windows
+            // Reload logs for all windows that are connected
             initialState.tabs.forEach { tab ->
                 tab.windows.forEach { window ->
-                    if (window.sourceIds.isNotEmpty()) {
+                    if (window.sourceIds.isNotEmpty() && window.isConnected) {
                         loadFilesIntoWindow(window.id, window.sourceIds, window.parserName)
                     }
                 }
@@ -206,6 +212,7 @@ class KLogViewerViewModel(
                 }
                 savePreferences()
             }
+            KLogViewerIntent.ToggleConnection -> toggleConnection()
             KLogViewerIntent.AddTab -> addTab()
             is KLogViewerIntent.CloseTab -> closeTab(intent.id)
             is KLogViewerIntent.SwitchTab -> {
@@ -261,13 +268,7 @@ class KLogViewerViewModel(
                 if (activeWindowId != null) {
                     val config = SftpConfig(intent.name, Host(intent.host), Port(intent.port), Username(intent.user), intent.auth, intent.path)
                     
-                    // Automatically save connection details
-                    _state.update { currentState ->
-                        val updatedList = (currentState.sftpConnections.filter { it.name != config.name } + config)
-                            .sortedBy { it.name }
-                        currentState.copy(sftpConnections = updatedList)
-                    }
-                    savePreferences()
+                    saveSftpConnection(config)
 
                     // Check if it's a directory or a file
                     scope.launch {
@@ -305,6 +306,7 @@ class KLogViewerViewModel(
                 }
             }
             is KLogViewerIntent.ConnectMultipleSftp -> {
+                saveSftpConnection(intent.config)
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
                 if (activeWindowId != null) {
                     connectMultipleSftp(activeWindowId, intent.config, intent.paths)
@@ -312,6 +314,7 @@ class KLogViewerViewModel(
                 _state.update { it.copy(pendingDialog = null) }
             }
             is KLogViewerIntent.ConnectSftpDirectory -> {
+                saveSftpConnection(intent.config)
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
                 if (activeWindowId != null) {
                     connectSftpDirectory(activeWindowId, intent.config, intent.path)
@@ -390,6 +393,25 @@ class KLogViewerViewModel(
                 }
             }
         }
+    }
+
+    private fun toggleConnection() {
+        val activeWindow = _state.value.activeTab?.activeWindow ?: return
+        val newConnected = !activeWindow.isConnected
+        
+        _state.update { currentState ->
+            currentState.updateActiveWindow { it.copy(isConnected = newConnected) }
+        }
+        
+        if (newConnected) {
+            if (activeWindow.sourceIds.isNotEmpty()) {
+                loadFilesIntoWindow(activeWindow.id, activeWindow.sourceIds, activeWindow.parserName)
+            }
+        } else {
+            logJobs[activeWindow.id]?.cancel()
+        }
+        
+        savePreferences()
     }
 
     private fun addTab() {
@@ -486,13 +508,14 @@ class KLogViewerViewModel(
         savePreferences()
     }
 
-    private fun connectSftpDirectory(windowId: String, config: SftpConfig, path: String) {
+    private fun connectSftpDirectory(windowId: String, config: SftpConfig, path: String, parserName: String? = null) {
         val oldJob = logJobs[windowId]
         
         logJobs[windowId] = scope.launch {
             oldJob?.cancelAndJoin()
             
-            val sourceId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}$path"
+            val sftpUri = SftpUri(config.username.value, config.host.value, config.port.value, path, isDirectory = true)
+            val sourceId = sftpUri.toString()
             
             _state.update { currentState ->
                 currentState.updateWindow(windowId) { window ->
@@ -502,10 +525,12 @@ class KLogViewerViewModel(
                         filePath = sourceId,
                         sourceIds = listOf(sourceId),
                         logs = emptyList(),
+                        parserName = parserName,
                         columns = listOf("Timestamp", "Level", "Content")
                     )
                 }
             }
+            savePreferences()
 
             // Update tab title
             val title = path.substringAfterLast('/').ifEmpty { path }
@@ -517,15 +542,22 @@ class KLogViewerViewModel(
                 })
             }
             
-            val sftpDirectorySource = SftpDirectoryLogSource(config, remoteFileSystem)
+            val sftpDirectorySource = SftpDirectoryLogSource(
+                config, 
+                remoteFileSystem, 
+                logSourceFactory = sftpSourceFactory,
+                dispatcher = sftpDispatcher,
+                sshClientProvider = sshClientProvider
+            )
+            val parser = parserName?.let { getParserResultByName(it, emptyList()).parser }
             
-            sftpDirectorySource.observeLogs(LogFilePath(path)).collect { result ->
+            sftpDirectorySource.observeLogs(LogFilePath(path), parser).collect { result ->
                 result.fold(
                     { error ->
                         _state.update { it.updateWindow(windowId) { w -> w.copy(error = error.message, isLoading = false) } }
                     },
                     { update ->
-                        handleLogUpdate(windowId, update)
+                        handleLogUpdate(windowId, update, sourceId)
                     }
                 )
             }
@@ -552,6 +584,7 @@ class KLogViewerViewModel(
                     )
                 }
             }
+            savePreferences()
 
             // Update tab title
             val title = if (paths.size == 1) paths[0].substringAfterLast('/') else "${paths.size} remote files"
@@ -567,7 +600,7 @@ class KLogViewerViewModel(
             
             // Create a flow for each path and merge them
             val flows = paths.map { path ->
-                val source = sftpSourceFactory(config)
+                val source = sftpSourceFactory(config, null)
                 source.observeLogs(LogFilePath(path), parser)
             }
             
@@ -586,23 +619,25 @@ class KLogViewerViewModel(
 
     private fun findSftpConfig(uri: String): SftpConfig? {
         val sftpUri = SftpUri.parse(uri) ?: return null
-        return _state.value.sftpConnections.find {
+        val found = _state.value.sftpConnections.find {
             it.username.value == sftpUri.username &&
             it.host.value == sftpUri.host &&
             it.port.value == sftpUri.port
         }
+        return found
     }
 
-    private fun connectSftp(windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) {
+    private fun connectSftp(windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String, parserName: String? = null) {
         val config = SftpConfig(name, Host(host), Port(port), Username(user), auth, path)
-        val sftpSource = sftpSourceFactory(config)
+        val sftpSource = sftpSourceFactory(config, null)
         
         val oldJob = logJobs[windowId]
         
         logJobs[windowId] = scope.launch {
             oldJob?.cancelAndJoin()
             
-            val sourceId = "sftp://$user@$host:$port$path"
+            val sftpUri = SftpUri(user, host, port, path, isDirectory = false)
+            val sourceId = sftpUri.toString()
             
             _state.update { currentState ->
                 currentState.updateWindow(windowId) { window ->
@@ -612,10 +647,12 @@ class KLogViewerViewModel(
                         filePath = sourceId,
                         sourceIds = listOf(sourceId),
                         logs = emptyList(),
+                        parserName = parserName,
                         columns = listOf("Timestamp", "Level", "Content")
                     )
                 }
             }
+            savePreferences()
 
             // Update tab title if it's the only window or first window
             val fileName = path.substringAfterLast('/')
@@ -642,16 +679,7 @@ class KLogViewerViewModel(
                             } }
                         },
                         { update ->
-                            _state.update { it.updateWindow(windowId) { w -> 
-                                val newLogs = when (update) {
-                                    is LogUpdate.Initial -> update.entries
-                                    is LogUpdate.Appended -> w.logs + update.entries
-                                    LogUpdate.Reset -> emptyList()
-                                    is LogUpdate.SourceMissing -> w.logs // Handle appropriately
-                                }
-                                w.copy(logs = newLogs, isLoading = false) 
-                            } }
-                            filterLogs(windowId)
+                            handleLogUpdate(windowId, update, sourceId)
                         }
                     )
                 }
@@ -659,10 +687,11 @@ class KLogViewerViewModel(
     }
 
     private fun loadFilesIntoWindow(windowId: String, paths: List<String>, overrideParserName: String? = null) {
+        val filteredPaths = filterRedundantPaths(paths)
         val oldJob = logJobs[windowId]
 
-        val localPaths = paths.filter { !it.startsWith("sftp://") }
-        val sftpPaths = paths.filter { it.startsWith("sftp://") }
+        val localPaths = filteredPaths.filter { !it.startsWith("sftp://") }
+        val sftpPaths = filteredPaths.filter { it.startsWith("sftp://") }
 
         val missingLocalPaths = localPaths.filter { !File(it).exists() }
         if (missingLocalPaths.isNotEmpty()) {
@@ -671,13 +700,17 @@ class KLogViewerViewModel(
             return
         }
 
-        // If it's a single SFTP path, handle it separately to reuse connectSftp logic
-        if (paths.size == 1 && sftpPaths.size == 1) {
+        // If it's a single SFTP path, handle it separately to reuse connectSftp/connectSftpDirectory logic
+        if (filteredPaths.size == 1 && sftpPaths.size == 1) {
             val uri = sftpPaths[0]
             val config = findSftpConfig(uri)
             val sftpUri = SftpUri.parse(uri)
             if (config != null && sftpUri != null) {
-                connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path)
+                if (sftpUri.isDirectory) {
+                    connectSftpDirectory(windowId, config, sftpUri.path, overrideParserName)
+                } else {
+                    connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path, overrideParserName)
+                }
                 return
             } else if (sftpUri != null) {
                 _state.update { it.updateWindow(windowId) { w ->
@@ -694,7 +727,7 @@ class KLogViewerViewModel(
 
         logJobs[windowId] = scope.launch {
             oldJob?.cancelAndJoin()
-            val fileName = if (paths.size == 1) File(paths[0]).name else "${paths.size} files"
+            val fileName = if (filteredPaths.size == 1) File(filteredPaths[0]).name else "${filteredPaths.size} files"
             
             _state.update { currentState ->
                 currentState.copy(tabs = currentState.tabs.map { tab ->
@@ -703,9 +736,9 @@ class KLogViewerViewModel(
                             window.copy(
                                 isLoading = true, 
                                 error = null, 
-                                filePath = paths.joinToString(", "), 
+                                filePath = filteredPaths.joinToString(", "), 
                                 logs = emptyList(), 
-                                sourceIds = paths
+                                sourceIds = filteredPaths
                             )
                         } else window
                     })
@@ -723,7 +756,7 @@ class KLogViewerViewModel(
             
             savePreferences()
             
-            val results = paths.map { path ->
+            val results = filteredPaths.map { path ->
                 if (path.startsWith("sftp://") || (File(path).exists() && File(path).isDirectory)) {
                     null
                 } else {
@@ -749,41 +782,70 @@ class KLogViewerViewModel(
                 })
             }
             
-            val flows = paths.mapIndexed { index, path ->
+            val flows = filteredPaths.mapIndexed { index, path ->
                 if (path.startsWith("sftp://")) {
                     val config = findSftpConfig(path)
                     val sftpUri = SftpUri.parse(path)
                     if (config != null && sftpUri != null) {
-                        sftpSourceFactory(config).observeLogs(LogFilePath(sftpUri.path))
+                        val flow = if (sftpUri.isDirectory) {
+                            SftpDirectoryLogSource(
+                                config, 
+                                remoteFileSystem, 
+                                logSourceFactory = sftpSourceFactory,
+                                dispatcher = sftpDispatcher,
+                                sshClientProvider = sshClientProvider
+                            ).observeLogs(LogFilePath(sftpUri.path))
+                        } else {
+                            sftpSourceFactory(config, null).observeLogs(LogFilePath(sftpUri.path))
+                        }
+                        flow.map { result ->
+                            result.fold(
+                                { l -> Pair(l, path).left() },
+                                { r -> Pair(r, path).right() }
+                            )
+                        }
                     } else {
-                        flowOf(LogFailure.FileError("SFTP connection not found for $path", sourceId = path).left())
+                        val failure = LogFailure.FileError("SFTP connection not found for $path", sourceId = path)
+                        flowOf(Pair(failure, path).left())
                     }
                 } else if (File(path).isDirectory) {
-                    DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
+                    DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path)).map { result ->
+                        result.fold(
+                            { l -> Pair(l, path).left() },
+                            { r -> Pair(r, path).right() }
+                        )
+                    }
                 } else {
-                    logSource.observeLogs(LogFilePath(path), results[index]?.parser)
+                    logSource.observeLogs(LogFilePath(path), results[index]?.parser).map { result ->
+                        result.fold(
+                            { l -> Pair(l, path).left() },
+                            { r -> Pair(r, path).right() }
+                        )
+                    }
                 }
             }
 
             val flow = if (flows.size == 1) {
                 flows[0]
             } else {
-                MergedLogSource(flows).observeMerged()
+                // MergedLogSource currently takes List<Flow<Either<LogFailure, LogUpdate>>>
+                // We need it to take List<Flow<Either<LogFailure, Pair<LogUpdate, String>>>>
+                // Or just merge them ourselves
+                flows.merge()
             }
             
             flow.collect { result ->
                 result.fold(
-                    ifLeft = { failure ->
-                        val message = when (failure) {
-                            is LogFailure.FileError -> failure.message
-                            is LogFailure.ParsingError -> failure.message
-                        }
-                        logger.error { "Failed to load logs: $message" }
+                    ifLeft = { pair ->
+                        val failure = pair.first
+                        val path = pair.second
+                        val message = failure.message
+                        logger.error { "Failed to load logs from $path: $message" }
                         _state.update { currentState ->
                             currentState.copy(tabs = currentState.tabs.map { tab ->
                                 tab.copy(windows = tab.windows.map { window ->
                                     if (window.id == windowId) {
-                                        val newMissing = if (failure.sourceId != null) window.missingSourceIds + failure.sourceId!! else window.missingSourceIds
+                                        val newMissing = if (failure.sourceId != null) window.missingSourceIds + failure.sourceId!! else window.missingSourceIds + path
                                         window.copy(isLoading = false, error = message, missingSourceIds = newMissing)
                                     } else window
                                 })
@@ -791,10 +853,45 @@ class KLogViewerViewModel(
                         }
                         _events.emit(KLogViewerEvent.ShowError(message))
                     },
-                    ifRight = { update ->
-                        handleLogUpdate(windowId, update)
+                    ifRight = { pair ->
+                        val update = pair.first
+                        val sourceId = pair.second
+                        handleLogUpdate(windowId, update, sourceId)
                     }
                 )
+            }
+        }
+    }
+
+    private fun filterRedundantPaths(paths: List<String>): List<String> {
+        val directories = paths.filter { path ->
+            if (path.startsWith("sftp://")) {
+                SftpUri.parse(path)?.isDirectory == true
+            } else {
+                File(path).isDirectory
+            }
+        }
+        
+        if (directories.isEmpty()) return paths
+
+        return paths.filter { path ->
+            val sftpUri = SftpUri.parse(path)
+            val isDir = sftpUri?.isDirectory == true || File(path).isDirectory
+            if (isDir) return@filter true
+            
+            !directories.any { dir ->
+                if (path.startsWith("sftp://") && dir.startsWith("sftp://")) {
+                    val dirUri = SftpUri.parse(dir)
+                    if (sftpUri != null && dirUri != null) {
+                        sftpUri.username == dirUri.username &&
+                        sftpUri.host == dirUri.host &&
+                        sftpUri.port == dirUri.port &&
+                        sftpUri.path.startsWith(dirUri.path) &&
+                        sftpUri.path != dirUri.path
+                    } else false
+                } else if (!path.startsWith("sftp://") && !dir.startsWith("sftp://")) {
+                    path.startsWith(dir) && path != dir
+                } else false
             }
         }
     }
@@ -825,40 +922,59 @@ class KLogViewerViewModel(
         }
     }
 
-    private fun handleLogUpdate(windowId: String, update: LogUpdate) {
+    private fun handleLogUpdate(windowId: String, update: LogUpdate, sourceId: String? = null) {
         _state.update { currentState ->
             currentState.copy(tabs = currentState.tabs.map { tab ->
                 tab.copy(windows = tab.windows.map { window ->
                     if (window.id == windowId) {
-                        val newLogs = when (update) {
-                            is LogUpdate.Initial -> update.entries
+                        val mergedLogs = when (update) {
+                            is LogUpdate.Initial -> {
+                                if (sourceId != null) {
+                                    // Additive for specific source, replace existing entries for that source
+                                    window.logs.filter { it.sourceId != sourceId } + update.entries
+                                } else {
+                                    update.entries
+                                }
+                            }
                             is LogUpdate.Appended -> window.logs + update.entries
                             LogUpdate.Reset -> emptyList()
                             is LogUpdate.SourceMissing -> window.logs
                         }
+
+                        // Ensure logs are sorted by timestamp if we have multiple sources
+                        val newLogs = if (window.sourceIds.size > 1) {
+                            mergedLogs.sortedBy { it.timestamp.value }
+                        } else {
+                            mergedLogs
+                        }
                         
+                        val currentMissing = if (sourceId != null) window.missingSourceIds - sourceId else window.missingSourceIds
                         val newMissingSourceIds = when (update) {
-                            is LogUpdate.SourceMissing -> window.missingSourceIds + update.sourceId
+                            is LogUpdate.SourceMissing -> currentMissing + update.sourceId
                             is LogUpdate.Initial -> {
                                 val incoming = update.entries.mapNotNull { it.sourceId }.toSet()
-                                window.missingSourceIds - incoming
+                                currentMissing - incoming
                             }
                             is LogUpdate.Appended -> {
                                 val incoming = update.entries.mapNotNull { it.sourceId }.toSet()
-                                window.missingSourceIds - incoming
+                                currentMissing - incoming
                             }
                             LogUpdate.Reset -> emptySet()
                         }
                         
                         // Extract unique source IDs from the logs to ensure badges are shown for all discovered files
                         val discoveredSourceIds = newLogs.mapNotNull { it.sourceId }.distinct().filter { it.isNotEmpty() }
+                        
+                        val isDirectorySource = sourceId != null && (SftpUri.parse(sourceId)?.isDirectory == true || File(sourceId).isDirectory)
+                        
                         val mergedSourceIds = (window.sourceIds + discoveredSourceIds).distinct()
                         
                         window.copy(
                             isLoading = false, 
                             logs = newLogs,
                             sourceIds = mergedSourceIds,
-                            missingSourceIds = newMissingSourceIds
+                            missingSourceIds = newMissingSourceIds,
+                            error = if (newMissingSourceIds.isEmpty()) null else window.error
                         )
                     } else window
                 })
@@ -915,6 +1031,15 @@ class KLogViewerViewModel(
         }
     }
 
+    private fun saveSftpConnection(config: SftpConfig) {
+        _state.update { currentState ->
+            val updatedList = (currentState.sftpConnections.filter { it.name != config.name } + config)
+                .sortedBy { it.name }
+            currentState.copy(sftpConnections = updatedList)
+        }
+        savePreferences()
+    }
+
     fun savePreferences(currentState: KLogViewerState = _state.value, debounce: Boolean = false) {
         if (debounce) {
             saveJob?.cancel()
@@ -951,8 +1076,10 @@ class KLogViewerViewModel(
                             isReversed = window.isReversed,
                             isAutoScrollEnabled = window.isAutoScrollEnabled,
                             showAnsiColors = window.showAnsiColors,
+                            parserName = window.parserName,
                             columns = window.columns,
-                            columnWidths = window.columnWidths
+                            columnWidths = window.columnWidths,
+                            isConnected = window.isConnected
                         )
                     }
                 )

@@ -26,7 +26,8 @@ class SftpLogSource(
     private val config: SftpConfig,
     private val parser: LogParser,
     private val sshClientProvider: SshClientProvider = DefaultSshClientProvider(),
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val existingClient: SSHClient? = null
 ) : LogSource {
 
     override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = flow {
@@ -38,30 +39,34 @@ class SftpLogSource(
         val sourceId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}${path.value}"
         logger.info { "Started observing remote log file: $sourceId using ${effectiveParser::class.simpleName}" }
 
-        val client = withRetry(maxRetries = 3) {
-            val c = sshClientProvider.createClient()
-            c.addHostKeyVerifier(PromiscuousVerifier())
-            withContext(Dispatchers.IO) {
-                c.connect(config.host.value, config.port.value)
-                
-                try {
-                    when (val auth = config.auth) {
-                        is SftpAuth.Password -> c.authPassword(config.username.value, auth.password)
-                        is SftpAuth.KeyPair -> {
-                            val keyProvider = if (!auth.passphrase.isNullOrBlank()) {
-                                c.loadKeys(auth.privateKeyPath, auth.passphrase)
-                            } else {
-                                c.loadKeys(auth.privateKeyPath)
+        val client = if (existingClient != null && existingClient.isConnected && existingClient.isAuthenticated) {
+            existingClient
+        } else {
+            withRetry(maxRetries = 3) {
+                val c = sshClientProvider.createClient()
+                c.addHostKeyVerifier(PromiscuousVerifier())
+                withContext(dispatcher) {
+                    c.connect(config.host.value, config.port.value)
+                    
+                    try {
+                        when (val auth = config.auth) {
+                            is SftpAuth.Password -> c.authPassword(config.username.value, auth.password)
+                            is SftpAuth.KeyPair -> {
+                                val keyProvider = if (!auth.passphrase.isNullOrBlank()) {
+                                    c.loadKeys(auth.privateKeyPath, auth.passphrase)
+                                } else {
+                                    c.loadKeys(auth.privateKeyPath)
+                                }
+                                c.authPublickey(config.username.value, keyProvider)
                             }
-                            c.authPublickey(config.username.value, keyProvider)
                         }
+                    } catch (e: Exception) {
+                        try { c.disconnect(); c.close() } catch (_: Exception) {}
+                        throw e
                     }
-                } catch (e: Exception) {
-                    try { c.disconnect(); c.close() } catch (_: Exception) {}
-                    throw e
                 }
+                c
             }
-            c
         }
         
         try {
@@ -76,21 +81,9 @@ class SftpLogSource(
                     val initialEntries = mutableListOf<LogEntry>()
                     
                     while (currentCoroutineContext().isActive) {
-                        val line = if (withContext(Dispatchers.IO) { reader.ready() }) {
-                            withContext(Dispatchers.IO) { reader.readLine() }
-                        } else {
-                            // Check if command has exited with error
-                            val exitStatus = command.exitStatus
-                            if (exitStatus != null && exitStatus != 0) {
-                                val error = withContext(Dispatchers.IO) { 
-                                    if (errorReader.ready()) errorReader.readLine() else null 
-                                } ?: "Remote process exited with status $exitStatus"
-                                emit(LogFailure.FileError("Remote error: $error", sourceId = sourceId).left())
-                                return@use
-                            }
-                            
-                            // If not ready, and we were in initial mode, flush initial entries
-                            if (isInitial) {
+                        if (isInitial) {
+                            val ready = withContext(dispatcher) { reader.ready() }
+                            if (!ready) {
                                 multilineProcessor?.flush()?.let {
                                     initialEntries.add(it.copy(sourceId = sourceId))
                                 }
@@ -98,35 +91,31 @@ class SftpLogSource(
                                 initialEntries.clear()
                                 isInitial = false
                             }
-                            
-                            // Small delay to avoid tight loop when no data is available
-                            delay(100.milliseconds)
-                            if (withContext(Dispatchers.IO) { reader.ready() }) {
-                                withContext(Dispatchers.IO) { reader.readLine() }
-                            } else null
-                        } ?: if (!isInitial) break else {
-                            // readLine returned null, check for error
+                        }
+
+                        val line = withContext(dispatcher) { reader.readLine() }
+                        
+                        if (line == null) {
+                            // Check if command has exited
                             val exitStatus = command.exitStatus
-                            if (exitStatus != null && exitStatus != 0) {
-                                val error = withContext(Dispatchers.IO) {
-                                    if (errorReader.ready()) errorReader.readLine() else null
-                                } ?: "File not found or inaccessible"
-                                emit(LogFailure.FileError("Remote file not found or inaccessible: ${path.value} ($error)", sourceId = sourceId).left())
-                            } else {
-                                // If we are still in initial phase and stream closed, check if anything on stderr
-                                val error = withContext(Dispatchers.IO) {
-                                    if (errorReader.ready()) errorReader.readLine() else null
-                                }
-                                if (error != null) {
+                            if (exitStatus != null) {
+                                if (exitStatus != 0) {
+                                    val error = withContext(dispatcher) {
+                                        if (errorReader.ready()) errorReader.readLine() else null
+                                    } ?: "Remote process exited with status $exitStatus"
                                     emit(LogFailure.FileError("Remote error: $error", sourceId = sourceId).left())
-                                } else {
-                                    // Just emit empty initial if we didn't find anything
+                                } else if (isInitial) {
                                     emit(LogUpdate.Initial(emptyList<LogEntry>()).right())
                                 }
+                                break // Exit loop as command finished
                             }
-                            break
+                            
+                            // If not exited but readLine returned null, it might be a temporary EOF
+                            delay(200.milliseconds)
+                            continue
                         }
-                        
+
+                        // We got a line
                         val entry = if (multilineProcessor != null) {
                             multilineProcessor.process(line)
                         } else {
@@ -149,12 +138,14 @@ class SftpLogSource(
             logger.error(e) { "Error tailing remote log file: $sourceId" }
             emit(LogFailure.FileError("Error tailing remote log file: ${e.message}", sourceId = sourceId, cause = e).left())
         } finally {
-            withContext(NonCancellable) {
-                try {
-                    client.disconnect()
-                    client.close()
-                } catch (e: Exception) {
-                    logger.warn { "Error disconnecting SSH client: ${e.message}" }
+            if (existingClient == null) {
+                withContext(NonCancellable + dispatcher) {
+                    try {
+                        client.disconnect()
+                        client.close()
+                    } catch (e: Exception) {
+                        logger.warn { "Error disconnecting SSH client: ${e.message}" }
+                    }
                 }
             }
         }

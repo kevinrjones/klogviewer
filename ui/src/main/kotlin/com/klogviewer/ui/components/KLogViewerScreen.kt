@@ -229,6 +229,8 @@ fun KLogViewerScreen(
                         onToggleAutoScroll = { viewModel.handleIntent(KLogViewerIntent.ToggleAutoScroll) },
                         showAnsiColors = activeWindow?.showAnsiColors ?: true,
                         onToggleAnsiColors = { viewModel.handleIntent(KLogViewerIntent.ToggleAnsiColors) },
+                        isConnected = activeWindow?.isConnected ?: true,
+                        onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
                         onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
                         matchesCount = activeWindow?.filteredLogs?.size ?: 0,
                         totalCount = activeWindow?.logs?.size ?: 0
@@ -249,7 +251,8 @@ fun KLogViewerScreen(
                             viewModel.handleIntent(KLogViewerIntent.ChangeParser(id, name))
                         }
                     },
-                    isMissing = activeWindow?.missingSourceIds?.isNotEmpty() ?: false
+                    isMissing = activeWindow?.missingSourceIds?.isNotEmpty() ?: false,
+                    isConnected = activeWindow?.isConnected ?: true
                 )
             }
         ) { padding ->
@@ -298,19 +301,23 @@ fun KLogViewerScreen(
                             // Window Header (File path, Active badge, Close button)
                             if (window.filePath.isNotEmpty() || activeTab.windows.size > 1) {
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 2.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(if (window.isConnected) Color.Transparent else MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
+                                        .padding(horizontal = 16.dp, vertical = 2.dp),
                                     horizontalArrangement = Arrangement.SpaceBetween,
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     if (window.filePath.isNotEmpty()) {
                                         val isAnySourceMissing = window.missingSourceIds.isNotEmpty()
+                                        val isPrimaryPathMissing = window.missingSourceIds.contains(window.filePath)
                                         Text(
                                             text = window.filePath,
                                             style = MaterialTheme.typography.caption.copy(
-                                                color = if (isAnySourceMissing) Color.Red else MaterialTheme.colors.onSurface.copy(
+                                                color = if (isPrimaryPathMissing) Color.Red else if (isAnySourceMissing) Color(0xFFFFA500) else MaterialTheme.colors.onSurface.copy(
                                                     alpha = 0.5f
                                                 ),
-                                                textDecoration = if (isAnySourceMissing) TextDecoration.LineThrough else TextDecoration.None
+                                                textDecoration = if (isPrimaryPathMissing) TextDecoration.LineThrough else TextDecoration.None
                                             ),
                                             maxLines = 1,
                                             overflow = TextOverflow.Ellipsis,
@@ -473,7 +480,8 @@ private fun LogTabRow(
                     }
                 ) {
                     tabs.forEach { tab ->
-                        val isAnyWindowMissing = tab.windows.any { it.missingSourceIds.isNotEmpty() }
+                        val isAnyPrimaryWindowMissing = tab.windows.any { it.missingSourceIds.contains(it.filePath) }
+                        val isAnySecondarySourceMissing = tab.windows.any { it.missingSourceIds.isNotEmpty() }
                         Tab(
                             selected = tab.id == activeTabId,
                             onClick = { onTabClick(tab.id) },
@@ -487,8 +495,8 @@ private fun LogTabRow(
                                     text = tab.title,
                                     style = MaterialTheme.typography.button.copy(
                                         fontSize = 12.sp,
-                                        color = if (isAnyWindowMissing) Color.Red else Color.Unspecified,
-                                        textDecoration = if (isAnyWindowMissing) TextDecoration.LineThrough else TextDecoration.None
+                                        color = if (isAnyPrimaryWindowMissing) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified,
+                                        textDecoration = if (isAnyPrimaryWindowMissing) TextDecoration.LineThrough else TextDecoration.None
                                     ),
                                     maxLines = 1
                                 )

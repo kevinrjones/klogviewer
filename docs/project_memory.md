@@ -46,6 +46,15 @@
 - Keyboard Shortcuts: Added Cmd+W to close active tab, Cmd+N for new tab, and Cmd+C to copy selected logs.
 - Multi-selection: Implemented multi-selection in log list (Shift+Click for range, Cmd+Click for toggle).
 - ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
+- SFTP Session Restoration: Fixed a critical bug where remote directories were not reloaded correctly on startup. Improved `loadFilesIntoWindow` to correctly handle SFTP directory URIs and prevent double-tailing of sub-files. Added missing `savePreferences` calls to ensure remote source state is persisted immediately when opened.
+- Auto-Save Connection Details: Centralized SFTP connection persistence to ensure that any connection established (via direct connect, browsing, or directory selection) is automatically added to the user's saved connections list.
+- Multi-Source Interleaving: Enhanced `handleLogUpdate` to merge initial logs from multiple sources and ensure chronological interleaving via automatic sorting.
+- Dependency Injection for Remote Sources: Refactored ViewModel and SFTP log sources to allow full dependency injection (Dispatcher, Client Provider), enabling fast and reliable automated testing of remote log flows.
+- Remote Directory Monitoring: Improved `SftpDirectoryLogSource` to automatically detect and add new files discovered during directory rescans. Fixed bugs where tailing would stop prematurely and directory initialization would hang on file errors. Also fixed a critical bug where logs were cleared every rescan interval.
+- SSH Connection Sharing: Implemented a connection pool in `SftpDirectoryLogSource` to share SSH connections across multiple log files (8 sessions per connection), preventing server-side limit exhaustion.
+- Data Integrity: Fixed a bug where logs received during remote directory initialization were lost due to being overwritten by an incomplete directory-wide update.
+- UI Robustness: Refined "missing file" indicators to only strike through the primary path (file or directory URI) if it fails, while using an Orange color for secondary source failures. Improved `missingSourceIds` clearing logic in the ViewModel.
+- Toolbar Disconnect/Reconnect: Added a button to pause/resume log paging (observation). Connection state is persisted and reflected in the UI with color changes in the header and status bar.
 - SFTP Session Restoration: Implemented automatic reloading of SFTP log sources on startup by matching stored URIs with connection profiles.
 - Missing File Indicators: Added visual indicators (red text, strike-through) for both local and remote files that fail to load or disappear.
 - Robust SFTP Connections: Implemented a retry mechanism with exponential backoff for SSH connections and authentication. Added staggered connection loading (200ms delay) in `SftpDirectoryLogSource` to prevent server-side rate limiting when observing multiple remote files.

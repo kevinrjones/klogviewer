@@ -1,4 +1,100 @@
 # 2026-05-20
+15:10
+
+### SFTP Persistence and Reliability Fixes
+
+Fixed a critical bug where SFTP directories were not being re-opened correctly on application startup and ensured log parser settings are correctly persisted.
+
+#### Changes:
+- **SFTP Directory Reload**: Improved `SftpUri` to support an `isDirectory` flag via a query parameter (`?type=directory`). This allows the application to distinguish between remote files and remote directories when restoring the session from user preferences.
+- **Persistence**: 
+    - Added `parserName` to `WindowPreference` and `LogWindow` models.
+    - Updated `KLogViewerViewModel` to correctly save and restore the selected log parser for both local and remote windows.
+- **Dependency Injection**: 
+    - Refactored `KLogViewerViewModel` to allow injection of `CoroutineDispatcher` and `SshClientProvider`.
+    - Ensured that all SFTP log sources (file and directory) use the injected dependencies, improving testability and robustness.
+- **Testing**: 
+    - Fixed hanging/slow tests in `SftpLogSourceTest` by replacing `Dispatchers.Unconfined` with `Dispatchers.IO` for blocking SSH IO mocks.
+    - Updated multiple integration tests (`SftpBrowsingTest`, `SftpPersistenceTest`, `SftpReloadTest`) to properly mock the SFTP source factory, preventing real SSH connection attempts during automated testing.
+- **Robustness**: Ensured that `SftpDirectoryLogSource` correctly propagates the log parser and uses the shared connection pool during reload.
+
+15:45
+
+### SFTP Session Restoration and Multi-Source Interleaving Improvements
+
+Finalized the fix for remote directory restoration and improved the reliability of multi-source windows.
+
+#### Changes:
+- **Directory Restoration**: Updated `loadFilesIntoWindow` to correctly dispatch SFTP directory URIs to `SftpDirectoryLogSource`, ensuring remote directories are re-opened as directories upon restart.
+- **Persistence Fix**: Added missing `savePreferences()` calls when connecting to remote sources (file, directory, or multiple files). This ensures the window state is saved immediately when a connection is established.
+- **Auto-Save Centralization**: Implemented a `saveSftpConnection` helper to ensure connection details (host, user, etc.) are automatically saved to the connection list even when connecting via the remote browser or directory selection.
+- **Double Tailing Prevention**: Implemented `filterRedundantPaths` to automatically remove sub-files from the load list if their parent directory is also being loaded, preventing redundant log streams and UI badges.
+- **Multi-Source Interleaving**:
+    - Refactored `handleLogUpdate` to support additive `Initial` updates. When multiple files or directories are loaded into one window, their initial content is merged instead of being overwritten by the last source to load.
+    - Added automatic chronological sorting for windows with multiple sources, ensuring interleaved logs are always displayed in the correct order.
+- **Quality Assurance**: 
+    - Verified the fix with a new integration test for directory restoration.
+    - Fixed regressions in `InterleavingIntegrationTest` caused by the lack of explicit sorting in the new additive update logic.
+    - Optimized all SFTP-related tests to run instantaneously in virtual time using `runTest` and injected test dispatchers.
+
+## 15:00
+
+### SFTP Remote Directory Scaling and Reliability
+
+Fixed a data loss bug during remote directory loading and optimized SSH connection usage.
+
+#### Changes:
+- **Connection Sharing**: Implemented a simple SSH connection pool in `SftpDirectoryLogSource`. It now shares connections (up to 8 sessions per connection) instead of opening a new SSH connection for every single log file, significantly reducing server overhead and avoiding session limits.
+- **Data Integrity**: Fixed a bug where `Appended` updates received during the directory's initialization phase were being overwritten by the final `Initial` update. Now all logs received before initialization are correctly aggregated.
+- **Robustness**: Updated `SftpFileSystem` to filter out `.` and `..` entries from remote directory listings.
+- **Testing**: Added a comprehensive test case in `SftpDirectoryLogSourceTest` to verify log preservation during initialization.
+
+Fixed critical bugs in SFTP log sources that caused logs to be cleared periodically and improved the accuracy of "missing file" indicators in the UI.
+
+#### Changes:
+- **SFTP Tailing**: 
+    - Re-implemented the `SftpLogSource` loop to use a blocking `readLine()` on `Dispatchers.IO` after an initial non-blocking phase. This ensures reliable tailing while still allowing for fast initial loads of existing data.
+- **Directory Monitoring**:
+    - Fixed a bug in `SftpDirectoryLogSource` where logs were being cleared every 5 seconds due to redundant `Initial` update emissions during rescans.
+    - Improved directory error reporting by emitting failures with the directory's own URI.
+- **UI & State**:
+    - Refined `KLogViewerScreen` to only show red/strike-through in the header if the primary path (the directory or file opened) is missing. Secondary failures (e.g., one file in a monitored directory) are now indicated with an Orange color without striking through the main title.
+    - Updated `KLogViewerViewModel` to more reliably clear missing status when sources are initialized or logs are received.
+- **Testing**: Verified fixes with `SftpDirectoryLogSourceTest` and `SftpLogSourceTest`.
+
+## 14:00
+
+### Remote Directory Monitoring Enhancements
+
+Improved `SftpDirectoryLogSource` to automatically detect and add new files appearing in monitored remote directories.
+
+#### Changes:
+- **Core**:
+    - Refactored `SftpDirectoryLogSource` to support a `LogSource` factory, enabling isolated unit testing.
+    - Verified that new files discovered during remote directory rescans are automatically tailed and their content is appended to the active log view.
+- **Testing**:
+    - Added `SftpDirectoryLogSourceTest.kt` with a comprehensive test case for dynamic file discovery and log appending.
+- **Robustness**: Ensures that long-running remote monitoring sessions remain up-to-date as new log files (e.g., rotated logs or new service instances) are created.
+
+## 13:45
+ 
+ ### Toolbar Disconnect/Reconnect and Connection State Persistence
+
+### Toolbar Disconnect/Reconnect and Connection State Persistence
+
+Added a disconnect/reconnect button to the toolbar and implemented connection state persistence.
+
+#### Changes:
+- **Connection Management**: Added `isConnected` state to `LogWindow` and persisted it in `UserPreferences`.
+- **Toolbar UI**: Integrated a new toggle button in `FilterBar` using `Link` and `LinkOff` icons to represent connection status.
+- **Visual Feedback**:
+    - Disconnected windows now show a subtle background highlight in the header.
+    - The Status Bar turns Gray and appends "(Disconnected)" to the path when a window is disconnected.
+- **ViewModel Logic**:
+    - `ToggleConnection` intent cancels active log observation jobs when disconnecting.
+    - Reconnecting restarts log observation using stored source IDs and parsers.
+    - Application startup respects the `isConnected` state, only reloading logs for windows marked as connected.
+- **Testing**: Added `ConnectionToggleTest.kt` to verify state transitions, job management, and preference persistence.
 
 ## 13:10
 

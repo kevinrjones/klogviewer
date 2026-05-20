@@ -24,21 +24,29 @@ data class SftpUri(
     val username: String,
     val host: String,
     val port: Int,
-    val path: String
+    val path: String,
+    val isDirectory: Boolean = false
 ) {
     companion object {
         fun parse(uri: String): SftpUri? {
             if (!uri.startsWith("sftp://")) return null
-            val regex = Regex("sftp://([^@]+)@([^:]+):(\\d+)(.*)")
+            val regex = Regex("sftp://([^@]+)@([^:]+):(\\d+)([^?]*)(.*)")
             val match = regex.matchEntire(uri) ?: return null
+            val rawPath = match.groupValues[4]
+            val query = match.groupValues[5]
+            
             return SftpUri(
                 username = match.groupValues[1],
                 host = match.groupValues[2],
                 port = match.groupValues[3].toInt(),
-                path = match.groupValues[4]
+                path = rawPath,
+                isDirectory = query == "?type=directory"
             )
         }
     }
 
-    override fun toString(): String = "sftp://$username@$host:$port$path"
+    override fun toString(): String {
+        val base = "sftp://$username@$host:$port$path"
+        return if (isDirectory) "$base?type=directory" else base
+    }
 }

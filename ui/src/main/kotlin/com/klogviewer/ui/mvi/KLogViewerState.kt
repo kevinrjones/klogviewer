@@ -23,7 +23,8 @@ data class LogWindow(
     val lastSelectedIndex: Int? = null,
     val parserName: String? = null,
     val columns: List<String> = emptyList(),
-    val columnWidths: Map<String, Int> = emptyMap()
+    val columnWidths: Map<String, Int> = emptyMap(),
+    val isConnected: Boolean = true
 ) {
     val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
 }
