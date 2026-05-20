@@ -882,14 +882,15 @@ Resolved an issue where the tab title was not being updated when connecting to a
 - **Testing**: Added `SftpTabTitleTest.kt` to verify that the tab title correctly reflects the remote filename upon connection.
 - **Verification**: Confirmed all integration and unit tests pass, ensuring no regressions in tab management.
 
-## 12:25
+## 17:15
 
-### Feat: SFTP Auto-save on Connect
+### Feat: Tab and Status Bar Tooltips
 
-Implemented automatic saving of SFTP connection details when the user clicks "Connect".
+Enhanced the UI by adding tooltips to tabs and the status bar, allowing users to see the fully qualified file name/path by hovering.
 
 #### Changes:
-- **MVI**: Updated `ConnectSftp` intent to include the connection name.
-- **UI**: Modified `SftpConnectionDialog` to pass the name and require it for connection, ensuring all connections are named and saved.
-- **ViewModel**: Enhanced `KLogViewerViewModel` to automatically save or override the SFTP connection profile in preferences whenever a connection is initiated.
-- **Testing**: Added `SftpPersistenceTest.kt` to verify the auto-save and override logic.
+- **UI**: 
+    - Wrapped tab titles in `KLogViewerScreen.kt` with `TooltipWrapper`. The tooltip shows a newline-separated list of all file paths currently loaded in the tab.
+    - Updated `StatusBar.kt` to wrap the file path display with `TooltipWrapper`, ensuring the full path is always accessible even if truncated in the UI.
+- **Task Tracking**: Updated `TASKS-SPRINT-8-CONNECTIVITY.md` with the new tooltip task (13.4.14).
+- **Verification**: Confirmed the build succeeds and verified the tooltip logic for both single-file and multi-file (merged) log views.

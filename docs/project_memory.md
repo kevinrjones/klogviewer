@@ -77,6 +77,7 @@
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
 - Refined window activation: Clicking a non-active window in split-pane view now only activates the window; log entry details are only shown if the window is already active.
 - Initiated UI Testing Spike to establish a formal E2E testing strategy using Compose for Desktop and the Robot Pattern.
+- Tab & Status Bar Tooltips: Implemented tooltips for tab titles and the status bar, providing instant access to the fully qualified file name/path on hover.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -1530,3 +1531,17 @@
 **Test coverage areas**:
 - `PreferencesRepositoryTest`: Verified saving and loading of multiple SFTP connection profiles.
 - `SftpLogSourceTest`: Verified existing functionality remains intact after model updates.
+
+## Task: Tab and Status Bar Tooltips
+**Title**: Tab and Status Bar Tooltips
+**Date/time completed**: 2026-05-20 17:15
+**What was shipped**:
+- Hover tooltips for all log tabs showing the full file path(s).
+- Hover tooltips for the status bar file path.
+**Key decisions**:
+- Used the existing `TooltipWrapper` component for consistency across the UI.
+- For tabs with multiple windows or merged sources, the tooltip joins all relevant paths with newlines.
+**Gotchas**:
+- `TooltipArea` can sometimes conflict with child clickable elements, but wrapping only the text label in the status bar and tab row avoided these issues.
+**Test coverage areas**:
+- Manual verification of tooltip rendering and content.

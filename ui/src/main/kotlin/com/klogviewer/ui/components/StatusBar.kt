@@ -42,17 +42,20 @@ fun StatusBar(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(
-                text = when {
-                    filePath.isEmpty() -> "No file loaded"
-                    !isConnected -> "$filePath (Disconnected)"
-                    else -> filePath
-                },
-                style = MaterialTheme.typography.caption.copy(
-                    textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
-                ),
-                maxLines = 1
-            )
+            val tooltipText = when {
+                filePath.isEmpty() -> "No file loaded"
+                !isConnected -> "$filePath (Disconnected)"
+                else -> filePath
+            }
+            TooltipWrapper(tooltip = tooltipText) {
+                Text(
+                    text = tooltipText,
+                    style = MaterialTheme.typography.caption.copy(
+                        textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
+                    ),
+                    maxLines = 1
+                )
+            }
             Row {
                 if (parserName != null) {
                     Box {

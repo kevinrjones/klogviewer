@@ -44,6 +44,7 @@
 - [x] 13.4.11. Fix SFTP directory restoration and parser name persistence on startup
 - [x] 13.4.12. Ensure all remote connections are auto-saved and persisted when first opened
 - [x] 13.4.13. Support adding remote SFTP logs to existing workspace via "+" button dropdown
+- [x] 13.4.14. Add tooltips to tabs and status bar to show fully qualified file names
 
 ### 13.5. Verification & Testing
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server
