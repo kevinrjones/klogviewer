@@ -1561,3 +1561,19 @@
 **Test coverage areas**:
 - `FileDeletionTest`: Verified directory sub-source deletion detection and state update.
 - `SftpLogSourceTest`: Robustness verification of remote log tailing logic.
+
+## Task: Refined Missing File Handling
+**Title**: Refined Missing File Handling
+**Date/time completed**: 2026-05-20 22:30
+**What was shipped**:
+- Removed the intrusive "File Not Found" dialog that appeared during session restoration or when opening missing files.
+- Implemented a more seamless UX where missing files are immediately opened as red, strike-through tabs/windows without blocking the user with a dialog.
+- Cleaned up obsolete `MISSING_FILE` dialog logic and associated state properties from `KLogViewerViewModel` and `KLogViewerState`.
+**Key decisions**:
+- Consolidated missing file indication into the standard window error/missing-source flow.
+- Removed the automatic "Remove from List" prompt to prevent annoyance during app startup, relying instead on the existing "Clear Missing" functionality in the Recent Items dialog for history cleanup.
+**Gotchas**:
+- Removing the early return in `loadFilesIntoWindow` required ensuring that all downstream processors (parser, probe) gracefully handle empty input from missing files.
+**Test coverage areas**:
+- `SessionRestorationTest`: Verified that app startup with missing files correctly populates tabs with error states and no dialogs.
+- `RecentItemsTest`: Updated to verify the new "open as missing" behavior when selecting from history.

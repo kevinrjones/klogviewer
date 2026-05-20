@@ -66,9 +66,9 @@ fun KLogViewerScreen(
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY -> "Select Log Directory"
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> "Add Log File"
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY -> "Add Log Directory"
-                else -> ""
+
             }
-            val file = if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY || 
+            val file = if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY ||
                          pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY) {
                 dialogProvider.showOpenDirectoryDialog(title)
             } else {
@@ -91,62 +91,11 @@ fun KLogViewerScreen(
                             paths
                         )
                     )
-
-                    else -> {}
                 }
             }
         }
     }
 
-    if (state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.MISSING_FILE && state.missingPath != null) {
-        val focusRequester = remember { FocusRequester() }
-        
-        AlertDialog(
-            onDismissRequest = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
-            title = { Text("File Not Found") },
-            text = { 
-                Text(text = "The file '${state.missingPath}' no longer exists. Would you like to remove it from the recent items list?")
-            },
-            confirmButton = {
-                val focusManager = LocalFocusManager.current
-                LaunchedEffect(Unit) {
-                    focusRequester.requestFocus()
-                }
-                Button(
-                    onClick = {
-                        viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(state.missingPath!!))
-                        viewModel.handleIntent(KLogViewerIntent.DismissDialog)
-                    },
-                    modifier = Modifier.focusRequester(focusRequester).onPreviewKeyEvent { event ->
-                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                ) {
-                    Text("Remove from List")
-                }
-            },
-            dismissButton = {
-                val focusManager = LocalFocusManager.current
-                TextButton(
-                    onClick = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
-                    modifier = Modifier.onPreviewKeyEvent { event ->
-                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                ) {
-                    Text("Keep in List")
-                }
-            }
-        )
-    }
 
     if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.RECENT_ITEMS) {
         RecentItemsDialog(
@@ -154,9 +103,7 @@ fun KLogViewerScreen(
             recentDirectories = state.recentDirectories,
             onSelect = { path ->
                 viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path)))
-                if (File(path).exists()) {
-                    viewModel.handleIntent(KLogViewerIntent.DismissDialog)
-                }
+                viewModel.handleIntent(KLogViewerIntent.DismissDialog)
             },
             onRemoveItem = { viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(it)) },
             onClearMissing = { viewModel.handleIntent(KLogViewerIntent.ClearMissingRecentItems) },

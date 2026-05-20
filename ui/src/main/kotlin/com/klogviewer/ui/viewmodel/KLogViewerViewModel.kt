@@ -378,7 +378,7 @@ class KLogViewerViewModel(
                 }
                 savePreferences()
             }
-            KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null, missingPath = null) }
+            KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null) }
             is KLogViewerIntent.RemoveRecentItem -> {
                 _state.update { currentState ->
                     currentState.copy(
@@ -740,15 +740,7 @@ class KLogViewerViewModel(
         val filteredPaths = filterRedundantPaths(paths)
         val oldJob = logJobs[windowId]
 
-        val localPaths = filteredPaths.filter { !it.startsWith("sftp://") }
         val sftpPaths = filteredPaths.filter { it.startsWith("sftp://") }
-
-        val missingLocalPaths = localPaths.filter { !File(it).exists() }
-        if (missingLocalPaths.isNotEmpty()) {
-            _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.MISSING_FILE, missingPath = missingLocalPaths.first()) }
-            oldJob?.cancel()
-            return
-        }
 
         // If it's a single SFTP path, handle it separately to reuse connectSftp/connectSftpDirectory logic
         if (filteredPaths.size == 1 && sftpPaths.size == 1) {
@@ -1030,8 +1022,6 @@ class KLogViewerViewModel(
                         
                         // Extract unique source IDs from the logs to ensure badges are shown for all discovered files
                         val discoveredSourceIds = newLogs.mapNotNull { it.sourceId }.distinct().filter { it.isNotEmpty() }
-                        
-                        val isDirectorySource = sourceId != null && (SftpUri.parse(sourceId)?.isDirectory == true || File(sourceId).isDirectory)
                         
                         val currentSourceIds = if (update is LogUpdate.SourceMissing) {
                             val isDirectorySubSource = sourceId != null && sourceId != update.sourceId
