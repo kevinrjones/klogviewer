@@ -161,8 +161,15 @@ fun KLogViewerScreen(
 
     if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_CONNECT) {
         SftpConnectionDialog(
-            onConnect = { host, port, user, auth, path ->
-                viewModel.handleIntent(KLogViewerIntent.ConnectSftp(host, port, user, auth, path))
+            savedConnections = state.sftpConnections,
+            onConnect = { name, host, port, user, auth, path ->
+                viewModel.handleIntent(KLogViewerIntent.ConnectSftp(name, host, port, user, auth, path))
+            },
+            onSave = { config ->
+                viewModel.handleIntent(KLogViewerIntent.SaveSftpConnection(config))
+            },
+            onDelete = { name ->
+                viewModel.handleIntent(KLogViewerIntent.DeleteSftpConnection(name))
             },
             onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
             dialogProvider = dialogProvider

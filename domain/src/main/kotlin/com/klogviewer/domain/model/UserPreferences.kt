@@ -10,7 +10,8 @@ data class UserPreferences(
     val isDarkMode: Boolean = true,
     val isSidebarExpanded: Boolean = true,
     val tabs: List<TabPreference> = emptyList(),
-    val activeTabId: String? = null
+    val activeTabId: String? = null,
+    val sftpConnections: List<SftpConfig> = emptyList()
 )
 
 @Serializable

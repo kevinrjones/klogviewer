@@ -713,3 +713,40 @@ Implemented explicit focus management and Tab navigation for all custom dialogs.
 - **UX**: Ensured all dialogs get initial focus when opened.
 - **Architecture**: Created **ADR 025** to document the strategy for focus management in the application.
 - **Tracking**: Updated Sprint 8 tasks and project memory to reflect completion of this UX refinement.
+
+## 11:45
+
+### Feature: SFTP Connection Management
+
+Implemented the ability to save and manage multiple SFTP connections in user preferences.
+
+#### Core Achievements:
+- **Persistence**: Updated `UserPreferences` to store a list of named `SftpConfig` objects.
+- **Serialization**: Enabled `kotlinx.serialization` for SFTP configuration models and tiny types.
+- **UI Management**: Enhanced `SftpConnectionDialog` with a "Saved Connections" dropdown and a "Save" button to manage configurations.
+- **CRUD Operations**: Added support for saving, loading, and deleting SFTP connection profiles from the UI.
+- **Robustness**: Ensured all existing SFTP tests remain passing after model updates and added verification for preference persistence.
+
+## 12:20
+
+### Fix: Tab Title for SFTP Connections
+
+Resolved an issue where the tab title was not being updated when connecting to an SFTP log source.
+
+#### Changes:
+- **ViewModel**: Updated `connectSftp` in `KLogViewerViewModel` to extract the remote filename from the path and update the tab title state.
+- **Consistency**: Unified the tab title update logic across local file loading and remote SFTP connections.
+- **Testing**: Added `SftpTabTitleTest.kt` to verify that the tab title correctly reflects the remote filename upon connection.
+- **Verification**: Confirmed all integration and unit tests pass, ensuring no regressions in tab management.
+
+## 12:25
+
+### Feat: SFTP Auto-save on Connect
+
+Implemented automatic saving of SFTP connection details when the user clicks "Connect".
+
+#### Changes:
+- **MVI**: Updated `ConnectSftp` intent to include the connection name.
+- **UI**: Modified `SftpConnectionDialog` to pass the name and require it for connection, ensuring all connections are named and saved.
+- **ViewModel**: Enhanced `KLogViewerViewModel` to automatically save or override the SFTP connection profile in preferences whenever a connection is initiated.
+- **Testing**: Added `SftpPersistenceTest.kt` to verify the auto-save and override logic.

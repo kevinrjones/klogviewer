@@ -14,14 +14,23 @@ import androidx.compose.ui.input.key.*
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import com.klogviewer.domain.model.SftpAuth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import com.klogviewer.domain.model.*
 
 @Composable
 fun SftpConnectionDialog(
-    onConnect: (host: String, port: Int, user: String, auth: SftpAuth, path: String) -> Unit,
+    savedConnections: List<SftpConfig> = emptyList(),
+    onConnect: (name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -> Unit,
+    onSave: (SftpConfig) -> Unit,
+    onDelete: (String) -> Unit,
     onDismiss: () -> Unit,
     dialogProvider: DialogProvider = AwtDialogProvider()
 ) {
+    var name by remember { mutableStateOf("") }
     var host by remember { mutableStateOf("") }
     var port by remember { mutableStateOf("22") }
     var user by remember { mutableStateOf("") }
@@ -30,6 +39,8 @@ fun SftpConnectionDialog(
     var passphrase by remember { mutableStateOf("") }
     var path by remember { mutableStateOf("/var/log/syslog") }
     var authType by remember { mutableStateOf(0) } // 0 for Password, 1 for KeyPair
+
+    var expanded by remember { mutableStateOf(false) }
 
     val firstFieldFocusRequester = remember { FocusRequester() }
     
@@ -57,11 +68,82 @@ fun SftpConnectionDialog(
                     .padding(vertical = 8.dp)
                     .onPreviewKeyEvent(handleTab)
             ) {
+                if (savedConnections.isNotEmpty()) {
+                    Box {
+                        OutlinedTextField(
+                            value = if (name.isEmpty()) "Select saved connection..." else name,
+                            onValueChange = {},
+                            modifier = Modifier.fillMaxWidth(),
+                            readOnly = true,
+                            label = { Text("Saved Connections") },
+                            trailingIcon = {
+                                IconButton(onClick = { expanded = true }) {
+                                    Icon(Icons.Default.ArrowDropDown, "Select saved connection")
+                                }
+                            }
+                        )
+                        DropdownMenu(
+                            expanded = expanded, 
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier.width(400.dp)
+                        ) {
+                            savedConnections.forEach { config ->
+                                DropdownMenuItem(onClick = {
+                                    name = config.name
+                                    host = config.host.value
+                                    port = config.port.value.toString()
+                                    user = config.username.value
+                                    path = config.logFilePath
+                                    when (val auth = config.auth) {
+                                        is SftpAuth.Password -> {
+                                            authType = 0
+                                            password = auth.password
+                                        }
+                                        is SftpAuth.KeyPair -> {
+                                            authType = 1
+                                            keyPath = auth.privateKeyPath
+                                            passphrase = auth.passphrase ?: ""
+                                        }
+                                    }
+                                    expanded = false
+                                }) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(config.name, modifier = Modifier.weight(1f))
+                                        IconButton(onClick = { 
+                                            onDelete(config.name)
+                                        }) {
+                                            Icon(Icons.Default.Delete, "Delete", tint = Color.Gray)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Divider()
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Connection Name") },
+                    modifier = Modifier.fillMaxWidth().focusRequester(firstFieldFocusRequester),
+                    placeholder = { Text("e.g. Production Web Server") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) })
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = host,
                     onValueChange = { host = it },
                     label = { Text("Host") },
-                    modifier = Modifier.fillMaxWidth().focusRequester(firstFieldFocusRequester),
+                    modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) })
@@ -159,26 +241,50 @@ fun SftpConnectionDialog(
         },
         confirmButton = {
             val focusManager = LocalFocusManager.current
-            Button(
-                onClick = {
-                    val auth = if (authType == 0) {
-                        SftpAuth.Password(password)
-                    } else {
-                        SftpAuth.KeyPair(keyPath, passphrase.takeIf { it.isNotBlank() })
+            Row {
+                Button(
+                    onClick = {
+                        val auth = if (authType == 0) {
+                            SftpAuth.Password(password)
+                        } else {
+                            SftpAuth.KeyPair(keyPath, passphrase.takeIf { it.isNotBlank() })
+                        }
+                        onSave(SftpConfig(name, Host(host), Port(port.toIntOrNull() ?: 22), Username(user), auth, path))
+                    },
+                    enabled = name.isNotBlank() && host.isNotBlank() && user.isNotBlank(),
+                    modifier = Modifier.onPreviewKeyEvent { event ->
+                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
+                            true
+                        } else {
+                            false
+                        }
                     }
-                    onConnect(host, port.toIntOrNull() ?: 22, user, auth, path)
-                },
-                enabled = host.isNotBlank() && user.isNotBlank() && path.isNotBlank(),
-                modifier = Modifier.onPreviewKeyEvent { event ->
-                    if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                        focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
-                        true
-                    } else {
-                        false
-                    }
+                ) {
+                    Text("Save")
                 }
-            ) {
-                Text("Connect")
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = {
+                        val auth = if (authType == 0) {
+                            SftpAuth.Password(password)
+                        } else {
+                            SftpAuth.KeyPair(keyPath, passphrase.takeIf { it.isNotBlank() })
+                        }
+                        onConnect(name, host, port.toIntOrNull() ?: 22, user, auth, path)
+                    },
+                    enabled = name.isNotBlank() && host.isNotBlank() && user.isNotBlank() && path.isNotBlank(),
+                    modifier = Modifier.onPreviewKeyEvent { event ->
+                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
+                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
+                            true
+                        } else {
+                            false
+                        }
+                    }
+                ) {
+                    Text("Connect")
+                }
             }
         },
         dismissButton = {

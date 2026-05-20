@@ -76,4 +76,33 @@ class PreferencesRepositoryTest {
         
         expectThat(loaded).isEqualTo(UserPreferences())
     }
+    @Test
+    fun `should save and load sftp connections`() {
+        val repository = PreferencesRepository(tempDir)
+        val prefs = UserPreferences(
+            sftpConnections = listOf(
+                SftpConfig(
+                    name = "Prod",
+                    host = Host("1.2.3.4"),
+                    port = Port(2222),
+                    username = Username("admin"),
+                    auth = SftpAuth.Password("secret"),
+                    logFilePath = "/var/log/app.log"
+                ),
+                SftpConfig(
+                    name = "Staging",
+                    host = Host("1.2.3.5"),
+                    username = Username("dev"),
+                    auth = SftpAuth.KeyPair("/home/user/.ssh/id_rsa", "pass"),
+                    logFilePath = "/var/log/staging.log"
+                )
+            )
+        )
+
+        repository.save(prefs)
+        
+        val loaded = repository.load()
+        
+        expectThat(loaded).isEqualTo(prefs)
+    }
 }
