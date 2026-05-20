@@ -48,18 +48,19 @@ class SftpLogSourceTest {
         val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
 
         // Act & Assert
+        // Write Initial logs BEFORE observing to ensure they are picked up in the Initial update
+        pipedOut.write("2026-05-20 08:00:00 INFO Initial\n".toByteArray())
+        pipedOut.flush()
+
         launch {
-            // Write some logs to the pipe
-            pipedOut.write("2026-05-20 08:00:00 INFO Initial\n".toByteArray())
-            pipedOut.flush()
-            
-            // Wait for initial to be received
+            // Wait for initial load to be completed by the observer
             initialReceived.await()
             
+            // Now write appended logs
             pipedOut.write("2026-05-20 08:00:01 INFO Appended\n".toByteArray())
             pipedOut.flush()
             
-            delay(50.milliseconds)
+            delay(100.milliseconds) // Give it time to be read
             pipedOut.close() // Close pipe to end the flow
             
             // After close, make exitStatus return 0
@@ -67,7 +68,11 @@ class SftpLogSourceTest {
         }
 
         val results = source.observeLogs(LogFilePath("/var/log/test.log"))
-            .onEach { if (it.getOrNull() is LogUpdate.Initial) initialReceived.complete(Unit) }
+            .onEach { 
+                if (it.getOrNull() is LogUpdate.Initial) {
+                    initialReceived.complete(Unit) 
+                }
+            }
             .take(2)
             .toList()
 

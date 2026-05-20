@@ -1548,16 +1548,16 @@
 
 ## Task: CI Stability & State Management Fixes
 **Title**: CI Stability and Directory State Management Fixes
-**Date/time completed**: 2026-05-20 17:50
+**Date/time completed**: 2026-05-20 21:30
 **What was shipped**:
 - Fixed a bug in `KLogViewerViewModel` where deleted files within a monitored directory were not correctly identified as missing in the UI state.
-- Refactored `SftpLogSourceTest` to eliminate race conditions in the `Initial` load detection, ensuring stable builds on Linux and other fast environments.
-- Added explicit SSH `exitStatus` mocking in tests to ensure clean flow termination.
+- Hardened `SftpLogSourceTest` to eliminate race conditions in the `Initial` load detection by ensuring data is written to the pipe before observation starts.
+- Added explicit SSH `exitStatus` mocking in tests to ensure clean flow termination and robust state verification.
 **Key decisions**:
 - Standardized `missingSourceIds` updates in `handleLogUpdate` to always include missing sources, regardless of whether they are primary or directory sub-sources.
-- Adopted `CompletableDeferred` synchronization in SFTP tests to strictly order data input and emission checks.
+- Adopted pre-observation data seeding in SFTP tests to guarantee stable `Initial` vs `Appended` update separation across different OS environments.
 **Gotchas**:
-- Linux CI runners frequently processed test log lines fast enough to merge `Initial` and `Appended` updates, causing `take(2)` to hang or fail; solved by synchronized emission gates.
+- Linux CI runners were so fast that they could start the log observer before the test's background writer had put any data in the pipe, resulting in unexpected empty initial loads.
 **Test coverage areas**:
 - `FileDeletionTest`: Verified directory sub-source deletion detection and state update.
 - `SftpLogSourceTest`: Robustness verification of remote log tailing logic.
