@@ -1,5 +1,22 @@
 # 2026-05-20
-15:10
+16:45
+
+### Improved Remote Directory Monitoring and Visual Feedback
+
+Refined the behavior of monitored directories when files are deleted and optimized the UI to prevent false-positive error states.
+
+#### Changes:
+- **Automatic Refresh**: Updated `KLogViewerViewModel` to automatically remove logs and source IDs from the window when a file is deleted from a monitored directory. This ensures the window accurately reflects the current contents of the directory.
+- **Selective Log Removal**: Implemented a distinction between primary sources (manually opened files) and sub-sources (discovered via directory monitoring). Manually opened files preserve their logs even when missing (to maintain context), while directory sub-sources are refreshed cleanly.
+- **Error State Suppression**: Suppressed global error states (red status bar) when individual files in a monitored directory are deleted. The error state is now only triggered if the primary path (the directory itself) becomes inaccessible.
+- **UI Consistency**: 
+    - Standardized the use of Red (critical error) and Orange (secondary warning) across the Tab, Window Header, and Status Bar.
+    - Fixed a bug where the status bar incorrectly turned red for sub-file deletions.
+- **Testing**:
+    - Added `SftpFileRemovalRefreshTest.kt` to verify that logs and source IDs are correctly removed for directory sub-sources.
+    - Added `DirectoryErrorSuppressionTest.kt` to verify that sub-file deletions do not trigger global error states.
+
+15:45
 
 ### SFTP Persistence and Reliability Fixes
 

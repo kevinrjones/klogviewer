@@ -17,6 +17,8 @@
 - [x] 13.1.12. Fix data loss during remote directory initialization
 - [x] 13.1.13. Implement SSH connection sharing for remote directories
 - [x] 13.1.14. Detect and visually mark deleted files in monitored remote directories
+- [x] 13.1.15. Suppress global error state for individual file deletions in monitored directories
+- [x] 13.1.16. Refresh window by removing logs and source IDs when a file is deleted from a monitored directory
 
 ### 13.2. Cloud Integration (ADR 010)
 - [ ] 13.2.1. Implement `S3LogSource` for reading logs from AWS S3 buckets

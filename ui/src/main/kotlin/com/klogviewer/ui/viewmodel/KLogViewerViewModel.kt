@@ -554,7 +554,14 @@ class KLogViewerViewModel(
             sftpDirectorySource.observeLogs(LogFilePath(path), parser).collect { result ->
                 result.fold(
                     { error ->
-                        _state.update { it.updateWindow(windowId) { w -> w.copy(error = error.message, isLoading = false) } }
+                        val sid = error.sourceId ?: sourceId
+                        _state.update { it.updateWindow(windowId) { w -> 
+                            w.copy(
+                                error = error.message, 
+                                isLoading = false, 
+                                missingSourceIds = w.missingSourceIds + sid
+                            ) 
+                        } }
                     },
                     { update ->
                         handleLogUpdate(windowId, update, sourceId)
@@ -601,16 +608,35 @@ class KLogViewerViewModel(
             // Create a flow for each path and merge them
             val flows = paths.map { path ->
                 val source = sftpSourceFactory(config, null)
-                source.observeLogs(LogFilePath(path), parser)
+                val sId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}$path"
+                source.observeLogs(LogFilePath(path), parser).map { result ->
+                    result.fold(
+                        { l -> Pair(l, sId).left() },
+                        { r -> Pair(r, sId).right() }
+                    )
+                }
             }
             
             flows.merge().collect { result ->
                 result.fold(
-                    { error ->
-                        _state.update { it.updateWindow(windowId) { w -> w.copy(error = error.message, isLoading = false) } }
+                    { pair ->
+                        val failure = pair.first
+                        val sId = pair.second
+                        _state.update { it.updateWindow(windowId) { w -> 
+                            val sid = failure.sourceId ?: sId
+                            val isCritical = sid == w.filePath
+                            val newError = if (isCritical) failure.message else w.error
+                            w.copy(
+                                error = newError, 
+                                isLoading = false,
+                                missingSourceIds = w.missingSourceIds + sid
+                            ) 
+                        } }
                     },
-                    { update ->
-                        handleLogUpdate(windowId, update)
+                    { pair ->
+                        val update = pair.first
+                        val sId = pair.second
+                        handleLogUpdate(windowId, update, sId)
                     }
                 )
             }
@@ -845,13 +871,20 @@ class KLogViewerViewModel(
                             currentState.copy(tabs = currentState.tabs.map { tab ->
                                 tab.copy(windows = tab.windows.map { window ->
                                     if (window.id == windowId) {
-                                        val newMissing = if (failure.sourceId != null) window.missingSourceIds + failure.sourceId!! else window.missingSourceIds + path
-                                        window.copy(isLoading = false, error = message, missingSourceIds = newMissing)
+                                        val sourceId = failure.sourceId ?: path
+                                        val newMissing = window.missingSourceIds + sourceId
+                                        val isCritical = sourceId == window.filePath || path == window.filePath
+                                        val newError = if (isCritical) message else window.error
+                                        window.copy(isLoading = false, error = newError, missingSourceIds = newMissing)
                                     } else window
                                 })
                             })
                         }
-                        _events.emit(KLogViewerEvent.ShowError(message))
+                        // Only emit error event for critical failures or if no logs loaded yet
+                        val currentWindow = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId }
+                        if (currentWindow?.error != null || currentWindow?.logs?.isEmpty() == true) {
+                            _events.emit(KLogViewerEvent.ShowError(message))
+                        }
                     },
                     ifRight = { pair ->
                         val update = pair.first
@@ -938,7 +971,14 @@ class KLogViewerViewModel(
                             }
                             is LogUpdate.Appended -> window.logs + update.entries
                             LogUpdate.Reset -> emptyList()
-                            is LogUpdate.SourceMissing -> window.logs
+                            is LogUpdate.SourceMissing -> {
+                                val isDirectorySubSource = sourceId != null && sourceId != update.sourceId
+                                if (isDirectorySubSource) {
+                                    window.logs.filter { it.sourceId != update.sourceId }
+                                } else {
+                                    window.logs
+                                }
+                            }
                         }
 
                         // Ensure logs are sorted by timestamp if we have multiple sources
@@ -950,7 +990,14 @@ class KLogViewerViewModel(
                         
                         val currentMissing = if (sourceId != null) window.missingSourceIds - sourceId else window.missingSourceIds
                         val newMissingSourceIds = when (update) {
-                            is LogUpdate.SourceMissing -> currentMissing + update.sourceId
+                            is LogUpdate.SourceMissing -> {
+                                val isDirectorySubSource = sourceId != null && sourceId != update.sourceId
+                                if (isDirectorySubSource) {
+                                    currentMissing
+                                } else {
+                                    currentMissing + update.sourceId
+                                }
+                            }
                             is LogUpdate.Initial -> {
                                 val incoming = update.entries.mapNotNull { it.sourceId }.toSet()
                                 currentMissing - incoming
@@ -967,14 +1014,25 @@ class KLogViewerViewModel(
                         
                         val isDirectorySource = sourceId != null && (SftpUri.parse(sourceId)?.isDirectory == true || File(sourceId).isDirectory)
                         
-                        val mergedSourceIds = (window.sourceIds + discoveredSourceIds).distinct()
+                        val currentSourceIds = if (update is LogUpdate.SourceMissing) {
+                            val isDirectorySubSource = sourceId != null && sourceId != update.sourceId
+                            if (isDirectorySubSource) {
+                                window.sourceIds - update.sourceId
+                            } else {
+                                window.sourceIds
+                            }
+                        } else {
+                            window.sourceIds
+                        }
+
+                        val mergedSourceIds = (currentSourceIds + discoveredSourceIds).distinct()
                         
                         window.copy(
                             isLoading = false, 
                             logs = newLogs,
                             sourceIds = mergedSourceIds,
                             missingSourceIds = newMissingSourceIds,
-                            error = if (newMissingSourceIds.isEmpty()) null else window.error
+                            error = if (newMissingSourceIds.contains(window.filePath)) window.error else null
                         )
                     } else window
                 })

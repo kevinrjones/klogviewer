@@ -68,6 +68,10 @@
 - Documentation: Updated README.md with detailed SFTP usage instructions and key file requirements.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
 - Fixed a bug where resizing a column in a split pane would resize the column in the focused pane instead of the one being interacted with.
+- Robust Directory Monitoring: 
+    - Implemented "clean refresh" for monitored directories. When a file is deleted from a directory (local or remote), its logs and source ID are now automatically removed from the window to maintain an accurate view of the directory's contents.
+    - Added Selective Log Removal logic to distinguish between directory sub-sources (removed on deletion) and primary user-opened sources (retained with warning on deletion).
+    - Suppressed global error states (red status bar) for individual file deletions within a monitored directory, ensuring that warnings are only shown for critical path failures.
 - Fixed a resource leak in `KLogViewerViewModel` where background log observation jobs were not cancelled when a load intent for a missing file was processed, causing file locks and test failures on Windows.
 - Enhanced UI to make the active window more obvious by adding a subtle left border in split-pane view.
 - Fixed a regression where the "Message" column would disappear due to `weight(1f)` squashing in constrained rows.
