@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -42,6 +43,7 @@ fun LogList(
     filterQueries: List<String>,
     isDarkMode: Boolean,
     sourceIds: List<String> = emptyList(),
+    missingSourceIds: Set<String> = emptySet(),
     columns: List<String> = emptyList(),
     columnWidths: Map<String, Int> = emptyMap(),
     isAutoScrollEnabled: Boolean = true,
@@ -96,6 +98,7 @@ fun LogList(
                                 viewportWidth = minContentWidth,
                                 showAnsiColors = showAnsiColors,
                                 sourceIds = sourceIds,
+                                missingSourceIds = missingSourceIds,
                                 columns = displayColumns,
                                 columnWidths = columnWidths,
                                 isSelected = selectedIndices.contains(index),
@@ -223,6 +226,7 @@ fun LogEntryRow(
     viewportWidth: Dp,
     showAnsiColors: Boolean = true,
     sourceIds: List<String> = emptyList(),
+    missingSourceIds: Set<String> = emptySet(),
     columns: List<String>,
     columnWidths: Map<String, Int>,
     isSelected: Boolean = false,
@@ -270,8 +274,10 @@ fun LogEntryRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (sourceIds.size > 1) {
-                val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds)
-                TooltipWrapper(tooltip = entry.sourceId ?: "Unknown Source") {
+                val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
+                val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds, isMissing)
+                val tooltip = if (isMissing) "${entry.sourceId} (Missing)" else entry.sourceId ?: "Unknown Source"
+                TooltipWrapper(tooltip = tooltip) {
                     Box(
                         modifier = Modifier
                             .size(8.dp)
@@ -333,9 +339,12 @@ fun LogEntryRow(
                 "Message", "Content" -> {
                     val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value
                     val displayMessage = if (fullMessage.length > 10000) fullMessage.take(10000) + "..." else fullMessage
+                    val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
                     Text(
                         text = LogHighlighter.highlight(displayMessage, filterQueries, isDarkMode, showAnsiColors),
-                        style = MaterialTheme.typography.body1,
+                        style = MaterialTheme.typography.body1.copy(
+                            textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
+                        ),
                         fontSize = 12.sp,
                         softWrap = false,
                         overflow = TextOverflow.Visible,
@@ -381,8 +390,9 @@ private fun getLevelColor(level: LogLevel, colors: LogLevelColors): Color = when
     LogLevel.UNKNOWN -> colors.unknown
 }
 
-private fun getSourceBadgeColor(sourceId: String?, sourceIds: List<String>): Color {
+private fun getSourceBadgeColor(sourceId: String?, sourceIds: List<String>, isMissing: Boolean = false): Color {
     if (sourceId == null || sourceIds.size <= 1) return Color.Transparent
+    if (isMissing) return Color.Red
     val index = sourceIds.indexOf(sourceId).coerceAtLeast(0)
     val colors = listOf(
         Color(0xFFE57373), // Red

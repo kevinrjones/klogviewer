@@ -393,6 +393,7 @@ fun KLogViewerScreen(
                                         filterQueries = window.filterQueries,
                                         isDarkMode = state.isDarkMode,
                                         sourceIds = window.sourceIds,
+                                        missingSourceIds = window.missingSourceIds,
                                         columns = window.columns,
                                         columnWidths = window.columnWidths,
                                         isAutoScrollEnabled = window.isAutoScrollEnabled,

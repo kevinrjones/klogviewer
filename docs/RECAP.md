@@ -28,6 +28,7 @@ Finalized the fix for remote directory restoration and improved the reliability 
 - **Directory Restoration**: Updated `loadFilesIntoWindow` to correctly dispatch SFTP directory URIs to `SftpDirectoryLogSource`, ensuring remote directories are re-opened as directories upon restart.
 - **Persistence Fix**: Added missing `savePreferences()` calls when connecting to remote sources (file, directory, or multiple files). This ensures the window state is saved immediately when a connection is established.
 - **Auto-Save Centralization**: Implemented a `saveSftpConnection` helper to ensure connection details (host, user, etc.) are automatically saved to the connection list even when connecting via the remote browser or directory selection.
+- **Remote File Deletion Detection**: Enhanced `SftpDirectoryLogSource` to detect when files are removed from a monitored directory. Logs from missing sources are now visually marked with a red badge and strike-through text in the UI to provide clear feedback.
 - **Double Tailing Prevention**: Implemented `filterRedundantPaths` to automatically remove sub-files from the load list if their parent directory is also being loaded, preventing redundant log streams and UI badges.
 - **Multi-Source Interleaving**:
     - Refactored `handleLogUpdate` to support additive `Initial` updates. When multiple files or directories are loaded into one window, their initial content is merged instead of being overwritten by the last source to load.
