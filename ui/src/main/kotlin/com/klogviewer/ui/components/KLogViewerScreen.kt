@@ -502,15 +502,18 @@ private fun LogTabRow(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = tab.title,
-                                    style = MaterialTheme.typography.button.copy(
-                                        fontSize = 12.sp,
-                                        color = if (isAnyPrimaryWindowMissing || isAnyWindowError) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified,
-                                        textDecoration = if (isAnyPrimaryWindowMissing) TextDecoration.LineThrough else TextDecoration.None
-                                    ),
-                                    maxLines = 1
-                                )
+                                val tooltip = tab.windows.map { it.filePath }.distinct().filter { it.isNotEmpty() }.joinToString("\n").ifEmpty { tab.title }
+                                TooltipWrapper(tooltip = tooltip) {
+                                    Text(
+                                        text = tab.title,
+                                        style = MaterialTheme.typography.button.copy(
+                                            fontSize = 12.sp,
+                                            color = if (isAnyPrimaryWindowMissing || isAnyWindowError) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified,
+                                            textDecoration = if (isAnyPrimaryWindowMissing) TextDecoration.LineThrough else TextDecoration.None
+                                        ),
+                                        maxLines = 1
+                                    )
+                                }
                                 Spacer(modifier = Modifier.width(8.dp))
                                 TooltipWrapper(tooltip = "Close tab") {
                                     IconButton(
