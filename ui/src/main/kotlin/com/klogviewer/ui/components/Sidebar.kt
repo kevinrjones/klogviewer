@@ -100,7 +100,7 @@ fun Sidebar(
             
             if (isExpanded) {
                 Text(
-                    text = "v1.2.0",
+                    text = "v1.3.0",
                     style = MaterialTheme.typography.caption,
                     modifier = Modifier.padding(8.dp)
                 )
