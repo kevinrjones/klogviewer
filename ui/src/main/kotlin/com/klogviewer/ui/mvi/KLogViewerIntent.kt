@@ -27,6 +27,8 @@ sealed interface KLogViewerIntent {
     data object ShowOpenDialog : KLogViewerIntent
     data object ShowOpenDirectoryDialog : KLogViewerIntent
     data object ShowAddDialog : KLogViewerIntent
+    data object ShowAddDirectoryDialog : KLogViewerIntent
+    data object ShowAddSftpDialog : KLogViewerIntent
     data object ShowRecentDialog : KLogViewerIntent
     data object ShowSftpDialog : KLogViewerIntent
     data class ConnectSftp(
@@ -35,15 +37,18 @@ sealed interface KLogViewerIntent {
         val port: Int,
         val user: String,
         val auth: com.klogviewer.domain.model.SftpAuth,
-        val path: String
+        val path: String,
+        val addToWorkspace: Boolean = false
     ) : KLogViewerIntent
     data class ConnectMultipleSftp(
         val config: SftpConfig,
-        val paths: List<String>
+        val paths: List<String>,
+        val addToWorkspace: Boolean = false
     ) : KLogViewerIntent
     data class ConnectSftpDirectory(
         val config: SftpConfig,
-        val path: String
+        val path: String,
+        val addToWorkspace: Boolean = false
     ) : KLogViewerIntent
     data class BrowseSftp(val config: SftpConfig, val path: String) : KLogViewerIntent
     data class NavigateRemote(val path: String) : KLogViewerIntent

@@ -20,6 +20,7 @@ class MainRobot(composeTestRule: ComposeUiTest) : BaseRobot(composeTestRule) {
 
     fun clickAddFile() {
         onNodeWithTag("add_file_to_workspace").performClick()
+        onNodeWithTag("add_local_file_item").performClick()
     }
 
     fun splitHorizontal() {

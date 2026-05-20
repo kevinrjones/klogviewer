@@ -15,7 +15,8 @@ import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -39,15 +40,15 @@ class SftpBrowsingTest {
     private val prefsRepository by lazy { PreferencesRepository(tempDir) }
     private val remoteFileSystem = mockk<RemoteFileSystem>()
     private val mockSftpSource = mockk<LogSource>(relaxed = true)
-    private val viewModel by lazy { 
+    private fun createViewModel(scope: kotlinx.coroutines.CoroutineScope) = 
         KLogViewerViewModel(
             source, 
             prefsRepository, 
             heuristicProbe, 
             remoteFileSystem = remoteFileSystem,
-            sftpSourceFactory = { _, _ -> mockSftpSource }
+            sftpSourceFactory = { _, _ -> mockSftpSource },
+            scope = scope
         ) 
-    }
 
     @BeforeEach
     fun setup() {
@@ -57,11 +58,11 @@ class SftpBrowsingTest {
     @AfterEach
     fun tearDown() {
         Dispatchers.resetMain()
-        viewModel.clear()
     }
 
     @Test
-    fun `should transition to SFTP_BROWSE when connecting to a directory`() = runBlocking {
+    fun `should transition to SFTP_BROWSE when connecting to a directory`() = runTest {
+        val viewModel = createViewModel(backgroundScope)
         // Arrange
         val name = "Server"
         val host = "example.com"
@@ -89,7 +90,8 @@ class SftpBrowsingTest {
     }
 
     @Test
-    fun `should connect directly when connecting to a file`() = runBlocking {
+    fun `should connect directly when connecting to a file`() = runTest {
+        val viewModel = createViewModel(backgroundScope)
         // Arrange
         val name = "Server"
         val host = "example.com"
@@ -114,5 +116,35 @@ class SftpBrowsingTest {
         // Verify window is loading the file
         val window = state.activeTab?.activeWindow
         assertEquals("sftp://user@example.com:22/var/log/syslog", window?.filePath)
+    }
+
+    @Test
+    fun `should add to workspace when addToWorkspace is true`() = runTest {
+        val viewModel = createViewModel(backgroundScope)
+        // Arrange
+        val name = "Server"
+        val host = "example.com"
+        val auth = SftpAuth.Password("pass")
+        val path = "/var/log/syslog"
+        
+        // Create a real temp file
+        val localFile = File(tempDir, "local.log")
+        localFile.writeText("local log content")
+        
+        // Initial state with a local file
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(localFile.absolutePath)))
+        
+        // Wait for state to reflect the local file
+        viewModel.state.first { it.activeTab?.activeWindow?.sourceIds == listOf(localFile.absolutePath) }
+        
+        // Act
+        viewModel.handleIntent(KLogViewerIntent.ConnectSftp(name, host, 22, "user", auth, path, addToWorkspace = true))
+        
+        // Assert
+        viewModel.state.first { it.activeTab?.activeWindow?.sourceIds?.size == 2 }
+        
+        val state = viewModel.state.value
+        val window = state.activeTab?.activeWindow
+        assertEquals(listOf(localFile.absolutePath, "sftp://user@example.com:22/var/log/syslog"), window?.sourceIds)
     }
 }

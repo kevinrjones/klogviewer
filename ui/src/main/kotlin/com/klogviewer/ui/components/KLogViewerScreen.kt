@@ -58,15 +58,18 @@ fun KLogViewerScreen(
     LaunchedEffect(pendingDialog) {
         if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN ||
             pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY ||
-            pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD
+            pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD ||
+            pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY
         ) {
             val title = when (pendingDialog) {
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN -> "Select Log File"
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY -> "Select Log Directory"
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> "Add Log File"
+                com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY -> "Add Log Directory"
                 else -> ""
             }
-            val file = if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY) {
+            val file = if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY || 
+                         pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY) {
                 dialogProvider.showOpenDirectoryDialog(title)
             } else {
                 dialogProvider.showOpenFileDialog(title)
@@ -82,7 +85,8 @@ fun KLogViewerScreen(
                         KLogViewerIntent.LoadFiles(paths)
                     )
 
-                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> viewModel.handleIntent(
+                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD,
+                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY -> viewModel.handleIntent(
                         KLogViewerIntent.AddToWorkspace(
                             paths
                         )
@@ -160,11 +164,13 @@ fun KLogViewerScreen(
         )
     }
 
-    if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_CONNECT) {
+    if (state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_CONNECT ||
+        state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_ADD) {
+        val isAdd = state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_ADD
         SftpConnectionDialog(
             savedConnections = state.sftpConnections,
             onConnect = { name, host, port, user, auth, path ->
-                viewModel.handleIntent(KLogViewerIntent.ConnectSftp(name, host, port, user, auth, path))
+                viewModel.handleIntent(KLogViewerIntent.ConnectSftp(name, host, port, user, auth, path, addToWorkspace = isAdd))
             },
             onSave = { config ->
                 viewModel.handleIntent(KLogViewerIntent.SaveSftpConnection(config))
@@ -190,13 +196,13 @@ fun KLogViewerScreen(
             onSelectFiles = { paths ->
                 val config = state.currentSftpConfig
                 if (config != null) {
-                    viewModel.handleIntent(KLogViewerIntent.ConnectMultipleSftp(config, paths))
+                    viewModel.handleIntent(KLogViewerIntent.ConnectMultipleSftp(config, paths, addToWorkspace = state.isAddMode))
                 }
             },
             onSelectDirectory = { path ->
                 val config = state.currentSftpConfig
                 if (config != null) {
-                    viewModel.handleIntent(KLogViewerIntent.ConnectSftpDirectory(config, path))
+                    viewModel.handleIntent(KLogViewerIntent.ConnectSftpDirectory(config, path, addToWorkspace = state.isAddMode))
                 }
             },
             onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
@@ -221,6 +227,8 @@ fun KLogViewerScreen(
                         onRemoveQuery = { viewModel.handleIntent(KLogViewerIntent.RemoveFilterQuery(it)) },
                         onClearQueries = { viewModel.handleIntent(KLogViewerIntent.ClearFilterQueries) },
                         onAddClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) },
+                        onAddDirectoryClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDirectoryDialog) },
+                        onAddSftpClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddSftpDialog) },
                         onToggleTheme = { viewModel.handleIntent(KLogViewerIntent.ToggleTheme) },
                         onToggleSidebar = { viewModel.handleIntent(KLogViewerIntent.ToggleSidebar) },
                         isReversed = activeWindow?.isReversed ?: false,

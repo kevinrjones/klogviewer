@@ -1,7 +1,7 @@
 Initialized native services in: /Users/kevinjones/.gradle/native
 Initialized jansi services in: /Users/kevinjones/.gradle/native
-The client will now receive all logging from the daemon (pid: 131). The daemon log file: /Users/kevinjones/.gradle/daemon/9.3.0/daemon-131.out.log
-Starting 10th build in daemon [uptime: 3 mins 27.134 secs, performance: 100%, GC rate: 0.00/s, heap usage: 2% of 512 MiB, non-heap usage: 31% of 384 MiB]
+The client will now receive all logging from the daemon (pid: 18237). The daemon log file: /Users/kevinjones/.gradle/daemon/9.3.0/daemon-18237.out.log
+Starting 42nd build in daemon [uptime: 22 mins 19.997 secs, performance: 100%, GC rate: 0.00/s, heap usage: 4% of 512 MiB, non-heap usage: 77% of 384 MiB]
 Using 10 worker leases.
 Operational build model parameters: {requiresToolingModels=false, parallelProjectExecution=false, configureOnDemand=false, configurationCache=false, configurationCacheParallelStore=false, configurationCacheParallelLoad=true, isolatedProjects=false, parallelProjectConfiguration=false, intermediateModelCache=false, parallelToolingApiActions=false, invalidateCoupledProjects=false, modelAsProjectDependency=false, resilientModelBuilding=false}
 Now considering [/Users/kevinjones/Dropbox/projects/utilities/LogViewer] as hierarchies to watch
@@ -84,226 +84,226 @@ Task name matched 'test'
 Selected primary task 'test' from project :app
 Tasks to be executed: [task ':app:checkKotlinGradlePluginConfigurationErrors', task ':app:convertXmlValueResourcesForMain', task ':app:copyNonXmlValueResourcesForMain', task ':app:prepareComposeResourcesTaskForMain', task ':app:generateResourceAccessorsForMain', task ':app:generateActualResourceCollectorsForMain', task ':app:generateComposeResClass', task ':core:checkKotlinGradlePluginConfigurationErrors', task ':domain:checkKotlinGradlePluginConfigurationErrors', task ':domain:compileKotlin', task ':domain:compileJava', task ':domain:processResources', task ':domain:classes', task ':domain:jar', task ':core:compileKotlin', task ':core:compileJava', task ':ui:checkKotlinGradlePluginConfigurationErrors', task ':ui:convertXmlValueResourcesForMain', task ':ui:copyNonXmlValueResourcesForMain', task ':ui:prepareComposeResourcesTaskForMain', task ':ui:generateResourceAccessorsForMain', task ':ui:generateActualResourceCollectorsForMain', task ':ui:generateComposeResClass', task ':ui:compileKotlin', task ':ui:compileJava', task ':ui:assembleMainResources', task ':ui:processResources', task ':ui:classes', task ':ui:jar', task ':app:compileKotlin', task ':app:compileJava', task ':app:assembleMainResources', task ':app:processResources', task ':app:classes', task ':app:jar', task ':app:convertXmlValueResourcesForTest', task ':app:copyNonXmlValueResourcesForTest', task ':app:prepareComposeResourcesTaskForTest', task ':app:generateResourceAccessorsForTest', task ':app:compileTestKotlin', task ':app:compileTestJava', task ':app:assembleTestResources', task ':app:processTestResources', task ':app:testClasses', task ':core:processResources', task ':core:classes', task ':core:jar', task ':app:test']
 Tasks that were excluded: []
-Resolve mutations for :app:checkKotlinGradlePluginConfigurationErrors (Thread[#1187,Execution worker,5,main]) started.
-:app:checkKotlinGradlePluginConfigurationErrors (Thread[#1190,Execution worker Thread 4,5,main]) started.
+Resolve mutations for :app:checkKotlinGradlePluginConfigurationErrors (Thread[#4620,Execution worker,5,main]) started.
+:app:checkKotlinGradlePluginConfigurationErrors (Thread[#4627,Execution worker Thread 8,5,main]) started.
 
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
 Skipping task ':app:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
-Resolve mutations for :app:convertXmlValueResourcesForMain (Thread[#1190,Execution worker Thread 4,5,main]) started.
-:app:convertXmlValueResourcesForMain (Thread[#1190,Execution worker Thread 4,5,main]) started.
+Resolve mutations for :app:convertXmlValueResourcesForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
+:app:convertXmlValueResourcesForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
 
 > Task :app:convertXmlValueResourcesForMain NO-SOURCE
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/generated/compose/resourceGenerator/preparedResources/main/composeResources', not found
 Skipping task ':app:convertXmlValueResourcesForMain' as it has no source files and no previous output files.
-Resolve mutations for :app:copyNonXmlValueResourcesForMain (Thread[#1190,Execution worker Thread 4,5,main]) started.
-:app:copyNonXmlValueResourcesForMain (Thread[#1190,Execution worker Thread 4,5,main]) started.
+Resolve mutations for :app:copyNonXmlValueResourcesForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
+:app:copyNonXmlValueResourcesForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
 
 > Task :app:copyNonXmlValueResourcesForMain NO-SOURCE
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/generated/compose/resourceGenerator/preparedResources/main/composeResources', not found
 Skipping task ':app:copyNonXmlValueResourcesForMain' as it has no source files and no previous output files.
-Resolve mutations for :app:prepareComposeResourcesTaskForMain (Thread[#1190,Execution worker Thread 4,5,main]) started.
-:app:prepareComposeResourcesTaskForMain (Thread[#1190,Execution worker Thread 4,5,main]) started.
+Resolve mutations for :app:prepareComposeResourcesTaskForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
+:app:prepareComposeResourcesTaskForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
 
 > Task :app:prepareComposeResourcesTaskForMain NO-SOURCE
 Skipping task ':app:prepareComposeResourcesTaskForMain' as it has no source files and no previous output files.
-Resolve mutations for :app:generateResourceAccessorsForMain (Thread[#1190,Execution worker Thread 4,5,main]) started.
-:app:generateResourceAccessorsForMain (Thread[#1195,Execution worker Thread 9,5,main]) started.
+Resolve mutations for :app:generateResourceAccessorsForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
+:app:generateResourceAccessorsForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
 
 > Task :app:generateResourceAccessorsForMain SKIPPED
 Skipping task ':app:generateResourceAccessorsForMain' as task onlyIf 'Task satisfies onlyIf spec' is false.
-Resolve mutations for :app:generateActualResourceCollectorsForMain (Thread[#1195,Execution worker Thread 9,5,main]) started.
-:app:generateActualResourceCollectorsForMain (Thread[#1195,Execution worker Thread 9,5,main]) started.
+Resolve mutations for :app:generateActualResourceCollectorsForMain (Thread[#4627,Execution worker Thread 8,5,main]) started.
+:app:generateActualResourceCollectorsForMain (Thread[#4619,included builds,5,main]) started.
 
 > Task :app:generateActualResourceCollectorsForMain SKIPPED
 Skipping task ':app:generateActualResourceCollectorsForMain' as task onlyIf 'Task satisfies onlyIf spec' is false.
-Resolve mutations for :app:generateComposeResClass (Thread[#1195,Execution worker Thread 9,5,main]) started.
-:app:generateComposeResClass (Thread[#1195,Execution worker Thread 9,5,main]) started.
+Resolve mutations for :app:generateComposeResClass (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:generateComposeResClass (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :app:generateComposeResClass SKIPPED
 Skipping task ':app:generateComposeResClass' as task onlyIf 'Task satisfies onlyIf spec' is false.
-Resolve mutations for :core:checkKotlinGradlePluginConfigurationErrors (Thread[#1195,Execution worker Thread 9,5,main]) started.
-:core:checkKotlinGradlePluginConfigurationErrors (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :core:checkKotlinGradlePluginConfigurationErrors (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:core:checkKotlinGradlePluginConfigurationErrors (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :core:checkKotlinGradlePluginConfigurationErrors SKIPPED
 Skipping task ':core:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
-Resolve mutations for :domain:checkKotlinGradlePluginConfigurationErrors (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:domain:checkKotlinGradlePluginConfigurationErrors (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :domain:checkKotlinGradlePluginConfigurationErrors (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:domain:checkKotlinGradlePluginConfigurationErrors (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :domain:checkKotlinGradlePluginConfigurationErrors SKIPPED
 Skipping task ':domain:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
-Resolve mutations for :domain:compileKotlin (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:domain:compileKotlin (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :domain:compileKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:domain:compileKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :domain:compileKotlin UP-TO-DATE
 Caching disabled for task ':domain:compileKotlin' because:
   Build cache is disabled
 Skipping task ':domain:compileKotlin' as it is up-to-date.
-Resolve mutations for :domain:compileJava (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:domain:compileJava (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :domain:compileJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:domain:compileJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :domain:compileJava NO-SOURCE
 Skipping task ':domain:compileJava' as it has no source files and no previous output files.
-Resolve mutations for :domain:processResources (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:domain:processResources (Thread[#1190,Execution worker Thread 4,5,main]) started.
+Resolve mutations for :domain:processResources (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:domain:processResources (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :domain:processResources NO-SOURCE
 Skipping task ':domain:processResources' as it has no source files and no previous output files.
-Resolve mutations for :domain:classes (Thread[#1190,Execution worker Thread 4,5,main]) started.
-:domain:classes (Thread[#1190,Execution worker Thread 4,5,main]) started.
+Resolve mutations for :domain:classes (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:domain:classes (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :domain:classes UP-TO-DATE
 Skipping task ':domain:classes' as it has no actions.
-Resolve mutations for :domain:jar (Thread[#1190,Execution worker Thread 4,5,main]) started.
-:domain:jar (Thread[#1190,Execution worker Thread 4,5,main]) started.
+Resolve mutations for :domain:jar (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:domain:jar (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :domain:jar UP-TO-DATE
 Caching disabled for task ':domain:jar' because:
   Build cache is disabled
   Not worth caching
 Skipping task ':domain:jar' as it is up-to-date.
-work action resolve domain.jar (project :domain) (Thread[#1190,Execution worker Thread 4,5,main]) started.
-Resolve mutations for :core:compileKotlin (Thread[#1190,Execution worker Thread 4,5,main]) started.
-:core:compileKotlin (Thread[#1190,Execution worker Thread 4,5,main]) started.
+work action resolve domain.jar (project :domain) (Thread[#4626,Execution worker Thread 7,5,main]) started.
+Resolve mutations for :core:compileKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:core:compileKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :core:compileKotlin UP-TO-DATE
 Caching disabled for task ':core:compileKotlin' because:
   Build cache is disabled
 Skipping task ':core:compileKotlin' as it is up-to-date.
-Resolve mutations for :core:compileJava (Thread[#1190,Execution worker Thread 4,5,main]) started.
-:core:compileJava (Thread[#1190,Execution worker Thread 4,5,main]) started.
+Resolve mutations for :core:compileJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:core:compileJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :core:compileJava NO-SOURCE
 Skipping task ':core:compileJava' as it has no source files and no previous output files.
-work action resolve main (project :core) (Thread[#1190,Execution worker Thread 4,5,main]) started.
-work action resolve main (project :core) (Thread[#1192,Execution worker Thread 6,5,main]) started.
-Resolve mutations for :ui:checkKotlinGradlePluginConfigurationErrors (Thread[#1192,Execution worker Thread 6,5,main]) started.
-:ui:checkKotlinGradlePluginConfigurationErrors (Thread[#1192,Execution worker Thread 6,5,main]) started.
+work action resolve main (project :core) (Thread[#4626,Execution worker Thread 7,5,main]) started.
+work action resolve main (project :core) (Thread[#4626,Execution worker Thread 7,5,main]) started.
+Resolve mutations for :ui:checkKotlinGradlePluginConfigurationErrors (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:checkKotlinGradlePluginConfigurationErrors (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:checkKotlinGradlePluginConfigurationErrors SKIPPED
 Skipping task ':ui:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
-Resolve mutations for :ui:convertXmlValueResourcesForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
-:ui:convertXmlValueResourcesForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
+Resolve mutations for :ui:convertXmlValueResourcesForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:convertXmlValueResourcesForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:convertXmlValueResourcesForMain NO-SOURCE
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/generated/compose/resourceGenerator/preparedResources/main/composeResources', not found
 Skipping task ':ui:convertXmlValueResourcesForMain' as it has no source files and no previous output files.
-Resolve mutations for :ui:copyNonXmlValueResourcesForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
-:ui:copyNonXmlValueResourcesForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
+Resolve mutations for :ui:copyNonXmlValueResourcesForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:copyNonXmlValueResourcesForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:copyNonXmlValueResourcesForMain NO-SOURCE
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/generated/compose/resourceGenerator/preparedResources/main/composeResources', not found
 Skipping task ':ui:copyNonXmlValueResourcesForMain' as it has no source files and no previous output files.
-Resolve mutations for :ui:prepareComposeResourcesTaskForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
-:ui:prepareComposeResourcesTaskForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
+Resolve mutations for :ui:prepareComposeResourcesTaskForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:prepareComposeResourcesTaskForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:prepareComposeResourcesTaskForMain NO-SOURCE
 Skipping task ':ui:prepareComposeResourcesTaskForMain' as it has no source files and no previous output files.
-Resolve mutations for :ui:generateResourceAccessorsForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
-:ui:generateResourceAccessorsForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
+Resolve mutations for :ui:generateResourceAccessorsForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:generateResourceAccessorsForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:generateResourceAccessorsForMain SKIPPED
 Skipping task ':ui:generateResourceAccessorsForMain' as task onlyIf 'Task satisfies onlyIf spec' is false.
-Resolve mutations for :ui:generateActualResourceCollectorsForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
-:ui:generateActualResourceCollectorsForMain (Thread[#1192,Execution worker Thread 6,5,main]) started.
+Resolve mutations for :ui:generateActualResourceCollectorsForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:generateActualResourceCollectorsForMain (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:generateActualResourceCollectorsForMain SKIPPED
 Skipping task ':ui:generateActualResourceCollectorsForMain' as task onlyIf 'Task satisfies onlyIf spec' is false.
-Resolve mutations for :ui:generateComposeResClass (Thread[#1192,Execution worker Thread 6,5,main]) started.
-:ui:generateComposeResClass (Thread[#1186,included builds,5,main]) started.
+Resolve mutations for :ui:generateComposeResClass (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:generateComposeResClass (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:generateComposeResClass SKIPPED
 Skipping task ':ui:generateComposeResClass' as task onlyIf 'Task satisfies onlyIf spec' is false.
-Resolve mutations for :ui:compileKotlin (Thread[#1186,included builds,5,main]) started.
-:ui:compileKotlin (Thread[#1186,included builds,5,main]) started.
-Resolve mutations for :ui:assembleMainResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:ui:assembleMainResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :ui:compileKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:compileKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
+Resolve mutations for :ui:assembleMainResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:ui:assembleMainResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :ui:assembleMainResources UP-TO-DATE
 Caching disabled for task ':ui:assembleMainResources' because:
   Build cache is disabled
   There is no logic, just copy files
 Skipping task ':ui:assembleMainResources' as it is up-to-date.
-Resolve mutations for :ui:processResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:ui:processResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :ui:processResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:ui:processResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :ui:processResources UP-TO-DATE
 Caching disabled for task ':ui:processResources' because:
   Build cache is disabled
   Not worth caching
 Skipping task ':ui:processResources' as it is up-to-date.
-Resolve mutations for :app:assembleMainResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:app:assembleMainResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :app:assembleMainResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:app:assembleMainResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :app:assembleMainResources UP-TO-DATE
 Caching disabled for task ':app:assembleMainResources' because:
   Build cache is disabled
   There is no logic, just copy files
 Skipping task ':app:assembleMainResources' as it is up-to-date.
-Resolve mutations for :app:processResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:app:processResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :app:processResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:app:processResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :app:processResources UP-TO-DATE
 Caching disabled for task ':app:processResources' because:
   Build cache is disabled
   Not worth caching
 Skipping task ':app:processResources' as it is up-to-date.
-Resolve mutations for :app:convertXmlValueResourcesForTest (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:app:convertXmlValueResourcesForTest (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :app:convertXmlValueResourcesForTest (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:app:convertXmlValueResourcesForTest (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :app:convertXmlValueResourcesForTest NO-SOURCE
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/generated/compose/resourceGenerator/preparedResources/test/composeResources', not found
 Skipping task ':app:convertXmlValueResourcesForTest' as it has no source files and no previous output files.
-Resolve mutations for :app:copyNonXmlValueResourcesForTest (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:app:copyNonXmlValueResourcesForTest (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :app:copyNonXmlValueResourcesForTest (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:app:copyNonXmlValueResourcesForTest (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :app:copyNonXmlValueResourcesForTest NO-SOURCE
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/generated/compose/resourceGenerator/preparedResources/test/composeResources', not found
 Skipping task ':app:copyNonXmlValueResourcesForTest' as it has no source files and no previous output files.
-Resolve mutations for :app:prepareComposeResourcesTaskForTest (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:app:prepareComposeResourcesTaskForTest (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :app:prepareComposeResourcesTaskForTest (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:app:prepareComposeResourcesTaskForTest (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :app:prepareComposeResourcesTaskForTest NO-SOURCE
 Skipping task ':app:prepareComposeResourcesTaskForTest' as it has no source files and no previous output files.
-Resolve mutations for :app:generateResourceAccessorsForTest (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:app:generateResourceAccessorsForTest (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :app:generateResourceAccessorsForTest (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:app:generateResourceAccessorsForTest (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :app:generateResourceAccessorsForTest SKIPPED
 Skipping task ':app:generateResourceAccessorsForTest' as task onlyIf 'Task satisfies onlyIf spec' is false.
-Resolve mutations for :app:assembleTestResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:app:assembleTestResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :app:assembleTestResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:app:assembleTestResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :app:assembleTestResources UP-TO-DATE
 Caching disabled for task ':app:assembleTestResources' because:
   Build cache is disabled
   There is no logic, just copy files
 Skipping task ':app:assembleTestResources' as it is up-to-date.
-Resolve mutations for :app:processTestResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:app:processTestResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :app:processTestResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:app:processTestResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :app:processTestResources UP-TO-DATE
 Caching disabled for task ':app:processTestResources' because:
   Build cache is disabled
   Not worth caching
 Skipping task ':app:processTestResources' as it is up-to-date.
-Resolve mutations for :core:processResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:core:processResources (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :core:processResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:core:processResources (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :core:processResources NO-SOURCE
 Skipping task ':core:processResources' as it has no source files and no previous output files.
-Resolve mutations for :core:classes (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:core:classes (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :core:classes (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:core:classes (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :core:classes UP-TO-DATE
 Skipping task ':core:classes' as it has no actions.
-Resolve mutations for :core:jar (Thread[#1191,Execution worker Thread 5,5,main]) started.
-:core:jar (Thread[#1191,Execution worker Thread 5,5,main]) started.
+Resolve mutations for :core:jar (Thread[#4623,Execution worker Thread 4,5,main]) started.
+:core:jar (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :core:jar UP-TO-DATE
 Caching disabled for task ':core:jar' because:
   Build cache is disabled
   Not worth caching
 Skipping task ':core:jar' as it is up-to-date.
-work action resolve core.jar (project :core) (Thread[#1191,Execution worker Thread 5,5,main]) started.
+work action resolve core.jar (project :core) (Thread[#4623,Execution worker Thread 4,5,main]) started.
 
 > Task :ui:compileKotlin
 Caching disabled for task ':ui:compileKotlin' because:
@@ -320,20 +320,20 @@ Script source files:
 Script file extensions: 
 Using Kotlin/JVM incremental compilation
 [KOTLIN] Kotlin compilation 'jdkHome' argument: /Users/kevinjones/.sdkman/candidates/java/21.0.5-tem
-i: Options for KOTLIN DAEMON: IncrementalCompilationOptions(super=CompilationOptions(compilerMode=INCREMENTAL_COMPILER, targetPlatform=JVM, reportCategories=[0], reportSeverity=2, requestedCompilationResults=[0], kotlinScriptExtensions=[], generateCompilerRefIndex=false), sourceChanges=org.jetbrains.kotlin.buildtools.api.SourcesChanges$Known@1f186a5d, classpathChanges=NoChanges, workingDir=/Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/kotlin/compileKotlin/cacheable, multiModuleICSettings=null, icFeatures=IncrementalCompilationFeatures(usePreciseJavaTracking=true, withAbiSnapshot=false, preciseCompilationResultsBackup=true, keepIncrementalCompilationCachesInMemory=true, enableUnsafeIncrementalCompilationForMultiplatform=false, enableMonotonousIncrementalCompileSetExpansion=true), outputFiles=[/Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/classes/kotlin/main, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/kotlin/compileKotlin/cacheable, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/kotlin/compileKotlin/local-state])
+i: Options for KOTLIN DAEMON: IncrementalCompilationOptions(super=CompilationOptions(compilerMode=INCREMENTAL_COMPILER, targetPlatform=JVM, reportCategories=[0], reportSeverity=2, requestedCompilationResults=[0], kotlinScriptExtensions=[], generateCompilerRefIndex=false), sourceChanges=org.jetbrains.kotlin.buildtools.api.SourcesChanges$Known@33181248, classpathChanges=NoChanges, workingDir=/Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/kotlin/compileKotlin/cacheable, multiModuleICSettings=null, icFeatures=IncrementalCompilationFeatures(usePreciseJavaTracking=true, withAbiSnapshot=false, preciseCompilationResultsBackup=true, keepIncrementalCompilationCachesInMemory=true, enableUnsafeIncrementalCompilationForMultiplatform=false, enableMonotonousIncrementalCompileSetExpansion=true), outputFiles=[/Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/classes/kotlin/main, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/kotlin/compileKotlin/cacheable, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/kotlin/compileKotlin/local-state])
 i: Finished executing kotlin compiler using DAEMON strategy
-Resolve mutations for :ui:compileJava (Thread[#1186,included builds,5,main]) started.
-:ui:compileJava (Thread[#1186,included builds,5,main]) started.
+Resolve mutations for :ui:compileJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:compileJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:compileJava NO-SOURCE
 Skipping task ':ui:compileJava' as it has no source files and no previous output files.
-Resolve mutations for :ui:classes (Thread[#1186,included builds,5,main]) started.
-:ui:classes (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :ui:classes (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:classes (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:classes UP-TO-DATE
 Skipping task ':ui:classes' as it has no actions.
-Resolve mutations for :ui:jar (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:ui:jar (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :ui:jar (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:ui:jar (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :ui:jar
 Caching disabled for task ':ui:jar' because:
@@ -341,13 +341,13 @@ Caching disabled for task ':ui:jar' because:
   Not worth caching
 Task ':ui:jar' is not up-to-date because:
   Input property 'rootSpec$1' file /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/classes/kotlin/main/com/klogviewer/ui/viewmodel/KLogViewerViewModel$connectMultipleSftp$1$3.class has changed.
+  Input property 'rootSpec$1' file /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/classes/kotlin/main/com/klogviewer/ui/viewmodel/KLogViewerViewModel$connectMultipleSftp$1$invokeSuspend$lambda$2$$inlined$map$1$2.class has changed.
   Input property 'rootSpec$1' file /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/classes/kotlin/main/com/klogviewer/ui/viewmodel/KLogViewerViewModel$connectMultipleSftp$1.class has changed.
-  Input property 'rootSpec$1' file /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/classes/kotlin/main/com/klogviewer/ui/viewmodel/KLogViewerViewModel$connectSftp$1$3.class has changed.
   and more...
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/classes/java/main', not found
-work action resolve ui.jar (project :ui) (Thread[#1194,Execution worker Thread 8,5,main]) started.
-Resolve mutations for :app:compileKotlin (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:app:compileKotlin (Thread[#1194,Execution worker Thread 8,5,main]) started.
+work action resolve ui.jar (project :ui) (Thread[#4626,Execution worker Thread 7,5,main]) started.
+Resolve mutations for :app:compileKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:compileKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :app:compileKotlin
 Caching disabled for ClasspathEntrySnapshotTransform: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/build/libs/ui.jar because:
@@ -355,8 +355,8 @@ Caching disabled for ClasspathEntrySnapshotTransform: /Users/kevinjones/Dropbox/
 Caching disabled for task ':app:compileKotlin' because:
   Build cache is disabled
 Task ':app:compileKotlin' is not up-to-date because:
-  Input property 'classpathSnapshotProperties.classpathSnapshot' file /Users/kevinjones/.gradle/caches/9.3.0/transforms/02b4c5e223a51e0ebdc757998644efa6/transformed/ui_jar-snapshot.bin has been removed.
-  Input property 'classpathSnapshotProperties.classpathSnapshot' file /Users/kevinjones/.gradle/caches/9.3.0/transforms/e214ca0936c1403720d11c02c4971d4d/transformed/ui_jar-snapshot.bin has been added.
+  Input property 'classpathSnapshotProperties.classpathSnapshot' file /Users/kevinjones/.gradle/caches/9.3.0/transforms/54d1e186064864dd2e6b498352cfa11b/transformed/ui_jar-snapshot.bin has been removed.
+  Input property 'classpathSnapshotProperties.classpathSnapshot' file /Users/kevinjones/.gradle/caches/9.3.0/transforms/e5be9252192de5247387130ba9030c69/transformed/ui_jar-snapshot.bin has been added.
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/main/java', not found
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/main/java', not found
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/main/java', not found
@@ -367,88 +367,98 @@ Script source files:
 Script file extensions: 
 Using Kotlin/JVM incremental compilation
 [KOTLIN] Kotlin compilation 'jdkHome' argument: /Users/kevinjones/.sdkman/candidates/java/21.0.5-tem
-i: Options for KOTLIN DAEMON: IncrementalCompilationOptions(super=CompilationOptions(compilerMode=INCREMENTAL_COMPILER, targetPlatform=JVM, reportCategories=[0], reportSeverity=2, requestedCompilationResults=[0], kotlinScriptExtensions=[], generateCompilerRefIndex=false), sourceChanges=org.jetbrains.kotlin.buildtools.api.SourcesChanges$Known@5131036b, classpathChanges=ToBeComputedByIncrementalCompiler, workingDir=/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileKotlin/cacheable, multiModuleICSettings=null, icFeatures=IncrementalCompilationFeatures(usePreciseJavaTracking=true, withAbiSnapshot=false, preciseCompilationResultsBackup=true, keepIncrementalCompilationCachesInMemory=true, enableUnsafeIncrementalCompilationForMultiplatform=false, enableMonotonousIncrementalCompileSetExpansion=true), outputFiles=[/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/classes/kotlin/main, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileKotlin/cacheable, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileKotlin/local-state])
+i: Options for KOTLIN DAEMON: IncrementalCompilationOptions(super=CompilationOptions(compilerMode=INCREMENTAL_COMPILER, targetPlatform=JVM, reportCategories=[0], reportSeverity=2, requestedCompilationResults=[0], kotlinScriptExtensions=[], generateCompilerRefIndex=false), sourceChanges=org.jetbrains.kotlin.buildtools.api.SourcesChanges$Known@4f5d42be, classpathChanges=ToBeComputedByIncrementalCompiler, workingDir=/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileKotlin/cacheable, multiModuleICSettings=null, icFeatures=IncrementalCompilationFeatures(usePreciseJavaTracking=true, withAbiSnapshot=false, preciseCompilationResultsBackup=true, keepIncrementalCompilationCachesInMemory=true, enableUnsafeIncrementalCompilationForMultiplatform=false, enableMonotonousIncrementalCompileSetExpansion=true), outputFiles=[/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/classes/kotlin/main, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileKotlin/cacheable, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileKotlin/local-state])
 i: Finished executing kotlin compiler using DAEMON strategy
-Resolve mutations for :app:compileJava (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:app:compileJava (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :app:compileJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:compileJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :app:compileJava NO-SOURCE
 Skipping task ':app:compileJava' as it has no source files and no previous output files.
-Resolve mutations for :app:classes (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:app:classes (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :app:classes (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:classes (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :app:classes UP-TO-DATE
 Skipping task ':app:classes' as it has no actions.
-Resolve mutations for :app:jar (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:app:jar (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :app:jar (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:jar (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :app:jar UP-TO-DATE
 Caching disabled for task ':app:jar' because:
   Build cache is disabled
   Not worth caching
 Skipping task ':app:jar' as it is up-to-date.
-Resolve mutations for :app:compileTestKotlin (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:app:compileTestKotlin (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :app:compileTestKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:compileTestKotlin (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :app:compileTestKotlin
 Caching disabled for task ':app:compileTestKotlin' because:
   Build cache is disabled
 Task ':app:compileTestKotlin' is not up-to-date because:
-  Input property 'classpathSnapshotProperties.classpathSnapshot' file /Users/kevinjones/.gradle/caches/9.3.0/transforms/1f6c660adeec87494ee40ddf1b1f455d/transformed/ui_jar-snapshot.bin has been removed.
-  Input property 'classpathSnapshotProperties.classpathSnapshot' file /Users/kevinjones/.gradle/caches/9.3.0/transforms/e214ca0936c1403720d11c02c4971d4d/transformed/ui_jar-snapshot.bin has been added.
+  Input property 'classpathSnapshotProperties.classpathSnapshot' file /Users/kevinjones/.gradle/caches/9.3.0/transforms/7fd8049c330ab1b09d1fcc7f53ecbffb/transformed/ui_jar-snapshot.bin has been removed.
+  Input property 'classpathSnapshotProperties.classpathSnapshot' file /Users/kevinjones/.gradle/caches/9.3.0/transforms/e5be9252192de5247387130ba9030c69/transformed/ui_jar-snapshot.bin has been added.
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/java', not found
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/java', not found
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/java', not found
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/java', not found
-Kotlin source files: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/SftpBrowsingTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/PersistenceIntegrationTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/TabManagementTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/SftpDirectoryReloadTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/RecentItemsTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/SftpReloadTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/SftpPersistenceTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/LogSortingTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/FileDeletionTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/InterleavingIntegrationTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/bdd/steps/LogLoadingSteps.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/bdd/RunCucumberTest.kt
+Kotlin source files: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/SftpBrowsingTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/PersistenceIntegrationTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/TabManagementTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/RecentItemsTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/SftpReloadTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/SftpPersistenceTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/LogSortingTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/FileDeletionTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/integration/InterleavingIntegrationTest.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/bdd/steps/LogLoadingSteps.kt, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/src/test/kotlin/com/klogviewer/bdd/RunCucumberTest.kt
 Java source files: 
 Script source files: 
 Script file extensions: 
 Using Kotlin/JVM incremental compilation
 [KOTLIN] Kotlin compilation 'jdkHome' argument: /Users/kevinjones/.sdkman/candidates/java/21.0.5-tem
-i: Options for KOTLIN DAEMON: IncrementalCompilationOptions(super=CompilationOptions(compilerMode=INCREMENTAL_COMPILER, targetPlatform=JVM, reportCategories=[0], reportSeverity=2, requestedCompilationResults=[0], kotlinScriptExtensions=[], generateCompilerRefIndex=false), sourceChanges=org.jetbrains.kotlin.buildtools.api.SourcesChanges$Known@69060383, classpathChanges=ToBeComputedByIncrementalCompiler, workingDir=/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileTestKotlin/cacheable, multiModuleICSettings=null, icFeatures=IncrementalCompilationFeatures(usePreciseJavaTracking=true, withAbiSnapshot=false, preciseCompilationResultsBackup=true, keepIncrementalCompilationCachesInMemory=true, enableUnsafeIncrementalCompilationForMultiplatform=false, enableMonotonousIncrementalCompileSetExpansion=true), outputFiles=[/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/classes/kotlin/test, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileTestKotlin/cacheable, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileTestKotlin/local-state])
+i: Options for KOTLIN DAEMON: IncrementalCompilationOptions(super=CompilationOptions(compilerMode=INCREMENTAL_COMPILER, targetPlatform=JVM, reportCategories=[0], reportSeverity=2, requestedCompilationResults=[0], kotlinScriptExtensions=[], generateCompilerRefIndex=false), sourceChanges=org.jetbrains.kotlin.buildtools.api.SourcesChanges$Known@1e938051, classpathChanges=ToBeComputedByIncrementalCompiler, workingDir=/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileTestKotlin/cacheable, multiModuleICSettings=null, icFeatures=IncrementalCompilationFeatures(usePreciseJavaTracking=true, withAbiSnapshot=false, preciseCompilationResultsBackup=true, keepIncrementalCompilationCachesInMemory=true, enableUnsafeIncrementalCompilationForMultiplatform=false, enableMonotonousIncrementalCompileSetExpansion=true), outputFiles=[/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/classes/kotlin/test, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileTestKotlin/cacheable, /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/kotlin/compileTestKotlin/local-state])
 i: Finished executing kotlin compiler using DAEMON strategy
-Resolve mutations for :app:compileTestJava (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:app:compileTestJava (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :app:compileTestJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:compileTestJava (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :app:compileTestJava NO-SOURCE
 Skipping task ':app:compileTestJava' as it has no source files and no previous output files.
-Resolve mutations for :app:testClasses (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:app:testClasses (Thread[#1194,Execution worker Thread 8,5,main]) started.
+Resolve mutations for :app:testClasses (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:testClasses (Thread[#4626,Execution worker Thread 7,5,main]) started.
 
 > Task :app:testClasses UP-TO-DATE
 Skipping task ':app:testClasses' as it has no actions.
-Resolve mutations for :app:test (Thread[#1194,Execution worker Thread 8,5,main]) started.
-:app:test (Thread[#1194,Execution worker Thread 8,5,main]) started.
-Gradle Test Executor 6 started executing tests.
+Resolve mutations for :app:test (Thread[#4626,Execution worker Thread 7,5,main]) started.
+:app:test (Thread[#4626,Execution worker Thread 7,5,main]) started.
+Gradle Test Executor 21 started executing tests.
 OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+Gradle Test Executor 21 finished executing tests.
 
-> Task :app:test
+> Task :app:test FAILED
 Caching disabled for task ':app:test' because:
   Build cache is disabled
 Task ':app:test' is not up-to-date because:
   Task has failed previously.
 file or directory '/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/classes/java/test', not found
-Starting process 'Gradle Test Executor 6'. Working directory: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app Command: /Users/kevinjones/.sdkman/candidates/java/21.0.5-tem/bin/java -Dorg.gradle.internal.worker.tmpdir=/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/tmp/test/work @/Users/kevinjones/.gradle/.tmp/gradle-worker-classpath7440639232858282192txt -Xmx512m -Dfile.encoding=UTF-8 -Duser.country=GB -Duser.language=en -Duser.variant -ea worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 6'
-Successfully started process 'Gradle Test Executor 6'
+Starting process 'Gradle Test Executor 21'. Working directory: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app Command: /Users/kevinjones/.sdkman/candidates/java/21.0.5-tem/bin/java -Dorg.gradle.internal.worker.tmpdir=/Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/tmp/test/work @/Users/kevinjones/.gradle/.tmp/gradle-worker-classpath17969575129072165155txt -Xmx512m -Dfile.encoding=UTF-8 -Duser.country=GB -Duser.language=en -Duser.variant -ea worker.org.gradle.process.internal.worker.GradleWorkerMain 'Gradle Test Executor 21'
+Successfully started process 'Gradle Test Executor 21'
 
-SftpDirectoryReloadTest STANDARD_ERROR
+SftpBrowsingTest STANDARD_ERROR
     WARNING: A Java agent has been loaded dynamically (/Users/kevinjones/.gradle/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy-agent/1.14.17/e3c251a39dc90badaf71c83427ba46840f219d8d/byte-buddy-agent-1.14.17.jar)
     WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
     WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
     WARNING: Dynamic loading of agents will be disallowed by default in a future release
 
-SftpDirectoryReloadTest > should save and then reload SFTP directory() STANDARD_OUT
+SftpBrowsingTest > should add to workspace when addToWorkspace is true() STANDARD_OUT
     kotlin-logging: initializing... active logger factory: Slf4jLoggerFactory
-    2026-05-20 15:59:40.998 [Test worker @kotlinx.coroutines.test runner#2] INFO  c.k.ui.viewmodel.KLogViewerViewModel - Connecting to SFTP directory: /var/log
+    2026-05-20 16:55:48.041 [Test worker @kotlinx.coroutines.test runner#2] INFO  c.k.c.r.PreferencesRepository - Preferences file not found, using defaults
+    2026-05-20 16:55:48.047 [Test worker @kotlinx.coroutines.test runner#2] INFO  c.k.ui.viewmodel.KLogViewerViewModel - Handling intent: LoadFiles
+    2026-05-20 16:55:48.048 [Test worker @kotlinx.coroutines.test runner#2] INFO  c.k.ui.viewmodel.KLogViewerViewModel - Handling intent: ConnectSftp
+    2026-05-20 16:55:48.050 [Test worker @kotlinx.coroutines.test runner#2] INFO  c.k.ui.viewmodel.KLogViewerViewModel - ConnectSftp intent received. activeWindowId: default-window, addToWorkspace: true
+    2026-05-20 16:55:48.051 [Test worker @kotlinx.coroutines.test runner#2] INFO  c.k.c.r.PreferencesRepository - Preferences file not found, using defaults
+    2026-05-20 16:55:48.074 [Test worker @kotlinx.coroutines.test runner#2] INFO  c.k.ui.viewmodel.KLogViewerViewModel - Adding SFTP to workspace. Current paths: [], adding: sftp://user@example.com:22/var/log/syslog
 
-SftpDirectoryReloadTest > should save and then reload SFTP directory() FAILED
-    ▼ Expect that "":
-      ✗ is equal to "sftp://user@localhost:22/var/log?type=directory"
-              found ""
-        at app//com.klogviewer.integration.SftpDirectoryReloadTest$should save and then reload SFTP directory$1.invokeSuspend(SftpDirectoryReloadTest.kt:160)
-        at app//com.klogviewer.integration.SftpDirectoryReloadTest$should save and then reload SFTP directory$1.invoke(SftpDirectoryReloadTest.kt)
-        at app//com.klogviewer.integration.SftpDirectoryReloadTest$should save and then reload SFTP directory$1.invoke(SftpDirectoryReloadTest.kt)
+SftpBrowsingTest > should add to workspace when addToWorkspace is true() FAILED
+    org.opentest4j.AssertionFailedError: expected: <[/tmp/local.log, sftp://user@example.com:22/var/log/syslog]> but was: <[]>
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:158)
+        at app//org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:139)
+        at app//org.junit.jupiter.api.AssertEquals.failNotEqual(AssertEquals.java:201)
+        at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:184)
+        at app//org.junit.jupiter.api.AssertEquals.assertEquals(AssertEquals.java:179)
+        at app//org.junit.jupiter.api.Assertions.assertEquals(Assertions.java:1188)
+        at app//com.klogviewer.integration.SftpBrowsingTest$should add to workspace when addToWorkspace is true$1.invokeSuspend(SftpBrowsingTest.kt:144)
+        at app//com.klogviewer.integration.SftpBrowsingTest$should add to workspace when addToWorkspace is true$1.invoke(SftpBrowsingTest.kt)
+        at app//com.klogviewer.integration.SftpBrowsingTest$should add to workspace when addToWorkspace is true$1.invoke(SftpBrowsingTest.kt)
         at app//kotlinx.coroutines.test.TestBuildersKt__TestBuildersKt$runTest$2$1$1.invokeSuspend(TestBuilders.kt:317)
         at app//kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:34)
         at app//kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:100)
@@ -472,24 +482,24 @@ SftpDirectoryReloadTest > should save and then reload SFTP directory() FAILED
         at app//kotlinx.coroutines.test.TestBuildersKt.runTest-8Mi8wO0(TestBuilders.kt:1)
         at app//kotlinx.coroutines.test.TestBuildersKt__TestBuildersKt.runTest-8Mi8wO0$default(TestBuilders.kt:159)
         at app//kotlinx.coroutines.test.TestBuildersKt.runTest-8Mi8wO0$default(TestBuilders.kt:1)
-        at app//com.klogviewer.integration.SftpDirectoryReloadTest.should save and then reload SFTP directory(SftpDirectoryReloadTest.kt:117)
+        at app//com.klogviewer.integration.SftpBrowsingTest.should add to workspace when addToWorkspace is true(SftpBrowsingTest.kt:122)
 
-SftpDirectoryReloadTest > should reload SFTP directory on startup() STANDARD_OUT
-    2026-05-20 15:59:41.040 [Test worker @kotlinx.coroutines.test runner#7] INFO  c.k.ui.viewmodel.KLogViewerViewModel - Connecting to SFTP directory: /var/log
-    [DEBUG_LOG] Waiting for logs...
-    2026-05-20 15:59:41.049 [DefaultDispatcher-worker-1 @coroutine#11] INFO  c.k.c.source.SftpDirectoryLogSource - Started observing remote directory: /var/log on localhost
-    2026-05-20 15:59:41.051 [DefaultDispatcher-worker-1 @coroutine#11] INFO  c.k.c.source.SftpDirectoryLogSource - Discovered 1 new remote files: [/var/log/syslog]
-    2026-05-20 15:59:41.562 [DefaultDispatcher-worker-3 @coroutine#11] INFO  c.k.c.source.SftpDirectoryLogSource - Initial remote directory load complete: 1 entries from 1/1 files
-    [DEBUG_LOG] Logs loaded!
+SftpBrowsingTest > should transition to SFTP_BROWSE when connecting to a directory() STANDARD_OUT
+    2026-05-20 16:55:48.098 [Test worker @kotlinx.coroutines.test runner#5] INFO  c.k.c.r.PreferencesRepository - Preferences file not found, using defaults
+    2026-05-20 16:55:48.214 [Test worker @kotlinx.coroutines.test runner#5] INFO  c.k.ui.viewmodel.KLogViewerViewModel - Handling intent: ConnectSftp
+    2026-05-20 16:55:48.214 [Test worker @kotlinx.coroutines.test runner#5] INFO  c.k.ui.viewmodel.KLogViewerViewModel - ConnectSftp intent received. activeWindowId: default-window, addToWorkspace: false
+    2026-05-20 16:55:48.214 [Test worker @kotlinx.coroutines.test runner#5] INFO  c.k.c.r.PreferencesRepository - Preferences file not found, using defaults
 
-Gradle Test Executor 6 finished executing tests.
+SftpBrowsingTest > should connect directly when connecting to a file() STANDARD_OUT
+    2026-05-20 16:55:48.222 [Test worker @kotlinx.coroutines.test runner#10] INFO  c.k.c.r.PreferencesRepository - Preferences file not found, using defaults
+    2026-05-20 16:55:48.224 [Test worker @kotlinx.coroutines.test runner#10] INFO  c.k.ui.viewmodel.KLogViewerViewModel - Handling intent: ConnectSftp
+    2026-05-20 16:55:48.224 [Test worker @kotlinx.coroutines.test runner#10] INFO  c.k.ui.viewmodel.KLogViewerViewModel - ConnectSftp intent received. activeWindowId: default-window, addToWorkspace: false
+    2026-05-20 16:55:48.224 [Test worker @kotlinx.coroutines.test runner#10] INFO  c.k.c.r.PreferencesRepository - Preferences file not found, using defaults
 
-> Task :app:test FAILED
-
-2 tests completed, 1 failed
+3 tests completed, 1 failed
 Generating HTML test report...
-Finished generating test html results (0.005 secs) into: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/reports/tests/test
-Finished generating test XML results (0.001 secs) into: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/test-results/test
+Finished generating test html results (0.007 secs) into: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/reports/tests/test
+Finished generating test XML results (0.0 secs) into: /Users/kevinjones/Dropbox/projects/utilities/LogViewer/app/build/test-results/test
 
 FAILURE: Build failed with an exception.
 
@@ -500,6 +510,6 @@ Execution failed for task ':app:test'.
 * Try:
 > Run with --scan to get full insights from a Build Scan (powered by Develocity).
 
-BUILD FAILED in 5s
+BUILD FAILED in 4s
 16 actionable tasks: 5 executed, 11 up-to-date
 Watched directory hierarchies: [/Users/kevinjones/Dropbox/projects/utilities/LogViewer]

@@ -63,9 +63,10 @@ data class KLogViewerState(
     val remoteFiles: List<com.klogviewer.domain.model.RemoteFile> = emptyList(),
     val isRemoteLoading: Boolean = false,
     val remoteBrowsePath: String = "",
-    val currentSftpConfig: SftpConfig? = null
+    val currentSftpConfig: SftpConfig? = null,
+    val isAddMode: Boolean = false
 ) {
-    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, RECENT_ITEMS, MISSING_FILE, SFTP_CONNECT, SFTP_BROWSE }
+    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, ADD_DIRECTORY, RECENT_ITEMS, MISSING_FILE, SFTP_CONNECT, SFTP_ADD, SFTP_BROWSE }
     val activeTab: TabState? get() = tabs.find { it.id == activeTabId }
 
     fun updateActiveTab(block: (TabState) -> TabState): KLogViewerState {
