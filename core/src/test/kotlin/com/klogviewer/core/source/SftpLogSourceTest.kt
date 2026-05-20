@@ -25,7 +25,7 @@ class SftpLogSourceTest {
     @Test
     fun `should connect, auth and tail logs using mocked SSH client`() = runBlocking {
         // Arrange
-        val config = SftpConfig(Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"))
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log/test.log")
         val mockClient = mockk<SSHClient>(relaxed = true)
         val mockSession = mockk<Session>(relaxed = true)
         val mockCommand = mockk<Session.Command>(relaxed = true)
@@ -81,7 +81,7 @@ class SftpLogSourceTest {
     @Test
     fun `should support key-based authentication`() = runBlocking {
         // Arrange
-        val config = SftpConfig(Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key"))
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key"), "/test.log")
         val mockClient = mockk<SSHClient>(relaxed = true)
         val mockKeyProvider = mockk<KeyProvider>()
         
@@ -114,7 +114,7 @@ class SftpLogSourceTest {
     @Test
     fun `should support key-based authentication with passphrase`() = runBlocking {
         // Arrange
-        val config = SftpConfig(Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key", "secret"))
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key", "secret"), "/test.log")
         val mockClient = mockk<SSHClient>(relaxed = true)
         val mockKeyProvider = mockk<KeyProvider>()
         
@@ -147,7 +147,7 @@ class SftpLogSourceTest {
     @Test
     fun `should support key-based authentication with blank passphrase`() = runBlocking {
         // Arrange
-        val config = SftpConfig(Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key", "  "))
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key", "  "), "/test.log")
         val mockClient = mockk<SSHClient>(relaxed = true)
         val mockKeyProvider = mockk<KeyProvider>()
         
@@ -179,7 +179,7 @@ class SftpLogSourceTest {
     @Test
     fun `should emit failure if remote file does not exist`() = runBlocking {
         // Arrange
-        val config = SftpConfig(Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"))
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/invalid/path")
         val mockClient = mockk<SSHClient>(relaxed = true)
         val mockSession = mockk<Session>(relaxed = true)
         val mockCommand = mockk<Session.Command>(relaxed = true)
@@ -220,7 +220,7 @@ class SftpLogSourceTest {
     @Test
     fun `should emit empty initial load for empty remote file`() = runBlocking {
         // Arrange
-        val config = SftpConfig(Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"))
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/empty.log")
         val mockClient = mockk<SSHClient>(relaxed = true)
         val mockSession = mockk<Session>(relaxed = true)
         val mockCommand = mockk<Session.Command>(relaxed = true)

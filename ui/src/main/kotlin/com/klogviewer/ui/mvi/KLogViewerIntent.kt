@@ -28,12 +28,15 @@ sealed interface KLogViewerIntent {
     data object ShowRecentDialog : KLogViewerIntent
     data object ShowSftpDialog : KLogViewerIntent
     data class ConnectSftp(
+        val name: String,
         val host: String,
         val port: Int,
         val user: String,
         val auth: com.klogviewer.domain.model.SftpAuth,
         val path: String
     ) : KLogViewerIntent
+    data class SaveSftpConnection(val config: com.klogviewer.domain.model.SftpConfig) : KLogViewerIntent
+    data class DeleteSftpConnection(val name: String) : KLogViewerIntent
     data object DismissDialog : KLogViewerIntent
     data class RemoveRecentItem(val path: String) : KLogViewerIntent
     data object ClearMissingRecentItems : KLogViewerIntent

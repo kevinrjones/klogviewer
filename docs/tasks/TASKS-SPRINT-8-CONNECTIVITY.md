@@ -23,6 +23,8 @@
 - [ ] 13.4.2. Implement secure credential storage using OS-level keychains
 - [x] 13.4.3. Integrate connection manager with the main log loading flow
 - [x] 13.4.4. Implement Tab navigation in all application dialogs (UX refinement)
+- [x] 13.4.5. Update tab title when connecting to remote log sources
+- [x] 13.4.6. Automatically save SFTP connection details upon connecting
 
 ### 13.5. Verification & Testing
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server

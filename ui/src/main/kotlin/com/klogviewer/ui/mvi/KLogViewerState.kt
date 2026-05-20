@@ -2,6 +2,7 @@ package com.klogviewer.ui.mvi
 
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.SftpConfig
 
 data class LogWindow(
     val id: String,
@@ -56,7 +57,8 @@ data class KLogViewerState(
     val recentFiles: List<String> = emptyList(),
     val recentDirectories: List<String> = emptyList(),
     val pendingDialog: DialogType? = null,
-    val missingPath: String? = null
+    val missingPath: String? = null,
+    val sftpConnections: List<SftpConfig> = emptyList()
 ) {
     enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, RECENT_ITEMS, MISSING_FILE, SFTP_CONNECT }
     val activeTab: TabState? get() = tabs.find { it.id == activeTabId }

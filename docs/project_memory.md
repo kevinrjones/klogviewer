@@ -48,6 +48,9 @@
 - ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
 - Sprint 8: Connectivity & Remote Sources initiated with dedicated feature branch and task tracking.
 - SFTP Support: Implemented real-time log tailing over SFTP with support for password and key-pair authentication.
+- SFTP Connection Management: Added support for saving, loading, and deleting SFTP connection profiles in user preferences.
+- Tab Title Logic: Unified tab title updates across local and remote connections. The tab name now correctly reflects the filename for SFTP log sources.
+- SFTP Auto-save: Automatically save or override SFTP connection profiles when connecting to a remote source.
 - Dialog Focus Management: Implemented explicit Tab navigation and initial focus for all application dialogs (ADR-025).
 - Documentation: Updated README.md with detailed SFTP usage instructions and key file requirements.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
@@ -1493,3 +1496,20 @@
 
 **Test coverage areas**
 - N/A (UI behavior refinement, manual verification required).
+
+## Task: SFTP Connection Management
+**Title**: SFTP Connection Management
+**Date/time completed**: 2026-05-20 11:45
+**What was shipped**:
+- Persistent storage for multiple SFTP connection profiles in User Preferences.
+- UI dropdown in `SftpConnectionDialog` for selecting and managing (loading/deleting) saved connections.
+- "Save" functionality to persist current connection details for future use.
+**Key decisions**:
+- Made `SftpConfig` and related types serializable to simplify persistence in the existing `PreferencesRepository`.
+- Added a `name` field to `SftpConfig` as the primary identifier for saved connections.
+**Gotchas**:
+- Adding a new field to the beginning of a data class constructor broke existing test cases and call sites; required manual update of all `SftpConfig` instantiations.
+- `IconButton` inside `DropdownMenuItem` requires careful handling to ensure deletion doesn't accidentally trigger a connection attempt (though Compose standard behavior typically handles this).
+**Test coverage areas**:
+- `PreferencesRepositoryTest`: Verified saving and loading of multiple SFTP connection profiles.
+- `SftpLogSourceTest`: Verified existing functionality remains intact after model updates.

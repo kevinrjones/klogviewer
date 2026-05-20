@@ -69,7 +69,8 @@ class KLogViewerViewModel(
                 isDarkMode = prefs.isDarkMode,
                 isSidebarExpanded = prefs.isSidebarExpanded,
                 recentFiles = prefs.recentFiles,
-                recentDirectories = prefs.recentDirectories
+                recentDirectories = prefs.recentDirectories,
+                sftpConnections = prefs.sftpConnections
             )
             _state.value = initialState
             
@@ -86,7 +87,8 @@ class KLogViewerViewModel(
                 isDarkMode = prefs.isDarkMode,
                 isSidebarExpanded = prefs.isSidebarExpanded,
                 recentFiles = prefs.recentFiles,
-                recentDirectories = prefs.recentDirectories
+                recentDirectories = prefs.recentDirectories,
+                sftpConnections = prefs.sftpConnections
             ) }
         }
     }
@@ -255,9 +257,32 @@ class KLogViewerViewModel(
             is KLogViewerIntent.ConnectSftp -> {
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
                 if (activeWindowId != null) {
-                    connectSftp(activeWindowId, intent.host, intent.port, intent.user, intent.auth, intent.path)
+                    connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
+                    
+                    // Automatically save connection details
+                    val config = SftpConfig(intent.name, Host(intent.host), Port(intent.port), Username(intent.user), intent.auth, intent.path)
+                    _state.update { currentState ->
+                        val updatedList = (currentState.sftpConnections.filter { it.name != config.name } + config)
+                            .sortedBy { it.name }
+                        currentState.copy(sftpConnections = updatedList)
+                    }
+                    savePreferences()
                 }
                 _state.update { it.copy(pendingDialog = null) }
+            }
+            is KLogViewerIntent.SaveSftpConnection -> {
+                _state.update { currentState ->
+                    val updatedList = (currentState.sftpConnections.filter { it.name != intent.config.name } + intent.config)
+                        .sortedBy { it.name }
+                    currentState.copy(sftpConnections = updatedList)
+                }
+                savePreferences()
+            }
+            is KLogViewerIntent.DeleteSftpConnection -> {
+                _state.update { currentState ->
+                    currentState.copy(sftpConnections = currentState.sftpConnections.filter { it.name != intent.name })
+                }
+                savePreferences()
             }
             KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null, missingPath = null) }
             is KLogViewerIntent.RemoveRecentItem -> {
@@ -394,8 +419,8 @@ class KLogViewerViewModel(
         savePreferences()
     }
 
-    private fun connectSftp(windowId: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) {
-        val config = SftpConfig(Host(host), Port(port), Username(user), auth)
+    private fun connectSftp(windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) {
+        val config = SftpConfig(name, Host(host), Port(port), Username(user), auth, path)
         val sftpSource = SftpLogSource(config, SimpleLogParser())
         
         val oldJob = logJobs[windowId]
@@ -416,6 +441,16 @@ class KLogViewerViewModel(
                         columns = listOf("Timestamp", "Level", "Content")
                     )
                 }
+            }
+
+            // Update tab title if it's the only window or first window
+            val fileName = path.substringAfterLast('/')
+            _state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) {
+                        tab.copy(title = fileName)
+                    } else tab
+                })
             }
             
             val parser = SimpleLogParser()
@@ -719,6 +754,7 @@ class KLogViewerViewModel(
             isSidebarExpanded = currentState.isSidebarExpanded,
             recentFiles = currentState.recentFiles,
             recentDirectories = currentState.recentDirectories,
+            sftpConnections = currentState.sftpConnections,
             tabs = currentState.tabs.map { tab ->
                 TabPreference(
                     id = tab.id,
