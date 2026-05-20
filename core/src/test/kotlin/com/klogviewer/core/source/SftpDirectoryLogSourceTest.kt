@@ -146,13 +146,13 @@ class SftpDirectoryLogSourceTest {
         
         // Wait for results
         withTimeout(2000.milliseconds) {
-            // We expect at least one failure and one LogUpdate.Initial
-            while (results.size < 2) delay(50.milliseconds)
+            // We expect one LogUpdate.Initial (failures are now suppressed for directory monitoring)
+            while (results.size < 1) delay(50.milliseconds)
         }
         
         expectThat(results.mapNotNull { it.getOrNull() }).hasSize(1)
         expectThat(results.mapNotNull { it.getOrNull() }[0]).isA<LogUpdate.Initial>()
-        expectThat(results.mapNotNull { it.leftOrNull() }).hasSize(1)
+        expectThat(results.mapNotNull { it.leftOrNull() }).hasSize(0)
         
         job.cancelAndJoin()
     }

@@ -149,7 +149,8 @@ class SftpDirectoryLogSource(
                                                         if (!initialized) {
                                                             filesAttemptedInitial.add(file)
                                                         }
-                                                        send(failure.left())
+                                                        // For directory monitoring, individual file errors are not terminal failures
+                                                        // They will be detected as missing if they truly don't exist
                                                     },
                                                     { update ->
                                                         when (update) {

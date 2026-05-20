@@ -251,7 +251,7 @@ fun KLogViewerScreen(
                             viewModel.handleIntent(KLogViewerIntent.ChangeParser(id, name))
                         }
                     },
-                    isMissing = activeWindow?.missingSourceIds?.isNotEmpty() ?: false,
+                    isMissing = activeWindow?.let { it.missingSourceIds.contains(it.filePath) || it.error != null } ?: false,
                     isConnected = activeWindow?.isConnected ?: true
                 )
             }
@@ -311,10 +311,11 @@ fun KLogViewerScreen(
                                     if (window.filePath.isNotEmpty()) {
                                         val isAnySourceMissing = window.missingSourceIds.isNotEmpty()
                                         val isPrimaryPathMissing = window.missingSourceIds.contains(window.filePath)
+                                        val isWindowError = window.error != null
                                         Text(
                                             text = window.filePath,
                                             style = MaterialTheme.typography.caption.copy(
-                                                color = if (isPrimaryPathMissing) Color.Red else if (isAnySourceMissing) Color(0xFFFFA500) else MaterialTheme.colors.onSurface.copy(
+                                                color = if (isPrimaryPathMissing || isWindowError) Color.Red else if (isAnySourceMissing) Color(0xFFFFA500) else MaterialTheme.colors.onSurface.copy(
                                                     alpha = 0.5f
                                                 ),
                                                 textDecoration = if (isPrimaryPathMissing) TextDecoration.LineThrough else TextDecoration.None
@@ -483,6 +484,7 @@ private fun LogTabRow(
                     tabs.forEach { tab ->
                         val isAnyPrimaryWindowMissing = tab.windows.any { it.missingSourceIds.contains(it.filePath) }
                         val isAnySecondarySourceMissing = tab.windows.any { it.missingSourceIds.isNotEmpty() }
+                        val isAnyWindowError = tab.windows.any { it.error != null }
                         Tab(
                             selected = tab.id == activeTabId,
                             onClick = { onTabClick(tab.id) },
@@ -496,7 +498,7 @@ private fun LogTabRow(
                                     text = tab.title,
                                     style = MaterialTheme.typography.button.copy(
                                         fontSize = 12.sp,
-                                        color = if (isAnyPrimaryWindowMissing) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified,
+                                        color = if (isAnyPrimaryWindowMissing || isAnyWindowError) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified,
                                         textDecoration = if (isAnyPrimaryWindowMissing) TextDecoration.LineThrough else TextDecoration.None
                                     ),
                                     maxLines = 1
