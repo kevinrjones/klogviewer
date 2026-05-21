@@ -10,6 +10,14 @@ KLogViewer uses a multi-layered testing approach to ensure reliability and maint
 - **BDD (Behavior-Driven Development)**: Focus on user stories and high-level requirements.
 - **UI Tests**: Focus on the visual components and end-to-end user workflows using the Robot Pattern.
 
+### UI Regression Strategy (Focused Guide)
+
+For a dedicated plan to reduce UI regressions (including screenshot-testing decision rules, baseline management, CI normalization, ownership, and rollout), see:
+
+- `docs/UI-REGRESSION-TESTING-STRATEGY.md`
+
+This focused guide uses project domain terminology from `docs/UBIQUITOUS_LANGUAGE.md` such as `Workspace`, `Tab`, `Log Window`, and `Filter`.
+
 ## 2. Frameworks & Tools
 
 - **JUnit 5**: The primary test runner for unit and BDD tests.
