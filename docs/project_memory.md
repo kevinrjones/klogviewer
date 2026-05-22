@@ -1651,6 +1651,28 @@ For each sprint/task
 **Gotchas**:
 - When extracting Dialog logic, ensured `LaunchedEffect` for dialog triggers remained functional in the new `DialogHandler`.
 - Carefully managed imports for state types (`LogWindow`, `TabState`) to resolve compilation issues in decomposed files.
+**Title**: ViewModel Decomposition and Cyclomatic Complexity Reduction
+**Date/time completed**: 2026-05-22 15:45
+**What was shipped**:
+- Major decomposition of `KLogViewerViewModel` into 6 focused services and handlers.
+- Reduced `KLogViewerViewModel` file size from ~1235 to 906 lines while improving clarity.
+- Implemented `LogUpdateReducer` for functional log merging logic.
+- Implemented `LogFilterService` for log filtering and sorting.
+- Implemented `RecentItemsManager` for management of recently accessed paths.
+- Implemented `PreferencesStateMapper` to isolate state-preference conversion logic.
+- Implemented `TabWindowController` to handle tab and window state transitions.
+- Implemented `SftpIntentHandler` to handle complex SFTP navigation and connection intents.
+**Key decisions**:
+- Moved logic from private methods in the ViewModel to dedicated components to adhere to SRP.
+- Used a nested `SftpIntent` interface to allow the specialized handler to process all remote-related actions.
+- Preserved existing state management patterns and job cancellation logic to ensure reliability.
+- Documented the architecture changes in ADR-029.
+**Gotchas**:
+- `SftpIntent` and `SftpUri` imports needed careful management as they were moved across packages/layers.
+- Ensured that callback delegation from handlers back to the ViewModel correctly maintained the coroutine scope and job tracking.
 **Test coverage areas**:
-- `LogLoadingIntegrationTest`: 2/2 passing (directory and file loading).
-- `TabManagementTest`: 5/5 passing (split windows, column resizing, level toggling).
+- `LogLoadingIntegrationTest`: 2/2 passing.
+- `TabManagementTest`: 5/5 passing.
+- `SftpBrowsingTest`: 3/3 passing.
+- `RecentItemsTest`: 3/3 passing.
+- `PersistenceIntegrationTest`: 4/4 passing.

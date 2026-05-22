@@ -34,6 +34,37 @@ class KLogViewerViewModel(
 
     private val logJobs = mutableMapOf<String, Job>()
     private var saveJob: Job? = null
+
+    private val recentItemsManager = RecentItemsManager(localFileSystem)
+    private val sftpIntentHandler = SftpIntentHandler(
+        remoteFileSystem = remoteFileSystem,
+        scope = scope,
+        state = _state,
+        onSavePreferences = { savePreferences() },
+        onLoadFiles = { windowId, paths -> loadFilesIntoWindow(windowId, paths) },
+        onConnectSftp = { windowId, name, host, port, user, auth, path ->
+            connectSftp(windowId, name, host, port, user, auth, path)
+        },
+        onConnectMultipleSftp = { windowId, config, paths ->
+            connectMultipleSftp(windowId, config, paths)
+        },
+        onConnectSftpDirectory = { windowId, config, path ->
+            connectSftpDirectory(windowId, config, path)
+        },
+        onHandleBrowse = { config, path ->
+            scope.launch {
+                _state.update { it.copy(isRemoteLoading = true, pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE, currentSftpConfig = config) }
+                val result = remoteFileSystem.listFiles(config, path)
+                _state.update {
+                    it.copy(
+                        isRemoteLoading = false,
+                        remoteFiles = result.getOrNull()?.filter { f -> f.name != "." && f.name != ".." } ?: emptyList(),
+                        remoteBrowsePath = path
+                    )
+                }
+            }
+        }
+    )
     
     fun clear() {
         logJobs.values.forEach { it.cancel() }
@@ -47,56 +78,16 @@ class KLogViewerViewModel(
 
     private fun restoreStateFromPreferences() {
         val prefs = prefsRepository.load()
-        if (prefs.tabs.isNotEmpty()) {
-            val initialState = KLogViewerState(
-                tabs = prefs.tabs.map { tp ->
-                    TabState(
-                        id = tp.id,
-                        title = tp.title,
-                        windows = tp.windows.map { wp ->
-                            LogWindow(
-                                id = wp.id,
-                                filePath = wp.filePath,
-                                sourceIds = wp.sourceIds,
-                                filterQueries = wp.filterQueries,
-                                levelFilters = wp.levelFilters,
-                                isReversed = wp.isReversed,
-                                isAutoScrollEnabled = wp.isAutoScrollEnabled,
-                                showAnsiColors = wp.showAnsiColors,
-                                parserName = wp.parserName,
-                                columns = wp.columns,
-                                columnWidths = wp.columnWidths,
-                                isConnected = wp.isConnected
-                            )
-                        },
-                        activeWindowId = tp.activeWindowId
-                    )
-                },
-                activeTabId = prefs.activeTabId ?: prefs.tabs.firstOrNull()?.id,
-                isDarkMode = prefs.isDarkMode,
-                isSidebarExpanded = prefs.isSidebarExpanded,
-                recentFiles = prefs.recentFiles,
-                recentDirectories = prefs.recentDirectories,
-                sftpConnections = prefs.sftpConnections
-            )
-            _state.value = initialState
-            
-            // Reload logs for all windows that are connected
-            initialState.tabs.forEach { tab ->
-                tab.windows.forEach { window ->
-                    if (window.sourceIds.isNotEmpty() && window.isConnected) {
-                        loadFilesIntoWindow(window.id, window.sourceIds, window.parserName)
-                    }
+        val restoredState = PreferencesStateMapper.toState(prefs)
+        _state.value = restoredState
+        
+        // Reload logs for all windows that are connected
+        restoredState.tabs.forEach { tab ->
+            tab.windows.forEach { window ->
+                if (window.sourceIds.isNotEmpty() && window.isConnected) {
+                    loadFilesIntoWindow(window.id, window.sourceIds, window.parserName)
                 }
             }
-        } else {
-            _state.update { it.copy(
-                isDarkMode = prefs.isDarkMode,
-                isSidebarExpanded = prefs.isSidebarExpanded,
-                recentFiles = prefs.recentFiles,
-                recentDirectories = prefs.recentDirectories,
-                sftpConnections = prefs.sftpConnections
-            ) }
         }
     }
 
@@ -168,16 +159,16 @@ class KLogViewerViewModel(
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
                 if (activeWindowId != null) {
                     loadFilesIntoWindow(activeWindowId, intent.paths)
-                    updateRecentItems(intent.paths)
+                    _state.update { recentItemsManager.updateRecentItems(it, intent.paths) }
                 }
             }
             is KLogViewerIntent.AddToWorkspace -> {
                 val activeWindow = _state.value.activeTab?.activeWindow
                 if (activeWindow != null) {
                     val currentPaths = activeWindow.sourceIds
-                    val allPaths = currentPaths + intent.paths
+                    val allPaths = (currentPaths + intent.paths).distinct()
                     loadFilesIntoWindow(activeWindow.id, allPaths)
-                    updateRecentItems(intent.paths)
+                    _state.update { recentItemsManager.updateRecentItems(it, intent.paths) }
                 }
             }
             is KLogViewerIntent.SelectPath -> {
@@ -291,15 +282,36 @@ class KLogViewerViewModel(
 
     private fun handleTabWindowIntent(intent: KLogViewerIntent) {
         when (intent) {
-            KLogViewerIntent.AddTab -> addTab()
-            is KLogViewerIntent.CloseTab -> closeTab(intent.id)
+            KLogViewerIntent.AddTab -> {
+                _state.update { TabWindowController.addTab(it) }
+                savePreferences()
+            }
+            is KLogViewerIntent.CloseTab -> {
+                _state.update { TabWindowController.closeTab(it, intent.id) { windowId ->
+                    logJobs[windowId]?.cancel()
+                    logJobs.remove(windowId)
+                } }
+                savePreferences()
+            }
             is KLogViewerIntent.SwitchTab -> {
                 _state.update { it.copy(activeTabId = intent.id) }
                 savePreferences()
             }
-            KLogViewerIntent.SplitHorizontal -> splitHorizontal()
-            is KLogViewerIntent.CloseWindow -> closeWindow(intent.id)
-            is KLogViewerIntent.SwitchWindow -> switchWindow(intent.id)
+            KLogViewerIntent.SplitHorizontal -> {
+                _state.update { TabWindowController.splitHorizontal(it) }
+                savePreferences()
+            }
+            is KLogViewerIntent.CloseWindow -> {
+                _state.update { TabWindowController.closeWindow(it, intent.id) { windowId ->
+                    logJobs[windowId]?.cancel()
+                    logJobs.remove(windowId)
+                } }
+                savePreferences()
+            }
+            is KLogViewerIntent.SwitchWindow -> {
+                _state.update { TabWindowController.switchWindow(it, intent.id) }
+                savePreferences()
+            }
             is KLogViewerIntent.UpdateColumnWidth -> {
                 _state.update { currentState ->
                     currentState.updateWindow(intent.windowId) { window ->
@@ -358,118 +370,8 @@ class KLogViewerViewModel(
     }
 
     private fun handleSftpIntent(intent: KLogViewerIntent) {
-        when (intent) {
-            is KLogViewerIntent.ConnectSftp -> {
-                val activeWindowId = _state.value.activeTab?.activeWindow?.id
-                if (activeWindowId != null) {
-                    val config = SftpConfig(intent.name, com.klogviewer.domain.model.Host(intent.host), com.klogviewer.domain.model.Port(intent.port), com.klogviewer.domain.model.Username(intent.user), intent.auth, intent.path)
-
-                    saveSftpConnection(config)
-
-                    if (intent.addToWorkspace) {
-                        val sftpUri = SftpUri(config.username.value, config.host.value, config.port.value, intent.path).toString()
-                        val currentPaths = _state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
-                        val newPaths = (currentPaths + sftpUri).distinct()
-                        loadFilesIntoWindow(activeWindowId, newPaths)
-                        _state.update { it.copy(pendingDialog = null) }
-                    } else {
-                        scope.launch {
-                            _state.update { it.copy(isRemoteLoading = true) }
-                            val result = remoteFileSystem.listFiles(config, intent.path)
-                            _state.update { it.copy(isRemoteLoading = false) }
-
-                            result.fold(
-                                { _ ->
-                                    connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
-                                    _state.update { it.copy(pendingDialog = null) }
-                                },
-                                { files ->
-                                    val exactMatch = files.find { it.path == intent.path || it.path == intent.path.removeSuffix("/") + "/" + it.name }
-
-                                    if (files.size == 1 && exactMatch != null && !exactMatch.isDirectory) {
-                                        connectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
-                                        _state.update { it.copy(pendingDialog = null) }
-                                    } else {
-                                        _state.update {
-                                            it.copy(
-                                                remoteFiles = files.filter { f -> f.name != "." && f.name != ".." },
-                                                remoteBrowsePath = intent.path,
-                                                currentSftpConfig = config,
-                                                pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE,
-                                                isAddMode = intent.addToWorkspace
-                                            )
-                                        }
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-            }
-            is KLogViewerIntent.ConnectMultipleSftp -> {
-                saveSftpConnection(intent.config)
-                val activeWindowId = _state.value.activeTab?.activeWindow?.id
-                if (activeWindowId != null) {
-                    if (intent.addToWorkspace) {
-                        val newUris = intent.paths.map { "sftp://${intent.config.username.value}@${intent.config.host.value}:${intent.config.port.value}$it" }
-                        val currentPaths = _state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
-                        val newPaths = (currentPaths + newUris).distinct()
-                        loadFilesIntoWindow(activeWindowId, newPaths)
-                    } else {
-                        connectMultipleSftp(activeWindowId, intent.config, intent.paths)
-                    }
-                }
-                _state.update { it.copy(pendingDialog = null) }
-            }
-            is KLogViewerIntent.ConnectSftpDirectory -> {
-                saveSftpConnection(intent.config)
-                val activeWindowId = _state.value.activeTab?.activeWindow?.id
-                if (activeWindowId != null) {
-                    if (intent.addToWorkspace) {
-                        val sftpUri = SftpUri(intent.config.username.value, intent.config.host.value, intent.config.port.value, intent.path, isDirectory = true).toString()
-                        val currentPaths = _state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
-                        val newPaths = (currentPaths + sftpUri).distinct()
-                        loadFilesIntoWindow(activeWindowId, newPaths)
-                    } else {
-                        connectSftpDirectory(activeWindowId, intent.config, intent.path)
-                    }
-                }
-                _state.update { it.copy(pendingDialog = null) }
-            }
-            is KLogViewerIntent.BrowseSftp -> {
-                scope.launch {
-                    _state.update { it.copy(isRemoteLoading = true, pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE, currentSftpConfig = intent.config) }
-                    val result = remoteFileSystem.listFiles(intent.config, intent.path)
-                    _state.update {
-                        it.copy(
-                            isRemoteLoading = false,
-                            remoteFiles = result.getOrNull()?.filter { f -> f.name != "." && f.name != ".." } ?: emptyList(),
-                            remoteBrowsePath = intent.path
-                        )
-                    }
-                }
-            }
-            is KLogViewerIntent.NavigateRemote -> {
-                val config = _state.value.currentSftpConfig
-                if (config != null) {
-                    handleIntent(KLogViewerIntent.BrowseSftp(config, intent.path))
-                }
-            }
-            is KLogViewerIntent.SaveSftpConnection -> {
-                _state.update { currentState ->
-                    val updatedList = (currentState.sftpConnections.filter { it.name != intent.config.name } + intent.config)
-                        .sortedBy { it.name }
-                    currentState.copy(sftpConnections = updatedList)
-                }
-                savePreferences()
-            }
-            is KLogViewerIntent.DeleteSftpConnection -> {
-                _state.update { currentState ->
-                    currentState.copy(sftpConnections = currentState.sftpConnections.filter { it.name != intent.name })
-                }
-                savePreferences()
-            }
-            else -> {}
+        if (intent is KLogViewerIntent.SftpIntent) {
+            sftpIntentHandler.handle(intent)
         }
     }
 
@@ -490,21 +392,11 @@ class KLogViewerViewModel(
     private fun handleRecentItemsIntent(intent: KLogViewerIntent) {
         when (intent) {
             is KLogViewerIntent.RemoveRecentItem -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        recentFiles = currentState.recentFiles - intent.path,
-                        recentDirectories = currentState.recentDirectories - intent.path
-                    )
-                }
+                _state.update { recentItemsManager.removeRecentItem(it, intent.path) }
                 savePreferences()
             }
             KLogViewerIntent.ClearMissingRecentItems -> {
-                _state.update { currentState ->
-                    currentState.copy(
-                        recentFiles = currentState.recentFiles.filter { localFileSystem.exists(it) },
-                        recentDirectories = currentState.recentDirectories.filter { localFileSystem.exists(it) }
-                    )
-                }
+                _state.update { recentItemsManager.clearMissingRecentItems(it) }
                 savePreferences()
             }
             else -> {}
@@ -530,87 +422,6 @@ class KLogViewerViewModel(
         savePreferences()
     }
 
-    private fun addTab() {
-        val newTabId = UUID.randomUUID().toString()
-        val newWindowId = UUID.randomUUID().toString()
-        val newTab = TabState(
-            id = newTabId,
-            title = "New Tab",
-            windows = listOf(LogWindow(id = newWindowId)),
-            activeWindowId = newWindowId
-        )
-        _state.update { it.copy(tabs = it.tabs + newTab, activeTabId = newTabId) }
-        savePreferences()
-    }
-
-    private fun closeTab(id: String) {
-        val tab = _state.value.tabs.find { it.id == id }
-        tab?.windows?.forEach { window ->
-            logJobs[window.id]?.cancel()
-            logJobs.remove(window.id)
-        }
-        _state.update { currentState ->
-            val remainingTabs = currentState.tabs.filter { it.id != id }
-            val newTabs = if (remainingTabs.isEmpty()) {
-                val newTabId = UUID.randomUUID().toString()
-                val newWindowId = UUID.randomUUID().toString()
-                listOf(TabState(
-                    id = newTabId,
-                    title = "Log View",
-                    windows = listOf(LogWindow(id = newWindowId)),
-                    activeWindowId = newWindowId
-                ))
-            } else {
-                remainingTabs
-            }
-            val newActiveId = if (currentState.activeTabId == id) {
-                newTabs.last().id
-            } else {
-                currentState.activeTabId
-            }
-            currentState.copy(tabs = newTabs, activeTabId = newActiveId)
-        }
-        savePreferences()
-    }
-
-    private fun splitHorizontal() {
-        val newWindowId = UUID.randomUUID().toString()
-        val newWindow = LogWindow(id = newWindowId)
-        
-        _state.update { currentState ->
-            currentState.updateActiveTab { tab ->
-                tab.copy(
-                    windows = tab.windows + newWindow,
-                    activeWindowId = newWindowId
-                )
-            }
-        }
-        savePreferences()
-    }
-
-    private fun closeWindow(id: String) {
-        logJobs[id]?.cancel()
-        logJobs.remove(id)
-        
-        _state.update { currentState ->
-            currentState.updateActiveTab { tab ->
-                val remainingWindows = tab.windows.filter { it.id != id }
-                if (remainingWindows.isEmpty()) tab // Cannot close the last window
-                else {
-                    val newActiveId = if (tab.activeWindowId == id) remainingWindows.last().id else tab.activeWindowId
-                    tab.copy(windows = remainingWindows, activeWindowId = newActiveId)
-                }
-            }
-        }
-        savePreferences()
-    }
-
-    private fun switchWindow(id: String) {
-        _state.update { currentState ->
-            currentState.updateActiveTab { it.copy(activeWindowId = id) }
-        }
-        savePreferences()
-    }
 
     private fun clearActiveWindow() {
         val activeWindow = _state.value.activeTab?.activeWindow ?: return
@@ -1037,78 +848,10 @@ class KLogViewerViewModel(
     private fun handleLogUpdate(windowId: String, update: LogUpdate, sourceId: String? = null) {
         _state.update { currentState ->
             currentState.updateWindow(windowId) { window ->
-                val logsAfterUpdate = calculateLogsAfterUpdate(window, update, sourceId)
-                val newMissingSourceIds = calculateMissingSourceIds(window, update, sourceId)
-                val newSourceIds = calculateSourceIdsAfterUpdate(window, update, sourceId, logsAfterUpdate)
-
-                window.copy(
-                    isLoading = false,
-                    logs = logsAfterUpdate,
-                    sourceIds = newSourceIds,
-                    missingSourceIds = newMissingSourceIds,
-                    error = if (newMissingSourceIds.contains(window.filePath)) window.error else null
-                )
+                LogUpdateReducer.reduce(window, update, sourceId)
             }
         }
         filterLogs(windowId)
-    }
-
-    private fun calculateLogsAfterUpdate(window: LogWindow, update: LogUpdate, sourceId: String?): List<LogEntry> {
-        val mergedLogs = when (update) {
-            is LogUpdate.Initial -> {
-                if (sourceId != null) {
-                    // Additive for specific source, replace existing entries for that source
-                    window.logs.filter { it.sourceId != sourceId } + update.entries
-                } else {
-                    update.entries
-                }
-            }
-            is LogUpdate.Appended -> window.logs + update.entries
-            LogUpdate.Reset -> emptyList()
-            is LogUpdate.SourceMissing -> {
-                val isDirectorySubSource = sourceId != null && sourceId != update.sourceId
-                if (isDirectorySubSource) {
-                    window.logs.filter { it.sourceId != update.sourceId }
-                } else {
-                    window.logs
-                }
-            }
-        }
-
-        // Ensure logs are sorted by timestamp if we have multiple sources
-        return if (window.sourceIds.size > 1) {
-            mergedLogs.sortedBy { it.timestamp.value }
-        } else {
-            mergedLogs
-        }
-    }
-
-    private fun calculateMissingSourceIds(window: LogWindow, update: LogUpdate, sourceId: String?): Set<String> {
-        val currentMissing = if (sourceId != null) window.missingSourceIds - sourceId else window.missingSourceIds
-        return when (update) {
-            is LogUpdate.SourceMissing -> currentMissing + update.sourceId
-            is LogUpdate.Initial -> currentMissing - update.entries.mapNotNull { it.sourceId }.toSet()
-            is LogUpdate.Appended -> currentMissing - update.entries.mapNotNull { it.sourceId }.toSet()
-            LogUpdate.Reset -> emptySet()
-        }
-    }
-
-    private fun calculateSourceIdsAfterUpdate(window: LogWindow, update: LogUpdate, sourceId: String?, logs: List<LogEntry>): List<String> {
-        // Extract unique source IDs from the logs to ensure badges are shown for all discovered files
-        val discoveredSourceIds = logs.mapNotNull { it.sourceId }.distinct().filter { it.isNotEmpty() }
-
-        val currentSourceIds = if (update is LogUpdate.SourceMissing) {
-            val isDirectorySubSource = sourceId != null && sourceId != update.sourceId
-            if (isDirectorySubSource) {
-                window.sourceIds - update.sourceId
-            } else {
-                window.sourceIds
-            }
-        } else {
-            window.sourceIds
-        }
-
-        return (currentSourceIds + discoveredSourceIds).distinct()
     }
 
     private fun filterLogs(windowId: String?) {
@@ -1116,57 +859,14 @@ class KLogViewerViewModel(
         
         scope.launch(Dispatchers.Default) {
             val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@launch
-            
-            val filtered = window.logs.filter { entry ->
-                val matchesLevel = window.levelFilters.contains(entry.level)
-                val matchesFilter = if (window.filterQueries.isEmpty()) {
-                    true
-                } else {
-                    window.filterQueries.all { query ->
-                        entry.content.value.contains(query, ignoreCase = true) ||
-                        entry.timestamp.value.contains(query, ignoreCase = true)
-                    }
-                }
-                matchesLevel && matchesFilter
-            }
-            
-            val sorted = if (window.isReversed) filtered.reversed() else filtered
+            val filteredWindow = LogFilterService.filter(window)
             
             _state.update { currentState ->
-                currentState.copy(tabs = currentState.tabs.map { tab ->
-                    tab.copy(windows = tab.windows.map { 
-                        if (it.id == windowId) it.copy(filteredLogs = sorted) else it 
-                    })
-                })
+                currentState.updateWindow(windowId) { filteredWindow }
             }
         }
     }
 
-    private fun updateRecentItems(paths: List<String>) {
-        val files = paths.filter { localFileSystem.isFile(it) }
-        val dirs = paths.filter { localFileSystem.isDirectory(it) }
-        
-        if (files.isEmpty() && dirs.isEmpty()) return
-
-        _state.update { currentState ->
-            val newRecentFiles = (files + currentState.recentFiles).distinct().take(50)
-            val newRecentDirectories = (dirs + currentState.recentDirectories).distinct().take(50)
-            
-            currentState.copy(
-                recentFiles = newRecentFiles,
-                recentDirectories = newRecentDirectories
-            ).also { savePreferences(it) }
-        }
-    }
-
-    private fun saveSftpConnection(config: SftpConfig) {
-        _state.update { currentState ->
-            val updatedList = (currentState.sftpConnections.filter { it.name != config.name } + config)
-                .sortedBy { it.name }
-            currentState.copy(sftpConnections = updatedList)
-        }
-        savePreferences()
-    }
 
     fun savePreferences(currentState: KLogViewerState = _state.value, debounce: Boolean = false) {
         if (debounce) {
@@ -1183,37 +883,7 @@ class KLogViewerViewModel(
 
     private fun performSave(currentState: KLogViewerState) {
         val currentPrefs = prefsRepository.load()
-        val newPrefs = currentPrefs.copy(
-            isDarkMode = currentState.isDarkMode,
-            isSidebarExpanded = currentState.isSidebarExpanded,
-            recentFiles = currentState.recentFiles,
-            recentDirectories = currentState.recentDirectories,
-            sftpConnections = currentState.sftpConnections,
-            tabs = currentState.tabs.map { tab ->
-                TabPreference(
-                    id = tab.id,
-                    title = tab.title,
-                    activeWindowId = tab.activeWindowId,
-                    windows = tab.windows.map { window ->
-                        WindowPreference(
-                            id = window.id,
-                            filePath = window.filePath,
-                            sourceIds = window.sourceIds,
-                            filterQueries = window.filterQueries,
-                            levelFilters = window.levelFilters,
-                            isReversed = window.isReversed,
-                            isAutoScrollEnabled = window.isAutoScrollEnabled,
-                            showAnsiColors = window.showAnsiColors,
-                            parserName = window.parserName,
-                            columns = window.columns,
-                            columnWidths = window.columnWidths,
-                            isConnected = window.isConnected
-                        )
-                    }
-                )
-            },
-            activeTabId = currentState.activeTabId
-        )
+        val newPrefs = PreferencesStateMapper.toPreferences(currentState, currentPrefs)
         prefsRepository.save(newPrefs)
     }
 

@@ -31,6 +31,9 @@ sealed interface KLogViewerIntent {
     data object ShowAddSftpDialog : KLogViewerIntent
     data object ShowRecentDialog : KLogViewerIntent
     data object ShowSftpDialog : KLogViewerIntent
+    // SFTP
+    sealed interface SftpIntent : KLogViewerIntent
+
     data class ConnectSftp(
         val name: String,
         val host: String,
@@ -39,21 +42,21 @@ sealed interface KLogViewerIntent {
         val auth: com.klogviewer.domain.model.SftpAuth,
         val path: String,
         val addToWorkspace: Boolean = false
-    ) : KLogViewerIntent
+    ) : SftpIntent
     data class ConnectMultipleSftp(
         val config: SftpConfig,
         val paths: List<String>,
         val addToWorkspace: Boolean = false
-    ) : KLogViewerIntent
+    ) : SftpIntent
     data class ConnectSftpDirectory(
         val config: SftpConfig,
         val path: String,
         val addToWorkspace: Boolean = false
-    ) : KLogViewerIntent
-    data class BrowseSftp(val config: SftpConfig, val path: String) : KLogViewerIntent
-    data class NavigateRemote(val path: String) : KLogViewerIntent
-    data class SaveSftpConnection(val config: SftpConfig) : KLogViewerIntent
-    data class DeleteSftpConnection(val name: String) : KLogViewerIntent
+    ) : SftpIntent
+    data class BrowseSftp(val config: SftpConfig, val path: String) : SftpIntent
+    data class NavigateRemote(val path: String) : SftpIntent
+    data class SaveSftpConnection(val config: SftpConfig) : SftpIntent
+    data class DeleteSftpConnection(val name: String) : SftpIntent
     data object DismissDialog : KLogViewerIntent
     data class RemoveRecentItem(val path: String) : KLogViewerIntent
     data object ClearMissingRecentItems : KLogViewerIntent
