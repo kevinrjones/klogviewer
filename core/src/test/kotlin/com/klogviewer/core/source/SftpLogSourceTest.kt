@@ -81,7 +81,7 @@ class SftpLogSourceTest {
         
         val initialReceived = CompletableDeferred<Unit>()
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act & Assert
         // Write Initial logs BEFORE observing to ensure they are picked up in the Initial update
@@ -152,7 +152,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -186,7 +186,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -220,7 +220,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -257,7 +257,7 @@ class SftpLogSourceTest {
         every { mockCommand.errorStream } returns errorIn
         every { mockCommand.exitStatus } returns 1
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         val results = source.observeLogs(LogFilePath("/invalid/path")).toList()
@@ -291,7 +291,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null // Still running
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         val results = source.observeLogs(LogFilePath("/empty.log")).take(1).toList()
@@ -327,7 +327,7 @@ class SftpLogSourceTest {
             Unit
         }
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
         val observationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
         try {

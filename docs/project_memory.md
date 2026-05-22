@@ -1627,6 +1627,16 @@
 - `ConnectionToggleTest`: 6/6 passing (verifying connection lifecycle).
 
 For each sprint/task
+**Title**: SFTP Source Refactoring
+**Date/time completed**: 2026-05-22 13:30
+**What was shipped**: Decomposed `SftpLogSource` and `SftpDirectoryLogSource` into modular services.
+**Key decisions**: 
+- Extracted SSH auth to `SshService`.
+- Extracted pooling to `SshClientPool`.
+- Extracted remote tailing to `RemoteLogTailer`.
+- Extracted directory load aggregation to `LogInitialLoadCoordinator`.
+**Gotchas**: Constructor changes required updates to all SFTP-related unit tests.
+**Test coverage areas**: `SftpLogSource`, `SftpDirectoryLogSource`, `SftpFileSystem` (unit tests), `SftpBrowsingTest` (integration).
 **Title**: Comprehensive UI and Core Logic Tidy-up
 **Date/time completed**: 2026-05-22 14:15
 **What was shipped**:

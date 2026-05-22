@@ -61,7 +61,7 @@ class SftpDirectoryLogSourceTest {
             remoteFileSystem, 
             rescanIntervalMs = 100, 
             dispatcher = Dispatchers.Default,
-            sshClientProvider = sshClientProvider,
+            sshService = SshService(sshClientProvider, Dispatchers.Default),
             logSourceFactory = logSourceFactory
         )
 
@@ -133,7 +133,7 @@ class SftpDirectoryLogSourceTest {
             remoteFileSystem, 
             rescanIntervalMs = 100, 
             dispatcher = Dispatchers.Default,
-            sshClientProvider = sshClientProvider,
+            sshService = SshService(sshClientProvider, Dispatchers.Default),
             logSourceFactory = logSourceFactory
         )
 
@@ -200,7 +200,7 @@ class SftpDirectoryLogSourceTest {
             remoteFileSystem, 
             rescanIntervalMs = 500, 
             dispatcher = Dispatchers.Default,
-            sshClientProvider = sshClientProvider,
+            sshService = SshService(sshClientProvider, Dispatchers.Default),
             logSourceFactory = logSourceFactory
         )
 
