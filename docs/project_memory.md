@@ -1678,21 +1678,19 @@ For each sprint/task
 - `PersistenceIntegrationTest`: 4/4 passing.
 
 For each sprint/task
-**Title**: Extract LogLoadingCoordinator from ViewModel
-**Date/time completed**: 2026-05-22 13:45
+**Title**: Categorize MVI Intents in ViewModel
+**Date/time completed**: 2026-05-22 13:55
 **What was shipped**:
-- Extracted all log loading and connection orchestration logic into a dedicated `LogLoadingCoordinator`.
-- Further reduced `KLogViewerViewModel` complexity by ~400 lines (now ~500 lines total).
-- Centralized management of log observation jobs and loading lifecycles.
+- Refactored `KLogViewerIntent.kt` with a hierarchy of sealed interfaces for categorization.
+- Simplified `handleIntent()` in `KLogViewerViewModel` to act as a high-level category dispatcher.
+- Moved `ChangeParser` logic into the `TabWindowIntent` category.
 **Key decisions**:
-- Moved `loadFilesIntoWindow`, `connectSftp*`, and heuristic detection logic to a separate component.
-- Used callback delegation for state updates and error events to keep the ViewModel as the central MVI hub.
-- Documented the architecture changes in ADR-030.
+- Grouped 40+ intents into 8 logical categories (`Workspace`, `UiToggle`, `Filter`, `TabWindow`, `Entry`, `Dialog`, `RecentItems`, `Sftp`).
+- Updated private handler methods in the ViewModel to accept specific intent subtypes for better type safety.
 **Gotchas**:
-- Job management (`logJobs`) had to be carefully moved to the coordinator to avoid leaks or inconsistent states during window closing or tab switching.
+- `SftpIntent` already existed but needed to be consistently integrated into the new high-level dispatch pattern.
 **Test coverage areas**:
 - `LogLoadingIntegrationTest`: 2/2 passing.
 - `TabManagementTest`: 5/5 passing.
 - `SftpBrowsingTest`: 3/3 passing.
-- `ConnectionToggleTest`: 6/6 passing.
-- Full suite of integration tests verified.
+- Full verification of core MVI intent routing.

@@ -105,66 +105,18 @@ class KLogViewerViewModel(
     fun handleIntent(intent: KLogViewerIntent) {
         logger.debug { "Handling intent: ${intent::class.simpleName}" }
         when (intent) {
-            is KLogViewerIntent.LoadFiles,
-            is KLogViewerIntent.AddToWorkspace,
-            is KLogViewerIntent.SelectPath,
-            KLogViewerIntent.ClearLogs -> handleWorkspaceIntent(intent)
-
-            KLogViewerIntent.ToggleTheme,
-            KLogViewerIntent.ToggleSidebar,
-            KLogViewerIntent.ToggleSortOrder,
-            KLogViewerIntent.ToggleAutoScroll,
-            KLogViewerIntent.ToggleAnsiColors,
-            KLogViewerIntent.ToggleConnection -> handleUiToggleIntent(intent)
-
-            is KLogViewerIntent.AddFilterQuery,
-            is KLogViewerIntent.RemoveFilterQuery,
-            KLogViewerIntent.ClearFilterQueries,
-            is KLogViewerIntent.ToggleLevel,
-            KLogViewerIntent.ToggleAllLevels -> handleFilterIntent(intent)
-
-            KLogViewerIntent.AddTab,
-            is KLogViewerIntent.CloseTab,
-            is KLogViewerIntent.SwitchTab,
-            KLogViewerIntent.SplitHorizontal,
-            is KLogViewerIntent.CloseWindow,
-            is KLogViewerIntent.SwitchWindow,
-            is KLogViewerIntent.UpdateColumnWidth -> handleTabWindowIntent(intent)
-
-            is KLogViewerIntent.SelectEntry,
-            is KLogViewerIntent.ToggleEntrySelection,
-            KLogViewerIntent.CopySelected -> handleEntryIntent(intent)
-
-            is KLogViewerIntent.ConnectSftp,
-            is KLogViewerIntent.ConnectMultipleSftp,
-            is KLogViewerIntent.ConnectSftpDirectory,
-            is KLogViewerIntent.BrowseSftp,
-            is KLogViewerIntent.NavigateRemote,
-            is KLogViewerIntent.SaveSftpConnection,
-            is KLogViewerIntent.DeleteSftpConnection -> handleSftpIntent(intent)
-
-            KLogViewerIntent.ShowOpenDialog,
-            KLogViewerIntent.ShowOpenDirectoryDialog,
-            KLogViewerIntent.ShowAddDialog,
-            KLogViewerIntent.ShowAddDirectoryDialog,
-            KLogViewerIntent.ShowAddSftpDialog,
-            KLogViewerIntent.ShowRecentDialog,
-            KLogViewerIntent.ShowSftpDialog,
-            KLogViewerIntent.DismissDialog -> handleDialogIntent(intent)
-
-            is KLogViewerIntent.RemoveRecentItem,
-            KLogViewerIntent.ClearMissingRecentItems -> handleRecentItemsIntent(intent)
-
-            is KLogViewerIntent.ChangeParser -> {
-                val window = _state.value.tabs.flatMap { it.windows }.find { it.id == intent.windowId }
-                if (window != null && window.sourceIds.isNotEmpty()) {
-                    logLoadingCoordinator.loadFilesIntoWindow(intent.windowId, window.sourceIds, intent.parserName)
-                }
-            }
+            is KLogViewerIntent.WorkspaceIntent -> handleWorkspaceIntent(intent)
+            is KLogViewerIntent.UiToggleIntent -> handleUiToggleIntent(intent)
+            is KLogViewerIntent.FilterIntent -> handleFilterIntent(intent)
+            is KLogViewerIntent.TabWindowIntent -> handleTabWindowIntent(intent)
+            is KLogViewerIntent.EntryIntent -> handleEntryIntent(intent)
+            is KLogViewerIntent.SftpIntent -> handleSftpIntent(intent)
+            is KLogViewerIntent.DialogIntent -> handleDialogIntent(intent)
+            is KLogViewerIntent.RecentItemsIntent -> handleRecentItemsIntent(intent)
         }
     }
 
-    private fun handleWorkspaceIntent(intent: KLogViewerIntent) {
+    private fun handleWorkspaceIntent(intent: KLogViewerIntent.WorkspaceIntent) {
         when (intent) {
             is KLogViewerIntent.LoadFiles -> {
                 val activeWindowId = _state.value.activeTab?.activeWindow?.id
@@ -187,11 +139,10 @@ class KLogViewerViewModel(
                 savePreferences()
             }
             KLogViewerIntent.ClearLogs -> clearActiveWindow()
-            else -> {}
         }
     }
 
-    private fun handleUiToggleIntent(intent: KLogViewerIntent) {
+    private fun handleUiToggleIntent(intent: KLogViewerIntent.UiToggleIntent) {
         when (intent) {
             KLogViewerIntent.ToggleTheme -> {
                 _state.update { it.copy(isDarkMode = !it.isDarkMode) }
@@ -221,11 +172,10 @@ class KLogViewerViewModel(
                 savePreferences()
             }
             KLogViewerIntent.ToggleConnection -> toggleConnection()
-            else -> {}
         }
     }
 
-    private fun handleFilterIntent(intent: KLogViewerIntent) {
+    private fun handleFilterIntent(intent: KLogViewerIntent.FilterIntent) {
         when (intent) {
             is KLogViewerIntent.AddFilterQuery -> {
                 if (intent.query.isNotBlank()) {
@@ -287,11 +237,10 @@ class KLogViewerViewModel(
                 filterLogs(_state.value.activeTab?.activeWindow?.id)
                 savePreferences()
             }
-            else -> {}
         }
     }
 
-    private fun handleTabWindowIntent(intent: KLogViewerIntent) {
+    private fun handleTabWindowIntent(intent: KLogViewerIntent.TabWindowIntent) {
         when (intent) {
             KLogViewerIntent.AddTab -> {
                 _state.update { TabWindowController.addTab(it) }
@@ -329,11 +278,16 @@ class KLogViewerViewModel(
                 }
                 savePreferences(debounce = true)
             }
-            else -> {}
+            is KLogViewerIntent.ChangeParser -> {
+                val window = _state.value.tabs.flatMap { it.windows }.find { it.id == intent.windowId }
+                if (window != null && window.sourceIds.isNotEmpty()) {
+                    logLoadingCoordinator.loadFilesIntoWindow(intent.windowId, window.sourceIds, intent.parserName)
+                }
+            }
         }
     }
 
-    private fun handleEntryIntent(intent: KLogViewerIntent) {
+    private fun handleEntryIntent(intent: KLogViewerIntent.EntryIntent) {
         when (intent) {
             is KLogViewerIntent.SelectEntry -> {
                 _state.update { currentState ->
@@ -374,17 +328,14 @@ class KLogViewerViewModel(
                 }
             }
             KLogViewerIntent.CopySelected -> copySelectedToClipboard()
-            else -> {}
         }
     }
 
-    private fun handleSftpIntent(intent: KLogViewerIntent) {
-        if (intent is KLogViewerIntent.SftpIntent) {
-            sftpIntentHandler.handle(intent)
-        }
+    private fun handleSftpIntent(intent: KLogViewerIntent.SftpIntent) {
+        sftpIntentHandler.handle(intent)
     }
 
-    private fun handleDialogIntent(intent: KLogViewerIntent) {
+    private fun handleDialogIntent(intent: KLogViewerIntent.DialogIntent) {
         when (intent) {
             KLogViewerIntent.ShowOpenDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN, isAddMode = false) }
             KLogViewerIntent.ShowOpenDirectoryDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY, isAddMode = false) }
@@ -394,11 +345,10 @@ class KLogViewerViewModel(
             KLogViewerIntent.ShowRecentDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
             KLogViewerIntent.ShowSftpDialog -> _state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_CONNECT, isAddMode = false) }
             KLogViewerIntent.DismissDialog -> _state.update { it.copy(pendingDialog = null) }
-            else -> {}
         }
     }
 
-    private fun handleRecentItemsIntent(intent: KLogViewerIntent) {
+    private fun handleRecentItemsIntent(intent: KLogViewerIntent.RecentItemsIntent) {
         when (intent) {
             is KLogViewerIntent.RemoveRecentItem -> {
                 _state.update { recentItemsManager.removeRecentItem(it, intent.path) }
@@ -408,7 +358,6 @@ class KLogViewerViewModel(
                 _state.update { recentItemsManager.clearMissingRecentItems(it) }
                 savePreferences()
             }
-            else -> {}
         }
     }
 
