@@ -1602,3 +1602,115 @@
 - `SftpBrowsingTest`: 3/3 passing (SFTP connect/browse/add-to-workspace flows).
 - `RecentItemsTest`: 3/3 passing (history/missing item behavior unchanged).
 - `PersistenceIntegrationTest`: 4/4 passing (state restore and preference persistence unaffected).
+
+## Task: ViewModel Refactoring and Tidying
+**Title**: ViewModel Refactoring and Tidying
+**Date/time completed**: 2026-05-22 13:30
+**What was shipped**:
+- Significant refactoring of `KLogViewerViewModel` (over 1200 lines) to improve maintainability.
+- Extracted massive `handleIntent` dispatcher into categorized private handlers.
+- Decomposed complex `loadFilesIntoWindow` logic into a readable sequence of steps.
+- Simplified `handleLogUpdate` state update logic by extracting calculation helpers.
+- Extracted preference restoration logic from the `init` block.
+**Key decisions**:
+- Grouped intent handlers by domain (Workspace, Filter, UI, Tab/Window, Entry, SFTP, Dialog, Recent Items) to reduce cognitive load when navigating the ViewModel.
+- Prioritized small, well-named functions (Clean Code principles) over large blocks of MVI logic.
+- Maintained existing state flow and behavior to ensure zero regression for end-users.
+- Documented the refactoring strategy in ADR-026.
+**Gotchas**:
+- Care was taken to ensure that `scope.launch` and `cancelAndJoin` lifecycles were correctly preserved during function extraction.
+- Sorting logic in `handleLogUpdate` must only be applied when multiple sources are present to avoid unnecessary overhead for single-file views.
+**Test coverage areas**:
+- `LogLoadingIntegrationTest`: 2/2 passing (verifying load flows).
+- `TabManagementTest`: 5/5 passing (verifying intents and state transitions).
+- `SftpBrowsingTest`: 3/3 passing (verifying remote logic).
+- `ConnectionToggleTest`: 6/6 passing (verifying connection lifecycle).
+
+For each sprint/task
+**Title**: SFTP Source Refactoring
+**Date/time completed**: 2026-05-22 13:30
+**What was shipped**: Decomposed `SftpLogSource` and `SftpDirectoryLogSource` into modular services.
+**Key decisions**: 
+- Extracted SSH auth to `SshService`.
+- Extracted pooling to `SshClientPool`.
+- Extracted remote tailing to `RemoteLogTailer`.
+- Extracted directory load aggregation to `LogInitialLoadCoordinator`.
+**Gotchas**: Constructor changes required updates to all SFTP-related unit tests.
+**Test coverage areas**: `SftpLogSource`, `SftpDirectoryLogSource`, `SftpFileSystem` (unit tests), `SftpBrowsingTest` (integration).
+**Title**: Comprehensive UI and Core Logic Tidy-up
+**Date/time completed**: 2026-05-22 14:15
+**What was shipped**:
+- Decomposed massive `KLogViewerScreen` composable into modular components (`DialogHandler`, `LogTopBar`, `LogBottomBar`, `LogWindowList`, `LogWindowItem`).
+- Extracted `RecentItemsDialog` to a standalone file.
+- Refactored `DirectoryLogSource` to use small private functions for scanning and job management.
+- Tidied up `LogList.kt` by extracting `LogGutter` and `LogEntryCell` from the row rendering logic.
+**Key decisions**:
+- Prioritized UI decomposition to make the main screen more readable and AI-navigable.
+- Used `ProducerScope` extensions in `DirectoryLogSource` to keep `channelFlow` logic clean.
+- Maintained consistent naming and parameter passing across new private composables.
+**Gotchas**:
+- When extracting Dialog logic, ensured `LaunchedEffect` for dialog triggers remained functional in the new `DialogHandler`.
+- Carefully managed imports for state types (`LogWindow`, `TabState`) to resolve compilation issues in decomposed files.
+**Title**: ViewModel Decomposition and Cyclomatic Complexity Reduction
+**Date/time completed**: 2026-05-22 15:45
+**What was shipped**:
+- Major decomposition of `KLogViewerViewModel` into 6 focused services and handlers.
+- Reduced `KLogViewerViewModel` file size from ~1235 to 906 lines while improving clarity.
+- Implemented `LogUpdateReducer` for functional log merging logic.
+- Implemented `LogFilterService` for log filtering and sorting.
+- Implemented `RecentItemsManager` for management of recently accessed paths.
+- Implemented `PreferencesStateMapper` to isolate state-preference conversion logic.
+- Implemented `TabWindowController` to handle tab and window state transitions.
+- Implemented `SftpIntentHandler` to handle complex SFTP navigation and connection intents.
+**Key decisions**:
+- Moved logic from private methods in the ViewModel to dedicated components to adhere to SRP.
+- Used a nested `SftpIntent` interface to allow the specialized handler to process all remote-related actions.
+- Preserved existing state management patterns and job cancellation logic to ensure reliability.
+- Documented the architecture changes in ADR-029.
+**Gotchas**:
+- `SftpIntent` and `SftpUri` imports needed careful management as they were moved across packages/layers.
+- Ensured that callback delegation from handlers back to the ViewModel correctly maintained the coroutine scope and job tracking.
+**Test coverage areas**:
+- `LogLoadingIntegrationTest`: 2/2 passing.
+- `TabManagementTest`: 5/5 passing.
+- `SftpBrowsingTest`: 3/3 passing.
+- `RecentItemsTest`: 3/3 passing.
+- `PersistenceIntegrationTest`: 4/4 passing.
+
+For each sprint/task
+**Title**: Deep Decomposition of ViewModel and Loading Coordinator
+**Date/time completed**: 2026-05-22 15:15
+**What was shipped**:
+- Extracted `WorkspaceLogLoader` from `LogLoadingCoordinator` to isolate path resolution and heuristic logic.
+- Decomposed `KLogViewerViewModel` into 8 focused intent handlers (Workspace, UI, Filter, TabWindow, Entry, Dialog, RecentItems, Sftp).
+- Reduced ViewModel size from ~1235 lines to ~218 lines while preserving full MVI functionality.
+**Key decisions**:
+- Used a dependency-based approach where the ViewModel orchestrates focused handlers that share state via callbacks.
+- Isolated "thinking" logic (WorkspaceLogLoader) from "orchestration" logic (LogLoadingCoordinator).
+- Documented the architecture changes in ADR-032.
+**Gotchas**:
+- Callback delegation for debounced operations (like `savePreferences`) needed careful handling to maintain state consistency.
+**Test coverage areas**:
+- `LogLoadingIntegrationTest`: 2/2 passing.
+- `TabManagementTest`: 5/5 passing.
+- `SftpBrowsingTest`: 3/3 passing.
+- `RecentItemsTest`: 3/3 passing.
+- `PersistenceIntegrationTest`: 4/4 passing.
+- Full suite of integration tests verified.
+
+**Title**: Refactor SftpDirectoryLogSource for Reduced Complexity
+**Date/time completed**: 2026-05-22 15:30
+**What was shipped**:
+- Extracted `RemoteDirectoryFileObserver` to orchestrate per-file observation in remote directories.
+- Simplified `SftpDirectoryLogSource` by delegating file job management and update handling.
+- Reduced cyclomatic complexity of `SftpDirectoryLogSource.observeLogs()`.
+**Key decisions**:
+- Isolated the management of `activeSources` and individual file coroutine jobs into a dedicated observer registry.
+- Standardized the update handling flow between directory and file sources.
+- Documented the architecture changes in ADR-033.
+**Gotchas**:
+- Ordering of initial load completion check and observer initialization state is critical for correct log aggregation.
+**Test coverage areas**:
+- `SftpDirectoryLogSourceTest`: 3/3 passing.
+- `SftpLogSourceTest`: 7/7 passing.
+- `SftpBrowsingTest`: 3/3 passing.

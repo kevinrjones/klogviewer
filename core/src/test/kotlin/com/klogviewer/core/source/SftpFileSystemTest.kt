@@ -43,7 +43,7 @@ class SftpFileSystemTest {
         
         every { mockSftp.ls("/var/log") } returns listOf(mockEntry1, mockEntry2)
         
-        val fileSystem = SftpFileSystem(provider)
+        val fileSystem = SftpFileSystem(SshService(provider))
 
         // Act
         val result = fileSystem.listFiles(config, "/var/log")

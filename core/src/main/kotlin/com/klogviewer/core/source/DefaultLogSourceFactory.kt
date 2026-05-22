@@ -10,22 +10,22 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 
 class DefaultLogSourceFactory(
-    private val sshClientProvider: SshClientProvider = DefaultSshClientProvider(),
+    private val sshService: SshService = SshService(),
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : LogSourceFactory {
     
     override fun createSftpSource(config: SftpConfig, parser: LogParser?): LogSource {
-        return SftpLogSource(config, parser ?: SimpleLogParser(), sshClientProvider = sshClientProvider, dispatcher = dispatcher)
+        return SftpLogSource(config, parser ?: SimpleLogParser(), sshService = sshService, dispatcher = dispatcher)
     }
 
     override fun createSftpDirectorySource(config: SftpConfig, remoteFileSystem: RemoteFileSystem): LogSource {
         return SftpDirectoryLogSource(
             config = config,
             remoteFileSystem = remoteFileSystem,
-            sshClientProvider = sshClientProvider,
+            sshService = sshService,
             dispatcher = dispatcher,
             logSourceFactory = { cfg, client ->
-                SftpLogSource(cfg, SimpleLogParser(), sshClientProvider = sshClientProvider, existingClient = client, dispatcher = dispatcher)
+                SftpLogSource(cfg, SimpleLogParser(), sshService = sshService, existingClient = client, dispatcher = dispatcher)
             }
         )
     }
