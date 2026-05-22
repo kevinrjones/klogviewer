@@ -1602,3 +1602,45 @@
 - `SftpBrowsingTest`: 3/3 passing (SFTP connect/browse/add-to-workspace flows).
 - `RecentItemsTest`: 3/3 passing (history/missing item behavior unchanged).
 - `PersistenceIntegrationTest`: 4/4 passing (state restore and preference persistence unaffected).
+
+## Task: ViewModel Refactoring and Tidying
+**Title**: ViewModel Refactoring and Tidying
+**Date/time completed**: 2026-05-22 13:30
+**What was shipped**:
+- Significant refactoring of `KLogViewerViewModel` (over 1200 lines) to improve maintainability.
+- Extracted massive `handleIntent` dispatcher into categorized private handlers.
+- Decomposed complex `loadFilesIntoWindow` logic into a readable sequence of steps.
+- Simplified `handleLogUpdate` state update logic by extracting calculation helpers.
+- Extracted preference restoration logic from the `init` block.
+**Key decisions**:
+- Grouped intent handlers by domain (Workspace, Filter, UI, Tab/Window, Entry, SFTP, Dialog, Recent Items) to reduce cognitive load when navigating the ViewModel.
+- Prioritized small, well-named functions (Clean Code principles) over large blocks of MVI logic.
+- Maintained existing state flow and behavior to ensure zero regression for end-users.
+- Documented the refactoring strategy in ADR-026.
+**Gotchas**:
+- Care was taken to ensure that `scope.launch` and `cancelAndJoin` lifecycles were correctly preserved during function extraction.
+- Sorting logic in `handleLogUpdate` must only be applied when multiple sources are present to avoid unnecessary overhead for single-file views.
+**Test coverage areas**:
+- `LogLoadingIntegrationTest`: 2/2 passing (verifying load flows).
+- `TabManagementTest`: 5/5 passing (verifying intents and state transitions).
+- `SftpBrowsingTest`: 3/3 passing (verifying remote logic).
+- `ConnectionToggleTest`: 6/6 passing (verifying connection lifecycle).
+
+For each sprint/task
+**Title**: Comprehensive UI and Core Logic Tidy-up
+**Date/time completed**: 2026-05-22 14:15
+**What was shipped**:
+- Decomposed massive `KLogViewerScreen` composable into modular components (`DialogHandler`, `LogTopBar`, `LogBottomBar`, `LogWindowList`, `LogWindowItem`).
+- Extracted `RecentItemsDialog` to a standalone file.
+- Refactored `DirectoryLogSource` to use small private functions for scanning and job management.
+- Tidied up `LogList.kt` by extracting `LogGutter` and `LogEntryCell` from the row rendering logic.
+**Key decisions**:
+- Prioritized UI decomposition to make the main screen more readable and AI-navigable.
+- Used `ProducerScope` extensions in `DirectoryLogSource` to keep `channelFlow` logic clean.
+- Maintained consistent naming and parameter passing across new private composables.
+**Gotchas**:
+- When extracting Dialog logic, ensured `LaunchedEffect` for dialog triggers remained functional in the new `DialogHandler`.
+- Carefully managed imports for state types (`LogWindow`, `TabState`) to resolve compilation issues in decomposed files.
+**Test coverage areas**:
+- `LogLoadingIntegrationTest`: 2/2 passing (directory and file loading).
+- `TabManagementTest`: 5/5 passing (split windows, column resizing, level toggling).

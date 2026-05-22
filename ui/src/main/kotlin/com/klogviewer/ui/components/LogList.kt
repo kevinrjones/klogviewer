@@ -267,106 +267,145 @@ fun LogEntryRow(
                 .padding(vertical = 0.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-        // Gutter / Line Number
-        val gutterWidth = if (sourceIds.size > 1) 60.dp else 50.dp
-        Row(
-            modifier = Modifier.width(gutterWidth).padding(horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (sourceIds.size > 1) {
-                val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
-                val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds, isMissing)
-                val tooltip = if (isMissing) "${entry.sourceId} (Missing)" else entry.sourceId ?: "Unknown Source"
-                TooltipWrapper(tooltip = tooltip) {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .background(badgeColor, CircleShape)
-                    )
-                }
-                Spacer(modifier = Modifier.width(6.dp))
-            }
-            Text(
-                text = lineNumber.toString().padStart(4, ' '),
-                color = MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
-                style = MaterialTheme.typography.caption,
-                modifier = Modifier.weight(1f)
+            val gutterWidth = if (sourceIds.size > 1) 60.dp else 50.dp
+            LogGutter(
+                entry = entry,
+                lineNumber = lineNumber,
+                sourceIds = sourceIds,
+                missingSourceIds = missingSourceIds,
+                gutterWidth = gutterWidth
             )
-        }
-        
-        columns.forEachIndexed { index, column ->
-            val isLast = index == columns.lastIndex
-            val widthDp = getColumnWidth(column, columnWidths)
-            val isResized = columnWidths.containsKey(column)
             
-            val columnModifier = if (isLast && !isResized) {
-                val otherWidths = columns.dropLast(1).sumOf { getColumnWidth(it, columnWidths).value.toDouble() }.dp + gutterWidth
-                val minWidth = if (viewportWidth - otherWidths > widthDp) viewportWidth - otherWidths else widthDp
-                Modifier.widthIn(min = minWidth, max = 10000.dp)
-            } else {
-                Modifier.width(widthDp)
-            }
+            columns.forEachIndexed { index, column ->
+                val isLast = index == columns.lastIndex
+                val widthDp = getColumnWidth(column, columnWidths)
+                val isResized = columnWidths.containsKey(column)
+                
+                val columnModifier = if (isLast && !isResized) {
+                    val otherWidths = columns.dropLast(1).sumOf { getColumnWidth(it, columnWidths).value.toDouble() }.dp + gutterWidth
+                    val minWidth = if (viewportWidth - otherWidths > widthDp) viewportWidth - otherWidths else widthDp
+                    Modifier.widthIn(min = minWidth, max = 10000.dp)
+                } else {
+                    Modifier.width(widthDp)
+                }
 
-            when (column) {
-                "Timestamp" -> {
-                    Text(
-                        text = entry.timestamp.value,
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
-                        style = MaterialTheme.typography.caption,
-                        modifier = columnModifier.padding(horizontal = 4.dp)
-                    )
-                }
-                "Level" -> {
-                    val displayLevel = when {
-                        entry.fields["level"] != null && entry.fields["level"] != "UNKNOWN" -> {
-                            entry.fields["level"]!!
-                        }
-                        entry.level != LogLevel.UNKNOWN -> "[${entry.level}]"
-                        else -> ""
-                    }
-                    val color = if (entry.level == LogLevel.UNKNOWN && entry.fields.containsKey("level") && entry.fields["level"] != "UNKNOWN") {
-                        MaterialTheme.colors.onSurface
-                    } else {
-                        getLevelColor(entry.level, logColors)
-                    }
-                    Text(
-                        text = displayLevel,
-                        color = color,
-                        style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
-                        modifier = columnModifier.padding(horizontal = 4.dp)
-                    )
-                }
-                "Message", "Content" -> {
-                    val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value
-                    val displayMessage = if (fullMessage.length > 10000) fullMessage.take(10000) + "..." else fullMessage
-                    val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
-                    Text(
-                        text = LogHighlighter.highlight(displayMessage, filterQueries, isDarkMode, showAnsiColors),
-                        style = MaterialTheme.typography.body1.copy(
-                            textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
-                        ),
-                        fontSize = 12.sp,
-                        softWrap = false,
-                        overflow = TextOverflow.Visible,
-                        modifier = columnModifier.padding(horizontal = 4.dp)
-                    )
-                }
-                else -> {
-                    val fieldName = column.lowercase().replace(" ", "_")
-                    val value = entry.fields[fieldName] ?: ""
-                    Text(
-                        text = value,
-                        color = MaterialTheme.colors.onSurface,
-                        style = MaterialTheme.typography.caption,
-                        modifier = columnModifier.padding(horizontal = 4.dp),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+                LogEntryCell(
+                    column = column,
+                    entry = entry,
+                    columnModifier = columnModifier,
+                    filterQueries = filterQueries,
+                    isDarkMode = isDarkMode,
+                    showAnsiColors = showAnsiColors,
+                    missingSourceIds = missingSourceIds,
+                    logColors = logColors
+                )
             }
         }
     }
 }
+
+@Composable
+private fun LogGutter(
+    entry: LogEntry,
+    lineNumber: Int,
+    sourceIds: List<String>,
+    missingSourceIds: Set<String>,
+    gutterWidth: Dp
+) {
+    Row(
+        modifier = Modifier.width(gutterWidth).padding(horizontal = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (sourceIds.size > 1) {
+            val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
+            val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds, isMissing)
+            val tooltip = if (isMissing) "${entry.sourceId} (Missing)" else entry.sourceId ?: "Unknown Source"
+            TooltipWrapper(tooltip = tooltip) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .background(badgeColor, CircleShape)
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+        }
+        Text(
+            text = lineNumber.toString().padStart(4, ' '),
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
+            style = MaterialTheme.typography.caption,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
+
+@Composable
+private fun LogEntryCell(
+    column: String,
+    entry: LogEntry,
+    columnModifier: Modifier,
+    filterQueries: List<String>,
+    isDarkMode: Boolean,
+    showAnsiColors: Boolean,
+    missingSourceIds: Set<String>,
+    logColors: LogLevelColors
+) {
+    when (column) {
+        "Timestamp" -> {
+            Text(
+                text = entry.timestamp.value,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                style = MaterialTheme.typography.caption,
+                modifier = columnModifier.padding(horizontal = 4.dp)
+            )
+        }
+        "Level" -> {
+            val displayLevel = when {
+                entry.fields["level"] != null && entry.fields["level"] != "UNKNOWN" -> {
+                    entry.fields["level"]!!
+                }
+                entry.level != LogLevel.UNKNOWN -> "[${entry.level}]"
+                else -> ""
+            }
+            val color = if (entry.level == LogLevel.UNKNOWN && entry.fields.containsKey("level") && entry.fields["level"] != "UNKNOWN") {
+                MaterialTheme.colors.onSurface
+            } else {
+                getLevelColor(entry.level, logColors)
+            }
+            Text(
+                text = displayLevel,
+                color = color,
+                style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
+                modifier = columnModifier.padding(horizontal = 4.dp)
+            )
+        }
+        "Message", "Content" -> {
+            val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value
+            val displayMessage = if (fullMessage.length > 10000) fullMessage.take(10000) + "..." else fullMessage
+            val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
+            Text(
+                text = LogHighlighter.highlight(displayMessage, filterQueries, isDarkMode, showAnsiColors),
+                style = MaterialTheme.typography.body1.copy(
+                    textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
+                ),
+                fontSize = 12.sp,
+                softWrap = false,
+                overflow = TextOverflow.Visible,
+                modifier = columnModifier.padding(horizontal = 4.dp)
+            )
+        }
+        else -> {
+            val fieldName = column.lowercase().replace(" ", "_")
+            val value = entry.fields[fieldName] ?: ""
+            Text(
+                text = value,
+                color = MaterialTheme.colors.onSurface,
+                style = MaterialTheme.typography.caption,
+                modifier = columnModifier.padding(horizontal = 4.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
 }
 
 private fun getColumnWidth(column: String, columnWidths: Map<String, Int>): Dp {
