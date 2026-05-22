@@ -1,11 +1,12 @@
 package com.klogviewer.ui.viewmodel
 
+import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.ui.mvi.LogWindow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 object LogFilterService {
-    suspend fun filter(window: LogWindow): LogWindow = withContext(Dispatchers.Default) {
+    suspend fun filter(window: LogWindow): List<LogEntry> = withContext(Dispatchers.Default) {
         val filtered = window.logs.filter { entry ->
             val matchesLevel = window.levelFilters.contains(entry.level)
             val matchesFilter = if (window.filterQueries.isEmpty()) {
@@ -19,7 +20,6 @@ object LogFilterService {
             matchesLevel && matchesFilter
         }
         
-        val sorted = if (window.isReversed) filtered.reversed() else filtered
-        window.copy(filteredLogs = sorted)
+        if (window.isReversed) filtered.reversed() else filtered
     }
 }
