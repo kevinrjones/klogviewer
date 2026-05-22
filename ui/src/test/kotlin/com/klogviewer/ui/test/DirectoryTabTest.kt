@@ -4,7 +4,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.v2.runComposeUiTest
 import com.klogviewer.core.parser.HeuristicProbe
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.components.DialogProvider
@@ -20,7 +20,7 @@ import java.nio.file.Files
 class DirectoryTabTest {
 
     private val logSource = mockk<LogSource>(relaxed = true)
-    private val prefsRepository = mockk<PreferencesRepository>(relaxed = true)
+    private val prefsRepository = mockk<JsonPreferencesRepository>(relaxed = true)
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
     private val dialogProvider = mockk<DialogProvider>()
 

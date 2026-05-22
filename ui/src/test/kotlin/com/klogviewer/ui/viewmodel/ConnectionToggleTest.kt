@@ -2,14 +2,12 @@ package com.klogviewer.ui.viewmodel
 
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
-import com.klogviewer.core.repository.PreferencesRepository
-import com.klogviewer.domain.model.*
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -20,7 +18,6 @@ import org.junit.jupiter.api.io.TempDir
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
 import strikt.assertions.isFalse
-import strikt.assertions.isTrue
 import java.io.File
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -28,14 +25,14 @@ class ConnectionToggleTest {
     @TempDir
     lateinit var tempDir: File
 
-    private lateinit var prefsRepo: PreferencesRepository
+    private lateinit var prefsRepo: JsonPreferencesRepository
     private lateinit var mockLogSource: LogSource
     private lateinit var viewModel: KLogViewerViewModel
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        prefsRepo = PreferencesRepository(tempDir)
+        prefsRepo = JsonPreferencesRepository(tempDir)
         mockLogSource = mockk(relaxed = true)
         
         viewModel = KLogViewerViewModel(

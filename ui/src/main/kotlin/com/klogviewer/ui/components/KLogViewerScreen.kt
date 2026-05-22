@@ -31,7 +31,6 @@ import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
-import java.io.File
 
 @Composable
 fun KLogViewerScreen(
@@ -68,7 +67,7 @@ fun KLogViewerScreen(
                 com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY -> "Add Log Directory"
 
             }
-            val file = if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY ||
+            val path = if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY ||
                          pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY) {
                 dialogProvider.showOpenDirectoryDialog(title)
             } else {
@@ -77,8 +76,8 @@ fun KLogViewerScreen(
 
             viewModel.handleIntent(KLogViewerIntent.DismissDialog)
 
-            if (file != null) {
-                val paths = listOf(file.absolutePath)
+            if (path != null) {
+                val paths = listOf(path)
                 when (pendingDialog) {
                     com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN,
                     com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY -> viewModel.handleIntent(
@@ -101,6 +100,7 @@ fun KLogViewerScreen(
         RecentItemsDialog(
             recentFiles = state.recentFiles,
             recentDirectories = state.recentDirectories,
+            localFileSystem = viewModel.localFileSystem,
             onSelect = { path ->
                 viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path)))
                 viewModel.handleIntent(KLogViewerIntent.DismissDialog)
@@ -510,6 +510,7 @@ private fun LogTabRow(
 fun RecentItemsDialog(
     recentFiles: List<String>,
     recentDirectories: List<String>,
+    localFileSystem: com.klogviewer.domain.repository.LocalFileSystem,
     onSelect: (String) -> Unit,
     onRemoveItem: (String) -> Unit,
     onClearMissing: () -> Unit,
@@ -517,7 +518,7 @@ fun RecentItemsDialog(
 ) {
     val focusRequester = remember { FocusRequester() }
     
-    val hasMissing = recentFiles.any { !File(it).exists() } || recentDirectories.any { !File(it).exists() }
+    val hasMissing = recentFiles.any { !localFileSystem.exists(it) } || recentDirectories.any { !localFileSystem.exists(it) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -580,7 +581,7 @@ fun RecentItemsDialog(
                             path, 
                             onSelect, 
                             onRemoveItem, 
-                            isMissing = !File(path).exists(),
+                            isMissing = !localFileSystem.exists(path),
                             modifier = if (index == 0) Modifier.focusRequester(focusRequester) else Modifier
                         )
                     }
@@ -601,7 +602,7 @@ fun RecentItemsDialog(
                             path, 
                             onSelect, 
                             onRemoveItem, 
-                            isMissing = !File(path).exists(),
+                            isMissing = !localFileSystem.exists(path),
                             modifier = if (index == 0 && recentFiles.isEmpty()) Modifier.focusRequester(focusRequester) else Modifier
                         )
                     }

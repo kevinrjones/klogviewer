@@ -204,9 +204,9 @@ fun SftpConnectionDialog(
                             Spacer(modifier = Modifier.width(8.dp))
                             Button(
                                 onClick = {
-                                    val file = dialogProvider.showOpenFileDialog("Select SSH Key")
-                                    if (file != null) {
-                                        keyPath = file.absolutePath
+                                    val path = dialogProvider.showOpenFileDialog("Select SSH Key")
+                                    if (path != null) {
+                                        keyPath = path
                                     }
                                 },
                                 modifier = Modifier.padding(top = 8.dp)

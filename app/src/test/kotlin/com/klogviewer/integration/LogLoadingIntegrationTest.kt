@@ -3,7 +3,7 @@ package com.klogviewer.integration
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -95,7 +95,7 @@ class LogLoadingIntegrationTest {
     }
 
     private fun createViewModel(): KLogViewerViewModel {
-        val prefsRepo = PreferencesRepository(File(tempDir, "prefs"))
+        val prefsRepo = JsonPreferencesRepository(File(tempDir, "prefs"))
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)

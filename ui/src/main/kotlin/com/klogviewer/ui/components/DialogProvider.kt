@@ -8,15 +8,15 @@ interface DialogProvider {
     fun showOpenFileDialog(
         title: String,
         allowedExtensions: List<String> = emptyList()
-    ): File?
+    ): String?
     
     fun showOpenDirectoryDialog(
         title: String
-    ): File?
+    ): String?
 }
 
 class AwtDialogProvider(private val parent: Frame? = null) : DialogProvider {
-    override fun showOpenFileDialog(title: String, allowedExtensions: List<String>): File? {
+    override fun showOpenFileDialog(title: String, allowedExtensions: List<String>): String? {
         val dialog = FileDialog(parent, title, FileDialog.LOAD)
         if (allowedExtensions.isNotEmpty()) {
             dialog.setFilenameFilter { _, name ->
@@ -26,13 +26,13 @@ class AwtDialogProvider(private val parent: Frame? = null) : DialogProvider {
         dialog.isVisible = true
         
         return if (dialog.directory != null && dialog.file != null) {
-            File(dialog.directory, dialog.file)
+            File(dialog.directory, dialog.file).absolutePath
         } else {
             null
         }
     }
 
-    override fun showOpenDirectoryDialog(title: String): File? {
+    override fun showOpenDirectoryDialog(title: String): String? {
         val isMac = System.getProperty("os.name").lowercase().contains("mac")
         if (isMac) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true")
@@ -46,9 +46,9 @@ class AwtDialogProvider(private val parent: Frame? = null) : DialogProvider {
         }
         
         return if (dialog.directory != null && dialog.file != null) {
-            File(dialog.directory, dialog.file)
+            File(dialog.directory, dialog.file).absolutePath
         } else if (dialog.directory != null) {
-            File(dialog.directory)
+            File(dialog.directory).absolutePath
         } else {
             null
         }

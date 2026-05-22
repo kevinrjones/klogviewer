@@ -3,7 +3,7 @@ package com.klogviewer.integration
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.domain.model.TabPreference
 import com.klogviewer.domain.model.UserPreferences
@@ -38,7 +38,7 @@ class SessionRestorationTest {
         val missingFilePath = File(tempDir, "non-existent.log").absolutePath
         
         // 1. Prepare preferences with a missing file
-        val prefsRepo = PreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir)
         val initialPrefs = UserPreferences(
             tabs = listOf(
                 TabPreference(
