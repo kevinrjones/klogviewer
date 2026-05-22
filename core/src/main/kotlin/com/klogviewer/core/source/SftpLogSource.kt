@@ -19,6 +19,7 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 private val logger = KotlinLogging.logger {}
 
@@ -73,63 +74,85 @@ class SftpLogSource(
             client.startSession().use { session ->
                 val command = session.exec("tail -n +1 -f \"${path.value}\"")
                 val errorReader = BufferedReader(InputStreamReader(command.errorStream))
-                
-                command.inputStream.use { inputStream ->
-                    val reader = BufferedReader(InputStreamReader(inputStream))
-                    
-                    var isInitial = true
-                    val initialEntries = mutableListOf<LogEntry>()
-                    
-                    while (currentCoroutineContext().isActive) {
-                        if (isInitial) {
+                val inputStream = command.inputStream
+                coroutineScope {
+                    val parentJob = currentCoroutineContext().job
+                    val cancellationWatcher = launch(start = CoroutineStart.UNDISPATCHED) {
+                        try {
+                            awaitCancellation()
+                        } finally {
+                            if (parentJob.isCancelled) {
+                                logger.debug { "Cancellation requested for remote log tail: $sourceId. Closing command/session to unblock read." }
+                                runCatching { inputStream.close() }
+                                    .onFailure { logger.debug(it) { "Ignoring input stream close error during cancellation for $sourceId" } }
+                                runCatching { command.close() }
+                                    .onFailure { logger.debug(it) { "Ignoring command close error during cancellation for $sourceId" } }
+                                runCatching { session.close() }
+                                    .onFailure { logger.debug(it) { "Ignoring session close error during cancellation for $sourceId" } }
+                            }
+                        }
+                    }
+
+                    try {
+                        inputStream.use { input ->
+                            val reader = BufferedReader(InputStreamReader(input))
+
+                        var isInitial = true
+                        val initialEntries = mutableListOf<LogEntry>()
+
+                        while (currentCoroutineContext().isActive) {
                             val ready = withContext(dispatcher) { reader.ready() }
                             if (!ready) {
-                                multilineProcessor?.flush()?.let {
-                                    initialEntries.add(it.copy(sourceId = sourceId))
+                                if (isInitial) {
+                                    multilineProcessor?.flush()?.let {
+                                        initialEntries.add(it.copy(sourceId = sourceId))
+                                    }
+                                    emit(LogUpdate.Initial(initialEntries.toList()).right())
+                                    initialEntries.clear()
+                                    isInitial = false
                                 }
-                                emit(LogUpdate.Initial(initialEntries.toList()).right())
-                                initialEntries.clear()
-                                isInitial = false
-                            }
-                        }
 
-                        val line = withContext(dispatcher) { reader.readLine() }
-                        
-                        if (line == null) {
-                            // Check if command has exited
-                            val exitStatus = command.exitStatus
-                            if (exitStatus != null) {
-                                if (exitStatus != 0) {
-                                    val error = withContext(dispatcher) {
-                                        if (errorReader.ready()) errorReader.readLine() else null
-                                    } ?: "Remote process exited with status $exitStatus"
-                                    emit(LogFailure.FileError("Remote error: $error", sourceId = sourceId).left())
-                                } else if (isInitial) {
-                                    emit(LogUpdate.Initial(emptyList<LogEntry>()).right())
+                                val exitStatus = withContext(dispatcher) { command.exitStatus }
+                                if (exitStatus != null) {
+                                    if (exitStatus != 0) {
+                                        val error = withContext(dispatcher) {
+                                            if (errorReader.ready()) errorReader.readLine() else null
+                                        } ?: "Remote process exited with status $exitStatus"
+                                        emit(LogFailure.FileError("Remote error: $error", sourceId = sourceId).left())
+                                    } else if (isInitial) {
+                                        emit(LogUpdate.Initial(emptyList<LogEntry>()).right())
+                                    }
+                                    break
                                 }
-                                break // Exit loop as command finished
-                            }
-                            
-                            // If not exited but readLine returned null, it might be a temporary EOF
-                            delay(200.milliseconds)
-                            continue
-                        }
 
-                        // We got a line
-                        val entry = if (multilineProcessor != null) {
-                            multilineProcessor.process(line)
-                        } else {
-                            effectiveParser.parse(line).getOrNull()
-                        }
-                        
-                        entry?.let {
-                            val entryWithSource = it.copy(sourceId = sourceId)
-                            if (isInitial) {
-                                initialEntries.add(entryWithSource)
+                                delay(200.milliseconds)
+                                continue
+                            }
+
+                            val line = withContext(dispatcher) { reader.readLine() }
+                            if (line == null) {
+                                logger.debug { "Remote stream ended for $sourceId" }
+                                break
+                            }
+
+                            val entry = if (multilineProcessor != null) {
+                                multilineProcessor.process(line)
                             } else {
-                                emit(LogUpdate.Appended(listOf(entryWithSource)).right())
+                                effectiveParser.parse(line).getOrNull()
+                            }
+
+                            entry?.let {
+                                val entryWithSource = it.copy(sourceId = sourceId)
+                                if (isInitial) {
+                                    initialEntries.add(entryWithSource)
+                                } else {
+                                    emit(LogUpdate.Appended(listOf(entryWithSource)).right())
+                                }
                             }
                         }
+                        }
+                    } finally {
+                        cancellationWatcher.cancelAndJoin()
                     }
                 }
             }
@@ -140,11 +163,19 @@ class SftpLogSource(
         } finally {
             if (existingClient == null) {
                 withContext(NonCancellable + dispatcher) {
-                    try {
-                        client.disconnect()
-                        client.close()
-                    } catch (e: Exception) {
-                        logger.warn { "Error disconnecting SSH client: ${e.message}" }
+                    val disconnected = withTimeoutOrNull(2.seconds) {
+                        try {
+                            client.disconnect()
+                            client.close()
+                            true
+                        } catch (e: Exception) {
+                            logger.warn { "Error disconnecting SSH client: ${e.message}" }
+                            true
+                        }
+                    } ?: false
+
+                    if (!disconnected) {
+                        logger.warn { "Timed out while disconnecting SSH client for $sourceId" }
                     }
                 }
             }

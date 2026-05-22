@@ -18,11 +18,47 @@ import strikt.api.expectThat
 import strikt.assertions.hasSize
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class SftpLogSourceTest {
+
+    private class NonInterruptibleBlockingInputStream : InputStream() {
+        private val readStarted = CompletableDeferred<Unit>()
+
+        @Volatile
+        private var closed = false
+
+        suspend fun awaitReadStarted() {
+            readStarted.await()
+        }
+
+        override fun available(): Int = 1
+
+        override fun read(): Int {
+            if (!readStarted.isCompleted) {
+                readStarted.complete(Unit)
+            }
+
+            while (!closed) {
+                try {
+                    Thread.sleep(25)
+                } catch (_: InterruptedException) {
+                    // Intentionally ignored to simulate a non-cooperative blocking read.
+                }
+            }
+
+            return -1
+        }
+
+        override fun close() {
+            closed = true
+        }
+    }
 
     @Test
     fun `should connect, auth and tail logs using mocked SSH client`() = runBlocking {
@@ -267,5 +303,48 @@ class SftpLogSourceTest {
         expectThat(update).isA<LogUpdate.Initial>()
         expectThat((update as LogUpdate.Initial).entries).hasSize(0)
         Unit
+    }
+
+    @Test
+    fun `should cancel promptly when remote read is blocking`() = runBlocking {
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/blocking.log")
+        val mockClient = mockk<SSHClient>(relaxed = true)
+        val mockSession = mockk<Session>(relaxed = true)
+        val mockCommand = mockk<Session.Command>(relaxed = true)
+        val blockingInput = NonInterruptibleBlockingInputStream()
+
+        val provider = object : SshClientProvider {
+            override fun createClient(): SSHClient = mockClient
+        }
+
+        every { mockClient.startSession() } returns mockSession
+        every { mockSession.exec(any()) } returns mockCommand
+        every { mockCommand.inputStream } returns blockingInput
+        every { mockCommand.errorStream } returns ByteArrayInputStream(byteArrayOf())
+        every { mockCommand.exitStatus } returns null
+        every { mockCommand.close() } answers {
+            blockingInput.close()
+            Unit
+        }
+
+        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val observationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        try {
+            val observerJob = observationScope.launch {
+                source.observeLogs(LogFilePath("/blocking.log")).collect { }
+            }
+
+            blockingInput.awaitReadStarted()
+
+            withTimeout(1.seconds) {
+                observerJob.cancelAndJoin()
+            }
+
+            verify(atLeast = 1) { mockCommand.close() }
+        } finally {
+            blockingInput.close()
+            observationScope.cancel()
+        }
     }
 }

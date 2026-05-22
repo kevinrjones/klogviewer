@@ -79,10 +79,12 @@
 - Initiated UI Testing Spike to establish a formal E2E testing strategy using Compose for Desktop and the Robot Pattern.
 - Tab & Status Bar Tooltips: Implemented tooltips for tab titles and the status bar, providing instant access to the fully qualified file name/path on hover.
 - Refined Directory Monitoring UI: Improved visual feedback for directory views by ignoring sub-file removal for color-coding. Tabs and window headers now only turn red if the directory itself is missing, while merged file views retain orange warnings for missing files.
+- SFTP cancellation reliability: fixed a remote tail cancellation deadlock that prevented adding a second SFTP source to an active tab/workspace.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
 - `FileDialog` via `AwtWindow` requires manual state reset on close to avoid dialog re-triggering.
+- Blocking remote reads may not react to coroutine cancellation unless the underlying SSH command/session/input stream is explicitly closed.
 
 ## Sprint: Walking Skeleton Implementation
 **Title**: Sprint 1 Completion
@@ -1578,3 +1580,25 @@
 **Test coverage areas**:
 - `SessionRestorationTest`: Verified that app startup with missing files correctly populates tabs with error states and no dialogs.
 - `RecentItemsTest`: Updated to verify the new "open as missing" behavior when selecting from history.
+
+## Task: SFTP Cancellation Deadlock Fix
+**Title**: Reliable SFTP Stream Cancellation for Tab Add/Replace
+**Date/time completed**: 2026-05-22 11:46
+**What was shipped**:
+- Refactored `SftpLogSource` cancellation handling to actively close input stream, command, and session when observation is cancelled.
+- Reworked the remote read loop to avoid unbounded blocking when no data is ready, while preserving initial and appended update semantics.
+- Bounded SSH client teardown with timeout-protected cleanup to avoid indefinite waits in `cancelAndJoin` paths.
+- Added a regression test (`should cancel promptly when remote read is blocking`) that reproduces and protects against the deadlock.
+**Key decisions**:
+- Used a structured-concurrency cancellation watcher within `coroutineScope` to trigger resource closure immediately on parent job cancellation.
+- Preserved non-cancellable cleanup but wrapped it in `withTimeoutOrNull` to prevent hangs during disconnect/close.
+- Kept the existing parser/update pipeline intact to minimize behavioral change outside cancellation lifecycle boundaries.
+**Gotchas**:
+- `Job.invokeOnCompletion(onCancelling = true)` is an internal coroutines API in this setup; switched to a stable watcher coroutine pattern.
+- A deterministic reproducer required a custom non-interruptible `InputStream` in tests to model real-world non-cooperative blocking reads.
+**Test coverage areas**:
+- `SftpLogSourceTest`: 7/7 passing including the new blocking-read cancellation regression.
+- `LogLoadingIntegrationTest`: 2/2 passing (local load flow baseline unaffected).
+- `SftpBrowsingTest`: 3/3 passing (SFTP connect/browse/add-to-workspace flows).
+- `RecentItemsTest`: 3/3 passing (history/missing item behavior unchanged).
+- `PersistenceIntegrationTest`: 4/4 passing (state restore and preference persistence unaffected).
