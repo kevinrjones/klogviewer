@@ -264,8 +264,8 @@ fun KLogViewerScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     if (window.filePath.isNotEmpty()) {
-                                        val isAnySourceMissing = window.missingSourceIds.isNotEmpty()
                                         val isPrimaryPathMissing = window.missingSourceIds.contains(window.filePath)
+                                        val isAnySourceMissing = if (window.isDirectory) isPrimaryPathMissing else window.missingSourceIds.isNotEmpty()
                                         val isWindowError = window.error != null
                                         Text(
                                             text = window.filePath,
@@ -438,7 +438,10 @@ private fun LogTabRow(
                 ) {
                     tabs.forEach { tab ->
                         val isAnyPrimaryWindowMissing = tab.windows.any { it.missingSourceIds.contains(it.filePath) }
-                        val isAnySecondarySourceMissing = tab.windows.any { it.missingSourceIds.isNotEmpty() }
+                        val isAnySecondarySourceMissing = tab.windows.any { window ->
+                            if (window.isDirectory) false
+                            else (window.missingSourceIds - window.filePath).isNotEmpty()
+                        }
                         val isAnyWindowError = tab.windows.any { it.error != null }
                         Tab(
                             selected = tab.id == activeTabId,

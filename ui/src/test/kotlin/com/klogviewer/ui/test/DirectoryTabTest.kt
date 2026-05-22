@@ -19,14 +19,14 @@ import java.nio.file.Files
 @OptIn(ExperimentalTestApi::class)
 class DirectoryTabTest {
 
-    private val logSource = mockk<LogSource>()
+    private val logSource = mockk<LogSource>(relaxed = true)
     private val prefsRepository = mockk<PreferencesRepository>(relaxed = true)
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
     private val dialogProvider = mockk<DialogProvider>()
 
     @Test
     fun givenDirectoryOpened_whenFilesDiscovered_thenTabTitleShowsCount() = runComposeUiTest {
-        val tempDir = Files.createTempDirectory("testDir").toFile()
+        val tempDir = Files.createTempDirectory("testDirCount").toFile()
         tempDir.deleteOnExit()
         
         val testEntries = listOf(
@@ -85,5 +85,52 @@ class DirectoryTabTest {
         
         // Verify tab title shows "[0]"
         onNodeWithText("${tempDir.name} [0]", substring = true).assertExists()
+    }
+
+    @Test
+    fun givenDirectoryOpened_whenFileRemoved_thenColorRemainsUnchanged() = runComposeUiTest {
+        val tempDir = Files.createTempDirectory("testDirMissing").toFile()
+        tempDir.deleteOnExit()
+        
+        val file1 = File(tempDir, "file1.log")
+        file1.writeText("Line 1")
+        
+        val testEntries = listOf(
+            LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("Log 1"), sourceId = file1.absolutePath)
+        )
+
+        every { prefsRepository.load() } returns UserPreferences()
+        
+        every { heuristicProbe.detect(any()) } returns com.klogviewer.core.parser.ProbeResult(
+            parser = mockk(),
+            columns = listOf("Timestamp", "Level", "Content"),
+            parserName = "Simple"
+        )
+
+        val viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe)
+
+        setContent {
+            KLogViewerScreen(viewModel, dialogProvider)
+        }
+
+        viewModel.handleIntent(com.klogviewer.ui.mvi.KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
+        
+        val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)
+        handleLogUpdateMethod.isAccessible = true
+        val activeWindowId = viewModel.state.value.activeTab?.activeWindow?.id!!
+        
+        // 1. Initial load
+        handleLogUpdateMethod.invoke(viewModel, activeWindowId, LogUpdate.Initial(testEntries), tempDir.absolutePath)
+        
+        // 2. File removed
+        handleLogUpdateMethod.invoke(viewModel, activeWindowId, LogUpdate.SourceMissing(file1.absolutePath), tempDir.absolutePath)
+
+        // Verify state
+        val window = viewModel.state.value.activeTab?.windows?.find { it.id == activeWindowId }!!
+        assert(window.missingSourceIds.contains(file1.absolutePath))
+        assert(window.isDirectory)
+        
+        // We can't easily assert color here without custom matchers for Material Theme or Text color.
+        // But we've verified that the state is correct (isDirectory=true and missingSourceIds has the file).
     }
 }

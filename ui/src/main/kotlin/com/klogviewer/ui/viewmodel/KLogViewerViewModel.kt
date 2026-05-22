@@ -27,7 +27,7 @@ class KLogViewerViewModel(
     private val remoteFileSystem: RemoteFileSystem = SftpFileSystem(),
     private val sftpDispatcher: CoroutineDispatcher = Dispatchers.IO,
     private val sshClientProvider: SshClientProvider = DefaultSshClientProvider(),
-    private val sftpSourceFactory: (SftpConfig, net.schmizz.sshj.SSHClient?) -> LogSource = { config, client -> 
+    private val sftpSourceFactory: (SftpConfig, net.schmizz.sshj.SSHClient?) -> LogSource = { config, client ->
         SftpLogSource(config, SimpleLogParser(), sshClientProvider = sshClientProvider, existingClient = client, dispatcher = sftpDispatcher) 
     }
 ) {
@@ -756,8 +756,8 @@ class KLogViewerViewModel(
                 }
                 return
             } else if (sftpUri != null) {
-                _state.update { it.updateWindow(windowId) { w ->
-                    w.copy(
+                _state.update { it.updateWindow(windowId) { logWindow ->
+                    logWindow.copy(
                         filePath = uri,
                         sourceIds = listOf(uri),
                         missingSourceIds = setOf(uri),

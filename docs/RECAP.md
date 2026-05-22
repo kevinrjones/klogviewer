@@ -939,3 +939,17 @@ Established a formal strategy for reducing UI regressions and added comprehensiv
 - **Documentation**: Authored `docs/UI-REGRESSION-TESTING-STRATEGY.md` and updated `docs/TESTING.md` to define baseline management, CI normalization, and screenshot-testing decision rules.
 - **Integration Tests**: Added `LogLoadingIntegrationTest.kt` to verify end-to-end loading of single files and full directories, ensuring stable source ID and log entry counts.
 - **Terminology**: Aligned all testing documentation with the project's Ubiquitous Language (Workspace, Tab, Log Window, Filter).
+
+# 2026-05-22
+
+## 06:30
+
+### Refined Directory Monitoring UI
+
+Improved the visual feedback for directory-based log views when sub-files are added or removed.
+
+#### Changes:
+- **UI Logic**: Updated `KLogViewerScreen.kt` to ignore missing sub-files for color-coding in directory tabs and window headers.
+- **Visuals**: Directory tabs and window headers now only turn red/strike-through if the directory itself is missing or if there's a critical window error.
+- **Consistency**: Maintained orange color indicators for missing files in merged (non-directory) log views to preserve error visibility for static file sets.
+- **Testing**: Enhanced `DirectoryTabTest.kt` with verification that sub-file removal from a directory populates `missingSourceIds` but remains "directory-flagged" for UI rendering logic.
