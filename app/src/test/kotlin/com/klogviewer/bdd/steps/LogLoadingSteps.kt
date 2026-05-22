@@ -3,10 +3,9 @@ package com.klogviewer.bdd.steps
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
-import com.klogviewer.ui.mvi.KLogViewerState
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.cucumber.java.After
 import io.cucumber.java.Before
@@ -38,7 +37,7 @@ class LogLoadingSteps {
     private val parser = SimpleLogParser()
     private val logSource = FileLogSource(parser, testDispatcher)
     private val tempDir = File("build/tmp/cucumber").apply { mkdirs() }
-    private val prefsRepository = PreferencesRepository(tempDir)
+    private val prefsRepository = JsonPreferencesRepository(tempDir)
     private val parserRegistry = ParserRegistry()
     private val heuristicProbe = HeuristicProbe(parserRegistry)
     private lateinit var viewModel: KLogViewerViewModel
@@ -50,7 +49,12 @@ class LogLoadingSteps {
 
     @When("I load the log file {string}")
     fun i_load_the_log_file(path: String) = testScope.runTest {
-        viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe, backgroundScope)
+        viewModel = KLogViewerViewModel(
+            logSource = logSource, 
+            prefsRepository = prefsRepository, 
+            heuristicProbe = heuristicProbe, 
+            scope = backgroundScope
+        )
         
         // The default state already has a tab and a window, but we might need to ensure it's fresh
         advanceUntilIdle()

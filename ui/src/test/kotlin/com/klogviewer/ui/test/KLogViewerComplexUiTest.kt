@@ -8,7 +8,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import arrow.core.right
 import com.klogviewer.core.parser.HeuristicProbe
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.components.DialogProvider
@@ -25,7 +25,7 @@ import java.io.File
 class KLogViewerComplexUiTest {
 
     private val logSource = mockk<LogSource>(relaxed = true)
-    private val prefsRepository = mockk<PreferencesRepository>(relaxed = true)
+    private val prefsRepository = mockk<JsonPreferencesRepository>(relaxed = true)
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
     private val dialogProvider = mockk<DialogProvider>(relaxed = true)
 
@@ -118,7 +118,7 @@ class KLogViewerComplexUiTest {
             LogEntry(LogTimestamp("10:00:0$it"), LogLevel.INFO, LogContent("Message $it")) 
         }
         every { logSource.observeLogs(any(), any()) } returns flowOf(LogUpdate.Initial(testEntries).right())
-        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogFile
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogFile.absolutePath
         
         setupApp()
 

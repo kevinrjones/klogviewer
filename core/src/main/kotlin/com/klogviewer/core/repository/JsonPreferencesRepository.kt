@@ -1,13 +1,14 @@
 package com.klogviewer.core.repository
 
 import com.klogviewer.domain.model.UserPreferences
+import com.klogviewer.domain.repository.PreferencesRepository
 import kotlinx.serialization.json.Json
 import java.io.File
 import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-class PreferencesRepository(private val customConfigDir: File? = null) {
+class JsonPreferencesRepository(private val customConfigDir: File? = null) : PreferencesRepository {
     private val json = Json { 
         prettyPrint = true
         ignoreUnknownKeys = true
@@ -40,7 +41,7 @@ class PreferencesRepository(private val customConfigDir: File? = null) {
         File(dir, "preferences.json")
     }
 
-    fun load(): UserPreferences {
+    override fun load(): UserPreferences {
         return if (configFile.exists()) {
             try {
                 val content = configFile.readText()
@@ -55,7 +56,7 @@ class PreferencesRepository(private val customConfigDir: File? = null) {
         }
     }
 
-    fun save(preferences: UserPreferences) {
+    override fun save(preferences: UserPreferences) {
         try {
             val content = json.encodeToString(UserPreferences.serializer(), preferences)
             configFile.writeText(content)

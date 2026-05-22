@@ -13,7 +13,7 @@ class PreferencesRepositoryTest {
 
     @Test
     fun `should save and load preferences`() {
-        val repository = PreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir)
         val prefs = UserPreferences(
             windowState = WindowStatePreferences(width = 800, height = 600, x = 100, y = 100),
             recentFiles = listOf("/path/to/file.log"),
@@ -29,7 +29,7 @@ class PreferencesRepositoryTest {
 
     @Test
     fun `should return defaults if file does not exist`() {
-        val repository = PreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir)
         val loaded = repository.load()
         
         expectThat(loaded).isEqualTo(UserPreferences())
@@ -37,7 +37,7 @@ class PreferencesRepositoryTest {
 
     @Test
     fun `should save and load complex preferences including tabs`() {
-        val repository = PreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir)
         val prefs = UserPreferences(
             tabs = listOf(
                 TabPreference(
@@ -68,7 +68,7 @@ class PreferencesRepositoryTest {
 
     @Test
     fun `should handle corrupted json by returning defaults`() {
-        val repository = PreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir)
         val configFile = File(tempDir, "preferences.json")
         configFile.writeText("invalid json")
         
@@ -78,7 +78,7 @@ class PreferencesRepositoryTest {
     }
     @Test
     fun `should save and load sftp connections`() {
-        val repository = PreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir)
         val prefs = UserPreferences(
             sftpConnections = listOf(
                 SftpConfig(

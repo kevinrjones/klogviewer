@@ -2,19 +2,15 @@ package com.klogviewer.ui.viewmodel
 
 import arrow.core.*
 import com.klogviewer.domain.model.*
-import com.klogviewer.domain.repository.LogSource
-import com.klogviewer.domain.repository.RemoteFileSystem
+import com.klogviewer.domain.repository.*
 import com.klogviewer.core.parser.*
 import com.klogviewer.core.source.*
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.*
 import com.klogviewer.ui.mvi.*
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.io.File
 import java.util.UUID
-import java.awt.Toolkit
-import java.awt.datatransfer.StringSelection
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
@@ -23,13 +19,12 @@ class KLogViewerViewModel(
     private val logSource: LogSource,
     private val prefsRepository: PreferencesRepository,
     val heuristicProbe: HeuristicProbe,
+    private val logSourceFactory: LogSourceFactory = DefaultLogSourceFactory(),
+    private val clipboard: Clipboard = AwtClipboard(),
+    val localFileSystem: LocalFileSystem = JavaLocalFileSystem(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
     private val remoteFileSystem: RemoteFileSystem = SftpFileSystem(),
-    private val sftpDispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val sshClientProvider: SshClientProvider = DefaultSshClientProvider(),
-    private val sftpSourceFactory: (SftpConfig, net.schmizz.sshj.SSHClient?) -> LogSource = { config, client ->
-        SftpLogSource(config, SimpleLogParser(), sshClientProvider = sshClientProvider, existingClient = client, dispatcher = sftpDispatcher) 
-    }
+    private val sftpDispatcher: CoroutineDispatcher = Dispatchers.IO
 ) {
     private val _state = MutableStateFlow(KLogViewerState())
     val state: StateFlow<KLogViewerState> = _state.asStateFlow()
@@ -391,8 +386,8 @@ class KLogViewerViewModel(
             KLogViewerIntent.ClearMissingRecentItems -> {
                 _state.update { currentState ->
                     currentState.copy(
-                        recentFiles = currentState.recentFiles.filter { File(it).exists() },
-                        recentDirectories = currentState.recentDirectories.filter { File(it).exists() }
+                        recentFiles = currentState.recentFiles.filter { localFileSystem.exists(it) },
+                        recentDirectories = currentState.recentDirectories.filter { localFileSystem.exists(it) }
                     )
                 }
                 savePreferences()
@@ -567,13 +562,7 @@ class KLogViewerViewModel(
                 })
             }
             
-            val sftpDirectorySource = SftpDirectoryLogSource(
-                config, 
-                remoteFileSystem, 
-                logSourceFactory = sftpSourceFactory,
-                dispatcher = sftpDispatcher,
-                sshClientProvider = sshClientProvider
-            )
+            val sftpDirectorySource = logSourceFactory.createSftpDirectorySource(config, remoteFileSystem)
             val parser = parserName?.let { getParserResultByName(it, emptyList()).parser }
             
             sftpDirectorySource.observeLogs(LogFilePath(path), parser).collect { result ->
@@ -632,7 +621,7 @@ class KLogViewerViewModel(
             
             // Create a flow for each path and merge them
             val flows = paths.map { path ->
-                val source = sftpSourceFactory(config, null)
+                val source = logSourceFactory.createSftpSource(config)
                 val sId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}$path"
                 source.observeLogs(LogFilePath(path), parser).map { result ->
                     result.fold(
@@ -680,7 +669,7 @@ class KLogViewerViewModel(
 
     private fun connectSftp(windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String, parserName: String? = null) {
         val config = SftpConfig(name, Host(host), Port(port), Username(user), auth, path)
-        val sftpSource = sftpSourceFactory(config, null)
+        val sftpSource = logSourceFactory.createSftpSource(config)
         
         val oldJob = logJobs[windowId]
         
@@ -770,8 +759,8 @@ class KLogViewerViewModel(
 
         logJobs[windowId] = scope.launch {
             oldJob?.cancelAndJoin()
-            val isDir = filteredPaths.size == 1 && File(filteredPaths[0]).isDirectory
-            val fileName = if (filteredPaths.size == 1) File(filteredPaths[0]).name else "${filteredPaths.size} files"
+            val isDir = filteredPaths.size == 1 && localFileSystem.isDirectory(filteredPaths[0])
+            val fileName = if (filteredPaths.size == 1) localFileSystem.getName(filteredPaths[0]) else "${filteredPaths.size} files"
             
             _state.update { currentState ->
                 currentState.copy(tabs = currentState.tabs.map { tab ->
@@ -802,7 +791,7 @@ class KLogViewerViewModel(
             savePreferences()
             
             val results = filteredPaths.map { path ->
-                if (path.startsWith("sftp://") || (File(path).exists() && File(path).isDirectory)) {
+                if (path.startsWith("sftp://") || (localFileSystem.exists(path) && localFileSystem.isDirectory(path))) {
                     null
                 } else {
                     val sampleLines = readSampleLines(path)
@@ -833,15 +822,9 @@ class KLogViewerViewModel(
                     val sftpUri = SftpUri.parse(path)
                     if (config != null && sftpUri != null) {
                         val flow = if (sftpUri.isDirectory) {
-                            SftpDirectoryLogSource(
-                                config, 
-                                remoteFileSystem, 
-                                logSourceFactory = sftpSourceFactory,
-                                dispatcher = sftpDispatcher,
-                                sshClientProvider = sshClientProvider
-                            ).observeLogs(LogFilePath(sftpUri.path))
+                            logSourceFactory.createSftpDirectorySource(config, remoteFileSystem).observeLogs(LogFilePath(sftpUri.path))
                         } else {
-                            sftpSourceFactory(config, null).observeLogs(LogFilePath(sftpUri.path))
+                            logSourceFactory.createSftpSource(config).observeLogs(LogFilePath(sftpUri.path))
                         }
                         flow.map { result ->
                             result.fold(
@@ -853,7 +836,7 @@ class KLogViewerViewModel(
                         val failure = LogFailure.FileError("SFTP connection not found for $path", sourceId = path)
                         flowOf(Pair(failure, path).left())
                     }
-                } else if (File(path).isDirectory) {
+                } else if (localFileSystem.isDirectory(path)) {
                     DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path)).map { result ->
                         result.fold(
                             { l -> Pair(l, path).left() },
@@ -920,7 +903,7 @@ class KLogViewerViewModel(
             if (path.startsWith("sftp://")) {
                 SftpUri.parse(path)?.isDirectory == true
             } else {
-                File(path).isDirectory
+                localFileSystem.isDirectory(path)
             }
         }
         
@@ -928,7 +911,7 @@ class KLogViewerViewModel(
 
         return paths.filter { path ->
             val sftpUri = SftpUri.parse(path)
-            val isDir = sftpUri?.isDirectory == true || File(path).isDirectory
+            val isDir = sftpUri?.isDirectory == true || localFileSystem.isDirectory(path)
             if (isDir) return@filter true
             
             !directories.any { dir ->
@@ -967,7 +950,7 @@ class KLogViewerViewModel(
 
     private fun readSampleLines(path: String, limit: Int = 50): List<String> {
         return try {
-            File(path).useLines { it.take(limit).toList() }
+            localFileSystem.readLines(path, limit)
         } catch (e: Exception) {
             logger.warn { "Failed to read sample lines from $path: ${e.message}" }
             emptyList()
@@ -1085,8 +1068,8 @@ class KLogViewerViewModel(
     }
 
     private fun updateRecentItems(paths: List<String>) {
-        val files = paths.filter { File(it).isFile }
-        val dirs = paths.filter { File(it).isDirectory }
+        val files = paths.filter { localFileSystem.isFile(it) }
+        val dirs = paths.filter { localFileSystem.isDirectory(it) }
         
         if (files.isEmpty() && dirs.isEmpty()) return
 
@@ -1168,9 +1151,7 @@ class KLogViewerViewModel(
             .joinToString("\n") { it.content.value }
 
         try {
-            val clipboard = Toolkit.getDefaultToolkit().systemClipboard
-            val selection = StringSelection(textToCopy)
-            clipboard.setContents(selection, null)
+            clipboard.copy(textToCopy)
             logger.info { "Copied ${indices.size} lines to clipboard" }
         } catch (e: Exception) {
             logger.error(e) { "Failed to copy to clipboard" }

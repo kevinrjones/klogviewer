@@ -3,7 +3,7 @@ package com.klogviewer.ui.test
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
 import com.klogviewer.core.parser.HeuristicProbe
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.model.UserPreferences
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.components.KLogViewerScreen
@@ -17,7 +17,7 @@ import org.junit.Test
 class KLogViewerSmokeTest {
 
     private val logSource = mockk<LogSource>(relaxed = true)
-    private val prefsRepository = mockk<PreferencesRepository>(relaxed = true)
+    private val prefsRepository = mockk<JsonPreferencesRepository>(relaxed = true)
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
 
     @Test

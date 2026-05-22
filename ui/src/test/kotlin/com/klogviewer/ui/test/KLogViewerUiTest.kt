@@ -4,7 +4,7 @@ import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
 import arrow.core.right
 import com.klogviewer.core.parser.HeuristicProbe
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.components.DialogProvider
@@ -23,7 +23,7 @@ import java.io.File
 class KLogViewerUiTest {
 
     private val logSource = mockk<LogSource>()
-    private val prefsRepository = mockk<PreferencesRepository>(relaxed = true)
+    private val prefsRepository = mockk<JsonPreferencesRepository>(relaxed = true)
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
     private val dialogProvider = mockk<DialogProvider>()
 
@@ -68,7 +68,7 @@ class KLogViewerUiTest {
         setupApp()
         
         // Mock file selection
-        every { dialogProvider.showOpenFileDialog(any(), any()) } returns File(testLogPath)
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
         
         // Mock log source to return test entries
         every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
@@ -91,7 +91,7 @@ class KLogViewerUiTest {
     fun givenLogsLoaded_whenLevelFiltered_thenListIsUpdated() = runComposeUiTest {
         setupApp()
         
-        every { dialogProvider.showOpenFileDialog(any(), any()) } returns File(testLogPath)
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
         every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
             LogUpdate.Initial(testEntries).right()
         )
@@ -123,7 +123,7 @@ class KLogViewerUiTest {
     fun givenLogsLoaded_whenSearchTermEntered_thenLogsAreFiltered() = runComposeUiTest {
         setupApp()
         
-        every { dialogProvider.showOpenFileDialog(any(), any()) } returns File(testLogPath)
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
         every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
             LogUpdate.Initial(testEntries).right()
         )

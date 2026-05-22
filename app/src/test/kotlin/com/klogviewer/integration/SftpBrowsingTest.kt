@@ -4,7 +4,7 @@ import arrow.core.right
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
@@ -37,22 +37,26 @@ class SftpBrowsingTest {
     private val registry = ParserRegistry()
     private val heuristicProbe = HeuristicProbe(registry)
     private val source = FileLogSource(parser)
-    private val prefsRepository by lazy { PreferencesRepository(tempDir) }
+    private val prefsRepository by lazy { JsonPreferencesRepository(tempDir) }
     private val remoteFileSystem = mockk<RemoteFileSystem>()
     private val mockSftpSource = mockk<LogSource>(relaxed = true)
+    private val logSourceFactory = mockk<com.klogviewer.domain.repository.LogSourceFactory>(relaxed = true)
+
     private fun createViewModel(scope: kotlinx.coroutines.CoroutineScope) = 
         KLogViewerViewModel(
-            source, 
-            prefsRepository, 
-            heuristicProbe, 
+            logSource = source, 
+            prefsRepository = prefsRepository, 
+            heuristicProbe = heuristicProbe, 
             remoteFileSystem = remoteFileSystem,
-            sftpSourceFactory = { _, _ -> mockSftpSource },
+            logSourceFactory = logSourceFactory,
             scope = scope
         ) 
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        every { logSourceFactory.createSftpSource(any(), any()) } returns mockSftpSource
+        every { logSourceFactory.createSftpDirectorySource(any(), any()) } returns mockSftpSource
     }
 
     @AfterEach

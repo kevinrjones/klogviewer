@@ -8,8 +8,8 @@ import androidx.compose.ui.window.*
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
-import com.klogviewer.core.repository.PreferencesRepository
-import com.klogviewer.core.source.FileLogSource
+import com.klogviewer.core.repository.*
+import com.klogviewer.core.source.*
 import com.klogviewer.domain.model.WindowStatePreferences
 import com.klogviewer.ui.components.KLogViewerScreen
 import com.klogviewer.ui.mvi.KLogViewerIntent
@@ -20,7 +20,7 @@ private val logger = KotlinLogging.logger {}
 
 fun main() {
     logger.info { "Starting KLogViewer application" }
-    val prefsRepository = PreferencesRepository()
+    val prefsRepository = JsonPreferencesRepository()
     val initialPrefs = prefsRepository.load()
 
     application {
@@ -28,7 +28,21 @@ fun main() {
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
-        val viewModel = KLogViewerViewModel(source, prefsRepository, heuristicProbe)
+        
+        val factory = DefaultLogSourceFactory()
+        val clipboard = AwtClipboard()
+        val localFileSystem = JavaLocalFileSystem()
+        val remoteFileSystem = SftpFileSystem()
+        
+        val viewModel = KLogViewerViewModel(
+            logSource = source, 
+            prefsRepository = prefsRepository, 
+            heuristicProbe = heuristicProbe,
+            logSourceFactory = factory,
+            clipboard = clipboard,
+            localFileSystem = localFileSystem,
+            remoteFileSystem = remoteFileSystem
+        )
 
         val windowState = rememberWindowState(
             width = initialPrefs.windowState.width.dp,
