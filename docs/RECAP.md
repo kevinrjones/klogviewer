@@ -894,3 +894,48 @@ Enhanced the UI by adding tooltips to tabs and the status bar, allowing users to
     - Updated `StatusBar.kt` to wrap the file path display with `TooltipWrapper`, ensuring the full path is always accessible even if truncated in the UI.
 - **Task Tracking**: Updated `TASKS-SPRINT-8-CONNECTIVITY.md` with the new tooltip task (13.4.14).
 - **Verification**: Confirmed the build succeeds and verified the tooltip logic for both single-file and multi-file (merged) log views.
+
+## 21:30
+
+### CI Stability & State Management Fixes
+
+Hardened the SFTP log source and improved state consistency for directory monitoring.
+
+#### Changes:
+- **ViewModel**: Fixed a bug where deleted files within a monitored directory were not correctly identified as missing in the UI state. Standardized `missingSourceIds` updates to include both primary and sub-sources.
+- **SFTP Reliability**: Hardened `SftpLogSourceTest` by ensuring data is written to the pipe before observation starts, eliminating race conditions in `Initial` load detection on fast CI runners.
+- **Resource Management**: Added explicit SSH `exitStatus` mocking to ensure clean flow termination and robust state verification.
+
+## 21:43
+
+### Version Update and Resource Cleanup
+
+Maintenance and minor UI updates.
+
+#### Changes:
+- **UI**: Updated the Sidebar version label to `v1.3.1` to reflect recent improvements and bug fixes.
+- **Core**: Enhanced `SftpLogSourceTest` stability by ensuring pre-observation data writes and clean coroutine cancellation.
+
+## 22:30
+
+### Refined Missing File Handling
+
+Streamlined the user experience when dealing with missing or deleted files by removing intrusive dialogs.
+
+#### Changes:
+- **UX Improvement**: Removed the "File Not Found" dialog that appeared during session restoration or when opening missing files from history.
+- **Seamless State**: Missing files are now immediately opened as red, strike-through tabs/windows, consistent with the existing window error flow.
+- **Cleanup**: Removed obsolete `MISSING_FILE` dialog logic and associated state properties. Relied on the "Clear Missing" button in the Recent Items dialog for history pruning.
+
+# 2026-05-21
+
+## 14:20
+
+### UI Regression Testing Strategy and Integration Hardening
+
+Established a formal strategy for reducing UI regressions and added comprehensive integration tests.
+
+#### Changes:
+- **Documentation**: Authored `docs/UI-REGRESSION-TESTING-STRATEGY.md` and updated `docs/TESTING.md` to define baseline management, CI normalization, and screenshot-testing decision rules.
+- **Integration Tests**: Added `LogLoadingIntegrationTest.kt` to verify end-to-end loading of single files and full directories, ensuring stable source ID and log entry counts.
+- **Terminology**: Aligned all testing documentation with the project's Ubiquitous Language (Workspace, Tab, Log Window, Filter).

@@ -449,10 +449,15 @@ private fun LogTabRow(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                val displayTitle = if (tab.activeWindow?.isDirectory == true) {
+                                    "${tab.title} [${tab.activeWindow!!.sourceIds.size - 1}]"
+                                } else {
+                                    tab.title
+                                }
                                 val tooltip = tab.windows.map { it.filePath }.distinct().filter { it.isNotEmpty() }.joinToString("\n").ifEmpty { tab.title }
                                 TooltipWrapper(tooltip = tooltip) {
                                     Text(
-                                        text = tab.title,
+                                        text = displayTitle,
                                         style = MaterialTheme.typography.button.copy(
                                             fontSize = 12.sp,
                                             color = if (isAnyPrimaryWindowMissing || isAnyWindowError) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified,

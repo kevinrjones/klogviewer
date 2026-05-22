@@ -550,7 +550,8 @@ class KLogViewerViewModel(
                         sourceIds = listOf(sourceId),
                         logs = emptyList(),
                         parserName = parserName,
-                        columns = listOf("Timestamp", "Level", "Content")
+                        columns = listOf("Timestamp", "Level", "Content"),
+                        isDirectory = true
                     )
                 }
             }
@@ -769,6 +770,7 @@ class KLogViewerViewModel(
 
         logJobs[windowId] = scope.launch {
             oldJob?.cancelAndJoin()
+            val isDir = filteredPaths.size == 1 && File(filteredPaths[0]).isDirectory
             val fileName = if (filteredPaths.size == 1) File(filteredPaths[0]).name else "${filteredPaths.size} files"
             
             _state.update { currentState ->
@@ -780,7 +782,8 @@ class KLogViewerViewModel(
                                 error = null, 
                                 filePath = filteredPaths.joinToString(", "), 
                                 logs = emptyList(), 
-                                sourceIds = filteredPaths
+                                sourceIds = filteredPaths,
+                                isDirectory = isDir
                             )
                         } else window
                     })
