@@ -29,16 +29,22 @@ class SftpDirectoryLogSource(
     override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = channelFlow<Either<LogFailure, LogUpdate>> {
         logger.info { "Started observing remote directory: ${path.value} on ${config.host.value}" }
 
-        val activeSources = mutableMapOf<String, Job>()
-        var initialized = false
         val pool = SshClientPool(config, sshService)
         val coordinator = LogInitialLoadCoordinator()
+        val observer = RemoteDirectoryFileObserver(
+            config = config,
+            pool = pool,
+            logSourceFactory = logSourceFactory,
+            coordinator = coordinator,
+            onUpdate = { update -> send(update.right()) }
+        )
 
         try {
             val sourceIdBase = "sftp://${config.username.value}@${config.host.value}:${config.port.value}"
             val directorySourceId = "$sourceIdBase${path.value}"
             var firstScanPerformed = false
             var currentFilePaths = emptyList<String>()
+            var initialized = false
 
             while (isActive) {
                 if (!firstScanPerformed || initialized) {
@@ -56,67 +62,7 @@ class SftpDirectoryLogSource(
                         },
                         { discoveredFiles ->
                             currentFilePaths = discoveredFiles.filter { !it.isDirectory }.map { it.path }
-                            val newFiles = currentFilePaths.filter { !activeSources.containsKey(it) }
-                            val removedFiles = activeSources.keys.filter { !currentFilePaths.contains(it) }
-
-                            if (removedFiles.isNotEmpty()) {
-                                logger.info { "Removing ${removedFiles.size} remote files" }
-                                for (file in removedFiles) {
-                                    activeSources[file]?.cancel()
-                                    activeSources.remove(file)
-                                    send(LogUpdate.SourceMissing("$sourceIdBase$file").right())
-                                }
-                            }
-
-                            if (newFiles.isNotEmpty()) {
-                                logger.info { "Discovered ${newFiles.size} new remote files: $newFiles" }
-                                newFiles.forEachIndexed { index, file ->
-                                    activeSources[file] = launch {
-                                        if (index > 0) delay((index * 200L).milliseconds)
-
-                                        var client: SSHClient? = null
-                                        try {
-                                            client = pool.getOrCreateClient()
-                                            val sftpSource = logSourceFactory(config, client)
-                                            sftpSource.observeLogs(LogFilePath(file), parser).collect { fileResult ->
-                                                fileResult.fold(
-                                                    { failure ->
-                                                        logger.error { "Error observing remote file $file: $failure" }
-                                                        if (!initialized) {
-                                                            coordinator.onFileFailedInitial(file)
-                                                        }
-                                                    },
-                                                    { update ->
-                                                        when (update) {
-                                                            is LogUpdate.Initial -> {
-                                                                if (!initialized) {
-                                                                    coordinator.onInitialLoad(file, update.entries)
-                                                                } else {
-                                                                    send(LogUpdate.Appended(update.entries).right())
-                                                                }
-                                                            }
-                                                            is LogUpdate.Appended -> {
-                                                                if (!initialized) {
-                                                                    coordinator.onAppendedDuringInitial(file, update.entries)
-                                                                }
-                                                                send(update.right())
-                                                            }
-                                                            LogUpdate.Reset -> {}
-                                                            is LogUpdate.SourceMissing -> send(update.right())
-                                                        }
-                                                    }
-                                                )
-                                            }
-                                        } catch (e: Exception) {
-                                            if (e is CancellationException) throw e
-                                            logger.error(e) { "Failed to get client or observe file $file" }
-                                            if (!initialized) coordinator.onFileFailedInitial(file)
-                                        } finally {
-                                            client?.let { pool.releaseClient(it) }
-                                        }
-                                    }
-                                }
-                            }
+                            observer.updateFiles(currentFilePaths, parser, this)
                         }
                     )
                 }
@@ -126,12 +72,14 @@ class SftpDirectoryLogSource(
                     logger.info { "Initial remote directory load complete: ${allEntries.size} entries" }
                     send(LogUpdate.Initial(allEntries).right())
                     initialized = true
+                    observer.setInitialized()
                 }
 
                 val delayInterval = if (initialized) rescanIntervalMs.milliseconds else 500.milliseconds
                 delay(delayInterval)
             }
         } finally {
+            observer.cancelAll()
             pool.close()
         }
     }.flowOn(dispatcher)

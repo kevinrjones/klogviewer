@@ -953,3 +953,47 @@ Improved the visual feedback for directory-based log views when sub-files are ad
 - **Visuals**: Directory tabs and window headers now only turn red/strike-through if the directory itself is missing or if there's a critical window error.
 - **Consistency**: Maintained orange color indicators for missing files in merged (non-directory) log views to preserve error visibility for static file sets.
 - **Testing**: Enhanced `DirectoryTabTest.kt` with verification that sub-file removal from a directory populates `missingSourceIds` but remains "directory-flagged" for UI rendering logic.
+
+## 11:46
+
+### Fix: SFTP Cancellation Deadlock and Core Abstractions
+
+Resolved a critical deadlock in SFTP tailing and introduced core abstractions for improved testability.
+
+#### Changes:
+- **SFTP Reliability**: Refactored `SftpLogSource` to ensure active closure of input streams and commands upon cancellation, preventing deadlocks when adding/replacing tabs.
+- **Abstractions**: Introduced `Clipboard` and `LocalFileSystem` interfaces to decouple the UI and Core from platform-specific implementations (AWT, Java IO).
+- **Testing**: Added a regression test for blocking remote reads and updated `DirectoryTabTest` to verify correct `missingSourceIds` handling.
+
+## 13:30
+
+### Architecture: Initial ViewModel and Core Refactoring
+
+Initiated a major cleanup of the ViewModel and Core layers to improve maintainability and testability.
+
+#### Changes:
+- **ViewModel Tidy-up**: Decomposed massive functions in `KLogViewerViewModel` into focused private handlers (ADR-026).
+- **SFTP Modularization**: Extracted SSH authentication, client pooling, and remote tailing into standalone services: `SshService`, `SshClientPool`, and `RemoteLogTailer` (ADR-028).
+- **UI Modularization**: Decomposed the `KLogViewerScreen` composable into smaller, single-responsibility components and extracted `RecentItemsDialog` (ADR-027).
+
+## 15:15
+
+### Architecture: Deep ViewModel Decomposition and Intent Categorization
+
+Completed a comprehensive decomposition of the ViewModel, transforming it into a thin orchestrator.
+
+#### Changes:
+- **Intent Categorization**: Grouped all 40+ MVI intents into logical categories (Workspace, UI, Filter, etc.), simplifying the ViewModel's dispatch logic (ADR-031).
+- **Loading Orchestration**: Extracted `LogLoadingCoordinator` and `WorkspaceLogLoader` to isolate the complex logic of file loading, heuristic detection, and connection management (ADR-030, ADR-032).
+- **Service Extraction**: Moved core ViewModel logic into focused services: `LogUpdateReducer`, `LogFilterService`, `RecentItemsManager`, `PreferencesStateMapper`, and `TabWindowController`.
+
+## 15:30
+
+### Architecture: Remote Directory Observation Refinement
+
+Refactored SFTP directory observation to reduce cyclomatic complexity and improve job management.
+
+#### Changes:
+- **Remote Observer**: Extracted `RemoteDirectoryFileObserver` from `SftpDirectoryLogSource` to orchestrate per-file observation jobs (ADR-033).
+- **Logic Simplification**: Focused `SftpDirectoryLogSource` on high-level directory scanning and state coordination, delegating file-level lifecycles to the new observer.
+- **Verification**: Verified the refactor with unit and integration tests, ensuring stable log aggregation during directory initialization.

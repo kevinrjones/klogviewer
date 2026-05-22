@@ -1697,3 +1697,20 @@ For each sprint/task
 - `RecentItemsTest`: 3/3 passing.
 - `PersistenceIntegrationTest`: 4/4 passing.
 - Full suite of integration tests verified.
+
+**Title**: Refactor SftpDirectoryLogSource for Reduced Complexity
+**Date/time completed**: 2026-05-22 15:30
+**What was shipped**:
+- Extracted `RemoteDirectoryFileObserver` to orchestrate per-file observation in remote directories.
+- Simplified `SftpDirectoryLogSource` by delegating file job management and update handling.
+- Reduced cyclomatic complexity of `SftpDirectoryLogSource.observeLogs()`.
+**Key decisions**:
+- Isolated the management of `activeSources` and individual file coroutine jobs into a dedicated observer registry.
+- Standardized the update handling flow between directory and file sources.
+- Documented the architecture changes in ADR-033.
+**Gotchas**:
+- Ordering of initial load completion check and observer initialization state is critical for correct log aggregation.
+**Test coverage areas**:
+- `SftpDirectoryLogSourceTest`: 3/3 passing.
+- `SftpLogSourceTest`: 7/7 passing.
+- `SftpBrowsingTest`: 3/3 passing.
