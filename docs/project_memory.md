@@ -1678,19 +1678,22 @@ For each sprint/task
 - `PersistenceIntegrationTest`: 4/4 passing.
 
 For each sprint/task
-**Title**: Categorize MVI Intents in ViewModel
-**Date/time completed**: 2026-05-22 13:55
+**Title**: Deep Decomposition of ViewModel and Loading Coordinator
+**Date/time completed**: 2026-05-22 15:15
 **What was shipped**:
-- Refactored `KLogViewerIntent.kt` with a hierarchy of sealed interfaces for categorization.
-- Simplified `handleIntent()` in `KLogViewerViewModel` to act as a high-level category dispatcher.
-- Moved `ChangeParser` logic into the `TabWindowIntent` category.
+- Extracted `WorkspaceLogLoader` from `LogLoadingCoordinator` to isolate path resolution and heuristic logic.
+- Decomposed `KLogViewerViewModel` into 8 focused intent handlers (Workspace, UI, Filter, TabWindow, Entry, Dialog, RecentItems, Sftp).
+- Reduced ViewModel size from ~1235 lines to ~218 lines while preserving full MVI functionality.
 **Key decisions**:
-- Grouped 40+ intents into 8 logical categories (`Workspace`, `UiToggle`, `Filter`, `TabWindow`, `Entry`, `Dialog`, `RecentItems`, `Sftp`).
-- Updated private handler methods in the ViewModel to accept specific intent subtypes for better type safety.
+- Used a dependency-based approach where the ViewModel orchestrates focused handlers that share state via callbacks.
+- Isolated "thinking" logic (WorkspaceLogLoader) from "orchestration" logic (LogLoadingCoordinator).
+- Documented the architecture changes in ADR-032.
 **Gotchas**:
-- `SftpIntent` already existed but needed to be consistently integrated into the new high-level dispatch pattern.
+- Callback delegation for debounced operations (like `savePreferences`) needed careful handling to maintain state consistency.
 **Test coverage areas**:
 - `LogLoadingIntegrationTest`: 2/2 passing.
 - `TabManagementTest`: 5/5 passing.
 - `SftpBrowsingTest`: 3/3 passing.
-- Full verification of core MVI intent routing.
+- `RecentItemsTest`: 3/3 passing.
+- `PersistenceIntegrationTest`: 4/4 passing.
+- Full suite of integration tests verified.
