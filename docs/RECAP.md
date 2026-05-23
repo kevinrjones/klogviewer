@@ -998,6 +998,32 @@ Refactored SFTP directory observation to reduce cyclomatic complexity and improv
 - **Logic Simplification**: Focused `SftpDirectoryLogSource` on high-level directory scanning and state coordination, delegating file-level lifecycles to the new observer.
 - **Verification**: Verified the refactor with unit and integration tests, ensuring stable log aggregation during directory initialization.
 
+
+# 2026-05-23
+
+## 07:22
+
+### UI: Resizable Line Number Column
+
+Implemented dynamic resizing for the "Line #" column (gutter) to allow users to adjust its width based on their needs, with persistent state.
+
+#### Changes:
+- **Resizable Gutter**: Added a resize handle to the "Line #" column in `LogList.kt`, enabling users to drag and adjust the gutter width.
+- **Visual Feedback**: Added a visible vertical bar to the gutter's resize handle for better discoverability.
+- **Persistence**: Updated `WindowPreference` and `LogWindow` to store and restore the gutter width across sessions.
+- **Testing**: Added a UI test in `LogListTest.kt` to verify that the line number column correctly responds to drag gestures.
+
+## 09:00
+
+### SFTP Support in Recent Items
+
+Enhanced the "Recently Opened" list to correctly identify and handle remote SFTP paths.
+
+#### Changes:
+- **RecentItemsManager**: Updated the manager to support `sftp://` URIs. It now correctly distinguishes between remote files and remote directories, ensuring they are added to the appropriate "Recent Files" or "Recent Directories" list.
+- **SftpIntentHandler**: Integrated recent items updates into the SFTP connection flow. Connecting to a remote source now automatically triggers an update to the history list.
+- **UI Consistency**: Ensured that the "Recently Opened" menu displays the full SFTP URI for remote sources, providing better context.
+
 ## 14:00
 
 ### Feature: S3 Menu and Toolbar Integration
@@ -1008,3 +1034,15 @@ Promoted S3 connection actions to the primary UI (Menu Bar and Toolbar) for bett
 - **Menu Bar**: Added "Connect to S3..." and "Add Remote S3..." to the `File` menu.
 - **Toolbar (FilterBar)**: Added top-level icons for "Open File", "Connect SFTP", and "Connect S3".
 - **UX Refinement**: Clarified the "Add Logs" dropdown and ensured all connection types have consistent entry points.
+
+## 19:05
+
+### Fix: Intermittent UI Test Failures
+
+Resolved intermittent test failures in `DirectoryTabTest` and other UI tests caused by race conditions between background coroutines and UI assertions.
+
+#### Changes:
+- **DirectoryTabTest**: Replaced immediate assertions with `waitUntil` blocks to wait for asynchronous state updates (directory flags and tab titles) before verifying UI state.
+- **LogListRobot**: Enhanced `assertLogCount` to use `waitUntil`, ensuring that log filtering operations have completed before checking the resulting entry count.
+- **Robustness**: Improved the overall stability of the UI testing suite by ensuring that assertions correctly synchronize with the MVI state flow.
+

@@ -18,9 +18,10 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
     }
 
     fun assertLogCount(expectedCount: Int) {
-        waitUntilExists("log_entry_row")
-        composeTestRule.onAllNodes(matcher("log_entry_row"), useUnmergedTree = true)
-            .assertCountEquals(expectedCount)
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodes(matcher("log_entry_row"), useUnmergedTree = true)
+                .fetchSemanticsNodes().size == expectedCount
+        }
     }
 
     fun assertHasText(text: String) {
