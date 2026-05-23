@@ -82,6 +82,8 @@
 - Tab & Status Bar Tooltips: Implemented tooltips for tab titles and the status bar, providing instant access to the fully qualified file name/path on hover.
 - Refined Directory Monitoring UI: Improved visual feedback for directory views by ignoring sub-file removal for color-coding. Tabs and window headers now only turn red if the directory itself is missing, while merged file views retain orange warnings for missing files.
 - SFTP cancellation reliability: fixed a remote tail cancellation deadlock that prevented adding a second SFTP source to an active tab/workspace.
+- S3 Log Source: Implemented native support for tailing logs from AWS S3 buckets using the Kotlin SDK, with flexible authentication and session persistence.
+- Fix: Intermittent UI Test Failures: Resolved flakiness in the UI test suite by implementing robust synchronization via `waitUntil` in robots and tests, ensuring assertions wait for asynchronous MVI state changes.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -1754,18 +1756,36 @@ For each sprint/task
 - `SftpLogSourceTest`: 7/7 passing.
 - `SftpBrowsingTest`: 3/3 passing.
 
-**Title**: S3 Menu and Toolbar Integration
-**Date/time completed**: 2026-05-23 14:00
+**Title**: Resizable Line Number Column
+**Date/time completed**: 2026-05-23 07:22
+**What was shipped**: Dynamic resizing for the gutter with persistent width state.
+**Key decisions**: Added visible handles to the gutter to match other resizable columns and improve discoverability.
+**Gotchas**: Needed to ensure the gutter width was persisted in `WindowPreference` to survive app restarts.
+**Test coverage areas**: `LogListTest` (UI drag gesture verification).
+
+**Title**: SFTP Support in Recent Items
+**Date/time completed**: 2026-05-23 09:00
+**What was shipped**: Support for `sftp://` URIs in the recently opened items list.
+**Key decisions**: Distinguished between remote files and directories to ensure they populate the correct history sub-menus.
+**Gotchas**: Needed to update the `SftpIntentHandler` to trigger history updates on successful connection.
+**Test coverage areas**: `RecentItemsManager`, `SftpIntentHandler`.
+
+**Title**: S3 Log Source and Connectivity Integration
+**Date/time completed**: 2026-05-23 13:55
 **What was shipped**:
-- Added "Connect to S3..." and "Add Remote S3..." to the main OS `MenuBar` under the `File` menu.
-- Added top-level toolbar icons for "Connect to S3" and "Connect to SFTP" in the `FilterBar`.
-- Added a top-level "Open Log File" icon to the toolbar for quicker access to local files.
-- Refined the "Add to Workspace" dropdown in the toolbar to clearly distinguish it from starting new sessions.
+- Native S3 log tailing support via `S3LogSource`.
+- `S3ClientProvider` for profile/key-pair auth.
+- S3 connectivity in Menu Bar and Toolbar.
+- S3 setup documentation.
 **Key decisions**:
-- Promoted S3 and SFTP to top-level toolbar icons to improve discoverability as requested by the user.
-- Maintained consistency between the OS Menu Bar and the application toolbar for all log source types.
-**Gotchas**:
-- Balancing toolbar density: Replaced generic labels with tooltips and focused icons to keep the `FilterBar` compact despite adding more actions.
-**Test coverage areas**:
-- UI: Verified `MenuBar` shortcuts and item presence.
-- Integration: Verified wiring of intents from new toolbar buttons.
+- Used polling-based tailing for S3 objects as they don't support streaming tail natively.
+- Promoted S3 to a top-level toolbar icon for better visibility.
+**Gotchas**: AWS SDK initialization can be slow; implemented lazy client creation.
+**Test coverage areas**: `S3LogSourceTest`, `S3UriTest`, UI menu/toolbar wiring.
+
+**Title**: Fix Intermittent UI Test Failures
+**Date/time completed**: 2026-05-23 19:10
+**What was shipped**: Robust synchronization for UI tests.
+**Key decisions**: Replaced all immediate assertions on asynchronous UI state with `waitUntil` blocks.
+**Gotchas**: Some flakiness was due to MVI intents being processed in the background without explicit UI feedback before assertion.
+**Test coverage areas**: `DirectoryTabTest`, `LogListRobot`.

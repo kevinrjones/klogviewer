@@ -1009,7 +1009,7 @@ Implemented dynamic resizing for the "Line #" column (gutter) to allow users to 
 
 #### Changes:
 - **Resizable Gutter**: Added a resize handle to the "Line #" column in `LogList.kt`, enabling users to drag and adjust the gutter width.
-- **Visual Feedback**: Added a visible vertical bar to the gutter's resize handle for better discoverability.
+- **Visual Feedback**: Added a vertical bar to the gutter's resize handle for better discoverability.
 - **Persistence**: Updated `WindowPreference` and `LogWindow` to store and restore the gutter width across sessions.
 - **Testing**: Added a UI test in `LogListTest.kt` to verify that the line number column correctly responds to drag gestures.
 
@@ -1024,18 +1024,22 @@ Enhanced the "Recently Opened" list to correctly identify and handle remote SFTP
 - **SftpIntentHandler**: Integrated recent items updates into the SFTP connection flow. Connecting to a remote source now automatically triggers an update to the history list.
 - **UI Consistency**: Ensured that the "Recently Opened" menu displays the full SFTP URI for remote sources, providing better context.
 
-## 14:00
+## 13:55
 
-### Feature: S3 Menu and Toolbar Integration
+### Feature: S3 Log Source and Connectivity Integration
 
-Promoted S3 connection actions to the primary UI (Menu Bar and Toolbar) for better discoverability.
+Implemented native support for tailing logs from Amazon S3 buckets, including core log source logic and UI integration.
 
 #### Changes:
-- **Menu Bar**: Added "Connect to S3..." and "Add Remote S3..." to the `File` menu.
-- **Toolbar (FilterBar)**: Added top-level icons for "Open File", "Connect SFTP", and "Connect S3".
-- **UX Refinement**: Clarified the "Add Logs" dropdown and ensured all connection types have consistent entry points.
+- **Core Implementation**: Developed `S3LogSource` using the AWS SDK for Kotlin. Supports real-time polling of S3 objects for new log content.
+- **Authentication**: Implemented `S3ClientProvider` supporting Default, Profile, and Explicit (Key/Secret) authentication methods.
+- **UI & Connectivity**:
+    - Added "Connect to S3..." and "Add Remote S3..." to the `File` menu and `FilterBar`.
+    - Integrated S3 connection state into `UserPreferences` for persistence.
+- **Documentation**: Added a detailed S3 setup guide (`docs/S3-SETUP.md`) for testing and production environments.
+- **Verification**: Added `S3LogSourceTest.kt` to verify polling, chunked reads, and error handling using a mocked S3 client.
 
-## 19:05
+## 19:10
 
 ### Fix: Intermittent UI Test Failures
 
