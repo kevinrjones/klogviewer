@@ -1,6 +1,7 @@
 package com.klogviewer.ui.test
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.v2.runComposeUiTest
 import com.klogviewer.core.parser.HeuristicProbe
@@ -56,6 +57,11 @@ class DirectoryTabTest {
         // We need to bypass the real DirectoryLogSource and just update the state to verify UI rendering
         viewModel.handleIntent(com.klogviewer.ui.mvi.KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
         
+        // Wait for directory flag to be set
+        waitUntil(timeoutMillis = 5000) {
+            viewModel.state.value.activeTab?.activeWindow?.isDirectory == true
+        }
+
         // Manually send log update to simulate discovery of 2 files
         // (This is a bit hacky but tests the UI logic)
         val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)
@@ -65,7 +71,9 @@ class DirectoryTabTest {
         handleLogUpdateMethod.invoke(viewModel, activeWindowId, LogUpdate.Initial(testEntries), tempDir.absolutePath)
 
         // Verify tab title shows "[2]"
-        onNodeWithText("${tempDir.name} [2]", substring = true).assertExists()
+        waitUntil(timeoutMillis = 5000) {
+            onAllNodesWithText("${tempDir.name} [2]", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     @Test
@@ -84,7 +92,9 @@ class DirectoryTabTest {
         viewModel.handleIntent(com.klogviewer.ui.mvi.KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
         
         // Verify tab title shows "[0]"
-        onNodeWithText("${tempDir.name} [0]", substring = true).assertExists()
+        waitUntil(timeoutMillis = 5000) {
+            onAllNodesWithText("${tempDir.name} [0]", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     @Test
@@ -115,6 +125,11 @@ class DirectoryTabTest {
 
         viewModel.handleIntent(com.klogviewer.ui.mvi.KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
         
+        // Wait for directory flag to be set
+        waitUntil(timeoutMillis = 5000) {
+            viewModel.state.value.activeTab?.activeWindow?.isDirectory == true
+        }
+
         val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)
         handleLogUpdateMethod.isAccessible = true
         val activeWindowId = viewModel.state.value.activeTab?.activeWindow?.id!!
