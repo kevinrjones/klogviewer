@@ -1753,3 +1753,19 @@ For each sprint/task
 - `SftpDirectoryLogSourceTest`: 3/3 passing.
 - `SftpLogSourceTest`: 7/7 passing.
 - `SftpBrowsingTest`: 3/3 passing.
+
+**Title**: S3 Menu and Toolbar Integration
+**Date/time completed**: 2026-05-23 14:00
+**What was shipped**:
+- Added "Connect to S3..." and "Add Remote S3..." to the main OS `MenuBar` under the `File` menu.
+- Added top-level toolbar icons for "Connect to S3" and "Connect to SFTP" in the `FilterBar`.
+- Added a top-level "Open Log File" icon to the toolbar for quicker access to local files.
+- Refined the "Add to Workspace" dropdown in the toolbar to clearly distinguish it from starting new sessions.
+**Key decisions**:
+- Promoted S3 and SFTP to top-level toolbar icons to improve discoverability as requested by the user.
+- Maintained consistency between the OS Menu Bar and the application toolbar for all log source types.
+**Gotchas**:
+- Balancing toolbar density: Replaced generic labels with tooltips and focused icons to keep the `FilterBar` compact despite adding more actions.
+**Test coverage areas**:
+- UI: Verified `MenuBar` shortcuts and item presence.
+- Integration: Verified wiring of intents from new toolbar buttons.

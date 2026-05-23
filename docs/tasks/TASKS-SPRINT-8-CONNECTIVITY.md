@@ -20,15 +20,31 @@
 - [x] 13.1.15. Suppress global error state for individual file deletions in monitored directories
 - [x] 13.1.16. Refresh window by removing logs and source IDs when a file is deleted from a monitored directory
 
-### 13.2. Cloud Integration (ADR 010)
-- [ ] 13.2.1. Implement `S3LogSource` for reading logs from AWS S3 buckets
-- [ ] 13.2.2. Support for AWS profiles authentication
-- [ ] 13.2.3. Support for environment variable based authentication
+### 13.2. Cloud Integration (ADR 035)
+- [x] 13.2.1. Implement `S3LogSource` for reading logs from AWS S3 buckets
+- [x] 13.2.2. Support for AWS profiles authentication
+- [x] 13.2.3. Support for environment variable based authentication
+- [x] 13.2.4. Implement polling-based tailing for S3 objects
+- [x] 13.2.5. Implement S3 bucket/prefix browsing and multi-object selection
+- [x] 13.2.6. Support loading all logs from an S3 "directory" (prefix)
+- [x] 13.2.7. Implement connection retry and staggered loading for robustness
+- [x] 13.2.8. Automatically detect and add new objects in monitored S3 prefixes
+- [x] 13.2.9. Detect and visually mark deleted objects in monitored S3 prefixes
+- [x] 13.2.10. Refresh window by removing logs and source IDs when an object is deleted from a monitored prefix
+- [x] 13.2.11. Restore S3 log sources and connection state on application startup
+- [x] 13.2.12. Support adding S3 logs to existing workspace via "+" button dropdown
 
 ### 13.3. Network Appenders
 - [ ] 13.3.1. Implement a TCP listener in `:core` to receive logs
 - [ ] 13.3.2. Implement a UDP listener in `:core` to receive logs
 - [ ] 13.3.3. Define a lightweight protocol for streaming logs directly to KLogViewer
+- [ ] 13.3.4. Support multiple concurrent network log streams
+- [ ] 13.3.5. Implement buffer management and overflow handling for high-volume streams
+- [ ] 13.3.6. Add source identification for network streams (sender IP/hostname)
+- [ ] 13.3.7. Implement UI toggle to start/stop network listeners in the toolbar
+- [ ] 13.3.8. Persist listener configuration and auto-start state in user preferences
+- [ ] 13.3.9. Support secure TLS-encrypted TCP listeners
+- [ ] 13.3.10. Display network listener status and connection count in the status bar
 
 ### 13.4. Connection Manager
 - [x] 13.4.1. Build a UI for managing saved connections and credentials
@@ -48,6 +64,8 @@
 
 ### 13.5. Verification & Testing
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server
-- [ ] 13.5.2. Unit tests for `S3LogSource` with S3 mocks
-- [ ] 13.5.3. Integration tests for network log reception
-- [ ] 13.5.4. Security audit of credential storage implementation
+- [x] 13.5.2. Unit tests for `S3LogSource` with S3 mocks
+- [ ] 13.5.3. Integration tests for S3 directory monitoring and deletion detection
+- [ ] 13.5.4. Integration tests for network log reception and multi-stream interleaving
+- [ ] 13.5.5. Performance testing for high-volume network log streams and buffer limits
+- [ ] 13.5.6. Security audit of credential storage implementation

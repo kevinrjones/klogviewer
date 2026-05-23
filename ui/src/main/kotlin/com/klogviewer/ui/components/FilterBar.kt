@@ -28,9 +28,14 @@ fun FilterBar(
     onAddQuery: (String) -> Unit,
     onRemoveQuery: (String) -> Unit,
     onClearQueries: () -> Unit,
-    onAddClick: () -> Unit,
+    onOpenFileClick: () -> Unit,
+    onOpenDirectoryClick: () -> Unit,
+    onSftpClick: () -> Unit,
+    onS3Click: () -> Unit,
+    onAddFileClick: () -> Unit,
     onAddDirectoryClick: () -> Unit,
     onAddSftpClick: () -> Unit,
+    onAddS3Click: () -> Unit,
     onToggleTheme: () -> Unit,
     onToggleSidebar: () -> Unit,
     isReversed: Boolean,
@@ -58,13 +63,32 @@ fun FilterBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // File Actions
+            FilterBarIcon(
+                icon = Icons.AutoMirrored.Filled.InsertDriveFile,
+                tooltip = "Open Log File",
+                onClick = onOpenFileClick,
+                testTag = "toolbar_open_file"
+            )
+            FilterBarIcon(
+                icon = Icons.Default.Cloud,
+                tooltip = "Connect to SFTP",
+                onClick = onSftpClick,
+                testTag = "toolbar_connect_sftp"
+            )
+            FilterBarIcon(
+                icon = Icons.Default.CloudQueue,
+                tooltip = "Connect to S3",
+                onClick = onS3Click,
+                testTag = "toolbar_connect_s3"
+            )
+
             Box {
                 var menuExpanded by remember { mutableStateOf(false) }
                 FilterBarIcon(
                     icon = Icons.Default.AddCircle, 
-                    tooltip = "Add Logs to Workspace", 
+                    tooltip = "Add Logs to Workspace (Interleave)", 
                     onClick = { menuExpanded = true },
-                    testTag = "add_file_to_workspace"
+                    testTag = "add_to_workspace"
                 )
                 
                 DropdownMenu(
@@ -74,7 +98,7 @@ fun FilterBar(
                     DropdownMenuItem(
                         onClick = {
                             menuExpanded = false
-                            onAddClick() // This still triggers ShowAddDialog (Local File)
+                            onAddFileClick()
                         },
                         modifier = Modifier.testTag("add_local_file_item")
                     ) {
@@ -108,6 +132,19 @@ fun FilterBar(
                             Icon(Icons.Default.Cloud, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
                             Text("Add Remote SFTP...")
+                        }
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            menuExpanded = false
+                            onAddS3Click()
+                        },
+                        modifier = Modifier.testTag("add_remote_s3_item")
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.CloudQueue, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Add Remote S3...")
                         }
                     }
                 }

@@ -54,7 +54,7 @@ class LogLoadingCoordinator(
 
     fun loadFilesIntoWindow(windowId: String, paths: List<String>, overrideParserName: String? = null) {
         val filteredPaths = workspaceLogLoader.filterRedundantPaths(paths)
-        if (handleSingleSftpPath(windowId, filteredPaths, overrideParserName)) return
+        if (handleSingleRemotePath(windowId, filteredPaths, overrideParserName)) return
 
         val oldJob = logJobs[windowId]
         logJobs[windowId] = scope.launch {
@@ -125,6 +125,185 @@ class LogLoadingCoordinator(
             val parser = SimpleLogParser()
             
             sftpSource.observeLogs(LogFilePath(path), parser)
+                .collect { result ->
+                    result.fold(
+                        ifLeft = { error ->
+                            state.update { it.updateWindow(windowId) { w -> 
+                                w.copy(
+                                    error = error.message, 
+                                    isLoading = false,
+                                    missingSourceIds = w.missingSourceIds + sourceId
+                                ) 
+                            } }
+                        },
+                        ifRight = { update ->
+                            onHandleLogUpdate(windowId, update, sourceId)
+                        }
+                    )
+                }
+        }
+    }
+
+    fun connectS3(windowId: String, config: S3Config, parserName: String? = null) {
+        val s3Source = logSourceFactory.createS3Source(config)
+        
+        val oldJob = logJobs[windowId]
+        
+        logJobs[windowId] = scope.launch {
+            oldJob?.cancelAndJoin()
+            
+            val s3Uri = S3Uri(config.bucket, config.prefix, isDirectory = false)
+            val sourceId = s3Uri.toString()
+            
+            state.update { currentState ->
+                currentState.updateWindow(windowId) { window ->
+                    window.copy(
+                        isLoading = true,
+                        error = null,
+                        filePath = sourceId,
+                        sourceIds = listOf(sourceId),
+                        logs = emptyList(),
+                        parserName = parserName,
+                        columns = listOf("Timestamp", "Level", "Content"),
+                        isDirectory = false
+                    )
+                }
+            }
+            onSavePreferences()
+
+            val fileName = config.prefix.substringAfterLast('/')
+            state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) {
+                        tab.copy(title = fileName)
+                    } else tab
+                })
+            }
+            
+            val parser = SimpleLogParser()
+            
+            s3Source.observeLogs(LogFilePath(config.prefix), parser)
+                .collect { result ->
+                    result.fold(
+                        ifLeft = { error ->
+                            state.update { it.updateWindow(windowId) { w -> 
+                                w.copy(
+                                    error = error.message, 
+                                    isLoading = false,
+                                    missingSourceIds = w.missingSourceIds + sourceId
+                                ) 
+                            } }
+                        },
+                        ifRight = { update ->
+                            onHandleLogUpdate(windowId, update, sourceId)
+                        }
+                    )
+                }
+        }
+    }
+
+    fun connectMultipleS3(windowId: String, config: S3Config, keys: List<String>) {
+        val oldJob = logJobs[windowId]
+        logJobs[windowId] = scope.launch {
+            oldJob?.cancelAndJoin()
+
+            state.update { currentState ->
+                currentState.updateWindow(windowId) { window ->
+                    window.copy(
+                        isLoading = true,
+                        error = null,
+                        filePath = keys.joinToString(", "),
+                        sourceIds = keys.map { "s3://${config.bucket}$it" },
+                        logs = emptyList(),
+                        columns = listOf("Timestamp", "Level", "Content"),
+                        isDirectory = false
+                    )
+                }
+            }
+            onSavePreferences()
+
+            val title = if (keys.size == 1) keys[0].substringAfterLast('/') else "${keys.size} S3 objects"
+            state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) {
+                        tab.copy(title = title)
+                    } else tab
+                })
+            }
+            
+            val parser = SimpleLogParser()
+            
+            val flows = keys.map { key ->
+                val source = logSourceFactory.createS3Source(config)
+                val sId = "s3://${config.bucket}$key"
+                source.observeLogs(LogFilePath(key), parser).map { result ->
+                    result.fold(
+                        { l -> (l to sId).left() },
+                        { r -> (r to sId).right() }
+                    )
+                }
+            }
+            
+            flows.merge().collect { result ->
+                result.fold(
+                    ifLeft = { pair ->
+                        val (failure, sId) = pair
+                        state.update { it.updateWindow(windowId) { w -> 
+                            val sid = failure.sourceId ?: sId
+                            val isCritical = sid == w.filePath
+                            val newError = if (isCritical) failure.message else w.error
+                            w.copy(
+                                error = newError, 
+                                isLoading = false,
+                                missingSourceIds = w.missingSourceIds + sid
+                            ) 
+                        } }
+                    },
+                    ifRight = { pair ->
+                        val (update, sId) = pair
+                        onHandleLogUpdate(windowId, update, sId)
+                    }
+                )
+            }
+        }
+    }
+
+    fun connectS3Directory(windowId: String, config: S3Config, prefix: String, parserName: String? = null) {
+        val s3Source = logSourceFactory.createS3DirectorySource(config, remoteFileSystem)
+        
+        val oldJob = logJobs[windowId]
+        
+        logJobs[windowId] = scope.launch {
+            oldJob?.cancelAndJoin()
+            
+            val s3Uri = S3Uri(config.bucket, prefix, isDirectory = true)
+            val sourceId = s3Uri.toString()
+            
+            state.update { currentState ->
+                currentState.updateWindow(windowId) { window ->
+                    window.copy(
+                        isLoading = true,
+                        error = null,
+                        filePath = sourceId,
+                        sourceIds = listOf(sourceId),
+                        logs = emptyList(),
+                        parserName = parserName ?: "Auto",
+                        isDirectory = true
+                    )
+                }
+            }
+            onSavePreferences()
+
+            val fileName = prefix.removeSuffix("/").substringAfterLast('/')
+            state.update { currentState ->
+                currentState.copy(tabs = currentState.tabs.map { tab ->
+                    if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) {
+                        tab.copy(title = fileName)
+                    } else tab
+                })
+            }
+            
+            s3Source.observeLogs(LogFilePath(prefix))
                 .collect { result ->
                     result.fold(
                         ifLeft = { error ->
@@ -268,30 +447,54 @@ class LogLoadingCoordinator(
         }
     }
 
-    private fun handleSingleSftpPath(windowId: String, paths: List<String>, overrideParserName: String?): Boolean {
-        if (paths.size != 1 || !paths[0].startsWith("sftp://")) return false
+    private fun handleSingleRemotePath(windowId: String, paths: List<String>, overrideParserName: String?): Boolean {
+        if (paths.size != 1) return false
         
         val uri = paths[0]
-        val config = workspaceLogLoader.findSftpConfig(uri)
-        val sftpUri = SftpUri.parse(uri)
-        
-        if (config != null && sftpUri != null) {
-            if (sftpUri.isDirectory) {
-                connectSftpDirectory(windowId, config, sftpUri.path, overrideParserName)
-            } else {
-                connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path, overrideParserName)
+        if (uri.startsWith("sftp://")) {
+            val config = workspaceLogLoader.findSftpConfig(uri)
+            val sftpUri = SftpUri.parse(uri)
+            
+            if (config != null && sftpUri != null) {
+                if (sftpUri.isDirectory) {
+                    connectSftpDirectory(windowId, config, sftpUri.path, overrideParserName)
+                } else {
+                    connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path, overrideParserName)
+                }
+                return true
+            } else if (sftpUri != null) {
+                state.update { it.updateWindow(windowId) { logWindow ->
+                    logWindow.copy(
+                        filePath = uri,
+                        sourceIds = listOf(uri),
+                        missingSourceIds = setOf(uri),
+                        error = "SFTP connection not found in preferences"
+                    )
+                } }
+                return true
             }
-            return true
-        } else if (sftpUri != null) {
-            state.update { it.updateWindow(windowId) { logWindow ->
-                logWindow.copy(
-                    filePath = uri,
-                    sourceIds = listOf(uri),
-                    missingSourceIds = setOf(uri),
-                    error = "SFTP connection not found in preferences"
-                )
-            } }
-            return true
+        } else if (uri.startsWith("s3://")) {
+            val config = workspaceLogLoader.findS3Config(uri)
+            val s3Uri = S3Uri.parse(uri)
+            
+            if (config != null && s3Uri != null) {
+                if (s3Uri.isDirectory) {
+                    connectS3Directory(windowId, config, s3Uri.key, overrideParserName)
+                } else {
+                    connectS3(windowId, config.copy(prefix = s3Uri.key), overrideParserName)
+                }
+                return true
+            } else if (s3Uri != null) {
+                state.update { it.updateWindow(windowId) { logWindow ->
+                    logWindow.copy(
+                        filePath = uri,
+                        sourceIds = listOf(uri),
+                        missingSourceIds = setOf(uri),
+                        error = "S3 connection not found in preferences"
+                    )
+                } }
+                return true
+            }
         }
         return false
     }

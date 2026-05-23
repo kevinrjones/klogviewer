@@ -11,7 +11,8 @@ object PreferencesStateMapper {
                 isSidebarExpanded = prefs.isSidebarExpanded,
                 recentFiles = prefs.recentFiles,
                 recentDirectories = prefs.recentDirectories,
-                sftpConnections = prefs.sftpConnections
+                sftpConnections = prefs.sftpConnections,
+                s3Connections = prefs.s3Connections
             )
         }
 
@@ -44,7 +45,8 @@ object PreferencesStateMapper {
             isSidebarExpanded = prefs.isSidebarExpanded,
             recentFiles = prefs.recentFiles,
             recentDirectories = prefs.recentDirectories,
-            sftpConnections = prefs.sftpConnections
+            sftpConnections = prefs.sftpConnections,
+            s3Connections = prefs.s3Connections
         )
     }
 
@@ -55,6 +57,7 @@ object PreferencesStateMapper {
             recentFiles = state.recentFiles,
             recentDirectories = state.recentDirectories,
             sftpConnections = state.sftpConnections,
+            s3Connections = state.s3Connections,
             tabs = state.tabs.map { tab ->
                 TabPreference(
                     id = tab.id,

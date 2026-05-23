@@ -997,3 +997,14 @@ Refactored SFTP directory observation to reduce cyclomatic complexity and improv
 - **Remote Observer**: Extracted `RemoteDirectoryFileObserver` from `SftpDirectoryLogSource` to orchestrate per-file observation jobs (ADR-033).
 - **Logic Simplification**: Focused `SftpDirectoryLogSource` on high-level directory scanning and state coordination, delegating file-level lifecycles to the new observer.
 - **Verification**: Verified the refactor with unit and integration tests, ensuring stable log aggregation during directory initialization.
+
+## 14:00
+
+### Feature: S3 Menu and Toolbar Integration
+
+Promoted S3 connection actions to the primary UI (Menu Bar and Toolbar) for better discoverability.
+
+#### Changes:
+- **Menu Bar**: Added "Connect to S3..." and "Add Remote S3..." to the `File` menu.
+- **Toolbar (FilterBar)**: Added top-level icons for "Open File", "Connect SFTP", and "Connect S3".
+- **UX Refinement**: Clarified the "Add Logs" dropdown and ensured all connection types have consistent entry points.

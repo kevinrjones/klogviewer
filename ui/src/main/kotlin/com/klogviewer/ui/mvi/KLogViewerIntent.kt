@@ -1,6 +1,7 @@
 package com.klogviewer.ui.mvi
 
 import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
 
 sealed interface KLogViewerIntent {
@@ -12,6 +13,7 @@ sealed interface KLogViewerIntent {
     sealed interface DialogIntent : KLogViewerIntent
     sealed interface RecentItemsIntent : KLogViewerIntent
     sealed interface SftpIntent : KLogViewerIntent
+    sealed interface S3Intent : KLogViewerIntent
 
     data class LoadFiles(val paths: List<String>) : WorkspaceIntent
     data class AddToWorkspace(val paths: List<String>) : WorkspaceIntent
@@ -41,8 +43,10 @@ sealed interface KLogViewerIntent {
     data object ShowAddDialog : DialogIntent
     data object ShowAddDirectoryDialog : DialogIntent
     data object ShowAddSftpDialog : DialogIntent
+    data object ShowAddS3Dialog : DialogIntent
     data object ShowRecentDialog : DialogIntent
     data object ShowSftpDialog : DialogIntent
+    data object ShowS3Dialog : DialogIntent
     data object DismissDialog : DialogIntent
     
     // SFTP
@@ -69,6 +73,25 @@ sealed interface KLogViewerIntent {
     data class NavigateRemote(val path: String) : SftpIntent
     data class SaveSftpConnection(val config: SftpConfig) : SftpIntent
     data class DeleteSftpConnection(val name: String) : SftpIntent
+    
+    // S3
+    data class ConnectS3(
+        val config: S3Config,
+        val addToWorkspace: Boolean = false
+    ) : S3Intent
+    data class ConnectMultipleS3(
+        val config: S3Config,
+        val keys: List<String>,
+        val addToWorkspace: Boolean = false
+    ) : S3Intent
+    data class ConnectS3Directory(
+        val config: S3Config,
+        val prefix: String,
+        val addToWorkspace: Boolean = false
+    ) : S3Intent
+    data class BrowseS3(val config: S3Config, val prefix: String) : S3Intent
+    data class SaveS3Connection(val config: S3Config) : S3Intent
+    data class DeleteS3Connection(val name: String) : S3Intent
     
     // Recent Items
     data class RemoveRecentItem(val path: String) : RecentItemsIntent

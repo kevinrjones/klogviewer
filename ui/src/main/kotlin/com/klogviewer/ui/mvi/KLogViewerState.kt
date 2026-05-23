@@ -2,6 +2,7 @@ package com.klogviewer.ui.mvi
 
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
 
 data class LogWindow(
@@ -60,13 +61,15 @@ data class KLogViewerState(
     val recentDirectories: List<String> = emptyList(),
     val pendingDialog: DialogType? = null,
     val sftpConnections: List<SftpConfig> = emptyList(),
+    val s3Connections: List<S3Config> = emptyList(),
     val remoteFiles: List<com.klogviewer.domain.model.RemoteFile> = emptyList(),
     val isRemoteLoading: Boolean = false,
     val remoteBrowsePath: String = "",
     val currentSftpConfig: SftpConfig? = null,
+    val currentS3Config: S3Config? = null,
     val isAddMode: Boolean = false
 ) {
-    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, ADD_DIRECTORY, RECENT_ITEMS, SFTP_CONNECT, SFTP_ADD, SFTP_BROWSE }
+    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, ADD_DIRECTORY, RECENT_ITEMS, SFTP_CONNECT, SFTP_ADD, SFTP_BROWSE, S3_CONNECT, S3_ADD, S3_BROWSE }
     val activeTab: TabState? get() = tabs.find { it.id == activeTabId }
 
     fun updateActiveTab(block: (TabState) -> TabState): KLogViewerState {

@@ -12,6 +12,7 @@ dependencies {
     implementation(libs.kotlin.logging)
     implementation(libs.slf4j.api)
     api(libs.sshj)
+    implementation(libs.aws.s3)
     
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)
