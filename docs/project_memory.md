@@ -46,6 +46,7 @@
 - Keyboard Shortcuts: Added Cmd+W to close active tab, Cmd+N for new tab, and Cmd+C to copy selected logs.
 - Multi-selection: Implemented multi-selection in log list (Shift+Click for range, Cmd+Click for toggle).
 - ANSI SGR Support: Added support for parsing and displaying ANSI SGR color codes in log files, with a UI toggle in the Filter Bar.
+- Resizable Gutter: Made the line number column ("#") resizable and added visible bars to all resize handles for better discoverability.
 - SFTP Session Restoration: Fixed a critical bug where remote directories were not reloaded correctly on startup. Improved `loadFilesIntoWindow` to correctly handle SFTP directory URIs and prevent double-tailing of sub-files. Added missing `savePreferences` calls to ensure remote source state is persisted immediately when opened.
 - Remote File Deletion Detection: Enhanced `SftpDirectoryLogSource` to detect file removal from monitored directories. Implemented UI feedback using red badges and strike-through text for logs from missing sources.
 - Auto-Save Connection Details: Centralized SFTP connection persistence to ensure that any connection established (via direct connect, browsing, or directory selection) is automatically added to the user's saved connections list.
@@ -288,6 +289,24 @@
 - `SourceBadge`: Visual component (verified via manual run).
 - `TabManagementTest`: Integration test for independent search/logs per tab.
 - `InterleavingIntegrationTest`: Integration test for adding files to workspace and chronological merging.
+
+### Task: UI Polish - Resizable Gutter and Visible Handles
+**Title**: Resizable Line Number Column and Visible Resize Bars
+**Date/time completed**: 2026-05-23 07:45
+**What was shipped**
+- Resizable Line Number ("#") column in the `LogList` grid.
+- Visible resize bars (1.dp vertical lines) added to all column resize handles for better discoverability.
+- Updated `LogListHeader` and `LogEntryRow` to support dynamic gutter width.
+- Extracted `ResizeHandle` component for reuse and consistency.
+**Key decisions**
+- Used "Line #" as the internal column key for gutter width persistence.
+- Added a subtle `onSurface.copy(alpha = 0.2f)` background to resize handles to make them visible without being distracting.
+- Decided to include the gutter width in the "Message" column's min-width calculation to maintain layout consistency.
+**Gotchas**
+- The gutter was previously hardcoded to 50dp/60dp, so it required a refactor of both `LogListHeader` and `LogEntryRow` to accept a dynamic `gutterWidth`.
+**Test coverage areas**
+- `LogColumnResizeTest`: New integration test verifying that the Line # column is resizable.
+- `KLogViewerComplexUiTest`: Verified that existing column resizing still works as expected.
 
 ## Task: Desktop UI Transition
 **Title**: Desktop UI Transition (Sprint 3 Finalization)
