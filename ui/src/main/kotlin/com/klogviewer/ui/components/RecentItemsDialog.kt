@@ -34,7 +34,7 @@ fun RecentItemsDialog(
 ) {
     val focusRequester = remember { FocusRequester() }
     
-    val hasMissing = recentFiles.any { !localFileSystem.exists(it) } || recentDirectories.any { !localFileSystem.exists(it) }
+    val hasMissing = recentFiles.any { !exists(it, localFileSystem) } || recentDirectories.any { !exists(it, localFileSystem) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -97,7 +97,7 @@ fun RecentItemsDialog(
                             path, 
                             onSelect, 
                             onRemoveItem, 
-                            isMissing = !localFileSystem.exists(path),
+                            isMissing = !exists(path, localFileSystem),
                             modifier = if (index == 0) Modifier.focusRequester(focusRequester) else Modifier
                         )
                     }
@@ -118,7 +118,7 @@ fun RecentItemsDialog(
                             path, 
                             onSelect, 
                             onRemoveItem, 
-                            isMissing = !localFileSystem.exists(path),
+                            isMissing = !exists(path, localFileSystem),
                             modifier = if (index == 0 && recentFiles.isEmpty()) Modifier.focusRequester(focusRequester) else Modifier
                         )
                     }
@@ -146,6 +146,11 @@ fun RecentItemsDialog(
             }
         }
     )
+}
+
+private fun exists(path: String, localFileSystem: LocalFileSystem): Boolean {
+    if (path.startsWith("sftp://")) return true
+    return localFileSystem.exists(path)
 }
 
 @Composable

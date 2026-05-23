@@ -13,6 +13,7 @@ class SftpIntentHandler(
     private val remoteFileSystem: RemoteFileSystem,
     private val scope: CoroutineScope,
     private val state: MutableStateFlow<KLogViewerState>,
+    private val recentItemsManager: RecentItemsManager,
     private val onSavePreferences: () -> Unit,
     private val onLoadFiles: (windowId: String, paths: List<String>) -> Unit,
     private val onConnectSftp: (windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -> Unit,
@@ -51,7 +52,7 @@ class SftpIntentHandler(
                 val currentPaths = state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
                 val newPaths = (currentPaths + sftpUri).distinct()
                 onLoadFiles(activeWindowId, newPaths)
-                state.update { it.copy(pendingDialog = null) }
+                state.update { recentItemsManager.updateRecentItems(it.copy(pendingDialog = null), listOf(sftpUri)) }
             } else {
                 scope.launch {
                     state.update { it.copy(isRemoteLoading = true) }
@@ -60,15 +61,17 @@ class SftpIntentHandler(
 
                     result.fold(
                         { _ ->
+                            val sftpUri = SftpUri(config.username.value, config.host.value, config.port.value, intent.path).toString()
                             onConnectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
-                            state.update { it.copy(pendingDialog = null) }
+                            state.update { recentItemsManager.updateRecentItems(it.copy(pendingDialog = null), listOf(sftpUri)) }
                         },
                         { files ->
                             val exactMatch = files.find { it.path == intent.path || it.path == intent.path.removeSuffix("/") + "/" + it.name }
 
                             if (files.size == 1 && exactMatch != null && !exactMatch.isDirectory) {
+                                val sftpUri = SftpUri(config.username.value, config.host.value, config.port.value, intent.path).toString()
                                 onConnectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)
-                                state.update { it.copy(pendingDialog = null) }
+                                state.update { recentItemsManager.updateRecentItems(it.copy(pendingDialog = null), listOf(sftpUri)) }
                             } else {
                                 state.update {
                                     it.copy(
@@ -91,14 +94,15 @@ class SftpIntentHandler(
         saveSftpConnection(intent.config)
         val activeWindowId = state.value.activeTab?.activeWindow?.id
         if (activeWindowId != null) {
+            val newUris = intent.paths.map { "sftp://${intent.config.username.value}@${intent.config.host.value}:${intent.config.port.value}$it" }
             if (intent.addToWorkspace) {
-                val newUris = intent.paths.map { "sftp://${intent.config.username.value}@${intent.config.host.value}:${intent.config.port.value}$it" }
                 val currentPaths = state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
                 val newPaths = (currentPaths + newUris).distinct()
                 onLoadFiles(activeWindowId, newPaths)
             } else {
                 onConnectMultipleSftp(activeWindowId, intent.config, intent.paths)
             }
+            state.update { recentItemsManager.updateRecentItems(it, newUris) }
         }
         state.update { it.copy(pendingDialog = null) }
     }
@@ -107,14 +111,15 @@ class SftpIntentHandler(
         saveSftpConnection(intent.config)
         val activeWindowId = state.value.activeTab?.activeWindow?.id
         if (activeWindowId != null) {
+            val sftpUri = SftpUri(intent.config.username.value, intent.config.host.value, intent.config.port.value, intent.path, isDirectory = true).toString()
             if (intent.addToWorkspace) {
-                val sftpUri = SftpUri(intent.config.username.value, intent.config.host.value, intent.config.port.value, intent.path, isDirectory = true).toString()
                 val currentPaths = state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()
                 val newPaths = (currentPaths + sftpUri).distinct()
                 onLoadFiles(activeWindowId, newPaths)
             } else {
                 onConnectSftpDirectory(activeWindowId, intent.config, intent.path)
             }
+            state.update { recentItemsManager.updateRecentItems(it, listOf(sftpUri)) }
         }
         state.update { it.copy(pendingDialog = null) }
     }

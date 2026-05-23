@@ -65,6 +65,7 @@
 - SFTP Connection Management: Added support for saving, loading, and deleting SFTP connection profiles in user preferences.
 - Tab Title Logic: Unified tab title updates across local and remote connections. The tab name now correctly reflects the filename for SFTP log sources.
 - SFTP Auto-save: Automatically save or override SFTP connection profiles when connecting to a remote source.
+- Recent Remote Items: Enabled SFTP connections and remote files/directories to appear in the "Recently Opened Items" list by updating `RecentItemsManager` and `RecentItemsDialog` to recognize and handle `sftp://` URIs, and ensuring `SftpIntentHandler` correctly triggers these updates.
 - Dialog Focus Management: Implemented explicit Tab navigation and initial focus for all application dialogs (ADR-025).
 - Documentation: Updated README.md with detailed SFTP usage instructions and key file requirements.
 - Fixed a `java.lang.IndexOutOfBoundsException` in `ScrollableTabRow` by implementing defensive indexing and ensuring the tab row only renders when tabs are available.
@@ -289,6 +290,25 @@
 - `SourceBadge`: Visual component (verified via manual run).
 - `TabManagementTest`: Integration test for independent search/logs per tab.
 - `InterleavingIntegrationTest`: Integration test for adding files to workspace and chronological merging.
+
+### Task: Recent Items for Remote Connections
+**Title**: Support for Remote Connections in Recent Items
+**Date/time completed**: 2026-05-23 09:15
+**What was shipped**
+- Remote SFTP files and directories now correctly appear in the "Recently Opened Items" list.
+- `RecentItemsManager` now uses `SftpUri` to classify remote paths as files or directories.
+- `RecentItemsDialog` no longer incorrectly marks remote items as missing.
+- `SftpIntentHandler` now correctly updates the MRU list when connecting to remote sources.
+**Key decisions**
+- Decided to bypass the local filesystem existence check for SFTP URIs to avoid blocking the UI with network calls.
+- Integrated `SftpUri` parsing into the recent items filtering logic.
+- Injected `RecentItemsManager` into `SftpIntentHandler` to ensure consistency with `WorkspaceIntentHandler`.
+**Gotchas**
+- Remote items were previously ignored because they didn't pass the `localFileSystem.isFile` or `isDirectory` checks, and `SftpIntentHandler` wasn't calling the update logic.
+**Test coverage areas**
+- `SftpRecentItemsTest`: Verified that SFTP files and directories are correctly added to the recent items list when using `ConnectSftp`, `ConnectMultipleSftp`, and `ConnectSftpDirectory`.
+- `RecentRemoteItemsTest`: Verified that SFTP files and directories are correctly added to the recent items list (verified manually and with a temporary integration test).
+- `RecentItemsTest`: Verified no regressions in existing local file recent items logic.
 
 ### Task: UI Polish - Resizable Gutter and Visible Handles
 **Title**: Resizable Line Number Column and Visible Resize Bars

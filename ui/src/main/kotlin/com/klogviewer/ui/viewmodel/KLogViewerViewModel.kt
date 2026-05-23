@@ -1,16 +1,18 @@
 package com.klogviewer.ui.viewmodel
 
-import com.klogviewer.domain.model.*
+import com.klogviewer.core.parser.HeuristicProbe
+import com.klogviewer.core.repository.AwtClipboard
+import com.klogviewer.core.repository.JavaLocalFileSystem
+import com.klogviewer.core.source.DefaultLogSourceFactory
+import com.klogviewer.core.source.SftpFileSystem
+import com.klogviewer.domain.model.LogUpdate
 import com.klogviewer.domain.repository.*
-import com.klogviewer.domain.parser.LogParser
-import com.klogviewer.core.parser.*
-import com.klogviewer.core.source.*
-import com.klogviewer.core.repository.*
-import com.klogviewer.ui.mvi.*
+import com.klogviewer.ui.mvi.KLogViewerEvent
+import com.klogviewer.ui.mvi.KLogViewerIntent
+import com.klogviewer.ui.mvi.KLogViewerState
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.util.UUID
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
@@ -92,6 +94,7 @@ class KLogViewerViewModel(
         remoteFileSystem = remoteFileSystem,
         scope = scope,
         state = _state,
+        recentItemsManager = recentItemsManager,
         onSavePreferences = { savePreferences() },
         onLoadFiles = { windowId, paths -> logLoadingCoordinator.loadFilesIntoWindow(windowId, paths) },
         onConnectSftp = { windowId, name, host, port, user, auth, path ->
