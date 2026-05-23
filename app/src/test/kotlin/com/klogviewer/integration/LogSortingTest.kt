@@ -3,7 +3,7 @@ package com.klogviewer.integration
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -25,7 +25,7 @@ class LogSortingTest {
     private val registry = ParserRegistry()
     private val heuristicProbe = HeuristicProbe(registry)
     private val source = FileLogSource(parser)
-    private val prefsRepository by lazy { PreferencesRepository(tempDir) }
+    private val prefsRepository by lazy { JsonPreferencesRepository(tempDir) }
     private val viewModel by lazy { KLogViewerViewModel(source, prefsRepository, heuristicProbe) }
 
     @AfterEach

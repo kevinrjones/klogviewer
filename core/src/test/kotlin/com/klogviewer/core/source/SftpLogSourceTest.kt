@@ -7,6 +7,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import net.schmizz.sshj.SSHClient
@@ -17,11 +18,47 @@ import strikt.api.expectThat
 import strikt.assertions.hasSize
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 import java.io.PipedInputStream
 import java.io.PipedOutputStream
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class SftpLogSourceTest {
+
+    private class NonInterruptibleBlockingInputStream : InputStream() {
+        private val readStarted = CompletableDeferred<Unit>()
+
+        @Volatile
+        private var closed = false
+
+        suspend fun awaitReadStarted() {
+            readStarted.await()
+        }
+
+        override fun available(): Int = 1
+
+        override fun read(): Int {
+            if (!readStarted.isCompleted) {
+                readStarted.complete(Unit)
+            }
+
+            while (!closed) {
+                try {
+                    Thread.sleep(25)
+                } catch (_: InterruptedException) {
+                    // Intentionally ignored to simulate a non-cooperative blocking read.
+                }
+            }
+
+            return -1
+        }
+
+        override fun close() {
+            closed = true
+        }
+    }
 
     @Test
     fun `should connect, auth and tail logs using mocked SSH client`() = runBlocking {
@@ -42,27 +79,38 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val initialReceived = CompletableDeferred<Unit>()
+        
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act & Assert
+        // Write Initial logs BEFORE observing to ensure they are picked up in the Initial update
+        pipedOut.write("2026-05-20 08:00:00 INFO Initial\n".toByteArray())
+        pipedOut.flush()
+
         launch {
-            // Write some logs to the pipe
-            pipedOut.write("2026-05-20 08:00:00 INFO Initial\n".toByteArray())
-            // Small delay to let the flow detect "initial" end via reader.ready()
-            // In unit test with piped streams, ready() might be false immediately after write if not flushed
-            pipedOut.flush()
+            // Wait for initial load to be completed by the observer
+            initialReceived.await()
             
-            // Give it a moment to process initial
-            delay(50.milliseconds)
-            
+            // Now write appended logs
             pipedOut.write("2026-05-20 08:00:01 INFO Appended\n".toByteArray())
             pipedOut.flush()
             
-            delay(50.milliseconds)
+            delay(100.milliseconds) // Give it time to be read
             pipedOut.close() // Close pipe to end the flow
+            
+            // After close, make exitStatus return 0
+            every { mockCommand.exitStatus } returns 0
         }
 
-        val results = source.observeLogs(LogFilePath("/var/log/test.log")).take(2).toList()
+        val results = source.observeLogs(LogFilePath("/var/log/test.log"))
+            .onEach { 
+                if (it.getOrNull() is LogUpdate.Initial) {
+                    initialReceived.complete(Unit) 
+                }
+            }
+            .take(2)
+            .toList()
 
         // Assert
         expectThat(results).hasSize(2)
@@ -104,7 +152,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -138,7 +186,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -172,7 +220,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null
 
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         source.observeLogs(LogFilePath("/test.log")).take(1).toList()
@@ -209,7 +257,7 @@ class SftpLogSourceTest {
         every { mockCommand.errorStream } returns errorIn
         every { mockCommand.exitStatus } returns 1
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         val results = source.observeLogs(LogFilePath("/invalid/path")).toList()
@@ -243,7 +291,7 @@ class SftpLogSourceTest {
         every { mockCommand.inputStream } returns pipedIn
         every { mockCommand.exitStatus } returns null // Still running
         
-        val source = SftpLogSource(config, SimpleLogParser(), provider, Dispatchers.IO)
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
 
         // Act
         val results = source.observeLogs(LogFilePath("/empty.log")).take(1).toList()
@@ -255,5 +303,48 @@ class SftpLogSourceTest {
         expectThat(update).isA<LogUpdate.Initial>()
         expectThat((update as LogUpdate.Initial).entries).hasSize(0)
         Unit
+    }
+
+    @Test
+    fun `should cancel promptly when remote read is blocking`() = runBlocking {
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/blocking.log")
+        val mockClient = mockk<SSHClient>(relaxed = true)
+        val mockSession = mockk<Session>(relaxed = true)
+        val mockCommand = mockk<Session.Command>(relaxed = true)
+        val blockingInput = NonInterruptibleBlockingInputStream()
+
+        val provider = object : SshClientProvider {
+            override fun createClient(): SSHClient = mockClient
+        }
+
+        every { mockClient.startSession() } returns mockSession
+        every { mockSession.exec(any()) } returns mockCommand
+        every { mockCommand.inputStream } returns blockingInput
+        every { mockCommand.errorStream } returns ByteArrayInputStream(byteArrayOf())
+        every { mockCommand.exitStatus } returns null
+        every { mockCommand.close() } answers {
+            blockingInput.close()
+            Unit
+        }
+
+        val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)
+        val observationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+        try {
+            val observerJob = observationScope.launch {
+                source.observeLogs(LogFilePath("/blocking.log")).collect { }
+            }
+
+            blockingInput.awaitReadStarted()
+
+            withTimeout(1.seconds) {
+                observerJob.cancelAndJoin()
+            }
+
+            verify(atLeast = 1) { mockCommand.close() }
+        } finally {
+            blockingInput.close()
+            observationScope.cancel()
+        }
     }
 }

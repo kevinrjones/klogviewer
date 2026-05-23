@@ -28,10 +28,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.ui.mvi.KLogViewerIntent
+import com.klogviewer.ui.mvi.KLogViewerState
+import com.klogviewer.ui.mvi.LogWindow
+import com.klogviewer.ui.mvi.TabState
 import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
-import java.io.File
 
 @Composable
 fun KLogViewerScreen(
@@ -54,214 +56,16 @@ fun KLogViewerScreen(
         }
     }
 
-    val pendingDialog = state.pendingDialog
-    LaunchedEffect(pendingDialog) {
-        if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN ||
-            pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY ||
-            pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD ||
-            pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY
-        ) {
-            val title = when (pendingDialog) {
-                com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN -> "Select Log File"
-                com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY -> "Select Log Directory"
-                com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD -> "Add Log File"
-                com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY -> "Add Log Directory"
-                else -> ""
-            }
-            val file = if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY || 
-                         pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY) {
-                dialogProvider.showOpenDirectoryDialog(title)
-            } else {
-                dialogProvider.showOpenFileDialog(title)
-            }
-
-            viewModel.handleIntent(KLogViewerIntent.DismissDialog)
-
-            if (file != null) {
-                val paths = listOf(file.absolutePath)
-                when (pendingDialog) {
-                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN,
-                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.OPEN_DIRECTORY -> viewModel.handleIntent(
-                        KLogViewerIntent.LoadFiles(paths)
-                    )
-
-                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD,
-                    com.klogviewer.ui.mvi.KLogViewerState.DialogType.ADD_DIRECTORY -> viewModel.handleIntent(
-                        KLogViewerIntent.AddToWorkspace(
-                            paths
-                        )
-                    )
-
-                    else -> {}
-                }
-            }
-        }
-    }
-
-    if (state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.MISSING_FILE && state.missingPath != null) {
-        val focusRequester = remember { FocusRequester() }
-        
-        AlertDialog(
-            onDismissRequest = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
-            title = { Text("File Not Found") },
-            text = { 
-                Text(text = "The file '${state.missingPath}' no longer exists. Would you like to remove it from the recent items list?")
-            },
-            confirmButton = {
-                val focusManager = LocalFocusManager.current
-                LaunchedEffect(Unit) {
-                    focusRequester.requestFocus()
-                }
-                Button(
-                    onClick = {
-                        viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(state.missingPath!!))
-                        viewModel.handleIntent(KLogViewerIntent.DismissDialog)
-                    },
-                    modifier = Modifier.focusRequester(focusRequester).onPreviewKeyEvent { event ->
-                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                ) {
-                    Text("Remove from List")
-                }
-            },
-            dismissButton = {
-                val focusManager = LocalFocusManager.current
-                TextButton(
-                    onClick = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
-                    modifier = Modifier.onPreviewKeyEvent { event ->
-                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                ) {
-                    Text("Keep in List")
-                }
-            }
-        )
-    }
-
-    if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.RECENT_ITEMS) {
-        RecentItemsDialog(
-            recentFiles = state.recentFiles,
-            recentDirectories = state.recentDirectories,
-            onSelect = { path ->
-                viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path)))
-                if (File(path).exists()) {
-                    viewModel.handleIntent(KLogViewerIntent.DismissDialog)
-                }
-            },
-            onRemoveItem = { viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(it)) },
-            onClearMissing = { viewModel.handleIntent(KLogViewerIntent.ClearMissingRecentItems) },
-            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
-        )
-    }
-
-    if (state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_CONNECT ||
-        state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_ADD) {
-        val isAdd = state.pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_ADD
-        SftpConnectionDialog(
-            savedConnections = state.sftpConnections,
-            onConnect = { name, host, port, user, auth, path ->
-                viewModel.handleIntent(KLogViewerIntent.ConnectSftp(name, host, port, user, auth, path, addToWorkspace = isAdd))
-            },
-            onSave = { config ->
-                viewModel.handleIntent(KLogViewerIntent.SaveSftpConnection(config))
-            },
-            onDelete = { name ->
-                viewModel.handleIntent(KLogViewerIntent.DeleteSftpConnection(name))
-            },
-            onBrowse = { host, port, user, auth, path ->
-                val config = SftpConfig("Temporary", com.klogviewer.domain.model.Host(host), com.klogviewer.domain.model.Port(port), com.klogviewer.domain.model.Username(user), auth)
-                viewModel.handleIntent(KLogViewerIntent.BrowseSftp(config, path))
-            },
-            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
-            dialogProvider = dialogProvider
-        )
-    }
-
-    if (pendingDialog == com.klogviewer.ui.mvi.KLogViewerState.DialogType.SFTP_BROWSE) {
-        RemoteFileBrowserDialog(
-            files = state.remoteFiles,
-            currentPath = state.remoteBrowsePath,
-            isLoading = state.isRemoteLoading,
-            onNavigate = { path -> viewModel.handleIntent(KLogViewerIntent.NavigateRemote(path)) },
-            onSelectFiles = { paths ->
-                val config = state.currentSftpConfig
-                if (config != null) {
-                    viewModel.handleIntent(KLogViewerIntent.ConnectMultipleSftp(config, paths, addToWorkspace = state.isAddMode))
-                }
-            },
-            onSelectDirectory = { path ->
-                val config = state.currentSftpConfig
-                if (config != null) {
-                    viewModel.handleIntent(KLogViewerIntent.ConnectSftpDirectory(config, path, addToWorkspace = state.isAddMode))
-                }
-            },
-            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
-        )
-    }
+    DialogHandler(state, viewModel, dialogProvider)
 
     KLogViewerTheme(darkTheme = state.isDarkMode) {
         Scaffold(
             scaffoldState = scaffoldState,
             topBar = {
-                Column {
-                    LogTabRow(
-                        tabs = state.tabs,
-                        activeTabId = state.activeTabId,
-                        onTabClick = { viewModel.handleIntent(KLogViewerIntent.SwitchTab(it)) },
-                        onCloseClick = { viewModel.handleIntent(KLogViewerIntent.CloseTab(it)) },
-                        onAddClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) }
-                    )
-                    FilterBar(
-                        filterQueries = activeWindow?.filterQueries ?: emptyList(),
-                        onAddQuery = { viewModel.handleIntent(KLogViewerIntent.AddFilterQuery(it)) },
-                        onRemoveQuery = { viewModel.handleIntent(KLogViewerIntent.RemoveFilterQuery(it)) },
-                        onClearQueries = { viewModel.handleIntent(KLogViewerIntent.ClearFilterQueries) },
-                        onAddClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) },
-                        onAddDirectoryClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDirectoryDialog) },
-                        onAddSftpClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddSftpDialog) },
-                        onToggleTheme = { viewModel.handleIntent(KLogViewerIntent.ToggleTheme) },
-                        onToggleSidebar = { viewModel.handleIntent(KLogViewerIntent.ToggleSidebar) },
-                        isReversed = activeWindow?.isReversed ?: false,
-                        onToggleSortOrder = { viewModel.handleIntent(KLogViewerIntent.ToggleSortOrder) },
-                        isAutoScrollEnabled = activeWindow?.isAutoScrollEnabled ?: true,
-                        onToggleAutoScroll = { viewModel.handleIntent(KLogViewerIntent.ToggleAutoScroll) },
-                        showAnsiColors = activeWindow?.showAnsiColors ?: true,
-                        onToggleAnsiColors = { viewModel.handleIntent(KLogViewerIntent.ToggleAnsiColors) },
-                        isConnected = activeWindow?.isConnected ?: true,
-                        onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
-                        onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
-                        matchesCount = activeWindow?.filteredLogs?.size ?: 0,
-                        totalCount = activeWindow?.logs?.size ?: 0
-                    )
-                }
+                LogTopBar(state, activeWindow, viewModel)
             },
             bottomBar = {
-                val availableParsers = remember {
-                    listOf("Simple", "JSON", "logfmt") + viewModel.heuristicProbe.registry.getAllTemplates().map { it.name }
-                }
-                StatusBar(
-                    filePath = activeWindow?.filePath ?: "",
-                    lineCount = activeWindow?.logs?.size ?: 0,
-                    parserName = activeWindow?.parserName,
-                    availableParsers = availableParsers,
-                    onParserSelect = { name ->
-                        activeWindow?.id?.let { id ->
-                            viewModel.handleIntent(KLogViewerIntent.ChangeParser(id, name))
-                        }
-                    },
-                    isMissing = activeWindow?.let { it.missingSourceIds.contains(it.filePath) || it.error != null } ?: false,
-                    isConnected = activeWindow?.isConnected ?: true
-                )
+                LogBottomBar(activeWindow, viewModel)
             }
         ) { padding ->
             Row(
@@ -277,186 +81,420 @@ fun KLogViewerScreen(
                     levelCounts = activeWindow?.levelCounts ?: emptyMap()
                 )
 
-                Column(modifier = Modifier.weight(1f)) {
-                    activeTab?.windows?.forEachIndexed { index, window ->
-                        if (index > 0) {
-                            Divider(
-                                modifier = Modifier.height(2.dp).fillMaxWidth(),
-                                color = MaterialTheme.colors.primary.copy(alpha = 0.5f)
+                LogWindowList(
+                    activeTab = activeTab,
+                    state = state,
+                    viewModel = viewModel,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DialogHandler(
+    state: KLogViewerState,
+    viewModel: KLogViewerViewModel,
+    dialogProvider: DialogProvider
+) {
+    val pendingDialog = state.pendingDialog
+    LaunchedEffect(pendingDialog) {
+        if (pendingDialog == KLogViewerState.DialogType.OPEN ||
+            pendingDialog == KLogViewerState.DialogType.OPEN_DIRECTORY ||
+            pendingDialog == KLogViewerState.DialogType.ADD ||
+            pendingDialog == KLogViewerState.DialogType.ADD_DIRECTORY
+        ) {
+            val title = when (pendingDialog) {
+                KLogViewerState.DialogType.OPEN -> "Select Log File"
+                KLogViewerState.DialogType.OPEN_DIRECTORY -> "Select Log Directory"
+                KLogViewerState.DialogType.ADD -> "Add Log File"
+                KLogViewerState.DialogType.ADD_DIRECTORY -> "Add Log Directory"
+                else -> ""
+            }
+            val path = if (pendingDialog == KLogViewerState.DialogType.OPEN_DIRECTORY ||
+                pendingDialog == KLogViewerState.DialogType.ADD_DIRECTORY
+            ) {
+                dialogProvider.showOpenDirectoryDialog(title)
+            } else {
+                dialogProvider.showOpenFileDialog(title)
+            }
+
+            viewModel.handleIntent(KLogViewerIntent.DismissDialog)
+
+            if (path != null) {
+                val paths = listOf(path)
+                when (pendingDialog) {
+                    KLogViewerState.DialogType.OPEN,
+                    KLogViewerState.DialogType.OPEN_DIRECTORY -> viewModel.handleIntent(
+                        KLogViewerIntent.LoadFiles(paths)
+                    )
+
+                    KLogViewerState.DialogType.ADD,
+                    KLogViewerState.DialogType.ADD_DIRECTORY -> viewModel.handleIntent(
+                        KLogViewerIntent.AddToWorkspace(
+                            paths
+                        )
+                    )
+                    else -> {}
+                }
+            }
+        }
+    }
+
+    if (pendingDialog == KLogViewerState.DialogType.RECENT_ITEMS) {
+        RecentItemsDialog(
+            recentFiles = state.recentFiles,
+            recentDirectories = state.recentDirectories,
+            localFileSystem = viewModel.localFileSystem,
+            onSelect = { path ->
+                viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(path)))
+                viewModel.handleIntent(KLogViewerIntent.DismissDialog)
+            },
+            onRemoveItem = { viewModel.handleIntent(KLogViewerIntent.RemoveRecentItem(it)) },
+            onClearMissing = { viewModel.handleIntent(KLogViewerIntent.ClearMissingRecentItems) },
+            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
+        )
+    }
+
+    if (state.pendingDialog == KLogViewerState.DialogType.SFTP_CONNECT ||
+        state.pendingDialog == KLogViewerState.DialogType.SFTP_ADD
+    ) {
+        val isAdd = state.pendingDialog == KLogViewerState.DialogType.SFTP_ADD
+        SftpConnectionDialog(
+            savedConnections = state.sftpConnections,
+            onConnect = { name, host, port, user, auth, path ->
+                viewModel.handleIntent(
+                    KLogViewerIntent.ConnectSftp(
+                        name,
+                        host,
+                        port,
+                        user,
+                        auth,
+                        path,
+                        addToWorkspace = isAdd
+                    )
+                )
+            },
+            onSave = { config ->
+                viewModel.handleIntent(KLogViewerIntent.SaveSftpConnection(config))
+            },
+            onDelete = { name ->
+                viewModel.handleIntent(KLogViewerIntent.DeleteSftpConnection(name))
+            },
+            onBrowse = { host, port, user, auth, path ->
+                val config = SftpConfig(
+                    "Temporary",
+                    com.klogviewer.domain.model.Host(host),
+                    com.klogviewer.domain.model.Port(port),
+                    com.klogviewer.domain.model.Username(user),
+                    auth
+                )
+                viewModel.handleIntent(KLogViewerIntent.BrowseSftp(config, path))
+            },
+            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) },
+            dialogProvider = dialogProvider
+        )
+    }
+
+    if (pendingDialog == KLogViewerState.DialogType.SFTP_BROWSE) {
+        RemoteFileBrowserDialog(
+            files = state.remoteFiles,
+            currentPath = state.remoteBrowsePath,
+            isLoading = state.isRemoteLoading,
+            onNavigate = { path -> viewModel.handleIntent(KLogViewerIntent.NavigateRemote(path)) },
+            onSelectFiles = { paths ->
+                val config = state.currentSftpConfig
+                if (config != null) {
+                    viewModel.handleIntent(
+                        KLogViewerIntent.ConnectMultipleSftp(
+                            config,
+                            paths,
+                            addToWorkspace = state.isAddMode
+                        )
+                    )
+                }
+            },
+            onSelectDirectory = { path ->
+                val config = state.currentSftpConfig
+                if (config != null) {
+                    viewModel.handleIntent(
+                        KLogViewerIntent.ConnectSftpDirectory(
+                            config,
+                            path,
+                            addToWorkspace = state.isAddMode
+                        )
+                    )
+                }
+            },
+            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
+        )
+    }
+}
+
+@Composable
+private fun LogTopBar(
+    state: KLogViewerState,
+    activeWindow: LogWindow?,
+    viewModel: KLogViewerViewModel
+) {
+    Column {
+        LogTabRow(
+            tabs = state.tabs,
+            activeTabId = state.activeTabId,
+            onTabClick = { viewModel.handleIntent(KLogViewerIntent.SwitchTab(it)) },
+            onCloseClick = { viewModel.handleIntent(KLogViewerIntent.CloseTab(it)) },
+            onAddClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) }
+        )
+        FilterBar(
+            filterQueries = activeWindow?.filterQueries ?: emptyList(),
+            onAddQuery = { viewModel.handleIntent(KLogViewerIntent.AddFilterQuery(it)) },
+            onRemoveQuery = { viewModel.handleIntent(KLogViewerIntent.RemoveFilterQuery(it)) },
+            onClearQueries = { viewModel.handleIntent(KLogViewerIntent.ClearFilterQueries) },
+            onAddClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) },
+            onAddDirectoryClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDirectoryDialog) },
+            onAddSftpClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddSftpDialog) },
+            onToggleTheme = { viewModel.handleIntent(KLogViewerIntent.ToggleTheme) },
+            onToggleSidebar = { viewModel.handleIntent(KLogViewerIntent.ToggleSidebar) },
+            isReversed = activeWindow?.isReversed ?: false,
+            onToggleSortOrder = { viewModel.handleIntent(KLogViewerIntent.ToggleSortOrder) },
+            isAutoScrollEnabled = activeWindow?.isAutoScrollEnabled ?: true,
+            onToggleAutoScroll = { viewModel.handleIntent(KLogViewerIntent.ToggleAutoScroll) },
+            showAnsiColors = activeWindow?.showAnsiColors ?: true,
+            onToggleAnsiColors = { viewModel.handleIntent(KLogViewerIntent.ToggleAnsiColors) },
+            isConnected = activeWindow?.isConnected ?: true,
+            onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
+            onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
+            matchesCount = activeWindow?.filteredLogs?.size ?: 0,
+            totalCount = activeWindow?.logs?.size ?: 0
+        )
+    }
+}
+
+@Composable
+private fun LogBottomBar(
+    activeWindow: LogWindow?,
+    viewModel: KLogViewerViewModel
+) {
+    val availableParsers = remember {
+        listOf("Simple", "JSON", "logfmt") + viewModel.heuristicProbe.registry.getAllTemplates().map { it.name }
+    }
+    StatusBar(
+        filePath = activeWindow?.filePath ?: "",
+        lineCount = activeWindow?.logs?.size ?: 0,
+        parserName = activeWindow?.parserName,
+        availableParsers = availableParsers,
+        onParserSelect = { name ->
+            activeWindow?.id?.let { id ->
+                viewModel.handleIntent(KLogViewerIntent.ChangeParser(id, name))
+            }
+        },
+        isMissing = activeWindow?.let { it.missingSourceIds.contains(it.filePath) || it.error != null } ?: false,
+        isConnected = activeWindow?.isConnected ?: true
+    )
+}
+
+@Composable
+private fun LogWindowList(
+    activeTab: TabState?,
+    state: KLogViewerState,
+    viewModel: KLogViewerViewModel,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        activeTab?.windows?.forEachIndexed { index, window ->
+            if (index > 0) {
+                Divider(
+                    modifier = Modifier.height(2.dp).fillMaxWidth(),
+                    color = MaterialTheme.colors.primary.copy(alpha = 0.5f)
+                )
+            }
+
+            LogWindowItem(
+                window = window,
+                isWindowActive = window.id == activeTab.activeWindowId,
+                showSplitIndicator = activeTab.windows.size > 1,
+                state = state,
+                viewModel = viewModel,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun LogWindowItem(
+    window: LogWindow,
+    isWindowActive: Boolean,
+    showSplitIndicator: Boolean,
+    state: KLogViewerState,
+    viewModel: KLogViewerViewModel,
+    modifier: Modifier = Modifier
+) {
+    val activeBorderColor = MaterialTheme.colors.primary.copy(alpha = 0.5f)
+
+    Column(
+        modifier = modifier
+            .testTag("window_${window.id}")
+            .background(if (isWindowActive) MaterialTheme.colors.onSurface.copy(alpha = 0.02f) else Color.Transparent)
+            .drawBehind {
+                if (isWindowActive && showSplitIndicator) {
+                    drawLine(
+                        color = activeBorderColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, size.height),
+                        strokeWidth = 3.dp.toPx()
+                    )
+                }
+            }
+            .padding(top = 4.dp)
+    ) {
+        // Window Header (File path, Active badge, Close button)
+        if (window.filePath.isNotEmpty() || showSplitIndicator) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(if (window.isConnected) Color.Transparent else MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
+                    .padding(horizontal = 16.dp, vertical = 2.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (window.filePath.isNotEmpty()) {
+                    val isPrimaryPathMissing = window.missingSourceIds.contains(window.filePath)
+                    val isAnySourceMissing = if (window.isDirectory) isPrimaryPathMissing else window.missingSourceIds.isNotEmpty()
+                    val isWindowError = window.error != null
+                    Text(
+                        text = window.filePath,
+                        style = MaterialTheme.typography.caption.copy(
+                            color = if (isPrimaryPathMissing || isWindowError) Color.Red else if (isAnySourceMissing) Color(0xFFFFA500) else MaterialTheme.colors.onSurface.copy(
+                                alpha = 0.5f
+                            ),
+                            textDecoration = if (isPrimaryPathMissing) TextDecoration.LineThrough else TextDecoration.None
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                    )
+                } else {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (isWindowActive && showSplitIndicator) {
+                        Surface(
+                            color = MaterialTheme.colors.primary.copy(alpha = 0.1f),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                "Active",
+                                style = MaterialTheme.typography.caption,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
                             )
                         }
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
 
-                        val isWindowActive = window.id == activeTab.activeWindowId
-                        val activeBorderColor = MaterialTheme.colors.primary.copy(alpha = 0.5f)
-
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .testTag("window_${window.id}")
-                                .background(if (isWindowActive) MaterialTheme.colors.onSurface.copy(alpha = 0.02f) else Color.Transparent)
-                                .drawBehind {
-                                    if (isWindowActive && activeTab.windows.size > 1) {
-                                        drawLine(
-                                            color = activeBorderColor,
-                                            start = Offset(0f, 0f),
-                                            end = Offset(0f, size.height),
-                                            strokeWidth = 3.dp.toPx()
+                    if (showSplitIndicator) {
+                        TooltipWrapper(tooltip = "Close split") {
+                            IconButton(
+                                onClick = {
+                                    viewModel.handleIntent(
+                                        KLogViewerIntent.CloseWindow(
+                                            window.id
                                         )
-                                    }
-                                }
-                                .padding(top = 4.dp)
-                        ) {
-                            // Window Header (File path, Active badge, Close button)
-                            if (window.filePath.isNotEmpty() || activeTab.windows.size > 1) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(if (window.isConnected) Color.Transparent else MaterialTheme.colors.onSurface.copy(alpha = 0.1f))
-                                        .padding(horizontal = 16.dp, vertical = 2.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    if (window.filePath.isNotEmpty()) {
-                                        val isAnySourceMissing = window.missingSourceIds.isNotEmpty()
-                                        val isPrimaryPathMissing = window.missingSourceIds.contains(window.filePath)
-                                        val isWindowError = window.error != null
-                                        Text(
-                                            text = window.filePath,
-                                            style = MaterialTheme.typography.caption.copy(
-                                                color = if (isPrimaryPathMissing || isWindowError) Color.Red else if (isAnySourceMissing) Color(0xFFFFA500) else MaterialTheme.colors.onSurface.copy(
-                                                    alpha = 0.5f
-                                                ),
-                                                textDecoration = if (isPrimaryPathMissing) TextDecoration.LineThrough else TextDecoration.None
-                                            ),
-                                            maxLines = 1,
-                                            overflow = TextOverflow.Ellipsis,
-                                            modifier = Modifier.weight(1f).padding(end = 8.dp)
-                                        )
-                                    } else {
-                                        Spacer(modifier = Modifier.weight(1f))
-                                    }
-
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        if (isWindowActive && activeTab.windows.size > 1) {
-                                            Surface(
-                                                color = MaterialTheme.colors.primary.copy(alpha = 0.1f),
-                                                shape = androidx.compose.foundation.shape.RoundedCornerShape(4.dp)
-                                            ) {
-                                                Text(
-                                                    "Active",
-                                                    style = MaterialTheme.typography.caption,
-                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                                )
-                                            }
-                                            Spacer(modifier = Modifier.width(8.dp))
-                                        }
-
-                                        if (activeTab.windows.size > 1) {
-                                            TooltipWrapper(tooltip = "Close split") {
-                                                IconButton(
-                                                    onClick = {
-                                                        viewModel.handleIntent(
-                                                            KLogViewerIntent.CloseWindow(
-                                                                window.id
-                                                            )
-                                                        )
-                                                    },
-                                                    modifier = Modifier.size(20.dp)
-                                                ) {
-                                                    Icon(
-                                                        Icons.Default.Close,
-                                                        contentDescription = "Close Split",
-                                                        modifier = Modifier.size(14.dp)
-                                                    )
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (window.error != null) {
-                                Text(
-                                    text = "Error: ${window.error}",
-                                    color = MaterialTheme.colors.error,
-                                    modifier = Modifier.padding(16.dp)
-                                )
-                            }
-
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .padding(horizontal = 16.dp)
-                                    .clickable(
-                                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
-                                        indication = null
-                                    ) {
-                                        viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
-                                    }
+                                    )
+                                },
+                                modifier = Modifier.size(20.dp)
                             ) {
-                                if (window.isLoading) {
-                                    CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                                } else {
-                                    LogList(
-                                        logs = window.filteredLogs,
-                                        filterQueries = window.filterQueries,
-                                        isDarkMode = state.isDarkMode,
-                                        sourceIds = window.sourceIds,
-                                        missingSourceIds = window.missingSourceIds,
-                                        columns = window.columns,
-                                        columnWidths = window.columnWidths,
-                                        isAutoScrollEnabled = window.isAutoScrollEnabled,
-                                        showAnsiColors = window.showAnsiColors,
-                                        selectedIndices = window.selectedIndices,
-                                        onEntryClick = {
-                                            if (isWindowActive) {
-                                                viewModel.handleIntent(KLogViewerIntent.SelectEntry(it))
-                                            } else {
-                                                viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
-                                            }
-                                        },
-                                        onToggleSelection = { index, isShift, isMeta ->
-                                            if (isWindowActive) {
-                                                viewModel.handleIntent(
-                                                    KLogViewerIntent.ToggleEntrySelection(
-                                                        index,
-                                                        isShift,
-                                                        isMeta
-                                                    )
-                                                )
-                                            } else {
-                                                viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
-                                            }
-                                        },
-                                        onColumnResize = { column, width ->
-                                            viewModel.handleIntent(
-                                                KLogViewerIntent.UpdateColumnWidth(
-                                                    window.id,
-                                                    column,
-                                                    width
-                                                )
-                                            )
-                                        }
-                                    )
-                                }
-                            }
-
-                            // Detail Pane (Split View within Window)
-                            if (window.selectedEntry != null) {
-                                Divider(modifier = Modifier.height(1.dp).fillMaxWidth())
-                                Box(modifier = Modifier.height(200.dp)) {
-                                    LogEntryDetails(
-                                        entry = window.selectedEntry,
-                                        onClose = { viewModel.handleIntent(KLogViewerIntent.SelectEntry(null)) },
-                                        filterQueries = window.filterQueries,
-                                        isDarkMode = state.isDarkMode,
-                                        showAnsiColors = window.showAnsiColors
-                                    )
-                                }
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Close Split",
+                                    modifier = Modifier.size(14.dp)
+                                )
                             }
                         }
                     }
                 }
+            }
+        }
+
+        if (window.error != null) {
+            Text(
+                text = "Error: ${window.error}",
+                color = MaterialTheme.colors.error,
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp)
+                .clickable(
+                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    indication = null
+                ) {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+        ) {
+            if (window.isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                LogList(
+                    logs = window.filteredLogs,
+                    filterQueries = window.filterQueries,
+                    isDarkMode = state.isDarkMode,
+                    sourceIds = window.sourceIds,
+                    missingSourceIds = window.missingSourceIds,
+                    columns = window.columns,
+                    columnWidths = window.columnWidths,
+                    isAutoScrollEnabled = window.isAutoScrollEnabled,
+                    showAnsiColors = window.showAnsiColors,
+                    selectedIndices = window.selectedIndices,
+                    onEntryClick = {
+                        if (isWindowActive) {
+                            viewModel.handleIntent(KLogViewerIntent.SelectEntry(it))
+                        } else {
+                            viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                        }
+                    },
+                    onToggleSelection = { index, isShift, isMeta ->
+                        if (isWindowActive) {
+                            viewModel.handleIntent(
+                                KLogViewerIntent.ToggleEntrySelection(
+                                    index,
+                                    isShift,
+                                    isMeta
+                                )
+                            )
+                        } else {
+                            viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                        }
+                    },
+                    onColumnResize = { column, width ->
+                        viewModel.handleIntent(
+                            KLogViewerIntent.UpdateColumnWidth(
+                                window.id,
+                                column,
+                                width
+                            )
+                        )
+                    }
+                )
+            }
+        }
+
+        // Detail Pane (Split View within Window)
+        if (window.selectedEntry != null) {
+            Divider(modifier = Modifier.height(1.dp).fillMaxWidth())
+            Box(modifier = Modifier.height(200.dp)) {
+                LogEntryDetails(
+                    entry = window.selectedEntry,
+                    onClose = { viewModel.handleIntent(KLogViewerIntent.SelectEntry(null)) },
+                    filterQueries = window.filterQueries,
+                    isDarkMode = state.isDarkMode,
+                    showAnsiColors = window.showAnsiColors
+                )
             }
         }
     }
@@ -491,7 +529,10 @@ private fun LogTabRow(
                 ) {
                     tabs.forEach { tab ->
                         val isAnyPrimaryWindowMissing = tab.windows.any { it.missingSourceIds.contains(it.filePath) }
-                        val isAnySecondarySourceMissing = tab.windows.any { it.missingSourceIds.isNotEmpty() }
+                        val isAnySecondarySourceMissing = tab.windows.any { window ->
+                            if (window.isDirectory) false
+                            else (window.missingSourceIds - window.filePath).isNotEmpty()
+                        }
                         val isAnyWindowError = tab.windows.any { it.error != null }
                         Tab(
                             selected = tab.id == activeTabId,
@@ -502,10 +543,15 @@ private fun LogTabRow(
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                val displayTitle = if (tab.activeWindow?.isDirectory == true) {
+                                    "${tab.title} [${tab.activeWindow!!.sourceIds.size - 1}]"
+                                } else {
+                                    tab.title
+                                }
                                 val tooltip = tab.windows.map { it.filePath }.distinct().filter { it.isNotEmpty() }.joinToString("\n").ifEmpty { tab.title }
                                 TooltipWrapper(tooltip = tooltip) {
                                     Text(
-                                        text = tab.title,
+                                        text = displayTitle,
                                         style = MaterialTheme.typography.button.copy(
                                             fontSize = 12.sp,
                                             color = if (isAnyPrimaryWindowMissing || isAnyWindowError) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified,
@@ -547,170 +593,6 @@ private fun LogTabRow(
                     )
                 }
             }
-        }
-    }
-}
-
-@Composable
-fun RecentItemsDialog(
-    recentFiles: List<String>,
-    recentDirectories: List<String>,
-    onSelect: (String) -> Unit,
-    onRemoveItem: (String) -> Unit,
-    onClearMissing: () -> Unit,
-    onDismiss: () -> Unit
-) {
-    val focusRequester = remember { FocusRequester() }
-    
-    val hasMissing = recentFiles.any { !File(it).exists() } || recentDirectories.any { !File(it).exists() }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Recently Opened Items") },
-        text = {
-            val focusManager = LocalFocusManager.current
-            LaunchedEffect(Unit) {
-                focusRequester.requestFocus()
-            }
-
-            Column(
-                modifier = Modifier
-                    .width(600.dp)
-                    .heightIn(max = 400.dp)
-                    .verticalScroll(rememberScrollState())
-                    .onPreviewKeyEvent { event ->
-                        if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                            focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
-                            true
-                        } else {
-                            false
-                        }
-                    }
-            ) {
-                if (hasMissing) {
-                    Surface(
-                        color = MaterialTheme.colors.error.copy(alpha = 0.1f),
-                        shape = MaterialTheme.shapes.small,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "Some items no longer exist on disk.",
-                                style = MaterialTheme.typography.caption,
-                                color = MaterialTheme.colors.error
-                            )
-                            TextButton(onClick = onClearMissing) {
-                                Text(
-                                    "Clear Missing",
-                                    style = MaterialTheme.typography.caption,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        }
-                    }
-                }
-
-                if (recentFiles.isNotEmpty()) {
-                    Text(
-                        "Files",
-                        style = MaterialTheme.typography.subtitle2,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    recentFiles.forEachIndexed { index, path ->
-                        RecentItemRow(
-                            path, 
-                            onSelect, 
-                            onRemoveItem, 
-                            isMissing = !File(path).exists(),
-                            modifier = if (index == 0) Modifier.focusRequester(focusRequester) else Modifier
-                        )
-                    }
-                }
-
-                if (recentFiles.isNotEmpty() && recentDirectories.isNotEmpty()) {
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
-                }
-
-                if (recentDirectories.isNotEmpty()) {
-                    Text(
-                        "Directories",
-                        style = MaterialTheme.typography.subtitle2,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    recentDirectories.forEachIndexed { index, path ->
-                        RecentItemRow(
-                            path, 
-                            onSelect, 
-                            onRemoveItem, 
-                            isMissing = !File(path).exists(),
-                            modifier = if (index == 0 && recentFiles.isEmpty()) Modifier.focusRequester(focusRequester) else Modifier
-                        )
-                    }
-                }
-
-                if (recentFiles.isEmpty() && recentDirectories.isEmpty()) {
-                    Text("No recent items found.", modifier = Modifier.padding(16.dp))
-                }
-            }
-        },
-        confirmButton = {
-            val focusManager = LocalFocusManager.current
-            Button(
-                onClick = onDismiss,
-                modifier = Modifier.onPreviewKeyEvent { event ->
-                    if (event.key == Key.Tab && event.type == KeyEventType.KeyDown) {
-                        focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
-                        true
-                    } else {
-                        false
-                    }
-                }
-            ) {
-                Text("Close")
-            }
-        }
-    )
-}
-
-@Composable
-private fun RecentItemRow(
-    path: String,
-    onSelect: (String) -> Unit,
-    onRemoveItem: (String) -> Unit,
-    isMissing: Boolean = false,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        TextButton(
-            onClick = { onSelect(path) },
-            modifier = Modifier.weight(1f),
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-        ) {
-            Text(
-                text = path,
-                style = MaterialTheme.typography.body2.copy(
-                    textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None,
-                    color = if (isMissing) MaterialTheme.colors.onSurface.copy(alpha = 0.4f) else MaterialTheme.colors.onSurface
-                ),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-        IconButton(onClick = { onRemoveItem(path) }, modifier = Modifier.size(32.dp)) {
-            Icon(
-                imageVector = Icons.Default.Close,
-                contentDescription = "Remove from history",
-                modifier = Modifier.size(16.dp),
-                tint = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-            )
         }
     }
 }

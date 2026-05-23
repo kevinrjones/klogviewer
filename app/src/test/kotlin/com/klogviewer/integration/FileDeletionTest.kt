@@ -3,15 +3,11 @@ package com.klogviewer.integration
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.source.FileLogSource
-import com.klogviewer.domain.model.LogFilePath
-import com.klogviewer.domain.model.LogUpdate
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.toList
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import strikt.api.expectThat
@@ -29,7 +25,7 @@ class FileDeletionTest {
         logFile.writeText("2023-01-01 12:00:00 INFO test message\n")
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = PreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir)
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -37,7 +33,12 @@ class FileDeletionTest {
         
         // Use a test scope to control execution
         val testScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe, testScope)
+        val viewModel = KLogViewerViewModel(
+            logSource = source, 
+            prefsRepository = prefsRepo, 
+            heuristicProbe = heuristicProbe, 
+            scope = testScope
+        )
 
         // 1. Load the file
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(logFile.absolutePath)))
@@ -69,14 +70,19 @@ class FileDeletionTest {
         logFile.writeText("2023-01-01 12:00:00 INFO test message\n")
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = PreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir)
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
         val source = FileLogSource(parser)
         
         val testScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-        val viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe, testScope)
+        val viewModel = KLogViewerViewModel(
+            logSource = source, 
+            prefsRepository = prefsRepo, 
+            heuristicProbe = heuristicProbe, 
+            scope = testScope
+        )
 
         // 1. Load the directory
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(logDir.absolutePath)))

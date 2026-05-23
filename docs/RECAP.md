@@ -894,3 +894,106 @@ Enhanced the UI by adding tooltips to tabs and the status bar, allowing users to
     - Updated `StatusBar.kt` to wrap the file path display with `TooltipWrapper`, ensuring the full path is always accessible even if truncated in the UI.
 - **Task Tracking**: Updated `TASKS-SPRINT-8-CONNECTIVITY.md` with the new tooltip task (13.4.14).
 - **Verification**: Confirmed the build succeeds and verified the tooltip logic for both single-file and multi-file (merged) log views.
+
+## 21:30
+
+### CI Stability & State Management Fixes
+
+Hardened the SFTP log source and improved state consistency for directory monitoring.
+
+#### Changes:
+- **ViewModel**: Fixed a bug where deleted files within a monitored directory were not correctly identified as missing in the UI state. Standardized `missingSourceIds` updates to include both primary and sub-sources.
+- **SFTP Reliability**: Hardened `SftpLogSourceTest` by ensuring data is written to the pipe before observation starts, eliminating race conditions in `Initial` load detection on fast CI runners.
+- **Resource Management**: Added explicit SSH `exitStatus` mocking to ensure clean flow termination and robust state verification.
+
+## 21:43
+
+### Version Update and Resource Cleanup
+
+Maintenance and minor UI updates.
+
+#### Changes:
+- **UI**: Updated the Sidebar version label to `v1.3.1` to reflect recent improvements and bug fixes.
+- **Core**: Enhanced `SftpLogSourceTest` stability by ensuring pre-observation data writes and clean coroutine cancellation.
+
+## 22:30
+
+### Refined Missing File Handling
+
+Streamlined the user experience when dealing with missing or deleted files by removing intrusive dialogs.
+
+#### Changes:
+- **UX Improvement**: Removed the "File Not Found" dialog that appeared during session restoration or when opening missing files from history.
+- **Seamless State**: Missing files are now immediately opened as red, strike-through tabs/windows, consistent with the existing window error flow.
+- **Cleanup**: Removed obsolete `MISSING_FILE` dialog logic and associated state properties. Relied on the "Clear Missing" button in the Recent Items dialog for history pruning.
+
+# 2026-05-21
+
+## 14:20
+
+### UI Regression Testing Strategy and Integration Hardening
+
+Established a formal strategy for reducing UI regressions and added comprehensive integration tests.
+
+#### Changes:
+- **Documentation**: Authored `docs/UI-REGRESSION-TESTING-STRATEGY.md` and updated `docs/TESTING.md` to define baseline management, CI normalization, and screenshot-testing decision rules.
+- **Integration Tests**: Added `LogLoadingIntegrationTest.kt` to verify end-to-end loading of single files and full directories, ensuring stable source ID and log entry counts.
+- **Terminology**: Aligned all testing documentation with the project's Ubiquitous Language (Workspace, Tab, Log Window, Filter).
+
+# 2026-05-22
+
+## 06:30
+
+### Refined Directory Monitoring UI
+
+Improved the visual feedback for directory-based log views when sub-files are added or removed.
+
+#### Changes:
+- **UI Logic**: Updated `KLogViewerScreen.kt` to ignore missing sub-files for color-coding in directory tabs and window headers.
+- **Visuals**: Directory tabs and window headers now only turn red/strike-through if the directory itself is missing or if there's a critical window error.
+- **Consistency**: Maintained orange color indicators for missing files in merged (non-directory) log views to preserve error visibility for static file sets.
+- **Testing**: Enhanced `DirectoryTabTest.kt` with verification that sub-file removal from a directory populates `missingSourceIds` but remains "directory-flagged" for UI rendering logic.
+
+## 11:46
+
+### Fix: SFTP Cancellation Deadlock and Core Abstractions
+
+Resolved a critical deadlock in SFTP tailing and introduced core abstractions for improved testability.
+
+#### Changes:
+- **SFTP Reliability**: Refactored `SftpLogSource` to ensure active closure of input streams and commands upon cancellation, preventing deadlocks when adding/replacing tabs.
+- **Abstractions**: Introduced `Clipboard` and `LocalFileSystem` interfaces to decouple the UI and Core from platform-specific implementations (AWT, Java IO).
+- **Testing**: Added a regression test for blocking remote reads and updated `DirectoryTabTest` to verify correct `missingSourceIds` handling.
+
+## 13:30
+
+### Architecture: Initial ViewModel and Core Refactoring
+
+Initiated a major cleanup of the ViewModel and Core layers to improve maintainability and testability.
+
+#### Changes:
+- **ViewModel Tidy-up**: Decomposed massive functions in `KLogViewerViewModel` into focused private handlers (ADR-026).
+- **SFTP Modularization**: Extracted SSH authentication, client pooling, and remote tailing into standalone services: `SshService`, `SshClientPool`, and `RemoteLogTailer` (ADR-028).
+- **UI Modularization**: Decomposed the `KLogViewerScreen` composable into smaller, single-responsibility components and extracted `RecentItemsDialog` (ADR-027).
+
+## 15:15
+
+### Architecture: Deep ViewModel Decomposition and Intent Categorization
+
+Completed a comprehensive decomposition of the ViewModel, transforming it into a thin orchestrator.
+
+#### Changes:
+- **Intent Categorization**: Grouped all 40+ MVI intents into logical categories (Workspace, UI, Filter, etc.), simplifying the ViewModel's dispatch logic (ADR-031).
+- **Loading Orchestration**: Extracted `LogLoadingCoordinator` and `WorkspaceLogLoader` to isolate the complex logic of file loading, heuristic detection, and connection management (ADR-030, ADR-032).
+- **Service Extraction**: Moved core ViewModel logic into focused services: `LogUpdateReducer`, `LogFilterService`, `RecentItemsManager`, `PreferencesStateMapper`, and `TabWindowController`.
+
+## 15:30
+
+### Architecture: Remote Directory Observation Refinement
+
+Refactored SFTP directory observation to reduce cyclomatic complexity and improve job management.
+
+#### Changes:
+- **Remote Observer**: Extracted `RemoteDirectoryFileObserver` from `SftpDirectoryLogSource` to orchestrate per-file observation jobs (ADR-033).
+- **Logic Simplification**: Focused `SftpDirectoryLogSource` on high-level directory scanning and state coordination, delegating file-level lifecycles to the new observer.
+- **Verification**: Verified the refactor with unit and integration tests, ensuring stable log aggregation during directory initialization.

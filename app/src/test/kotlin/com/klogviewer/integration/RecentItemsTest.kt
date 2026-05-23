@@ -3,11 +3,10 @@ package com.klogviewer.integration
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
-import com.klogviewer.ui.mvi.KLogViewerState
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -38,7 +37,7 @@ class RecentItemsTest {
         missingFile.createNewFile()
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = PreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir)
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -77,7 +76,7 @@ class RecentItemsTest {
         file2.createNewFile()
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = PreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir)
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -97,14 +96,14 @@ class RecentItemsTest {
     }
 
     @Test
-    fun `should show missing file dialog when clicking missing item and leave logs unchanged`(): Unit = runBlocking {
+    fun `should not show missing file dialog when clicking missing item but mark window as missing`(): Unit = runBlocking {
         val existingFile = File(tempDir, "existing.log")
         existingFile.writeText("some logs")
         
         val missingFile = File(tempDir, "missing.log")
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = PreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir)
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -119,15 +118,21 @@ class RecentItemsTest {
         
         // 2. Try to load missing file
         vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(missingFile.absolutePath)))
-        // Wait for cancellation to propagate
+        // In the UI, the RecentItemsDialog would call DismissDialog, but here we call LoadFiles directly.
+        // loadFilesIntoWindow no longer sets pendingDialog, so it should stay null or unchanged.
+        
+        // Wait for potential background processing
         kotlinx.coroutines.delay(200.milliseconds)
 
-        // 3. Verify dialog is shown and path is set
-        expectThat(vm.state.value.pendingDialog).isEqualTo(KLogViewerState.DialogType.MISSING_FILE)
-        expectThat(vm.state.value.missingPath).isEqualTo(missingFile.absolutePath)
+        // 3. Verify NO dialog is shown
+        expectThat(vm.state.value.pendingDialog).isNull()
         
-        // 4. Verify logs are UNCHANGED (they should still be from existingFile if we had any, or at least not cleared for the missing file)
-        // Wait, if I hadn't changed KLogViewerViewModel, it would have cleared logs first.
-        // Since I check existence before clearing, they should stay as they were.
+        // 4. Verify window is marked as missing
+        val window = vm.state.value.activeTab?.activeWindow
+        expectThat(window).isNotNull().and {
+            get { filePath }.isEqualTo(missingFile.absolutePath)
+            get { missingSourceIds }.contains(missingFile.absolutePath)
+            get { error }.isNotNull()
+        }
     }
 }

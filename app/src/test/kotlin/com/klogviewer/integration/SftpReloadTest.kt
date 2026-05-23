@@ -3,7 +3,7 @@ package com.klogviewer.integration
 import arrow.core.left
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
-import com.klogviewer.core.repository.PreferencesRepository
+import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.domain.repository.RemoteFileSystem
@@ -46,7 +46,7 @@ class SftpReloadTest {
     @Test
     fun `should mark SFTP source as missing if connection fails on startup`() = runBlocking {
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = PreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir)
         
         val sftpConfig = SftpConfig(
             name = "My Server",
@@ -84,13 +84,17 @@ class SftpReloadTest {
         val sftpSourceResult = LogFailure.FileError("Connection failed", sourceId = sftpUri).left()
         every { mockSftpSource.observeLogs(any(), any()) } returns kotlinx.coroutines.flow.flowOf(sftpSourceResult)
         
+        val logSourceFactory = mockk<com.klogviewer.domain.repository.LogSourceFactory>()
+        every { logSourceFactory.createSftpSource(any(), any()) } returns mockSftpSource
+        every { logSourceFactory.createSftpDirectorySource(any(), any()) } returns mockSftpSource
+
         // Use a real ViewModel but with mocked sources
         val viewModel = KLogViewerViewModel(
             logSource = mockk(),
             prefsRepository = prefsRepo,
             heuristicProbe = HeuristicProbe(ParserRegistry()),
             remoteFileSystem = remoteFileSystem,
-            sftpSourceFactory = { _, _ -> mockSftpSource }
+            logSourceFactory = logSourceFactory
         )
         
         // Wait for it to fail and mark as missing
