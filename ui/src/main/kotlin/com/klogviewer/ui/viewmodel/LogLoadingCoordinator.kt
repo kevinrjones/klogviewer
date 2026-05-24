@@ -86,13 +86,18 @@ class LogLoadingCoordinator(
 
     fun connectSftp(windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String, parserName: String? = null) {
         val config = SftpConfig(name, Host(host), Port(port), Username(user), auth, path)
-        val sftpSource = logSourceFactory.createSftpSource(config)
-        
         val oldJob = logJobs[windowId]
         
         logJobs[windowId] = scope.launch {
             oldJob?.cancelAndJoin()
             
+            val isDir = remoteFileSystem.isSftpDirectory(config, path)
+            if (isDir) {
+                connectSftpDirectory(windowId, config, path, parserName)
+                return@launch
+            }
+
+            val sftpSource = logSourceFactory.createSftpSource(config)
             val sftpUri = SftpUri(user, host, port, path, isDirectory = false)
             val sourceId = sftpUri.toString()
             
@@ -128,13 +133,7 @@ class LogLoadingCoordinator(
                 .collect { result ->
                     result.fold(
                         ifLeft = { error ->
-                            state.update { it.updateWindow(windowId) { w -> 
-                                w.copy(
-                                    error = error.message, 
-                                    isLoading = false,
-                                    missingSourceIds = w.missingSourceIds + sourceId
-                                ) 
-                            } }
+                            handleLogLoadingFailure(windowId, sourceId, error)
                         },
                         ifRight = { update ->
                             onHandleLogUpdate(windowId, update, sourceId)
@@ -145,13 +144,18 @@ class LogLoadingCoordinator(
     }
 
     fun connectS3(windowId: String, config: S3Config, parserName: String? = null) {
-        val s3Source = logSourceFactory.createS3Source(config)
-        
         val oldJob = logJobs[windowId]
         
         logJobs[windowId] = scope.launch {
             oldJob?.cancelAndJoin()
             
+            val isDir = remoteFileSystem.isS3Directory(config, config.prefix)
+            if (isDir) {
+                connectS3Directory(windowId, config, config.prefix, parserName)
+                return@launch
+            }
+            
+            val s3Source = logSourceFactory.createS3Source(config)
             val s3Uri = S3Uri(config.bucket, config.prefix, isDirectory = false)
             val sourceId = s3Uri.toString()
             
@@ -171,7 +175,7 @@ class LogLoadingCoordinator(
             }
             onSavePreferences()
 
-            val fileName = config.prefix.substringAfterLast('/')
+            val fileName = config.prefix.removeSuffix("/").substringAfterLast('/')
             state.update { currentState ->
                 currentState.copy(tabs = currentState.tabs.map { tab ->
                     if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) {
@@ -186,13 +190,7 @@ class LogLoadingCoordinator(
                 .collect { result ->
                     result.fold(
                         ifLeft = { error ->
-                            state.update { it.updateWindow(windowId) { w -> 
-                                w.copy(
-                                    error = error.message, 
-                                    isLoading = false,
-                                    missingSourceIds = w.missingSourceIds + sourceId
-                                ) 
-                            } }
+                            handleLogLoadingFailure(windowId, sourceId, error)
                         },
                         ifRight = { update ->
                             onHandleLogUpdate(windowId, update, sourceId)
@@ -213,7 +211,7 @@ class LogLoadingCoordinator(
                         isLoading = true,
                         error = null,
                         filePath = keys.joinToString(", "),
-                        sourceIds = keys.map { "s3://${config.bucket}$it" },
+                        sourceIds = keys.map { "s3://${config.bucket}/${it.removePrefix("/")}" },
                         logs = emptyList(),
                         columns = listOf("Timestamp", "Level", "Content"),
                         isDirectory = false
@@ -235,7 +233,7 @@ class LogLoadingCoordinator(
             
             val flows = keys.map { key ->
                 val source = logSourceFactory.createS3Source(config)
-                val sId = "s3://${config.bucket}$key"
+                val sId = "s3://${config.bucket}/${key.removePrefix("/")}"
                 source.observeLogs(LogFilePath(key), parser).map { result ->
                     result.fold(
                         { l -> (l to sId).left() },
@@ -248,16 +246,7 @@ class LogLoadingCoordinator(
                 result.fold(
                     ifLeft = { pair ->
                         val (failure, sId) = pair
-                        state.update { it.updateWindow(windowId) { w -> 
-                            val sid = failure.sourceId ?: sId
-                            val isCritical = sid == w.filePath
-                            val newError = if (isCritical) failure.message else w.error
-                            w.copy(
-                                error = newError, 
-                                isLoading = false,
-                                missingSourceIds = w.missingSourceIds + sid
-                            ) 
-                        } }
+                        handleLogLoadingFailure(windowId, failure.sourceId ?: sId, failure)
                     },
                     ifRight = { pair ->
                         val (update, sId) = pair
@@ -307,13 +296,7 @@ class LogLoadingCoordinator(
                 .collect { result ->
                     result.fold(
                         ifLeft = { error ->
-                            state.update { it.updateWindow(windowId) { w -> 
-                                w.copy(
-                                    error = error.message, 
-                                    isLoading = false,
-                                    missingSourceIds = w.missingSourceIds + sourceId
-                                ) 
-                            } }
+                            handleLogLoadingFailure(windowId, sourceId, error)
                         },
                         ifRight = { update ->
                             onHandleLogUpdate(windowId, update, sourceId)
@@ -371,16 +354,7 @@ class LogLoadingCoordinator(
                 result.fold(
                     ifLeft = { pair ->
                         val (failure, sId) = pair
-                        state.update { it.updateWindow(windowId) { w -> 
-                            val sid = failure.sourceId ?: sId
-                            val isCritical = sid == w.filePath
-                            val newError = if (isCritical) failure.message else w.error
-                            w.copy(
-                                error = newError, 
-                                isLoading = false,
-                                missingSourceIds = w.missingSourceIds + sid
-                            ) 
-                        } }
+                        handleLogLoadingFailure(windowId, failure.sourceId ?: sId, failure)
                     },
                     ifRight = { pair ->
                         val (update, sId) = pair
@@ -431,13 +405,7 @@ class LogLoadingCoordinator(
                 .collect { result ->
                     result.fold(
                         ifLeft = { error ->
-                            state.update { it.updateWindow(windowId) { w -> 
-                                w.copy(
-                                    error = error.message, 
-                                    isLoading = false,
-                                    missingSourceIds = w.missingSourceIds + sourceId
-                                ) 
-                            } }
+                            handleLogLoadingFailure(windowId, sourceId, error)
                         },
                         ifRight = { update ->
                             onHandleLogUpdate(windowId, update, sourceId)
@@ -534,21 +502,31 @@ class LogLoadingCoordinator(
         }
     }
 
-    private suspend fun handleLogLoadingFailure(windowId: String, path: String, failure: LogFailure) {
-        val message = failure.message
-        logger.error { "Failed to load logs from $path: $message" }
+    internal suspend fun handleLogLoadingFailure(windowId: String, path: String, failure: LogFailure) {
+        val originalMessage = failure.message
+        val isRemote = path.startsWith("s3://") || path.startsWith("sftp://") || 
+                       (failure.sourceId?.startsWith("s3://") == true) || 
+                       (failure.sourceId?.startsWith("sftp://") == true)
+        
+        val displayMessage = if (isRemote) {
+            "Sorry, I was not able to connect. See the log file for more details"
+        } else {
+            originalMessage
+        }
+
+        logger.error { "Failed to load logs from $path: $originalMessage" }
         state.update { currentState ->
             currentState.updateWindow(windowId) { window ->
                 val sourceId = failure.sourceId ?: path
                 val newMissing = window.missingSourceIds + sourceId
                 val isCritical = sourceId == window.filePath || path == window.filePath
-                val newError = if (isCritical) message else window.error
+                val newError = if (isCritical) displayMessage else window.error
                 window.copy(isLoading = false, error = newError, missingSourceIds = newMissing)
             }
         }
         val currentWindow = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }
         if (currentWindow?.error != null || currentWindow?.logs?.isEmpty() == true) {
-            onShowError(message)
+            onShowError(displayMessage)
         }
     }
 }

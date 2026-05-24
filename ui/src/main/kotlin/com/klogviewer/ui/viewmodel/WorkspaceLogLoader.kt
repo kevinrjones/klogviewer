@@ -101,10 +101,14 @@ class WorkspaceLogLoader(
         val config = findSftpConfig(path)
         val sftpUri = SftpUri.parse(path)
         return if (config != null && sftpUri != null) {
-            if (sftpUri.isDirectory) {
-                logSourceFactory.createSftpDirectorySource(config, remoteFileSystem).observeLogs(LogFilePath(sftpUri.path))
-            } else {
-                logSourceFactory.createSftpSource(config).observeLogs(LogFilePath(sftpUri.path))
+            flow {
+                val isDir = sftpUri.isDirectory || remoteFileSystem.isSftpDirectory(config, sftpUri.path)
+                val source = if (isDir) {
+                    logSourceFactory.createSftpDirectorySource(config, remoteFileSystem)
+                } else {
+                    logSourceFactory.createSftpSource(config)
+                }
+                emitAll(source.observeLogs(LogFilePath(sftpUri.path)))
             }
         } else {
             flowOf(LogFailure.FileError("SFTP connection not found for $path", sourceId = path).left())
@@ -115,10 +119,14 @@ class WorkspaceLogLoader(
         val config = findS3Config(path)
         val s3Uri = S3Uri.parse(path)
         return if (config != null && s3Uri != null) {
-            if (s3Uri.isDirectory) {
-                logSourceFactory.createS3DirectorySource(config, remoteFileSystem).observeLogs(LogFilePath(s3Uri.key))
-            } else {
-                logSourceFactory.createS3Source(config).observeLogs(LogFilePath(s3Uri.key))
+            flow {
+                val isDir = s3Uri.isDirectory || remoteFileSystem.isS3Directory(config, s3Uri.key)
+                val source = if (isDir) {
+                    logSourceFactory.createS3DirectorySource(config, remoteFileSystem)
+                } else {
+                    logSourceFactory.createS3Source(config)
+                }
+                emitAll(source.observeLogs(LogFilePath(s3Uri.key)))
             }
         } else {
             flowOf(LogFailure.FileError("S3 connection not found for $path", sourceId = path).left())

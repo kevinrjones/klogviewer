@@ -8,8 +8,7 @@ import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.domain.repository.RemoteFileSystem
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
@@ -79,6 +78,7 @@ class SftpReloadTest {
         prefsRepo.save(initialPrefs)
         
         val remoteFileSystem = mockk<RemoteFileSystem>()
+        coEvery { remoteFileSystem.isSftpDirectory(any(), any()) } returns false
         val mockSftpSource = mockk<LogSource>()
         
         val sftpSourceResult = LogFailure.FileError("Connection failed", sourceId = sftpUri).left()

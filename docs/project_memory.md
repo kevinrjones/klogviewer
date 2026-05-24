@@ -8,6 +8,8 @@
 - Deepened architecture with reactive `LogSource` streaming.
 - Native UI enhancements for file browsing.
 - Project renamed to KLogViewer (from LogViewer) across all modules, packages, and documentation.
+- Robust S3/SFTP directory detection and URI standardization.
+- Fixed S3 Flow context preservation and polling logic.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -1797,3 +1799,64 @@ For each sprint/task
 **Key decisions**: Followed the SFTP pattern for consistency; details are saved upon any connection attempt (file, directory, or multiple files).
 **Gotchas**: None.
 **Test coverage areas**: `S3PersistenceTest`.
+
+**Title**: S3 Directory Detection Fix and URI Robustness
+**Date/time completed**: 2026-05-24 11:45
+**What was shipped**:
+- Fixed S3/SFTP directory detection by trusting trailing slashes.
+- Improved S3DirectoryLogSource to handle prefixes without trailing slashes.
+- Standardized URI construction across S3 and SFTP to ensure consistent slashes.
+- Fixed a Flow invariant violation in S3LogSource.
+**Key decisions**:
+- Implemented a shortcut in `isS3Directory` to treat any path ending in `/` as a directory, bypassing remote listing.
+- Updated all `s3://` and `sftp://` URI generation to use a uniform template: `scheme://bucket_or_user@host:port/path`.
+**Gotchas**:
+- S3 `headObject` on a prefix (without an object at that key) returns 404, so we must correctly identify directories before calling it.
+- Flow emissions must happen in the original collector's context; moved `emit` out of AWS SDK callback blocks.
+**Test coverage areas**: `S3LogSourceTest`, `S3DirectoryDetectionTest`, `S3DirectoryLogSourcePrefixTest`.
+
+**S3 Error Handling & Dialogs**
+**2026-05-24 11:35**
+**What was shipped**
+- Improved S3 error handling to stop polling when an object is not found or inaccessible.
+- Implemented error dialogs instead of snackbars for critical log loading failures.
+- Updated `DialogProvider` to support message dialogs.
+**Key decisions**
+- Decided to stop polling loops in `S3LogSource`, `S3DirectoryLogSource`, and `SftpDirectoryLogSource` upon encountering fatal errors to prevent unnecessary resource consumption and log spam.
+- Migrated error reporting from snackbars to modal dialogs to ensure users don't miss connection or file access errors.
+**Gotchas**
+- `S3LogSource` previously swallowed `headObject` 404 errors, causing it to hang silently if the initial load failed.
+**Test coverage areas**
+- `S3LogSourceTest`: Verified that polling stops and emits error on 404.
+- UI: `DialogProvider` and `KLogViewerScreen` now wired for error dialogs.
+
+**S3/SFTP Connection Error Message Improvement**
+**2026-05-24 11:55**
+**What was shipped**
+- User-friendly error messages for remote connection failures.
+**Key decisions**
+- Centralized error message replacement in `LogLoadingCoordinator.handleLogLoadingFailure`.
+- Use a generic message "Sorry, I was not able to connect. See the log file for more details" for all remote sources (S3/SFTP).
+- Detailed error messages are still logged to the system logs for troubleshooting.
+**Gotchas**
+- Ensure that local file errors (like "File not found") are not replaced by the generic connection message.
+**Test coverage areas**
+- `LogLoadingCoordinatorErrorTest` (temporary) verified the mapping logic for both remote and local sources.
+
+**S3/SFTP Trailing Slash Fix**
+**2026-05-24 12:15**
+**What was shipped**
+- Fixed a bug where trailing slashes were being stripped from S3 and SFTP URIs, causing 404 errors for prefixes/directories.
+- Updated `S3Uri` and `SftpUri` to properly preserve and normalize trailing slashes for directory-type URIs.
+- Added unit tests for `S3Uri` and `SftpUri` in the `domain` module.
+- Updated integration tests (`SftpBrowsingTest`, `SftpReloadTest`) to handle newly added directory detection calls.
+**Key decisions**
+- Modified `S3Uri.parse` to stop stripping trailing slashes from the key.
+- Updated `toString()` for both `S3Uri` and `SftpUri` to ensure a trailing slash is appended if `isDirectory` is true.
+**Gotchas**
+- `S3Uri.parse` was stripping slashes, which caused `WorkspaceLogLoader` to pass incorrect paths to log sources after a reload.
+- Adding default methods to mocked interfaces (`RemoteFileSystem`) required updating existing tests to use `callOriginal()` or mock the new methods.
+**Test coverage areas**
+- `S3UriTest`, `SftpUriTest` (new unit tests).
+- `SftpBrowsingTest`, `SftpReloadTest` (updated integration tests).
+- `S3DirectoryDetectionTest` (verified directory detection logic).

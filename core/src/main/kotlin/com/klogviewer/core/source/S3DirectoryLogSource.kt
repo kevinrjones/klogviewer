@@ -36,20 +36,22 @@ class S3DirectoryLogSource(
         )
 
         try {
-            val directorySourceId = "s3://${config.bucket}${path.value}"
+            val effectivePrefix = if (path.value.endsWith("/") || path.value.isEmpty()) path.value else "${path.value}/"
+            val directorySourceId = "s3://${config.bucket}/${effectivePrefix.removePrefix("/")}"
             var firstScanPerformed = false
             var currentFilePaths = emptyList<String>()
             var initialized = false
 
             while (isActive) {
                 if (!firstScanPerformed || initialized) {
-                    val result = remoteFileSystem.listS3Objects(config, path.value)
+                    val result = remoteFileSystem.listS3Objects(config, effectivePrefix)
                     firstScanPerformed = true
 
                     result.fold(
                         { failure ->
                             logger.error { "Error scanning S3 prefix: $failure" }
                             send(failure.left())
+                            return@channelFlow
                         },
                         { discoveredObjects ->
                             currentFilePaths = discoveredObjects.filter { !it.isDirectory }.map { it.path }

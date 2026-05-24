@@ -41,14 +41,15 @@ class SftpDirectoryLogSource(
 
         try {
             val sourceIdBase = "sftp://${config.username.value}@${config.host.value}:${config.port.value}"
-            val directorySourceId = "$sourceIdBase${path.value}"
+            val effectivePath = if (path.value.startsWith("/")) path.value else "/${path.value}"
+            val directorySourceId = "$sourceIdBase${effectivePath}"
             var firstScanPerformed = false
             var currentFilePaths = emptyList<String>()
             var initialized = false
 
             while (isActive) {
                 if (!firstScanPerformed || initialized) {
-                    val result = remoteFileSystem.listFiles(config, path.value)
+                    val result = remoteFileSystem.listFiles(config, effectivePath)
                     firstScanPerformed = true
 
                     result.fold(
@@ -59,6 +60,7 @@ class SftpDirectoryLogSource(
                                 is LogFailure.ParsingError -> failure.copy(sourceId = directorySourceId)
                             }
                             send(failureWithSource.left())
+                            return@channelFlow
                         },
                         { discoveredFiles ->
                             currentFilePaths = discoveredFiles.filter { !it.isDirectory }.map { it.path }

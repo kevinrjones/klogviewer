@@ -57,6 +57,8 @@ class SftpBrowsingTest {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         every { logSourceFactory.createSftpSource(any(), any()) } returns mockSftpSource
         every { logSourceFactory.createSftpDirectorySource(any(), any()) } returns mockSftpSource
+        coEvery { remoteFileSystem.isSftpDirectory(any(), any()) } answers { callOriginal() }
+        coEvery { remoteFileSystem.isS3Directory(any(), any()) } answers { callOriginal() }
     }
 
     @AfterEach

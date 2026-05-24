@@ -36,7 +36,7 @@ class S3LogSource(
             MultilineProcessor(effectiveParser.template)
         } else null
 
-        val sourceId = "s3://${config.bucket}${path.value}"
+        val sourceId = "s3://${config.bucket}/${path.value.removePrefix("/")}"
         logger.info { "Started observing S3 log object: $sourceId using ${effectiveParser::class.simpleName}" }
 
         val client = try {
@@ -62,11 +62,13 @@ class S3LogSource(
                         })
                     } catch (e: Exception) {
                         if (e is CancellationException) throw e
-                        logger.warn { "S3 object not found or inaccessible: $sourceId. Error: ${e.message}" }
-                        null
+                        val message = "S3 object not found or inaccessible: $sourceId. Error: ${e.message}"
+                        logger.warn { message }
+                        emit(LogFailure.FileError(message, sourceId).left())
+                        return@flow
                     }
 
-                    val currentSize = headResponse?.contentLength ?: 0L
+                    val currentSize = headResponse.contentLength ?: 0L
 
                     if (currentSize > lastSize) {
                         val rangeVal = "bytes=$lastSize-${currentSize - 1}"

@@ -32,7 +32,7 @@ fun main() {
         val factory = DefaultLogSourceFactory()
         val clipboard = AwtClipboard()
         val localFileSystem = JavaLocalFileSystem()
-        val remoteFileSystem = SftpFileSystem()
+        val remoteFileSystem = UnifiedRemoteFileSystem()
         
         val viewModel = KLogViewerViewModel(
             logSource = source, 

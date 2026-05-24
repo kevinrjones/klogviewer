@@ -76,8 +76,7 @@ class S3LogSourceTest {
     }
 
     @Test
-    @Timeout(5)
-    fun `should handle object not found gracefully`() = runTest {
+    fun `should handle object not found by emitting error and stopping`() = runTest {
         // Arrange
         val config = S3Config("test", "my-bucket", "us-east-1", S3Auth.DefaultChain, "/logs/app.log")
         val mockClient = mockk<S3Client>(relaxed = true)
@@ -86,14 +85,21 @@ class S3LogSourceTest {
         coEvery { mockProvider.createClient(any()) } returns mockClient
         coEvery { mockClient.headObject(any<HeadObjectRequest>()) } throws Exception("404 Not Found")
         
-        val source = S3LogSource(config, SimpleLogParser(), s3ClientProvider = mockProvider, pollingInterval = 10.milliseconds)
+        val source = S3LogSource(
+            config, 
+            SimpleLogParser(), 
+            s3ClientProvider = mockProvider, 
+            pollingInterval = 10.milliseconds,
+            dispatcher = UnconfinedTestDispatcher(testScheduler)
+        )
 
-        // Act & Assert
-        // Use withTimeout from kotlinx.coroutines to ensure we don't wait forever in virtual time
-        val results = withTimeoutOrNull(200.milliseconds) {
-            source.observeLogs(LogFilePath("/logs/app.log")).take(1).toList()
-        }
+        // Act
+        val results = source.observeLogs(LogFilePath("/logs/app.log")).toList()
         
-        expectThat(results).isEqualTo(null)
+        // Assert
+        expectThat(results).hasSize(1)
+        expectThat(results[0].isLeft()).isEqualTo(true)
+        val failure = (results[0] as Either.Left).value as LogFailure.FileError
+        expectThat(failure.message).isEqualTo("S3 object not found or inaccessible: s3://my-bucket/logs/app.log. Error: 404 Not Found")
     }
 }

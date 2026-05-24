@@ -50,7 +50,7 @@ fun KLogViewerScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is com.klogviewer.ui.mvi.KLogViewerEvent.ShowError -> {
-                    scaffoldState.snackbarHostState.showSnackbar(event.message)
+                    dialogProvider.showMessageDialog("Error", event.message)
                 }
             }
         }

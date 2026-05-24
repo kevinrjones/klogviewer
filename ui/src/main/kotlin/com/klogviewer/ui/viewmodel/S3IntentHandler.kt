@@ -52,7 +52,7 @@ class S3IntentHandler(
     private fun handleConnectMultipleS3(intent: KLogViewerIntent.ConnectMultipleS3) {
         saveS3Connection(intent.config)
         val windowId = state.value.activeTab?.activeWindowId ?: "default-window"
-        val newUris = intent.keys.map { "s3://${intent.config.bucket}$it" }
+        val newUris = intent.keys.map { "s3://${intent.config.bucket}/${it.removePrefix("/")}" }
         
         if (intent.addToWorkspace) {
             val currentPaths = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }?.sourceIds ?: emptyList()

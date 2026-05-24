@@ -447,37 +447,38 @@ Expected flow:
 
 Use this if the application supports watching an S3 prefix such as `logs/`.
 
-- [ ] In the application, open or monitor the prefix:
+- [x] In the application, open or monitor the prefix:
 ```text 
 logs/
 ``` 
 
-- [ ] On EC2, create another log file:
+- [x] On EC2, create another log file:
 ```bash 
-cd ~/klogviewer-test touch app-2.log
+cd ~/klogviewer-test 
+touch app-2.log
 ``` 
 
-- [ ] Upload the new file:
+- [x] Upload the new file:
 ```bash 
 aws s3 cp app-2.log s3://klogviewer-test-logs-yourname/logs/app-2.log
 ``` 
 
-- [ ] Append a line to the second log file:
+- [x] Append a line to the second log file:
 ```bash 
 echo "$(date --iso-8601=seconds) WARN Message from app-2" >> app-2.log
 ``` 
 
-- [ ] Upload the updated second log file:
+- [x] Upload the updated second log file:
 ```bash 
-aws s3 cp app-2.log s3://klogviewer-test-logs-yourname/logs/app-2.log
+aws s3 cp app-2.log s3://klogviewer-test-logs-kevin/logs/app-2.log
 ``` 
 
-- [ ] Confirm the application detects the new object:
+- [x] Confirm the application detects the new object:
 ```text 
 logs/app-2.log
 ``` 
 
-- [ ] Confirm the application displays log lines from the new object.
+- [x] Confirm the application displays log lines from the new object.
 
 ---
 
