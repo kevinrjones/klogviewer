@@ -83,6 +83,7 @@
 - Refined Directory Monitoring UI: Improved visual feedback for directory views by ignoring sub-file removal for color-coding. Tabs and window headers now only turn red if the directory itself is missing, while merged file views retain orange warnings for missing files.
 - SFTP cancellation reliability: fixed a remote tail cancellation deadlock that prevented adding a second SFTP source to an active tab/workspace.
 - S3 Log Source: Implemented native support for tailing logs from AWS S3 buckets using the Kotlin SDK, with flexible authentication and session persistence.
+- S3 Connection Persistence: Implemented automatic saving of S3 connection details in user preferences, matching the SFTP behavior for a better user experience.
 - Fix: Intermittent UI Test Failures: Resolved flakiness in the UI test suite by implementing robust synchronization via `waitUntil` in robots and tests, ensuring assertions wait for asynchronous MVI state changes.
 
 **Gotchas**
@@ -1789,3 +1790,10 @@ For each sprint/task
 **Key decisions**: Replaced all immediate assertions on asynchronous UI state with `waitUntil` blocks.
 **Gotchas**: Some flakiness was due to MVI intents being processed in the background without explicit UI feedback before assertion.
 **Test coverage areas**: `DirectoryTabTest`, `LogListRobot`.
+
+**Title**: S3 Connection Persistence
+**Date/time completed**: 2026-05-24 10:45
+**What was shipped**: Automatic saving of S3 connection details.
+**Key decisions**: Followed the SFTP pattern for consistency; details are saved upon any connection attempt (file, directory, or multiple files).
+**Gotchas**: None.
+**Test coverage areas**: `S3PersistenceTest`.

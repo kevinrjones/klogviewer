@@ -28,6 +28,7 @@ class KLogViewerComplexUiTest {
     private val prefsRepository = mockk<JsonPreferencesRepository>(relaxed = true)
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
     private val dialogProvider = mockk<DialogProvider>(relaxed = true)
+    private lateinit var viewModel: KLogViewerViewModel
 
     private fun ComposeUiTest.setupApp(initialState: UserPreferences? = null) {
         val prefs = initialState ?: UserPreferences(
@@ -35,7 +36,10 @@ class KLogViewerComplexUiTest {
                 TabPreference(
                     id = "tab1",
                     title = "Test Tab",
-                    windows = listOf(WindowPreference(id = "window1", filePath = "")),
+                    windows = listOf(
+                        WindowPreference(id = "window1", filePath = "test.log", columns = listOf("Timestamp", "Level", "Message")),
+                        WindowPreference(id = "window2", filePath = "test.log", columns = listOf("Timestamp", "Level", "Message"))
+                    ),
                     activeWindowId = "window1"
                 )
             ),
@@ -43,7 +47,7 @@ class KLogViewerComplexUiTest {
         )
         every { prefsRepository.load() } returns prefs
         
-        val viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe)
+        viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe)
 
         setContent {
             KLogViewerScreen(viewModel, dialogProvider)
@@ -62,26 +66,17 @@ class KLogViewerComplexUiTest {
     fun givenSplitPane_whenColumnResized_thenOnlyTargetWindowIsAffected() = runComposeUiTest {
         setupApp()
 
-        // 1. Split horizontally
-        mainRobot {
-            splitHorizontal()
-        }
-        
+        // 0. Load some logs to ensure LogList is fully rendered
+        val testEntries = listOf(LogEntry(LogTimestamp("10:00"), LogLevel.INFO, LogContent("Test")))
+        val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)
+        handleLogUpdateMethod.isAccessible = true
+        handleLogUpdateMethod.invoke(viewModel, "window1", LogUpdate.Initial(testEntries), "test.log")
+        handleLogUpdateMethod.invoke(viewModel, "window2", LogUpdate.Initial(testEntries), "test.log")
         waitForIdle()
 
         // 2. Identify windows
-        val windowNodes = onAllNodes(
-            SemanticsMatcher("Has window tag") { node ->
-                node.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("window_") == true
-            }
-        ).fetchSemanticsNodes()
-        
-        val windowIds = windowNodes.map { node -> 
-            node.config[SemanticsProperties.TestTag].removePrefix("window_") 
-        }
-        
-        val window1Id = windowIds.find { it == "window1" }!!
-        val window2Id = windowIds.find { it != "window1" }!!
+        val window1Id = "window1"
+        val window2Id = "window2"
 
         // 3. Verify initial width (Level = 80dp)
         window(window1Id) {

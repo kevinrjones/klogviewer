@@ -88,7 +88,7 @@ fun FilterBar(
                     icon = Icons.Default.AddCircle, 
                     tooltip = "Add Logs to Workspace (Interleave)", 
                     onClick = { menuExpanded = true },
-                    testTag = "add_to_workspace"
+                    testTag = "add_file_to_workspace"
                 )
                 
                 DropdownMenu(

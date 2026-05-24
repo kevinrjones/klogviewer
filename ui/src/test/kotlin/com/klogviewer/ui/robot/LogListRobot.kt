@@ -68,7 +68,11 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
     }
 
     fun assertColumnWidth(column: String, expectedWidth: Dp) {
-        composeTestRule.onNode(matcher("column_header_$column"), useUnmergedTree = true)
+        val nodeMatcher = matcher("column_header_$column")
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodes(nodeMatcher, useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNode(nodeMatcher, useUnmergedTree = true)
             .assertWidthIsEqualTo(expectedWidth)
     }
 }

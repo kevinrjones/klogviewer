@@ -29,22 +29,13 @@ class S3IntentHandler(
             is KLogViewerIntent.BrowseS3 -> {
                 onHandleBrowse(intent.config, intent.prefix)
             }
-            is KLogViewerIntent.SaveS3Connection -> {
-                state.update { 
-                    it.copy(s3Connections = it.s3Connections.filter { c -> c.name != intent.config.name } + intent.config)
-                }
-                onSavePreferences()
-            }
-            is KLogViewerIntent.DeleteS3Connection -> {
-                state.update {
-                    it.copy(s3Connections = it.s3Connections.filter { c -> c.name != intent.name })
-                }
-                onSavePreferences()
-            }
+            is KLogViewerIntent.SaveS3Connection -> handleSaveS3Connection(intent)
+            is KLogViewerIntent.DeleteS3Connection -> handleDeleteS3Connection(intent)
         }
     }
 
     private fun handleConnectS3(intent: KLogViewerIntent.ConnectS3) {
+        saveS3Connection(intent.config)
         val windowId = state.value.activeTab?.activeWindowId ?: "default-window"
         val s3Uri = com.klogviewer.domain.model.S3Uri(intent.config.bucket, intent.config.prefix, isDirectory = false).toString()
         
@@ -59,6 +50,7 @@ class S3IntentHandler(
     }
 
     private fun handleConnectMultipleS3(intent: KLogViewerIntent.ConnectMultipleS3) {
+        saveS3Connection(intent.config)
         val windowId = state.value.activeTab?.activeWindowId ?: "default-window"
         val newUris = intent.keys.map { "s3://${intent.config.bucket}$it" }
         
@@ -73,6 +65,7 @@ class S3IntentHandler(
     }
 
     private fun handleConnectS3Directory(intent: KLogViewerIntent.ConnectS3Directory) {
+        saveS3Connection(intent.config)
         val windowId = state.value.activeTab?.activeWindowId ?: "default-window"
         val s3Uri = com.klogviewer.domain.model.S3Uri(intent.config.bucket, intent.prefix, isDirectory = true).toString()
         
@@ -84,5 +77,25 @@ class S3IntentHandler(
             onConnectS3Directory(windowId, intent.config, intent.prefix)
         }
         state.update { recentItemsManager.updateRecentItems(it.copy(pendingDialog = null), listOf(s3Uri)) }
+    }
+
+    private fun handleSaveS3Connection(intent: KLogViewerIntent.SaveS3Connection) {
+        saveS3Connection(intent.config)
+    }
+
+    private fun handleDeleteS3Connection(intent: KLogViewerIntent.DeleteS3Connection) {
+        state.update {
+            it.copy(s3Connections = it.s3Connections.filter { c -> c.name != intent.name })
+        }
+        onSavePreferences()
+    }
+
+    private fun saveS3Connection(config: S3Config) {
+        state.update { currentState ->
+            val updatedList = (currentState.s3Connections.filter { it.name != config.name } + config)
+                .sortedBy { it.name }
+            currentState.copy(s3Connections = updatedList)
+        }
+        onSavePreferences()
     }
 }

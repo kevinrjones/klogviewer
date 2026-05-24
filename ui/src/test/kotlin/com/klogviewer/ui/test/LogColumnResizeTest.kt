@@ -31,7 +31,7 @@ class LogColumnResizeTest {
                 TabPreference(
                     id = "tab1",
                     title = "Test Tab",
-                    windows = listOf(WindowPreference(id = "window1", filePath = "")),
+                    windows = listOf(WindowPreference(id = "window1", filePath = "test.log")),
                     activeWindowId = "window1"
                 )
             ),
@@ -50,18 +50,24 @@ class LogColumnResizeTest {
     fun givenApp_whenLineNumberColumnExists_thenItShouldBeResizable() = runComposeUiTest {
         setupApp()
         
-        logList {
-            // Verify Line # column exists and has a resize handle
-            onNode(hasTestTag("resize_handle_Line #"), useUnmergedTree = true).assertExists()
+        // Verify log list exists
+        onNode(hasTestTag("log_list_window1"), useUnmergedTree = true).assertExists()
+
+        logList(windowId = "window1") {
+            // Verify Line # column exists
+            onNode(hasTestTag("column_header_gutter"), useUnmergedTree = true).assertExists()
+
+            // Verify Line # column has a resize handle
+            onNode(hasTestTag("resize_handle_gutter"), useUnmergedTree = true).assertExists()
             
-            assertColumnWidth("Line #", 50.dp)
+            assertColumnWidth("gutter", 50.dp)
             
-            resizeColumn("Line #", 20f)
+            resizeColumn("gutter", 20f)
             
             waitForIdle()
             
             // Check that width changed
-            val node = onNode(hasTestTag("column_header_Line #"), useUnmergedTree = true).fetchSemanticsNode()
+            val node = onNode(hasTestTag("column_header_gutter"), useUnmergedTree = true).fetchSemanticsNode()
             val width = with(density) { node.size.width.toDp() }
             assert(width != 50.dp) { "Line # column width should have changed, but is still $width" }
         }

@@ -548,7 +548,8 @@ private fun LogWindowItem(
                                 width
                             )
                         )
-                    }
+                    },
+                    windowId = window.id
                 )
             }
         }
