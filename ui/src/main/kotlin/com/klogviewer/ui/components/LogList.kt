@@ -52,6 +52,7 @@ fun LogList(
     onEntryClick: (LogEntry) -> Unit = {},
     onToggleSelection: (Int, Boolean, Boolean) -> Unit = { _, _, _ -> },
     onColumnResize: (String, Int) -> Unit = { _, _ -> },
+    windowId: String? = null,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
@@ -68,8 +69,9 @@ fun LogList(
     val displayColumns = if (columns.isEmpty()) listOf("Timestamp", "Level", "Message") else columns
 
     val gutterWidth = getColumnWidth("Line #", columnWidths, sourceIds)
+    val logListTag = if (windowId != null) "log_list_$windowId" else "log_list"
 
-    BoxWithConstraints(modifier = modifier.fillMaxSize().testTag("log_list")) {
+    BoxWithConstraints(modifier = modifier.fillMaxSize().testTag(logListTag)) {
         val viewportWidth = maxWidth
         val minContentWidth = if (widestRowWidth > viewportWidth) widestRowWidth else viewportWidth
         Row(modifier = Modifier.fillMaxSize()) {
@@ -86,6 +88,7 @@ fun LogList(
                         gutterWidth = gutterWidth,
                         sourceIds = sourceIds,
                         onColumnResize = onColumnResize,
+                        windowId = windowId,
                         modifier = Modifier.fillMaxWidth()
                     )
                     LazyColumn(
@@ -144,6 +147,7 @@ fun LogListHeader(
     gutterWidth: Dp,
     sourceIds: List<String> = emptyList(),
     onColumnResize: (String, Int) -> Unit,
+    windowId: String? = null,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -158,7 +162,7 @@ fun LogListHeader(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier.width(gutterWidth).testTag("column_header_Line #")
+                modifier = Modifier.width(gutterWidth).testTag("column_header_gutter")
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
@@ -166,7 +170,12 @@ fun LogListHeader(
                         style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
                         modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
                     )
-                    ResizeHandle(column = "Line #", currentWidth = gutterWidth, onColumnResize = onColumnResize)
+                    ResizeHandle(
+                        column = "Line #",
+                        currentWidth = gutterWidth,
+                        onColumnResize = onColumnResize,
+                        testTag = "resize_handle_gutter"
+                    )
                 }
             }
             
@@ -183,8 +192,11 @@ fun LogListHeader(
                     Modifier.width(widthDp)
                 }
 
+                val headerTag = "column_header_$column"
+                val handleTag = "resize_handle_$column"
+
                 Box(
-                    modifier = columnModifier.testTag("column_header_$column")
+                    modifier = columnModifier.testTag(headerTag)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
@@ -195,7 +207,12 @@ fun LogListHeader(
                             overflow = TextOverflow.Ellipsis
                         )
                         
-                        ResizeHandle(column = column, currentWidth = widthDp, onColumnResize = onColumnResize)
+                        ResizeHandle(
+                            column = column,
+                            currentWidth = widthDp,
+                            onColumnResize = onColumnResize,
+                            testTag = handleTag
+                        )
                     }
                 }
             }
@@ -207,14 +224,15 @@ fun LogListHeader(
 private fun ResizeHandle(
     column: String,
     currentWidth: Dp,
-    onColumnResize: (String, Int) -> Unit
+    onColumnResize: (String, Int) -> Unit,
+    testTag: String? = null
 ) {
     val density = LocalDensity.current
     Box(
         modifier = Modifier
             .width(8.dp)
             .fillMaxHeight()
-            .testTag("resize_handle_$column")
+            .testTag(testTag ?: "resize_handle_$column")
             .pointerHoverIcon(PointerIcon(java.awt.Cursor(java.awt.Cursor.E_RESIZE_CURSOR)))
             .pointerInput(column) {
                 var startWidth = 0.dp

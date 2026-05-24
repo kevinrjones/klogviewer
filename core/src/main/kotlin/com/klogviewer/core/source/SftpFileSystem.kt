@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.klogviewer.domain.model.LogFailure
 import com.klogviewer.domain.model.RemoteFile
+import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.domain.repository.RemoteFileSystem
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -49,5 +50,9 @@ class SftpFileSystem(
             logger.error(e) { "Error listing remote directory: $path" }
             LogFailure.FileError("Error listing remote directory: ${e.message}", cause = e).left()
         }
+    }
+
+    override suspend fun listS3Objects(config: S3Config, prefix: String): Either<LogFailure, List<RemoteFile>> {
+        return LogFailure.FileError("SftpFileSystem does not support S3").left()
     }
 }

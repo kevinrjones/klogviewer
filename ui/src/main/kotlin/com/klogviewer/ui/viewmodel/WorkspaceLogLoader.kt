@@ -26,10 +26,10 @@ class WorkspaceLogLoader(
 
     fun filterRedundantPaths(paths: List<String>): List<String> {
         val directories = paths.filter { path ->
-            if (path.startsWith("sftp://")) {
-                SftpUri.parse(path)?.isDirectory == true
-            } else {
-                localFileSystem.isDirectory(path)
+            when {
+                path.startsWith("sftp://") -> SftpUri.parse(path)?.isDirectory == true
+                path.startsWith("s3://") -> S3Uri.parse(path)?.isDirectory == true
+                else -> localFileSystem.isDirectory(path)
             }
         }
         
@@ -37,7 +37,8 @@ class WorkspaceLogLoader(
 
         return paths.filter { path ->
             val sftpUri = SftpUri.parse(path)
-            val isDir = sftpUri?.isDirectory == true || localFileSystem.isDirectory(path)
+            val s3Uri = S3Uri.parse(path)
+            val isDir = sftpUri?.isDirectory == true || s3Uri?.isDirectory == true || localFileSystem.isDirectory(path)
             if (isDir) return@filter true
             
             !directories.any { dir ->
@@ -50,7 +51,14 @@ class WorkspaceLogLoader(
                         sftpUri.path.startsWith(dirUri.path) &&
                         sftpUri.path != dirUri.path
                     } else false
-                } else if (!path.startsWith("sftp://") && !dir.startsWith("sftp://")) {
+                } else if (path.startsWith("s3://") && dir.startsWith("s3://")) {
+                    val dirUri = S3Uri.parse(dir)
+                    if (s3Uri != null && dirUri != null) {
+                        s3Uri.bucket == dirUri.bucket &&
+                        s3Uri.key.startsWith(dirUri.key) &&
+                        s3Uri.key != dirUri.key
+                    } else false
+                } else if (!path.startsWith("sftp://") && !path.startsWith("s3://") && !dir.startsWith("sftp://") && !dir.startsWith("s3://")) {
                     path.startsWith(dir) && path != dir
                 } else false
             }
@@ -59,7 +67,7 @@ class WorkspaceLogLoader(
 
     fun performHeuristicDetection(paths: List<String>, overrideParserName: String?): List<ProbeResult?> {
         return paths.map { path ->
-            if (path.startsWith("sftp://") || (localFileSystem.exists(path) && localFileSystem.isDirectory(path))) {
+            if (path.startsWith("sftp://") || path.startsWith("s3://") || (localFileSystem.exists(path) && localFileSystem.isDirectory(path))) {
                 null
             } else {
                 val sampleLines = readSampleLines(path)
@@ -76,6 +84,7 @@ class WorkspaceLogLoader(
         return paths.mapIndexed { index, path ->
             val flow = when {
                 path.startsWith("sftp://") -> createSftpLogFlow(path)
+                path.startsWith("s3://") -> createS3LogFlow(path)
                 localFileSystem.isDirectory(path) -> DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
                 else -> logSource.observeLogs(LogFilePath(path), results[index]?.parser)
             }
@@ -92,13 +101,35 @@ class WorkspaceLogLoader(
         val config = findSftpConfig(path)
         val sftpUri = SftpUri.parse(path)
         return if (config != null && sftpUri != null) {
-            if (sftpUri.isDirectory) {
-                logSourceFactory.createSftpDirectorySource(config, remoteFileSystem).observeLogs(LogFilePath(sftpUri.path))
-            } else {
-                logSourceFactory.createSftpSource(config).observeLogs(LogFilePath(sftpUri.path))
+            flow {
+                val isDir = sftpUri.isDirectory || remoteFileSystem.isSftpDirectory(config, sftpUri.path)
+                val source = if (isDir) {
+                    logSourceFactory.createSftpDirectorySource(config, remoteFileSystem)
+                } else {
+                    logSourceFactory.createSftpSource(config)
+                }
+                emitAll(source.observeLogs(LogFilePath(sftpUri.path)))
             }
         } else {
             flowOf(LogFailure.FileError("SFTP connection not found for $path", sourceId = path).left())
+        }
+    }
+
+    fun createS3LogFlow(path: String): Flow<Either<LogFailure, LogUpdate>> {
+        val config = findS3Config(path)
+        val s3Uri = S3Uri.parse(path)
+        return if (config != null && s3Uri != null) {
+            flow {
+                val isDir = s3Uri.isDirectory || remoteFileSystem.isS3Directory(config, s3Uri.key)
+                val source = if (isDir) {
+                    logSourceFactory.createS3DirectorySource(config, remoteFileSystem)
+                } else {
+                    logSourceFactory.createS3Source(config)
+                }
+                emitAll(source.observeLogs(LogFilePath(s3Uri.key)))
+            }
+        } else {
+            flowOf(LogFailure.FileError("S3 connection not found for $path", sourceId = path).left())
         }
     }
 
@@ -108,6 +139,13 @@ class WorkspaceLogLoader(
             it.username.value == sftpUri.username &&
             it.host.value == sftpUri.host &&
             it.port.value == sftpUri.port
+        }
+    }
+
+    fun findS3Config(uri: String): S3Config? {
+        val s3Uri = S3Uri.parse(uri) ?: return null
+        return state.value.s3Connections.find {
+            it.bucket == s3Uri.bucket
         }
     }
 

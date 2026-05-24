@@ -11,7 +11,8 @@ data class UserPreferences(
     val isSidebarExpanded: Boolean = true,
     val tabs: List<TabPreference> = emptyList(),
     val activeTabId: String? = null,
-    val sftpConnections: List<SftpConfig> = emptyList()
+    val sftpConnections: List<SftpConfig> = emptyList(),
+    val s3Connections: List<S3Config> = emptyList()
 )
 
 @Serializable

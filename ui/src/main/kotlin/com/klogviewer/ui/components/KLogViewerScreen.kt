@@ -50,7 +50,7 @@ fun KLogViewerScreen(
         viewModel.events.collect { event ->
             when (event) {
                 is com.klogviewer.ui.mvi.KLogViewerEvent.ShowError -> {
-                    scaffoldState.snackbarHostState.showSnackbar(event.message)
+                    dialogProvider.showMessageDialog("Error", event.message)
                 }
             }
         }
@@ -197,6 +197,28 @@ private fun DialogHandler(
         )
     }
 
+    if (state.pendingDialog == KLogViewerState.DialogType.S3_CONNECT ||
+        state.pendingDialog == KLogViewerState.DialogType.S3_ADD
+    ) {
+        val isAdd = state.pendingDialog == KLogViewerState.DialogType.S3_ADD
+        S3ConnectionDialog(
+            savedConnections = state.s3Connections,
+            onConnect = { config ->
+                viewModel.handleIntent(KLogViewerIntent.ConnectS3(config, addToWorkspace = isAdd))
+            },
+            onSave = { config ->
+                viewModel.handleIntent(KLogViewerIntent.SaveS3Connection(config))
+            },
+            onDelete = { name ->
+                viewModel.handleIntent(KLogViewerIntent.DeleteS3Connection(name))
+            },
+            onBrowse = { config ->
+                viewModel.handleIntent(KLogViewerIntent.BrowseS3(config, config.prefix))
+            },
+            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
+        )
+    }
+
     if (pendingDialog == KLogViewerState.DialogType.SFTP_BROWSE) {
         RemoteFileBrowserDialog(
             files = state.remoteFiles,
@@ -230,6 +252,40 @@ private fun DialogHandler(
             onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
         )
     }
+
+    if (pendingDialog == KLogViewerState.DialogType.S3_BROWSE) {
+        RemoteFileBrowserDialog(
+            files = state.remoteFiles,
+            currentPath = state.remoteBrowsePath,
+            isLoading = state.isRemoteLoading,
+            onNavigate = { path -> viewModel.handleIntent(KLogViewerIntent.BrowseS3(state.currentS3Config!!, path)) },
+            onSelectFiles = { paths ->
+                val config = state.currentS3Config
+                if (config != null) {
+                    viewModel.handleIntent(
+                        KLogViewerIntent.ConnectMultipleS3(
+                            config,
+                            paths,
+                            addToWorkspace = state.isAddMode
+                        )
+                    )
+                }
+            },
+            onSelectDirectory = { path ->
+                val config = state.currentS3Config
+                if (config != null) {
+                    viewModel.handleIntent(
+                        KLogViewerIntent.ConnectS3Directory(
+                            config,
+                            path,
+                            addToWorkspace = state.isAddMode
+                        )
+                    )
+                }
+            },
+            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
+        )
+    }
 }
 
 @Composable
@@ -251,9 +307,14 @@ private fun LogTopBar(
             onAddQuery = { viewModel.handleIntent(KLogViewerIntent.AddFilterQuery(it)) },
             onRemoveQuery = { viewModel.handleIntent(KLogViewerIntent.RemoveFilterQuery(it)) },
             onClearQueries = { viewModel.handleIntent(KLogViewerIntent.ClearFilterQueries) },
-            onAddClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) },
+            onOpenFileClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) },
+            onOpenDirectoryClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) },
+            onSftpClick = { viewModel.handleIntent(KLogViewerIntent.ShowSftpDialog) },
+            onS3Click = { viewModel.handleIntent(KLogViewerIntent.ShowS3Dialog) },
+            onAddFileClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) },
             onAddDirectoryClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDirectoryDialog) },
             onAddSftpClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddSftpDialog) },
+            onAddS3Click = { viewModel.handleIntent(KLogViewerIntent.ShowAddS3Dialog) },
             onToggleTheme = { viewModel.handleIntent(KLogViewerIntent.ToggleTheme) },
             onToggleSidebar = { viewModel.handleIntent(KLogViewerIntent.ToggleSidebar) },
             isReversed = activeWindow?.isReversed ?: false,
@@ -439,6 +500,14 @@ private fun LogWindowItem(
         ) {
             if (window.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else if (window.filePath.isEmpty() && window.logs.isEmpty() && !window.isDirectory) {
+                WelcomeScreen(
+                    onOpenFile = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) },
+                    onOpenDirectory = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) },
+                    onConnectSftp = { viewModel.handleIntent(KLogViewerIntent.ShowSftpDialog) },
+                    onConnectS3 = { viewModel.handleIntent(KLogViewerIntent.ShowS3Dialog) },
+                    onShowRecent = { viewModel.handleIntent(KLogViewerIntent.ShowRecentDialog) }
+                )
             } else {
                 LogList(
                     logs = window.filteredLogs,
@@ -479,7 +548,8 @@ private fun LogWindowItem(
                                 width
                             )
                         )
-                    }
+                    },
+                    windowId = window.id
                 )
             }
         }

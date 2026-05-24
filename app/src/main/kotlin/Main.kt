@@ -32,7 +32,7 @@ fun main() {
         val factory = DefaultLogSourceFactory()
         val clipboard = AwtClipboard()
         val localFileSystem = JavaLocalFileSystem()
-        val remoteFileSystem = SftpFileSystem()
+        val remoteFileSystem = UnifiedRemoteFileSystem()
         
         val viewModel = KLogViewerViewModel(
             logSource = source, 
@@ -80,11 +80,14 @@ fun main() {
                 Menu("File") {
                     Item("Open File...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) })
                     Item("Open Directory...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) })
+                    Separator()
                     Item("Connect to SFTP...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowSftpDialog) })
+                    Item("Connect to S3...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowS3Dialog) })
                     Separator()
                     Item("Add Local File...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) })
                     Item("Add Local Directory...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDirectoryDialog) })
                     Item("Add Remote SFTP...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddSftpDialog) })
+                    Item("Add Remote S3...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddS3Dialog) })
                     
                     Menu("Recently Opened") {
                         if (state.recentFiles.isEmpty() && state.recentDirectories.isEmpty()) {

@@ -4,7 +4,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.repository.AwtClipboard
 import com.klogviewer.core.repository.JavaLocalFileSystem
 import com.klogviewer.core.source.DefaultLogSourceFactory
-import com.klogviewer.core.source.SftpFileSystem
+import com.klogviewer.core.source.UnifiedRemoteFileSystem
 import com.klogviewer.domain.model.LogUpdate
 import com.klogviewer.domain.repository.*
 import com.klogviewer.ui.mvi.KLogViewerEvent
@@ -25,7 +25,7 @@ class KLogViewerViewModel(
     private val clipboard: Clipboard = AwtClipboard(),
     val localFileSystem: LocalFileSystem = JavaLocalFileSystem(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
-    private val remoteFileSystem: RemoteFileSystem = SftpFileSystem()
+    private val remoteFileSystem: RemoteFileSystem = UnifiedRemoteFileSystem()
 ) {
     private val _state = MutableStateFlow(KLogViewerState())
     val state: StateFlow<KLogViewerState> = _state.asStateFlow()
@@ -120,6 +120,37 @@ class KLogViewerViewModel(
             }
         }
     )
+
+    private val s3IntentHandler = S3IntentHandler(
+        remoteFileSystem = remoteFileSystem,
+        scope = scope,
+        state = _state,
+        recentItemsManager = recentItemsManager,
+        onSavePreferences = { savePreferences() },
+        onLoadFiles = { windowId, paths -> logLoadingCoordinator.loadFilesIntoWindow(windowId, paths) },
+        onConnectS3 = { windowId, config ->
+            logLoadingCoordinator.connectS3(windowId, config)
+        },
+        onConnectMultipleS3 = { windowId, config, keys ->
+            logLoadingCoordinator.connectMultipleS3(windowId, config, keys)
+        },
+        onConnectS3Directory = { windowId, config, prefix ->
+            logLoadingCoordinator.connectS3Directory(windowId, config, prefix)
+        },
+        onHandleBrowse = { config, prefix ->
+            scope.launch {
+                _state.update { it.copy(isRemoteLoading = true, pendingDialog = KLogViewerState.DialogType.S3_BROWSE, currentS3Config = config) }
+                val result = remoteFileSystem.listS3Objects(config, prefix)
+                _state.update {
+                    it.copy(
+                        isRemoteLoading = false,
+                        remoteFiles = result.getOrNull() ?: emptyList(),
+                        remoteBrowsePath = prefix
+                    )
+                }
+            }
+        }
+    )
     
     fun clear() {
         logLoadingCoordinator.cancelAll()
@@ -155,6 +186,7 @@ class KLogViewerViewModel(
             is KLogViewerIntent.TabWindowIntent -> tabWindowIntentHandler.handle(intent)
             is KLogViewerIntent.EntryIntent -> entryIntentHandler.handle(intent)
             is KLogViewerIntent.SftpIntent -> sftpIntentHandler.handle(intent)
+            is KLogViewerIntent.S3Intent -> s3IntentHandler.handle(intent)
             is KLogViewerIntent.DialogIntent -> dialogIntentHandler.handle(intent)
             is KLogViewerIntent.RecentItemsIntent -> recentItemsIntentHandler.handle(intent)
         }

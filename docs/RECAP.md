@@ -1009,7 +1009,7 @@ Implemented dynamic resizing for the "Line #" column (gutter) to allow users to 
 
 #### Changes:
 - **Resizable Gutter**: Added a resize handle to the "Line #" column in `LogList.kt`, enabling users to drag and adjust the gutter width.
-- **Visual Feedback**: Added a visible vertical bar to the gutter's resize handle for better discoverability.
+- **Visual Feedback**: Added a vertical bar to the gutter's resize handle for better discoverability.
 - **Persistence**: Updated `WindowPreference` and `LogWindow` to store and restore the gutter width across sessions.
 - **Testing**: Added a UI test in `LogListTest.kt` to verify that the line number column correctly responds to drag gestures.
 
@@ -1024,7 +1024,22 @@ Enhanced the "Recently Opened" list to correctly identify and handle remote SFTP
 - **SftpIntentHandler**: Integrated recent items updates into the SFTP connection flow. Connecting to a remote source now automatically triggers an update to the history list.
 - **UI Consistency**: Ensured that the "Recently Opened" menu displays the full SFTP URI for remote sources, providing better context.
 
-## 19:05
+## 13:55
+
+### Feature: S3 Log Source and Connectivity Integration
+
+Implemented native support for tailing logs from Amazon S3 buckets, including core log source logic and UI integration.
+
+#### Changes:
+- **Core Implementation**: Developed `S3LogSource` using the AWS SDK for Kotlin. Supports real-time polling of S3 objects for new log content.
+- **Authentication**: Implemented `S3ClientProvider` supporting Default, Profile, and Explicit (Key/Secret) authentication methods.
+- **UI & Connectivity**:
+    - Added "Connect to S3..." and "Add Remote S3..." to the `File` menu and `FilterBar`.
+    - Integrated S3 connection state into `UserPreferences` for persistence.
+- **Documentation**: Added a detailed S3 setup guide (`docs/S3-SETUP.md`) for testing and production environments.
+- **Verification**: Added `S3LogSourceTest.kt` to verify polling, chunked reads, and error handling using a mocked S3 client.
+
+## 19:10
 
 ### Fix: Intermittent UI Test Failures
 
@@ -1034,3 +1049,21 @@ Resolved intermittent test failures in `DirectoryTabTest` and other UI tests cau
 - **DirectoryTabTest**: Replaced immediate assertions with `waitUntil` blocks to wait for asynchronous state updates (directory flags and tab titles) before verifying UI state.
 - **LogListRobot**: Enhanced `assertLogCount` to use `waitUntil`, ensuring that log filtering operations have completed before checking the resulting entry count.
 - **Robustness**: Improved the overall stability of the UI testing suite by ensuring that assertions correctly synchronize with the MVI state flow.
+
+# 2026-05-24
+
+## 10:45
+
+### Feature: S3 Connection Persistence
+
+Implemented automatic saving of S3 connection details in user preferences upon connection, aligning with the SFTP connection behavior.
+
+#### Changes:
+- **S3IntentHandler**: Added automatic saving logic to `ConnectS3`, `ConnectMultipleS3`, and `ConnectS3Directory` intents. Connection details are now persisted to `UserPreferences` as soon as a connection is initiated.
+- **Persistence Logic**: Centralized S3 connection saving in a `saveS3Connection` helper to ensure consistency and proper sorting of saved connections.
+- **UI Test Robustness**: 
+    - Standardized test tags for `LogList` components to include window ID prefixes, preventing collisions in multi-window tests.
+    - Updated `LogListRobot` and `WindowRobot` to use these standardized tags for reliable element targeting.
+    - Fixed a regression in `FilterBar` test tags and improved setup in `KLogViewerComplexUiTest`.
+- **Verification**: Added `S3PersistenceTest.kt` and verified all desktop UI tests pass.
+

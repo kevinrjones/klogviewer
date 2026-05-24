@@ -32,7 +32,8 @@ class SftpLogSource(
             MultilineProcessor(effectiveParser.template)
         } else null
 
-        val sourceId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}${path.value}"
+        val effectivePath = if (path.value.startsWith("/")) path.value else "/${path.value}"
+        val sourceId = "sftp://${config.username.value}@${config.host.value}:${config.port.value}${effectivePath}"
         logger.info { "Started observing remote log file: $sourceId using ${effectiveParser::class.simpleName}" }
 
         val client = if (existingClient != null && existingClient.isConnected && existingClient.isAuthenticated) {

@@ -142,3 +142,4 @@ app/jsonlogs/
 /local.properties
 .output.txt
 
+/secrets/

@@ -10,60 +10,51 @@ import com.klogviewer.domain.repository.RemoteFileSystem
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import net.schmizz.sshj.SSHClient
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
 
-class SftpDirectoryLogSource(
-    private val config: SftpConfig,
+class S3DirectoryLogSource(
+    private val config: S3Config,
     private val remoteFileSystem: RemoteFileSystem,
-    private val rescanIntervalMs: Long = 5000,
+    private val rescanIntervalMs: Long = 10000,
     private val dispatcher: CoroutineDispatcher = Dispatchers.IO,
-    private val sshService: SshService = SshService(),
-    private val logSourceFactory: (SftpConfig, SSHClient?) -> LogSource = { cfg, client ->
-        SftpLogSource(cfg, com.klogviewer.core.parser.SimpleLogParser(), sshService = sshService, existingClient = client)
+    private val logSourceFactory: (S3Config) -> LogSource = { cfg ->
+        S3LogSource(cfg, com.klogviewer.core.parser.SimpleLogParser())
     }
 ) : LogSource {
 
     override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow<Either<LogFailure, LogUpdate>> = channelFlow<Either<LogFailure, LogUpdate>> {
-        logger.info { "Started observing remote directory: ${path.value} on ${config.host.value}" }
+        logger.info { "Started observing S3 prefix: ${path.value} in bucket ${config.bucket}" }
 
-        val pool = SshClientPool(config, sshService)
         val coordinator = LogInitialLoadCoordinator()
-        val observer = RemoteDirectoryFileObserver(
+        val observer = S3DirectoryFileObserver(
             config = config,
-            pool = pool,
             logSourceFactory = logSourceFactory,
             coordinator = coordinator,
             onUpdate = { update -> send(update.right()) }
         )
 
         try {
-            val sourceIdBase = "sftp://${config.username.value}@${config.host.value}:${config.port.value}"
-            val effectivePath = if (path.value.startsWith("/")) path.value else "/${path.value}"
-            val directorySourceId = "$sourceIdBase${effectivePath}"
+            val effectivePrefix = if (path.value.endsWith("/") || path.value.isEmpty()) path.value else "${path.value}/"
+            val directorySourceId = "s3://${config.bucket}/${effectivePrefix.removePrefix("/")}"
             var firstScanPerformed = false
             var currentFilePaths = emptyList<String>()
             var initialized = false
 
             while (isActive) {
                 if (!firstScanPerformed || initialized) {
-                    val result = remoteFileSystem.listFiles(config, effectivePath)
+                    val result = remoteFileSystem.listS3Objects(config, effectivePrefix)
                     firstScanPerformed = true
 
                     result.fold(
                         { failure ->
-                            logger.error { "Error scanning remote directory: $failure" }
-                            val failureWithSource = when (failure) {
-                                is LogFailure.FileError -> failure.copy(sourceId = directorySourceId)
-                                is LogFailure.ParsingError -> failure.copy(sourceId = directorySourceId)
-                            }
-                            send(failureWithSource.left())
+                            logger.error { "Error scanning S3 prefix: $failure" }
+                            send(failure.left())
                             return@channelFlow
                         },
-                        { discoveredFiles ->
-                            currentFilePaths = discoveredFiles.filter { !it.isDirectory }.map { it.path }
+                        { discoveredObjects ->
+                            currentFilePaths = discoveredObjects.filter { !it.isDirectory }.map { it.path }
                             observer.updateFiles(currentFilePaths, parser, this)
                         }
                     )
@@ -71,18 +62,17 @@ class SftpDirectoryLogSource(
 
                 if (!initialized && firstScanPerformed && coordinator.isComplete(currentFilePaths.size)) {
                     val allEntries = coordinator.getAggregatedInitialEntries()
-                    logger.info { "Initial remote directory load complete: ${allEntries.size} entries" }
+                    logger.info { "Initial S3 prefix load complete: ${allEntries.size} entries" }
                     send(LogUpdate.Initial(allEntries).right())
                     initialized = true
                     observer.setInitialized()
                 }
 
-                val delayInterval = if (initialized) rescanIntervalMs.milliseconds else 500.milliseconds
+                val delayInterval = if (initialized) rescanIntervalMs.milliseconds else 1000.milliseconds
                 delay(delayInterval)
             }
         } finally {
             observer.cancelAll()
-            pool.close()
         }
     }.flowOn(dispatcher)
 }

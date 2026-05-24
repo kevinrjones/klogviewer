@@ -3,6 +3,7 @@ package com.klogviewer.ui.components
 import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
+import javax.swing.JOptionPane
 
 interface DialogProvider {
     fun showOpenFileDialog(
@@ -13,6 +14,8 @@ interface DialogProvider {
     fun showOpenDirectoryDialog(
         title: String
     ): String?
+
+    fun showMessageDialog(title: String, message: String)
 }
 
 class AwtDialogProvider(private val parent: Frame? = null) : DialogProvider {
@@ -52,5 +55,9 @@ class AwtDialogProvider(private val parent: Frame? = null) : DialogProvider {
         } else {
             null
         }
+    }
+
+    override fun showMessageDialog(title: String, message: String) {
+        JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE)
     }
 }

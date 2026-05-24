@@ -8,6 +8,8 @@
 - Deepened architecture with reactive `LogSource` streaming.
 - Native UI enhancements for file browsing.
 - Project renamed to KLogViewer (from LogViewer) across all modules, packages, and documentation.
+- Robust S3/SFTP directory detection and URI standardization.
+- Fixed S3 Flow context preservation and polling logic.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -82,6 +84,9 @@
 - Tab & Status Bar Tooltips: Implemented tooltips for tab titles and the status bar, providing instant access to the fully qualified file name/path on hover.
 - Refined Directory Monitoring UI: Improved visual feedback for directory views by ignoring sub-file removal for color-coding. Tabs and window headers now only turn red if the directory itself is missing, while merged file views retain orange warnings for missing files.
 - SFTP cancellation reliability: fixed a remote tail cancellation deadlock that prevented adding a second SFTP source to an active tab/workspace.
+- S3 Log Source: Implemented native support for tailing logs from AWS S3 buckets using the Kotlin SDK, with flexible authentication and session persistence.
+- S3 Connection Persistence: Implemented automatic saving of S3 connection details in user preferences, matching the SFTP behavior for a better user experience.
+- Fix: Intermittent UI Test Failures: Resolved flakiness in the UI test suite by implementing robust synchronization via `waitUntil` in robots and tests, ensuring assertions wait for asynchronous MVI state changes.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -1753,3 +1758,105 @@ For each sprint/task
 - `SftpDirectoryLogSourceTest`: 3/3 passing.
 - `SftpLogSourceTest`: 7/7 passing.
 - `SftpBrowsingTest`: 3/3 passing.
+
+**Title**: Resizable Line Number Column
+**Date/time completed**: 2026-05-23 07:22
+**What was shipped**: Dynamic resizing for the gutter with persistent width state.
+**Key decisions**: Added visible handles to the gutter to match other resizable columns and improve discoverability.
+**Gotchas**: Needed to ensure the gutter width was persisted in `WindowPreference` to survive app restarts.
+**Test coverage areas**: `LogListTest` (UI drag gesture verification).
+
+**Title**: SFTP Support in Recent Items
+**Date/time completed**: 2026-05-23 09:00
+**What was shipped**: Support for `sftp://` URIs in the recently opened items list.
+**Key decisions**: Distinguished between remote files and directories to ensure they populate the correct history sub-menus.
+**Gotchas**: Needed to update the `SftpIntentHandler` to trigger history updates on successful connection.
+**Test coverage areas**: `RecentItemsManager`, `SftpIntentHandler`.
+
+**Title**: S3 Log Source and Connectivity Integration
+**Date/time completed**: 2026-05-23 13:55
+**What was shipped**:
+- Native S3 log tailing support via `S3LogSource`.
+- `S3ClientProvider` for profile/key-pair auth.
+- S3 connectivity in Menu Bar and Toolbar.
+- S3 setup documentation.
+**Key decisions**:
+- Used polling-based tailing for S3 objects as they don't support streaming tail natively.
+- Promoted S3 to a top-level toolbar icon for better visibility.
+**Gotchas**: AWS SDK initialization can be slow; implemented lazy client creation.
+**Test coverage areas**: `S3LogSourceTest`, `S3UriTest`, UI menu/toolbar wiring.
+
+**Title**: Fix Intermittent UI Test Failures
+**Date/time completed**: 2026-05-23 19:10
+**What was shipped**: Robust synchronization for UI tests.
+**Key decisions**: Replaced all immediate assertions on asynchronous UI state with `waitUntil` blocks.
+**Gotchas**: Some flakiness was due to MVI intents being processed in the background without explicit UI feedback before assertion.
+**Test coverage areas**: `DirectoryTabTest`, `LogListRobot`.
+
+**Title**: S3 Connection Persistence
+**Date/time completed**: 2026-05-24 10:45
+**What was shipped**: Automatic saving of S3 connection details.
+**Key decisions**: Followed the SFTP pattern for consistency; details are saved upon any connection attempt (file, directory, or multiple files).
+**Gotchas**: None.
+**Test coverage areas**: `S3PersistenceTest`.
+
+**Title**: S3 Directory Detection Fix and URI Robustness
+**Date/time completed**: 2026-05-24 11:45
+**What was shipped**:
+- Fixed S3/SFTP directory detection by trusting trailing slashes.
+- Improved S3DirectoryLogSource to handle prefixes without trailing slashes.
+- Standardized URI construction across S3 and SFTP to ensure consistent slashes.
+- Fixed a Flow invariant violation in S3LogSource.
+**Key decisions**:
+- Implemented a shortcut in `isS3Directory` to treat any path ending in `/` as a directory, bypassing remote listing.
+- Updated all `s3://` and `sftp://` URI generation to use a uniform template: `scheme://bucket_or_user@host:port/path`.
+**Gotchas**:
+- S3 `headObject` on a prefix (without an object at that key) returns 404, so we must correctly identify directories before calling it.
+- Flow emissions must happen in the original collector's context; moved `emit` out of AWS SDK callback blocks.
+**Test coverage areas**: `S3LogSourceTest`, `S3DirectoryDetectionTest`, `S3DirectoryLogSourcePrefixTest`.
+
+**S3 Error Handling & Dialogs**
+**2026-05-24 11:35**
+**What was shipped**
+- Improved S3 error handling to stop polling when an object is not found or inaccessible.
+- Implemented error dialogs instead of snackbars for critical log loading failures.
+- Updated `DialogProvider` to support message dialogs.
+**Key decisions**
+- Decided to stop polling loops in `S3LogSource`, `S3DirectoryLogSource`, and `SftpDirectoryLogSource` upon encountering fatal errors to prevent unnecessary resource consumption and log spam.
+- Migrated error reporting from snackbars to modal dialogs to ensure users don't miss connection or file access errors.
+**Gotchas**
+- `S3LogSource` previously swallowed `headObject` 404 errors, causing it to hang silently if the initial load failed.
+**Test coverage areas**
+- `S3LogSourceTest`: Verified that polling stops and emits error on 404.
+- UI: `DialogProvider` and `KLogViewerScreen` now wired for error dialogs.
+
+**S3/SFTP Connection Error Message Improvement**
+**2026-05-24 11:55**
+**What was shipped**
+- User-friendly error messages for remote connection failures.
+**Key decisions**
+- Centralized error message replacement in `LogLoadingCoordinator.handleLogLoadingFailure`.
+- Use a generic message "Sorry, I was not able to connect. See the log file for more details" for all remote sources (S3/SFTP).
+- Detailed error messages are still logged to the system logs for troubleshooting.
+**Gotchas**
+- Ensure that local file errors (like "File not found") are not replaced by the generic connection message.
+**Test coverage areas**
+- `LogLoadingCoordinatorErrorTest` (temporary) verified the mapping logic for both remote and local sources.
+
+**S3/SFTP Trailing Slash Fix**
+**2026-05-24 12:15**
+**What was shipped**
+- Fixed a bug where trailing slashes were being stripped from S3 and SFTP URIs, causing 404 errors for prefixes/directories.
+- Updated `S3Uri` and `SftpUri` to properly preserve and normalize trailing slashes for directory-type URIs.
+- Added unit tests for `S3Uri` and `SftpUri` in the `domain` module.
+- Updated integration tests (`SftpBrowsingTest`, `SftpReloadTest`) to handle newly added directory detection calls.
+**Key decisions**
+- Modified `S3Uri.parse` to stop stripping trailing slashes from the key.
+- Updated `toString()` for both `S3Uri` and `SftpUri` to ensure a trailing slash is appended if `isDirectory` is true.
+**Gotchas**
+- `S3Uri.parse` was stripping slashes, which caused `WorkspaceLogLoader` to pass incorrect paths to log sources after a reload.
+- Adding default methods to mocked interfaces (`RemoteFileSystem`) required updating existing tests to use `callOriginal()` or mock the new methods.
+**Test coverage areas**
+- `S3UriTest`, `SftpUriTest` (new unit tests).
+- `SftpBrowsingTest`, `SftpReloadTest` (updated integration tests).
+- `S3DirectoryDetectionTest` (verified directory detection logic).
