@@ -17,10 +17,10 @@ Use this checklist to create a real AWS-based test environment for validating S3
 
 ## 1. Create an S3 Bucket
 
-- [ ] Open the AWS Console.
-- [ ] Go to **S3**.
-- [ ] Click **Create bucket**.
-- [ ] Choose a globally unique bucket name, for example:
+- [x] Open the AWS Console.
+- [x] Go to **S3**.
+- [x] Click **Create bucket**.
+- [x] Choose a globally unique bucket name, for example:
 ```
 text klogviewer-test-logs-yourname
 ``` 
@@ -36,9 +36,9 @@ or:
 text eu-west-1
 ``` 
 
-- [ ] Keep **Block all public access** enabled.
-- [ ] Create the bucket.
-- [ ] Use this logical object layout for testing:
+- [x] Keep **Block all public access** enabled.
+- [x] Create the bucket.
+- [x] Use this logical object layout for testing:
 
 ```
 text logs/ app.log app-2.log
@@ -52,86 +52,127 @@ text logs/ app.log app-2.log
 
 This policy allows your local machine/application to browse the bucket and read log objects.
 
-- [ ] Go to **IAM > Policies**.
-- [ ] Click **Create policy**.
-- [ ] Choose the **JSON** editor.
-- [ ] Paste this policy:
-```
-
-json { "Version": "2012-10-17", "Statement":    }latex_unknown_tag
+- [x] Go to **IAM > Policies**.
+- [x] Click **Create policy**.
+- [x] Choose the **JSON** editor.
+- [x] Paste this policy:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListTestLogBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::klogviewer-test-logs-yourname"
+    },
+    {
+      "Sid": "ReadTestLogObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::klogviewer-test-logs-yourname/*"
+    }
+  ]
+}
 ``` 
 
-- [ ] Replace all occurrences of:
-```
-
-text klogviewer-test-logs-yourname
+- [x] Replace all occurrences of:
+```text 
+klogviewer-test-logs-yourname
 ``` 
 
 with your real bucket name.
 
-- [ ] Name the policy:
-```
-
-text KLogViewerS3ReadOnlyTestPolicy
+- [x] Name the policy:
+```text 
+KLogViewerS3ReadOnlyTestPolicy
 ``` 
 
-- [ ] Create the policy.
+- [x] Create the policy.
 
 ---
 
 ## 3. Create an IAM User for Local Testing
 
-- [ ] Go to **IAM > Users**.
-- [ ] Click **Create user**.
-- [ ] Name the user:
-```
-
-text klogviewer-s3-test-user
+- [x] Go to **IAM > Users**.
+- [x] Click **Create user**.
+- [x] Name the user:
+```text 
+klogviewer-s3-test-user
 ``` 
 
-- [ ] Attach the policy:
-```
-
-text KLogViewerS3ReadOnlyTestPolicy
+- [x] Attach the policy:
+- 
+```text 
+KLogViewerS3ReadOnlyTestPolicy
 ``` 
 
-- [ ] Create an access key for CLI/application access.
-- [ ] Save the generated credentials:
-    - [ ] `AWS_ACCESS_KEY_ID`
-    - [ ] `AWS_SECRET_ACCESS_KEY`
+- [x] Create an access key for CLI/application access.
+- [x] Save the generated credentials:
+    - [x] `AWS_ACCESS_KEY_ID`
+    - [x] `AWS_SECRET_ACCESS_KEY`
+
+1. Go to the AWS Console.
+2. Open IAM.
+3. Go to Users.
+4. Select the IAM user you created for testing, for example:
+   ``` text
+    klogviewer-s3-test-user
+    ```
+5. Open the **Security credentials** tab.
+6. Scroll to **Access keys**.
+7. Click **Create access key**. 
+8. For the use case, choose:
+    ``` text
+   Command Line Interface (CLI)
+    ```
+9.AWS may show a recommendation to use alternatives. Confirm that you understand and continue. 
+10.Optionally add a description tag, for example:
+    ``` text
+    KLogViewer local S3 testing
+    ```
+11, Click **Create access key**. 
+12. Copy or download the credentials.
+    You will get two values:
+    ``` text
+        AWS_ACCESS_KEY_ID
+        AWS_SECRET_ACCESS_KEY
+    ```
+Important: AWS only shows the **secret access key once**. Download the .csv file or copy it somewhere secure 
+immediately.
 
 ---
 
 ## 4. Configure a Local AWS Profile
 
-- [ ] Install the AWS CLI locally if you do not already have it.
-- [ ] Configure a dedicated test profile:
-```
-
-bash aws configure --profile klogviewer-test
+- [x] Install the AWS CLI locally if you do not already have it.
+- [x] Configure a dedicated test profile:
+```bash 
+aws configure --profile klogviewer-test
 ``` 
 
-- [ ] Enter the access key ID.
-- [ ] Enter the secret access key.
-- [ ] Enter the default region, for example:
-```
-
-text us-east-1
+- [x] Enter the access key ID.
+- [x] Enter the secret access key.
+- [x] Enter the default region (**check the region you created the bucket in**), for example:
+```text 
+eu-north-1
 ``` 
 
-- [ ] Enter the default output format:
-```
-
-text json
+- [x] Enter the default output format:
+``` text
+json
 ``` 
 
-- [ ] Verify the profile can access the bucket:
-```
-
-bash aws s3 ls s3://klogviewer-test-logs-yourname --profile klogviewer-test
+- [x] Verify the profile can access the bucket (**change `yourname` to the name you chose for the bucket**):
+```bash 
+aws s3 ls s3://klogviewer-test-logs-yourname --profile klogviewer-test
 ``` 
 
-- [ ] Confirm the command succeeds without an access denied error.
+- [x] Confirm the command succeeds without an access denied error.
 
 ---
 
@@ -140,34 +181,32 @@ bash aws s3 ls s3://klogviewer-test-logs-yourname --profile klogviewer-test
 - [ ] Go to **EC2 > Instances**.
 - [ ] Click **Launch instance**.
 - [ ] Name the instance:
-```
-
-text klogviewer-log-generator
+```text 
+klogviewer-log-generator
 ``` 
 
 - [ ] Choose an AMI:
-```
-
-text Amazon Linux 2023
+```text 
+Amazon Linux 2023
 ``` 
 
 - [ ] Choose an instance type:
-```
-
-text t3.micro
+```text 
+t3.micro
 ``` 
 
 or, if free-tier eligible:
-```
-
-text t2.micro
+```text 
+t2.micro
 ``` 
 
-- [ ] Create or select an SSH key pair.
-- [ ] Configure the security group:
-    - [ ] Allow SSH.
-    - [ ] Restrict SSH access to your IP address only.
-- [ ] Launch the instance.
+- [x] Create or select an SSH key pair (**when saving the key, make sure to set the correct permissions**):
+    - [x] Save the key pair as a .pem file.
+    - [x] Set the permissions: `chmod 400 /path/to/your-key.pem`.
+- [x] Configure the security group:
+    - [x] Allow SSH.
+    - [x] Restrict SSH access to your IP address only.
+- [x] Launch the instance.
 
 ---
 
@@ -175,148 +214,164 @@ text t2.micro
 
 The EC2 instance needs permission to upload log files to your S3 bucket.
 
-- [ ] Go to **IAM > Policies**.
-- [ ] Click **Create policy**.
-- [ ] Choose the **JSON** editor.
-- [ ] Paste this policy:
-```
-
-json { "Version": "2012-10-17", "Statement": }
+- [x] Go to **IAM > Policies**.
+- [x] Click **Create policy**.
+- [x] Choose the **JSON** editor.
+- [x] Paste this policy:
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "WriteLogsToTestBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::klogviewer-test-logs-kevin",
+        "arn:aws:s3:::klogviewer-test-logs-kevin/*"
+      ]
+    }
+  ]
+}
 ``` 
 
-- [ ] Replace all occurrences of:
-```
-
-text klogviewer-test-logs-yourname
+- [x] Replace all occurrences of:
+```text 
+klogviewer-test-logs-yourname
 ``` 
 
 with your real bucket name.
 
-- [ ] Name the policy:
-```
-
-text KLogViewerS3WriteTestPolicy
+- [x] Name the policy:
+```text 
+KLogViewerS3WriteTestPolicy
 ``` 
 
-- [ ] Create the policy.
+- [x] Create the policy.
 
 ---
 
 ## 7. Create and Attach an EC2 IAM Role
 
-- [ ] Go to **IAM > Roles**.
-- [ ] Click **Create role**.
-- [ ] Choose **AWS service** as the trusted entity type.
-- [ ] Choose **EC2** as the use case.
-- [ ] Attach this policy:
-```
+- [x] Go to **IAM > Roles**.
+- [x] Click **Create role**.
+- [x] Choose **AWS service** as the trusted entity type.
+- [x] Choose **EC2** as the use case.
+- [x] Attach this policy:
 
-text KLogViewerS3WriteTestPolicy
+```text 
+KLogViewerS3WriteTestPolicy
 ``` 
 
-- [ ] Name the role:
-```
+- [x] Name the role:
 
-text KLogViewerLogGeneratorRole
+```text 
+KLogViewerLogGeneratorRole
 ``` 
 
-- [ ] Create the role.
-- [ ] Go to **EC2 > Instances**.
-- [ ] Select your test instance.
-- [ ] Choose **Actions > Security > Modify IAM role**.
-- [ ] Select:
-```
-
-text KLogViewerLogGeneratorRole
+- [x] Create the role.
+- [x] Go to **EC2 > Instances**.
+- [x] Select your test instance.
+- [x] Choose **Actions > Security > Modify IAM role**.
+- [x] Select:
+```text 
+KLogViewerLogGeneratorRole
 ``` 
 
-- [ ] Save the change.
+- [x] Save the change.
 
 ---
 
 ## 8. SSH Into the EC2 Instance
 
-- [ ] Get the public IP or public DNS name of the EC2 instance.
-- [ ] SSH into the instance:
-```
-
-bash ssh -i /path/to/your-key.pem ec2-user@your-ec2-public-ip
+- [x] Get the public IP or public DNS name of the EC2 instance.
+- [x] SSH into the instance:
+```bash
+ssh -i /path/to/your-key.pem ec2-user@your-ec2-public-ip
 ``` 
 
-- [ ] Confirm you are connected to the EC2 instance.
+- [x] Confirm you are connected to the EC2 instance.
 
 ---
 
 ## 9. Verify AWS CLI on EC2
 
-- [ ] Check whether AWS CLI is installed:
-```
-
-bash aws --version
+- [x] Check whether AWS CLI is installed:
+```bash
+aws --version
 ``` 
 
-- [ ] If it is not installed, install it:
-```
-
-bash sudo dnf install -y awscli
+- [x] If it is not installed, install it:
+```bash
+sudo dnf install -y awscli
 ``` 
 
-- [ ] Verify that the EC2 instance role can access the bucket:
-```
-
-bash aws s3 ls s3://klogviewer-test-logs-yourname
+- [x] Verify that the EC2 instance role can access the bucket:
+```bash
+aws s3 ls s3://klogviewer-test-logs-yourname
 ``` 
 
-- [ ] Confirm the command succeeds without configuring credentials manually on the EC2 instance.
+- [x] Confirm the command succeeds without configuring credentials manually on the EC2 instance.
 
 ---
 
 ## 10. Create a Log Generator on EC2
 
-- [ ] Create a working directory:
-```
-
-bash mkdir -p ~/klogviewer-test cd ~/klogviewer-test touch app.log
+- [x] Create a working directory:
+```bash 
+mkdir -p ~/klogviewer-test 
+cd ~/klogviewer-test 
+touch app.log
 ``` 
 
-- [ ] Create a script:
-```
-
-bash nano generate-and-upload-logs.sh
+- [x] Create a script:
+```bash 
+nano generate-and-upload-logs.sh
 ``` 
 
-- [ ] Add this content:
-```
+- [x] Add this content:
+```bash
+ #!/usr/bin/env bash
 
-bash #!/usr/bin/env bash
-BUCKET="klogviewer-test-logs-yourname" KEY="logs/app.log" LOCAL_FILE="./app.log"
-echo "Starting log generator..." echo "Writing to {LOCAL_FILE}" echo "Uploading to s3://{BUCKET}/${KEY}"
-while true; do echo "(date --iso-8601=seconds) INFO Test log message from EC2 instance(hostname)" >> "${LOCAL_FILE}"
-aws s3 cp "{LOCAL_FILE}" "s3://{BUCKET}/${KEY}" >/dev/null
-sleep 3 done
+BUCKET="klogviewer-test-logs-kevin"
+KEY="logs/app.log"
+LOCAL_FILE="./app.log"
+
+echo "Starting log generator..."
+echo "Writing to ${LOCAL_FILE}"
+echo "Uploading to s3://${BUCKET}/${KEY}"
+
+while true; do
+  echo "$(date --iso-8601=seconds) INFO Test log message from EC2 instance $(hostname)" >> "${LOCAL_FILE}"
+
+  aws s3 cp "${LOCAL_FILE}" "s3://${BUCKET}/${KEY}" >/dev/null
+
+  sleep 3
+done
 ``` 
 
-- [ ] Replace:
-```
-
-text klogviewer-test-logs-yourname
+- [x] Replace:
+```text 
+klogviewer-test-logs-yourname
 ``` 
 
 with your real bucket name.
 
-- [ ] Make the script executable:
-```
-
-bash chmod +x generate-and-upload-logs.sh
+- [x] Make the script executable:
+```bash 
+chmod +x generate-and-upload-logs.sh
 ``` 
 
-- [ ] Run the script:
-```
-
-bash ./generate-and-upload-logs.sh
+- [x] Run the script:
+```bash 
+./generate-and-upload-logs.sh
 ``` 
 
-- [ ] Leave it running.
+- [x] Leave it running.
 
 ---
 
@@ -324,21 +379,19 @@ bash ./generate-and-upload-logs.sh
 
 From your local machine:
 
-- [ ] Download the current object content to stdout:
-```
-
-bash aws s3 cp s3://klogviewer-test-logs-yourname/logs/app.log - --profile klogviewer-test
+- [x] Download the current object content to stdout (**remember to change 'yourname' to your bucket name**:
+```bash 
+aws s3 cp s3://klogviewer-test-logs-yourname/logs/app.log - --profile klogviewer-test
 ``` 
 
-- [ ] Confirm you see log lines similar to:
-```
-
-text 2026-05-23T12:01:01+00:00 INFO Test log message from EC2 instance ip-10-0-1-123 2026-05-23T12:01:04+00:00 INFO Test log message from EC2 instance ip-10-0-1-123 2026-05-23T12:01:07+00:00 INFO Test log message from EC2 instance ip-10-0-1-123
+- [x] Confirm you see log lines similar to:
+```text 
+2026-05-23T12:01:01+00:00 INFO Test log message from EC2 instance ip-10-0-1-123 2026-05-23T12:01:04+00:00 INFO Test log message from EC2 instance ip-10-0-1-123 2026-05-23T12:01:07+00:00 INFO Test log message from EC2 instance ip-10-0-1-123
 ``` 
 
-- [ ] Wait a few seconds.
-- [ ] Run the same command again.
-- [ ] Confirm new lines have appeared.
+- [x] Wait a few seconds.
+- [x] Run the same command again.
+- [x] Confirm new lines have appeared.
 
 ---
 
@@ -347,49 +400,46 @@ text 2026-05-23T12:01:01+00:00 INFO Test log message from EC2 instance ip-10-0-1
 - [ ] Open the application.
 - [ ] Start the S3 connection flow.
 - [ ] Use the local AWS profile:
-```
-
-text klogviewer-test
+```text 
+klogviewer-test
 ``` 
 
 - [ ] Use the same AWS region as the bucket, for example:
-```
-
-text us-east-1
+```text 
+eu-north-1
 ``` 
 
 - [ ] Use your bucket name:
-```
-
-text klogviewer-test-logs-yourname
+```text 
+klogviewer-test-logs-yourname
 ``` 
 
 - [ ] Select or enter the object key:
-```
-
-text logs/app.log
+```text 
+logs/app.log
 ``` 
 
-- [ ] Open the S3 log source.
-- [ ] Confirm the initial log content appears in the application.
+- [x] Open the S3 log source.
+- [x] Confirm the initial log content appears in the application.
 
 ---
 
 ## 13. Test S3 Tailing / Polling Behavior
 
-- [ ] Keep the EC2 log generator script running.
-- [ ] Keep the S3 log open in the application.
-- [ ] Wait for the application to poll S3.
-- [ ] Confirm new log lines appear in the viewer.
-- [ ] Remember that S3 does not provide true streaming like `tail -f`; updates usually appear after the polling interval.
+- [x] Keep the EC2 log generator script running.
+- [x] Keep the S3 log open in the application.
+- [x] Wait for the application to poll S3.
+- [x] Confirm new log lines appear in the viewer.
+- [x] Remember that S3 does not provide true streaming like `tail -f`; updates usually appear after the polling 
+  interval.
 
 Expected flow:
 
-- [ ] EC2 appends a new line to `app.log`.
-- [ ] EC2 uploads the updated file to S3.
-- [ ] The application polls S3.
-- [ ] The application detects the larger object.
-- [ ] The application displays the appended log lines.
+- [x] EC2 appends a new line to `app.log`.
+- [x] EC2 uploads the updated file to S3.
+- [x] The application polls S3.
+- [x] The application detects the larger object.
+- [x] The application displays the appended log lines.
 
 ---
 
@@ -398,39 +448,33 @@ Expected flow:
 Use this if the application supports watching an S3 prefix such as `logs/`.
 
 - [ ] In the application, open or monitor the prefix:
-```
-
-text logs/
+```text 
+logs/
 ``` 
 
 - [ ] On EC2, create another log file:
-```
-
-bash cd ~/klogviewer-test touch app-2.log
+```bash 
+cd ~/klogviewer-test touch app-2.log
 ``` 
 
 - [ ] Upload the new file:
-```
-
-bash aws s3 cp app-2.log s3://klogviewer-test-logs-yourname/logs/app-2.log
+```bash 
+aws s3 cp app-2.log s3://klogviewer-test-logs-yourname/logs/app-2.log
 ``` 
 
 - [ ] Append a line to the second log file:
-```
-
-bash echo "$(date --iso-8601=seconds) WARN Message from app-2" >> app-2.log
+```bash 
+echo "$(date --iso-8601=seconds) WARN Message from app-2" >> app-2.log
 ``` 
 
 - [ ] Upload the updated second log file:
-```
-
-bash aws s3 cp app-2.log s3://klogviewer-test-logs-yourname/logs/app-2.log
+```bash 
+aws s3 cp app-2.log s3://klogviewer-test-logs-yourname/logs/app-2.log
 ``` 
 
 - [ ] Confirm the application detects the new object:
-```
-
-text logs/app-2.log
+```text 
+logs/app-2.log
 ``` 
 
 - [ ] Confirm the application displays log lines from the new object.
@@ -442,9 +486,8 @@ text logs/app-2.log
 Use this if the application supports deletion detection for monitored S3 prefixes.
 
 - [ ] Delete the second test object:
-```
-
-bash aws s3 rm s3://klogviewer-test-logs-yourname/logs/app-2.log
+```bash 
+aws s3 rm s3://klogviewer-test-logs-yourname/logs/app-2.log
 ``` 
 
 - [ ] Wait for the application to rescan/poll the prefix.
@@ -461,21 +504,18 @@ bash aws s3 rm s3://klogviewer-test-logs-yourname/logs/app-2.log
 Use this faster local-only flow if you only want to test S3 polling and do not need an EC2-hosted log generator.
 
 - [ ] Create a local test directory:
-```
-
-bash mkdir -p /tmp/klogviewer-test cd /tmp/klogviewer-test touch app.log
+```bash 
+mkdir -p /tmp/klogviewer-test cd /tmp/klogviewer-test touch app.log
 ``` 
 
 - [ ] Start a local upload loop:
-```
-
-bash while true; do echo "$(date --iso-8601=seconds) INFO Local test log message" >> app.log aws s3 cp app.log s3://klogviewer-test-logs-yourname/logs/app.log --profile klogviewer-test sleep 3 done
+```bash 
+while true; do echo "$(date --iso-8601=seconds) INFO Local test log message" >> app.log aws s3 cp app.log s3://klogviewer-test-logs-yourname/logs/app.log --profile klogviewer-test sleep 3 done
 ``` 
 
 - [ ] Open the same S3 object in the application:
-```
-
-text logs/app.log
+```text 
+logs/app.log
 ``` 
 
 - [ ] Confirm new lines appear after each upload/poll cycle.
@@ -487,15 +527,13 @@ text logs/app.log
 ### Access denied locally
 
 - [ ] Confirm the local profile exists:
-```
-
-bash aws configure list --profile klogviewer-test
+```bash 
+aws configure list --profile klogviewer-test
 ``` 
 
 - [ ] Confirm the profile can list the bucket:
-```
-
-bash aws s3 ls s3://klogviewer-test-logs-yourname --profile klogviewer-test
+```bash 
+aws s3 ls s3://klogviewer-test-logs-yourname --profile klogviewer-test
 ``` 
 
 - [ ] Confirm the IAM user has:
@@ -510,23 +548,20 @@ bash aws s3 ls s3://klogviewer-test-logs-yourname --profile klogviewer-test
     - [ ] `s3:GetObject`
     - [ ] `s3:ListBucket`
 - [ ] Run this on EC2:
-```
-
-bash aws s3 ls s3://klogviewer-test-logs-yourname
+```bash 
+aws s3 ls s3://klogviewer-test-logs-yourname
 ``` 
 
 - [ ] Try a manual upload from EC2:
-```
-
-bash echo "test" > test.log aws s3 cp test.log s3://klogviewer-test-logs-yourname/logs/test.log
+```bash 
+echo "test" > test.log aws s3 cp test.log s3://klogviewer-test-logs-yourname/logs/test.log
 ``` 
 
 ### Application does not show new lines
 
 - [ ] Confirm the S3 object is actually changing:
-```
-
-bash aws s3 cp s3://klogviewer-test-logs-yourname/logs/app.log - --profile klogviewer-test
+```bash 
+aws s3 cp s3://klogviewer-test-logs-yourname/logs/app.log - --profile klogviewer-test
 ``` 
 
 - [ ] Confirm the application is using the correct:
@@ -540,15 +575,13 @@ bash aws s3 cp s3://klogviewer-test-logs-yourname/logs/app.log - --profile klogv
 ### Application cannot browse the bucket
 
 - [ ] Confirm `s3:ListBucket` is granted on the bucket ARN:
-```
-
-text arn:aws:s3:::klogviewer-test-logs-yourname
+```text 
+arn:aws:s3:::klogviewer-test-logs-yourname
 ``` 
 
 - [ ] Confirm `s3:GetObject` is granted on the object ARN pattern:
-```
-
-text arn:aws:s3:::klogviewer-test-logs-yourname/*
+```text 
+arn:aws:s3:::klogviewer-test-logs-yourname/*
 ``` 
 
 ---
@@ -565,9 +598,8 @@ When testing is complete, clean up resources to avoid unnecessary AWS charges.
 
 - [ ] Go to **EC2 > Instances**.
 - [ ] Select:
-```
-
-text klogviewer-log-generator
+```text 
+klogviewer-log-generator
 ``` 
 
 - [ ] Stop or terminate the instance.
@@ -575,40 +607,35 @@ text klogviewer-log-generator
 ### Delete S3 objects
 
 - [ ] Remove the test logs:
-```
-
-bash aws s3 rm s3://klogviewer-test-logs-yourname/logs/ --recursive --profile klogviewer-test
+```bash 
+aws s3 rm s3://klogviewer-test-logs-yourname/logs/ --recursive --profile klogviewer-test
 ``` 
 
 ### Delete the S3 bucket
 
 - [ ] Delete the bucket:
-```
-
-bash aws s3 rb s3://klogviewer-test-logs-yourname --profile klogviewer-test
+```bash 
+aws s3 rb s3://klogviewer-test-logs-yourname --profile klogviewer-test
 ``` 
 
 If the bucket is not empty, use:
-```
-
-bash aws s3 rb s3://klogviewer-test-logs-yourname --force --profile klogviewer-test
+```bash 
+aws s3 rb s3://klogviewer-test-logs-yourname --force --profile klogviewer-test
 ``` 
 
 ### Remove IAM test resources
 
 - [ ] Delete or deactivate the IAM user:
-```
-
-text klogviewer-s3-test-user
+```text 
+klogviewer-s3-test-user
 ``` 
 
 - [ ] Delete the IAM policies if no longer needed:
     - [ ] `KLogViewerS3ReadOnlyTestPolicy`
     - [ ] `KLogViewerS3WriteTestPolicy`
 - [ ] Delete the EC2 IAM role if no longer needed:
-```
-
-text KLogViewerLogGeneratorRole
+```text 
+KLogViewerLogGeneratorRole
 ``` 
 
 ---

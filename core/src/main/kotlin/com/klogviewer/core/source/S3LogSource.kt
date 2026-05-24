@@ -76,11 +76,11 @@ class S3LogSource(
                             range = rangeVal
                         }
                         
+                        val appendedEntries = mutableListOf<LogEntry>()
                         client.getObject(request) { response ->
                             val content = response.body?.decodeToString() ?: ""
                             val lines = content.lines().filter { it.isNotEmpty() }
                             
-                            val entries = mutableListOf<LogEntry>()
                             lines.forEach { line ->
                                 val entry = if (multilineProcessor != null) {
                                     multilineProcessor.process(line)
@@ -93,14 +93,14 @@ class S3LogSource(
                                     if (isInitial) {
                                         initialEntries.add(entryWithSource)
                                     } else {
-                                        entries.add(entryWithSource)
+                                        appendedEntries.add(entryWithSource)
                                     }
                                 }
                             }
-                            
-                            if (!isInitial && entries.isNotEmpty()) {
-                                emit(LogUpdate.Appended(entries.toList()).right())
-                            }
+                        }
+                        
+                        if (!isInitial && appendedEntries.isNotEmpty()) {
+                            emit(LogUpdate.Appended(appendedEntries.toList()).right())
                         }
                         lastSize = currentSize
                     } else if (currentSize < lastSize) {
