@@ -156,8 +156,8 @@ class KLogViewerViewModel(
     )
     
     fun clear() {
+        savePreferences(currentState = _state.value, debounce = false)
         logLoadingCoordinator.cancelAll()
-        saveJob?.cancel()
         scope.cancel()
     }
 

@@ -88,6 +88,14 @@
 - S3 Connection Persistence: Implemented automatic saving of S3 connection details in user preferences, matching the SFTP behavior for a better user experience.
 - Fix: Intermittent UI Test Failures: Resolved flakiness in the UI test suite by implementing robust synchronization via `waitUntil` in robots and tests, ensuring assertions wait for asynchronous MVI state changes.
 - Plaintext Fallback Consent: Added explicit user confirmation before persisting remote secrets in plaintext when OS secure storage is unavailable.
+- Preferences Restore Reliability: Fixed a shutdown persistence gap so debounced column width changes are flushed and restored on next startup.
+- Default Column Width Cap: Capped oversized default log column widths at 300 while keeping manual resizing unrestricted.
+- Last Column Default Width Fix: Removed last-column viewport expansion so default widths honor the 300dp cap and keep the resize affordance visible.
+- Last Column Right-Resize Reliability: Fixed repeated drag behavior so the last column can continue expanding to the right across consecutive resize gestures.
+- Right-Most Column Full Resizability: Improved resize-handle drag behavior and hit area so the right-most column expands reliably during rightward drags.
+- Column Resize Visual Consistency: Aligned header resize handles to true column edges and clipped message-cell rendering so width changes are visually reflected in data columns.
+- Trailing Column Space Fix: Removed stale width retention in the log list so the right-most column now remains the true end of content after shrinking from wider sizes.
+- Resize Handle & Content Width Cleanups: Applied code review feedback in `LogList` (removed redundant `LaunchedEffect`, fixed `onDragEnd` indentation, threaded `gutterWidth` into `getLogListContentWidth`).
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
@@ -1940,6 +1948,23 @@ For each sprint/task
 **Test coverage areas**
 - N/A (documentation-only task).
 
+## Task: Column Width Preference Restore Reliability
+**Title**: Flush Debounced Column Width Saves on Shutdown
+**Date/time completed**: 2026-05-25 11:08
+**What was shipped**
+- Added a regression integration test proving debounced `UpdateColumnWidth` changes were lost if `KLogViewerViewModel.clear()` ran before debounce elapsed.
+- Updated `KLogViewerViewModel.clear()` to force an immediate preferences save before canceling jobs/scope, preserving latest column widths.
+- Verified persistence behavior across integration and related ViewModel suites.
+**Key decisions**
+- Fixed the issue at the lifecycle boundary (`clear()`) instead of changing resize event semantics, keeping responsive debounced saves during drag operations.
+- Kept save mapping unchanged (`PreferencesStateMapper`) because serialization/deserialization of `columnWidths` already worked correctly.
+**Gotchas**
+- Debounced saves can be canceled during shutdown, so relying only on delayed writes risks losing last-moment UI preference changes.
+**Test coverage areas**
+- `PersistenceIntegrationTest` (5/5 passing, including new shutdown-flush column width test).
+- `PlaintextSecretFallbackPromptTest` (6/6 passing).
+- `ConnectionToggleTest` (6/6 passing).
+
 ## Task: Sprint Replan for Network Adapters
 **Title**: Move TCP/UDP Adapter Scope to Sprint 13
 **Date/time completed**: 2026-05-25 10:36
@@ -1972,3 +1997,123 @@ For each sprint/task
 - OpenTelemetry can be implemented through multiple wire formats, so the sprint documentation frames it as an ingestion profile requirement while deferring concrete transport binding details to implementation design.
 **Test coverage areas**
 - N/A (documentation-only task).
+
+## Task: Default Column Width Cap
+**Title**: Cap Oversized Default Column Widths at 300
+**Date/time completed**: 2026-05-25 11:45
+**What was shipped**
+- Updated `LogList` column width resolution so fallback/default widths are capped at `300`.
+- Preserved manual resizing behavior by continuing to honor explicit persisted widths above `300`.
+- Added focused unit tests for default cap behavior and explicit-width override behavior.
+- Updated persistence integration assertions to verify widths above the cap still save and restore correctly.
+**Key decisions**
+- Applied the cap only to fallback defaults to avoid constraining user intent during resize operations.
+- Kept the change localized to UI width resolution, avoiding persistence schema or state-mapper changes.
+**Gotchas**
+- Last-column layout can expand to fill viewport in Compose, so default-width behavior is best validated at width-resolution function level.
+**Test coverage areas**
+- `LogListColumnWidthTest` (4/4 passing).
+- `PersistenceIntegrationTest` (5/5 passing).
+- `LogColumnResizeTest` (2/2 passing).
+
+## Task: Last Column Default Width and Resize Handle
+**Title**: Keep Last Column Capped by Default and Resizable
+**Date/time completed**: 2026-05-25 11:58
+**What was shipped**
+- Updated `LogList` header and row layout to remove special-case last-column stretch behavior that could exceed intended default sizing.
+- Ensured all columns, including the last column, use `getColumnWidth(...)` directly for default sizing, so the existing `300dp` cap is applied consistently.
+- Preserved the existing header resize handle for the last column, now kept visible with the capped default width.
+- Added a UI regression test asserting the default last-column width is `300dp` and that dragging the last-column handle increases width.
+**Key decisions**
+- Solved this in layout rendering (where the oversizing occurred) rather than changing persistence or width defaults.
+- Kept user-controlled resizing unrestricted so explicit widths can still exceed `300` after drag interactions.
+**Gotchas**
+- Prior viewport-fill logic for the last unresized column could effectively override the capped default width and push the handle far off-screen.
+**Test coverage areas**
+- `LogColumnResizeTest` (4/4 passing, including new last-column cap/resize scenario).
+- `LogListColumnWidthTest` (4/4 passing).
+- `PersistenceIntegrationTest` (5/5 passing).
+
+## Task: Last Column Right Resize Follow-up
+**Title**: Ensure Consecutive Right Resizes Use Latest Width
+**Date/time completed**: 2026-05-25 12:11
+**What was shipped**
+- Added a regression UI test proving the last column failed to keep growing when resized to the right in consecutive drag gestures.
+- Updated `ResizeHandle` in `LogList` to capture the latest column width at each drag start using `rememberUpdatedState`, so each new drag starts from the current width.
+- Kept existing default-width capping and persistence behavior unchanged.
+**Key decisions**
+- Fixed the issue in resize interaction state handling rather than in column-width defaults or persistence mapping.
+- Avoided restarting pointer input on every width update to keep drag interactions stable while still using fresh width values.
+**Gotchas**
+- `pointerInput` keyed only by column can retain an outdated width baseline across separate drags, causing repeated right-resize attempts to stall.
+**Test coverage areas**
+- `LogColumnResizeTest` (6/6 passing, including new repeated-right-resize regression).
+- `LogListColumnWidthTest` (4/4 passing).
+- `PersistenceIntegrationTest` (5/5 passing).
+
+## Task: Right-Most Column Full Resizability
+**Title**: Make Right-Most Column Reliably Expand on Right Drag
+**Date/time completed**: 2026-05-25 12:37
+**What was shipped**
+- Added a regression UI test for a large rightward drag on the `Message` (right-most) column to verify substantial width growth.
+- Updated `ResizeHandle` in `LogList` to use delta-based drag accumulation from the latest width state and to round persisted widths, improving continuous right-drag behavior.
+- Increased resize-handle width from `8dp` to `12dp` to improve interaction reliability for the right-most edge.
+**Key decisions**
+- Kept the fix in UI interaction code (`ResizeHandle`) so persistence and default-width policy remained unchanged.
+- Used a Compose-compatible pointer gesture implementation for this codebase instead of introducing non-supported draggable APIs.
+**Gotchas**
+- The available Compose foundation APIs in this project do not expose `draggable`/`rememberDraggableState`, so pointer-input gestures are required here.
+**Test coverage areas**
+- `LogColumnResizeTest` (8/8 passing, including large right-drag and repeated-right-drag scenarios).
+- `LogListColumnWidthTest` (4/4 passing).
+- `PersistenceIntegrationTest` (5/5 passing).
+
+## Task: Column Resize Handle Alignment and Visual Width Sync
+**Title**: Keep Resize Handle at Column Edge and Reflect Width in Cells
+**Date/time completed**: 2026-05-25 12:46
+**What was shipped**
+- Updated `LogList` header layout so gutter and column header rows use full column width, keeping each resize handle anchored at the real right edge of its column.
+- Updated message-cell rendering to `maxLines = 1` with `TextOverflow.Clip`, so resized column width is visually reflected instead of text painting past the cell boundary.
+- Added a regression UI test verifying `Message` column handle/right-edge alignment in `LogColumnResizeTest`.
+**Key decisions**
+- Fixed the issue in Compose layout/rendering (`LogList`) rather than persistence or intent handling, because width state updates were already functioning.
+- Preserved existing resize behavior and persistence contracts while correcting visual affordance and rendering feedback.
+**Gotchas**
+- Using weighted text without `fillMaxWidth()` inside fixed-width header containers can place the resize handle away from the actual column boundary.
+- `TextOverflow.Visible` can make data appear not to resize even when column width state changes correctly.
+**Test coverage areas**
+- `LogColumnResizeTest` (10/10 passing, including new handle-edge alignment regression).
+- `LogListColumnWidthTest` (4/4 passing).
+- `PersistenceIntegrationTest` (5/5 passing).
+
+## Task: Remove Extra Trailing Space After Message Column
+**Title**: Keep Last Column as True End of Content Width
+**Date/time completed**: 2026-05-25 13:03
+**What was shipped**
+- Added a regression UI test proving list content width did not shrink after reducing a previously wide `Message` column.
+- Reworked `LogList` width handling to derive content width from current column widths (gutter + visible columns) instead of persisting the historical widest measured row.
+- Updated header and row containers to render with the computed content width, eliminating stale trailing right-side space.
+**Key decisions**
+- Solved the issue in Compose layout sizing logic (`LogList`) rather than persistence/state mapping because saved widths were already correct.
+- Kept existing resize, default cap (`300dp`), and wrapped-message behavior unchanged while removing stale layout inflation.
+**Gotchas**
+- Tracking only the historical maximum row width can leave phantom horizontal space after columns are shrunk, making it appear like an extra column exists to the right.
+**Test coverage areas**
+- `LogColumnResizeTest` (14/14 passing, including new width-shrink regression).
+- `LogListColumnWidthTest` (4/4 passing).
+- `PersistenceIntegrationTest` (5/5 passing).
+
+## Task: Code Review Cleanups for LogList Resize Logic
+**Title**: Apply Code Review Feedback to LogList & Verify ViewModel Flush
+**Date/time completed**: 2026-05-25 13:21
+**What was shipped**
+- Removed redundant `LaunchedEffect(currentWidth) { dragWidth = currentWidth }` in `ResizeHandle`; `mutableStateOf(currentWidth)` initializer plus `onDragStart` reset from `latestWidth` (via `rememberUpdatedState`) already keeps `dragWidth` fresh.
+- Fixed indentation inside `onDragEnd` so `dragWidth = latestWidth` aligns with the lambda braces, matching `onDragCancel`.
+- Updated `getLogListContentWidth` to accept the already-computed `gutterWidth: Dp` from the caller instead of recomputing `getColumnWidth("Line #", ...)` per recomposition.
+**Key decisions**
+- Left `KLogViewerViewModel.clear()` unchanged after verifying `savePreferences(debounce = false)` calls `performSave` synchronously (no `scope.launch` on the hot path), so the flush completes before `scope.cancel()` without needing `runBlocking`.
+**Gotchas**
+- `rememberUpdatedState` already provides the fresh `currentWidth` to gesture callbacks, so an extra `LaunchedEffect` to copy it into `dragWidth` is duplicate work outside drag interactions.
+**Test coverage areas**
+- `LogColumnResizeTest` (14/14 passing).
+- `PersistenceIntegrationTest` (5/5 passing).

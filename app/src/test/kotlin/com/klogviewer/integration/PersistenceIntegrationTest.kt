@@ -141,18 +141,18 @@ class PersistenceIntegrationTest {
 
         // Resize a column
         val activeWindowId = vm.state.value.activeTab?.activeWindowId!!
-        vm.handleIntent(KLogViewerIntent.UpdateColumnWidth(activeWindowId, "Timestamp", 250))
+        vm.handleIntent(KLogViewerIntent.UpdateColumnWidth(activeWindowId, "Timestamp", 450))
 
         // Verify state
         val window = vm.state.value.activeTab?.activeWindow
-        expectThat(window?.columnWidths?.get("Timestamp")).isEqualTo(250)
+        expectThat(window?.columnWidths?.get("Timestamp")).isEqualTo(450)
 
         // Verify preferences were saved (with debounce)
         val activeTabId = vm.state.value.activeTabId
         
         val savedPrefs = withTimeout(2.seconds) {
             var prefs = prefsRepo.load()
-            while (prefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }?.columnWidths?.get("Timestamp") != 250) {
+            while (prefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }?.columnWidths?.get("Timestamp") != 450) {
                 kotlinx.coroutines.delay(100.milliseconds)
                 prefs = prefsRepo.load()
             }
@@ -160,7 +160,32 @@ class PersistenceIntegrationTest {
         }
         val savedWindow = savedPrefs.tabs.find { it.id == activeTabId }?.windows?.find { it.id == activeWindowId }
         
-        expectThat(savedWindow?.columnWidths?.get("Timestamp")).isEqualTo(250)
+        expectThat(savedWindow?.columnWidths?.get("Timestamp")).isEqualTo(450)
+    }
+
+    @Test
+    fun `should persist debounced column width updates when clearing view model`(): Unit = runBlocking {
+        val prefsDir = File(tempDir, "prefs")
+        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val parser = SimpleLogParser()
+        val registry = ParserRegistry()
+        val heuristicProbe = HeuristicProbe(registry)
+        val source = FileLogSource(parser)
+        viewModel = KLogViewerViewModel(source, prefsRepo, heuristicProbe)
+        val vm = viewModel!!
+
+        val activeTabId = vm.state.value.activeTabId
+        val activeWindowId = vm.state.value.activeTab?.activeWindowId!!
+        vm.handleIntent(KLogViewerIntent.UpdateColumnWidth(activeWindowId, "Timestamp", 300))
+
+        vm.clear()
+
+        val savedWindow = prefsRepo.load()
+            .tabs.find { it.id == activeTabId }
+            ?.windows
+            ?.find { it.id == activeWindowId }
+
+        expectThat(savedWindow?.columnWidths?.get("Timestamp")).isEqualTo(300)
     }
 
     @Test
