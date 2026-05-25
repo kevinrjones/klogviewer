@@ -1924,3 +1924,18 @@ For each sprint/task
 - `KLogViewerUiTest` (6/6 passing), `DirectoryTabTest` (6/6 passing).
 - `OsKeychainCredentialStoreTest` (4/4 passing), `ConnectionToggleTest` (6/6 passing).
 - `SftpPersistenceTest` (2/2 passing), `S3PersistenceTest` (2/2 passing), `SftpReloadTest` (1/1 passing), app integration directory (2/2 passing).
+
+## Task: Secret Storage ADR Documentation
+**Title**: ADR-036 Secret Storage Decisions
+**Date/time completed**: 2026-05-25 09:57
+**What was shipped**
+- Added `docs/adr/adr-036-secret-storage-decisions.md` to formalize secret storage decisions for SFTP/S3 credentials.
+- Documented secure-store-first behavior, marker-based persistence, deterministic credential references, stale secret cleanup, and explicit consent gating for plaintext fallback.
+- Captured alternatives considered and deferred follow-up work for safer native platform integrations.
+**Key decisions**
+- Record the decision at architecture level instead of only in README/task notes so future changes have a clear baseline.
+- Keep this ADR as an accepted decision tied to Sprint 8 credential persistence behavior.
+**Gotchas**
+- ADR numbering in this folder has mixed naming history (`adr-xxx` and `xxx`), so this record follows the `adr-036-...` convention used by most entries.
+**Test coverage areas**
+- N/A (documentation-only task).
