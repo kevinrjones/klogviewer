@@ -100,6 +100,13 @@ Sprint 8 introduced end-to-end remote connectivity in KLogViewer:
 - **AWS S3 ingestion** for object and prefix-based log sources.
 - **Secure saved connections** with OS-level credential storage.
 
+### Sprint 13 Network Adapter Plan
+TCP/UDP network listeners are tracked as a dedicated Sprint 13 scope. See:
+
+- `docs/sprints/sprint-13-network-log-adapters.md`
+- `docs/tasks/TASKS-SPRINT-13-NETWORK-LOG-ADAPTERS.md`
+- `docs/CONNECTIVITY-DESIGN.md`
+
 ### Connecting to SFTP Log Sources
 KLogViewer allows you to tail logs from remote servers via SFTP.
 
