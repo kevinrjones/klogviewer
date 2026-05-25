@@ -8,6 +8,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
+import com.klogviewer.domain.repository.PreferencesSaveResult
 import com.klogviewer.ui.components.DialogProvider
 import com.klogviewer.ui.components.KLogViewerScreen
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -36,6 +37,8 @@ class DirectoryTabTest {
         )
 
         every { prefsRepository.load() } returns UserPreferences()
+        every { prefsRepository.save(any(), any()) } returns PreferencesSaveResult.Saved
+        every { dialogProvider.showMessageDialog(any(), any()) } returns Unit
         
         // Mock heuristic probe
         every { heuristicProbe.detect(any()) } returns com.klogviewer.core.parser.ProbeResult(
@@ -82,6 +85,8 @@ class DirectoryTabTest {
         tempDir.deleteOnExit()
 
         every { prefsRepository.load() } returns UserPreferences()
+        every { prefsRepository.save(any(), any()) } returns PreferencesSaveResult.Saved
+        every { dialogProvider.showMessageDialog(any(), any()) } returns Unit
         
         val viewModel = KLogViewerViewModel(logSource, prefsRepository, heuristicProbe)
 
@@ -110,6 +115,8 @@ class DirectoryTabTest {
         )
 
         every { prefsRepository.load() } returns UserPreferences()
+        every { prefsRepository.save(any(), any()) } returns PreferencesSaveResult.Saved
+        every { dialogProvider.showMessageDialog(any(), any()) } returns Unit
         
         every { heuristicProbe.detect(any()) } returns com.klogviewer.core.parser.ProbeResult(
             parser = mockk(),

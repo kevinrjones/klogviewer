@@ -48,7 +48,7 @@
 
 ### 13.4. Connection Manager
 - [x] 13.4.1. Build a UI for managing saved connections and credentials
-- [ ] 13.4.2. Implement secure credential storage using OS-level keychains
+- [x] 13.4.2. Implement secure credential storage using OS-level keychains
 - [x] 13.4.3. Integrate connection manager with the main log loading flow
 - [x] 13.4.4. Implement Tab navigation in all application dialogs (UX refinement)
 - [x] 13.4.5. Update tab title when connecting to remote log sources
@@ -61,6 +61,7 @@
 - [x] 13.4.12. Ensure all remote connections are auto-saved and persisted when first opened
 - [x] 13.4.13. Support adding remote SFTP logs to existing workspace via "+" button dropdown
 - [x] 13.4.14. Add tooltips to tabs and status bar to show fully qualified file names
+- [x] 13.4.15. Prompt for explicit user consent before plaintext fallback when secure storage is unavailable
 
 ### 13.5. Verification & Testing
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server

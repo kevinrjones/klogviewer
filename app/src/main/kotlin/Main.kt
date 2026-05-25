@@ -11,6 +11,7 @@ import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.*
 import com.klogviewer.core.source.*
 import com.klogviewer.domain.model.WindowStatePreferences
+import com.klogviewer.domain.repository.PreferencesSaveResult
 import com.klogviewer.ui.components.KLogViewerScreen
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -67,7 +68,16 @@ fun main() {
                 isMaximized = windowState.placement == WindowPlacement.Maximized
             )
             viewModel.savePreferences()
-            prefsRepository.save(currentPrefs.copy(windowState = newWindowState))
+            when (prefsRepository.save(currentPrefs.copy(windowState = newWindowState))) {
+                PreferencesSaveResult.Saved -> Unit
+                PreferencesSaveResult.RequiresPlaintextSecretConfirmation -> {
+                    logger.warn { "Skipped final preference save because secure credential storage requires interactive plaintext fallback consent" }
+                }
+
+                is PreferencesSaveResult.Failed -> {
+                    logger.error { "Failed to persist final window state while exiting" }
+                }
+            }
             exitApplication()
         }
 

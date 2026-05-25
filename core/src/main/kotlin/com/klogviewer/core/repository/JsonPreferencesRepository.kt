@@ -1,6 +1,8 @@
 package com.klogviewer.core.repository
 
 import com.klogviewer.domain.model.UserPreferences
+import com.klogviewer.domain.repository.PreferencesSaveOptions
+import com.klogviewer.domain.repository.PreferencesSaveResult
 import com.klogviewer.domain.repository.PreferencesRepository
 import kotlinx.serialization.json.Json
 import java.io.File
@@ -8,11 +10,15 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 
 private val logger = KotlinLogging.logger {}
 
-class JsonPreferencesRepository(private val customConfigDir: File? = null) : PreferencesRepository {
+class JsonPreferencesRepository(
+    private val customConfigDir: File? = null,
+    private val secureCredentialStore: SecureCredentialStore = OsKeychainCredentialStore()
+) : PreferencesRepository {
     private val json = Json { 
         prettyPrint = true
         ignoreUnknownKeys = true
     }
+    private val credentialProtectionService = CredentialProtectionService(secureCredentialStore)
     
     private val configFile: File by lazy {
         val os = System.getProperty("os.name").lowercase()
@@ -42,6 +48,41 @@ class JsonPreferencesRepository(private val customConfigDir: File? = null) : Pre
     }
 
     override fun load(): UserPreferences {
+        val storedPreferences = loadStoredPreferences()
+        return credentialProtectionService.resolveAfterLoad(storedPreferences)
+    }
+
+    override fun save(
+        preferences: UserPreferences,
+        options: PreferencesSaveOptions
+    ): PreferencesSaveResult {
+        try {
+            val previousPreferences = loadStoredPreferences()
+            val protectionResult = credentialProtectionService.protectForPersistence(
+                preferences = preferences,
+                allowPlaintextSecretFallback = options.allowPlaintextSecretFallback
+            )
+            val protectedPreferences = when (protectionResult) {
+                CredentialProtectionService.ProtectionResult.RequiresPlaintextSecretFallbackConsent -> {
+                    logger.warn { "Secure credential storage unavailable; plaintext fallback requires explicit user consent" }
+                    return PreferencesSaveResult.RequiresPlaintextSecretConfirmation
+                }
+
+                is CredentialProtectionService.ProtectionResult.Protected -> protectionResult.preferences
+            }
+
+            val content = json.encodeToString(UserPreferences.serializer(), protectedPreferences)
+            configFile.writeText(content)
+            credentialProtectionService.cleanupRemovedCredentials(previousPreferences, protectedPreferences)
+            logger.debug { "Saved preferences to ${configFile.absolutePath}" }
+            return PreferencesSaveResult.Saved
+        } catch (e: Exception) {
+            logger.error(e) { "Failed to save preferences to ${configFile.absolutePath}" }
+            return PreferencesSaveResult.Failed(e.message)
+        }
+    }
+
+    private fun loadStoredPreferences(): UserPreferences {
         return if (configFile.exists()) {
             try {
                 val content = configFile.readText()
@@ -53,16 +94,6 @@ class JsonPreferencesRepository(private val customConfigDir: File? = null) : Pre
         } else {
             logger.info { "Preferences file not found, using defaults" }
             UserPreferences()
-        }
-    }
-
-    override fun save(preferences: UserPreferences) {
-        try {
-            val content = json.encodeToString(UserPreferences.serializer(), preferences)
-            configFile.writeText(content)
-            logger.debug { "Saved preferences to ${configFile.absolutePath}" }
-        } catch (e: Exception) {
-            logger.error(e) { "Failed to save preferences to ${configFile.absolutePath}" }
         }
     }
 }

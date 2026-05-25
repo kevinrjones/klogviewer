@@ -25,6 +25,12 @@ Monitor your logs as they grow. KLogViewer uses an efficient polling mechanism t
 ### Remote Log Streams (SFTP)
 Connect to remote servers and tail logs in real-time over SSH. Supports both password and public-key authentication (RSA, Ed25519, etc.) with optional passphrase support for encrypted keys.
 
+### AWS S3 Log Sources
+Read log objects directly from AWS S3 using default credential chain, named profiles, or explicit credentials. Monitor a single object key or a whole prefix (directory-style) and follow new log data as it arrives.
+
+### Secure Credential Storage
+Saved remote credentials are protected with native OS secret stores (macOS Keychain, Linux Secret Service via `secret-tool`, and Windows Credential Locker via PowerShell `PasswordVault`) when available.
+
 ### Advanced Heuristic Parsing
 Supports a wide variety of log formats out-of-the-box, including:
 - **Standard Text**: ISO8601, Apache, Syslog, CSV.
@@ -83,6 +89,13 @@ Distributions will be available in `app/build/compose/binaries`.
 
 ## Usage
 
+### Sprint 8 Connectivity Overview
+Sprint 8 introduced end-to-end remote connectivity in KLogViewer:
+
+- **SFTP/SSH tailing** for remote host log files.
+- **AWS S3 ingestion** for object and prefix-based log sources.
+- **Secure saved connections** with OS-level credential storage.
+
 ### Connecting to SFTP Log Sources
 KLogViewer allows you to tail logs from remote servers via SFTP.
 
@@ -96,7 +109,44 @@ KLogViewer allows you to tail logs from remote servers via SFTP.
 4. Enter the **Log File Path** on the remote server (e.g., `/var/log/syslog`).
 5. Click **Connect**.
 
-KLogViewer uses `tail -f` over SSH to provide efficient, real-time updates for remote files.
+How it works:
+- KLogViewer authenticates with SSH using your selected method.
+- It tails the remote file using `tail -f` semantics and streams appended lines into the parser pipeline.
+- Parsed entries are emitted as initial load + incremental appends for real-time updates.
+
+### Connecting to AWS S3 Log Sources
+KLogViewer supports S3 log reading from the **Connect to S3** action in the UI.
+
+1. Open the **Connect to S3** dialog.
+2. Enter a **Connection Name**, **Bucket Name**, and optional **Region** (default commonly `us-east-1`).
+3. Choose an authentication mode:
+   - **Default (Env/Web Identity)**: Uses AWS SDK default credential chain.
+   - **AWS Profile**: Uses a named local AWS profile.
+   - **Explicit Credentials**: Uses Access Key ID + Secret Access Key.
+4. Enter an **S3 Prefix / Object Key**.
+   - Use an object key to follow one log object.
+   - Use a prefix to browse/monitor directory-style S3 log layouts.
+5. Click **Connect** (or **Browse** first to inspect available objects).
+
+How it works:
+- For single objects, KLogViewer polls S3 and uses object size + byte-range requests to fetch only appended content.
+- For prefixes/directories, KLogViewer periodically rescans and attaches observers to discovered objects.
+
+### How Secure Storage Works
+When you save SFTP/S3 connections, KLogViewer protects secrets before writing preferences:
+
+- SFTP password auth: stores password in OS keychain and persists a marker in JSON.
+- SFTP key auth: stores private-key passphrase in OS keychain (if provided) and persists a marker.
+- S3 explicit auth: stores secret access key in OS keychain and persists a marker.
+
+On load, markers are resolved back into live credentials from the OS keychain.
+
+Platform behavior:
+- **macOS**: Uses the `security` CLI.
+- **Linux**: Uses `secret-tool` (Secret Service API).
+- **Windows**: Uses PowerShell with `Windows.Security.Credentials.PasswordVault`.
+
+If secure storage is unavailable on the host, KLogViewer asks for explicit confirmation before saving the secret in plaintext. If you decline, the connection settings are not persisted.
 
 ### Continuous Integration & Deployment
 KLogViewer uses GitHub Actions for automated building and packaging. For every push to the `main` branch, the following are automatically generated:

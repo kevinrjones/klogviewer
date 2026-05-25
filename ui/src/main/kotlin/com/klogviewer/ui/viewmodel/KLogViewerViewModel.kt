@@ -6,10 +6,12 @@ import com.klogviewer.core.repository.JavaLocalFileSystem
 import com.klogviewer.core.source.DefaultLogSourceFactory
 import com.klogviewer.core.source.UnifiedRemoteFileSystem
 import com.klogviewer.domain.model.LogUpdate
+import com.klogviewer.domain.model.UserPreferences
 import com.klogviewer.domain.repository.*
 import com.klogviewer.ui.mvi.KLogViewerEvent
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
+import com.klogviewer.ui.mvi.PlaintextSecretSavePrompt
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -47,6 +49,7 @@ class KLogViewerViewModel(
     )
 
     private var saveJob: Job? = null
+    private var pendingPreferencesForPlaintextSecretSave: UserPreferences? = null
 
     private val recentItemsManager = RecentItemsManager(localFileSystem)
     
@@ -187,8 +190,16 @@ class KLogViewerViewModel(
             is KLogViewerIntent.EntryIntent -> entryIntentHandler.handle(intent)
             is KLogViewerIntent.SftpIntent -> sftpIntentHandler.handle(intent)
             is KLogViewerIntent.S3Intent -> s3IntentHandler.handle(intent)
-            is KLogViewerIntent.DialogIntent -> dialogIntentHandler.handle(intent)
+            is KLogViewerIntent.DialogIntent -> handleDialogIntent(intent)
             is KLogViewerIntent.RecentItemsIntent -> recentItemsIntentHandler.handle(intent)
+        }
+    }
+
+    private fun handleDialogIntent(intent: KLogViewerIntent.DialogIntent) {
+        when (intent) {
+            KLogViewerIntent.ConfirmPlaintextSecretSave -> confirmPlaintextSecretSave()
+            KLogViewerIntent.DeclinePlaintextSecretSave -> declinePlaintextSecretSave()
+            else -> dialogIntentHandler.handle(intent)
         }
     }
 
@@ -215,23 +226,93 @@ class KLogViewerViewModel(
     }
 
 
-    fun savePreferences(currentState: KLogViewerState = _state.value, debounce: Boolean = false) {
+    fun savePreferences(
+        currentState: KLogViewerState = _state.value,
+        debounce: Boolean = false,
+        allowPlaintextSecretFallback: Boolean = false
+    ) {
         if (debounce) {
             saveJob?.cancel()
             saveJob = scope.launch {
                 delay(500.milliseconds)
-                performSave(currentState)
+                performSave(currentState, allowPlaintextSecretFallback)
             }
         } else {
             saveJob?.cancel()
-            performSave(currentState)
+            performSave(currentState, allowPlaintextSecretFallback)
         }
     }
 
-    private fun performSave(currentState: KLogViewerState) {
+    private fun performSave(
+        currentState: KLogViewerState,
+        allowPlaintextSecretFallback: Boolean
+    ) {
         val currentPrefs = prefsRepository.load()
         val newPrefs = PreferencesStateMapper.toPreferences(currentState, currentPrefs)
-        prefsRepository.save(newPrefs)
+        savePreferencesInternal(newPrefs, allowPlaintextSecretFallback)
+    }
+
+    private fun savePreferencesInternal(
+        preferences: UserPreferences,
+        allowPlaintextSecretFallback: Boolean
+    ) {
+        when (
+            val saveResult = prefsRepository.save(
+                preferences = preferences,
+                options = PreferencesSaveOptions(
+                    allowPlaintextSecretFallback = allowPlaintextSecretFallback
+                )
+            )
+        ) {
+            PreferencesSaveResult.Saved -> {
+                pendingPreferencesForPlaintextSecretSave = null
+                _state.update { it.copy(pendingPlaintextSecretSave = null) }
+            }
+
+            PreferencesSaveResult.RequiresPlaintextSecretConfirmation -> {
+                pendingPreferencesForPlaintextSecretSave = preferences
+                _state.update {
+                    it.copy(
+                        pendingPlaintextSecretSave = PlaintextSecretSavePrompt(
+                            title = "Secure storage unavailable",
+                            message = "KLogViewer could not access the OS secure credential store. Do you want to save this secret in plaintext in preferences.json?"
+                        )
+                    )
+                }
+            }
+
+            is PreferencesSaveResult.Failed -> {
+                pendingPreferencesForPlaintextSecretSave = null
+                _state.update { it.copy(pendingPlaintextSecretSave = null) }
+                scope.launch {
+                    _events.emit(
+                        KLogViewerEvent.ShowError(
+                            saveResult.reason ?: "Failed to save preferences"
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    private fun confirmPlaintextSecretSave() {
+        val pendingPreferences = pendingPreferencesForPlaintextSecretSave ?: return
+        savePreferencesInternal(
+            preferences = pendingPreferences,
+            allowPlaintextSecretFallback = true
+        )
+    }
+
+    private fun declinePlaintextSecretSave() {
+        pendingPreferencesForPlaintextSecretSave = null
+        _state.update { it.copy(pendingPlaintextSecretSave = null) }
+        scope.launch {
+            _events.emit(
+                KLogViewerEvent.ShowError(
+                    "Preferences with remote credentials were not saved because plaintext fallback was declined"
+                )
+            )
+        }
     }
 
     private fun copySelectedToClipboard() {

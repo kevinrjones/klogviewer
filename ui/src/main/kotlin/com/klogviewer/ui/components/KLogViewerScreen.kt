@@ -157,6 +157,24 @@ private fun DialogHandler(
         )
     }
 
+    state.pendingPlaintextSecretSave?.let { prompt ->
+        AlertDialog(
+            onDismissRequest = { viewModel.handleIntent(KLogViewerIntent.DeclinePlaintextSecretSave) },
+            title = { Text(prompt.title) },
+            text = { Text(prompt.message) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.handleIntent(KLogViewerIntent.ConfirmPlaintextSecretSave) }) {
+                    Text("Save in plaintext")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.handleIntent(KLogViewerIntent.DeclinePlaintextSecretSave) }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     if (state.pendingDialog == KLogViewerState.DialogType.SFTP_CONNECT ||
         state.pendingDialog == KLogViewerState.DialogType.SFTP_ADD
     ) {
