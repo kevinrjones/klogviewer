@@ -7,6 +7,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
+import com.klogviewer.domain.repository.PreferencesSaveResult
 import com.klogviewer.ui.components.DialogProvider
 import com.klogviewer.ui.components.KLogViewerScreen
 import com.klogviewer.ui.robot.logList
@@ -47,6 +48,8 @@ class KLogViewerUiTest {
             ),
             activeTabId = "tab1"
         )
+        every { prefsRepository.save(any(), any()) } returns PreferencesSaveResult.Saved
+        every { dialogProvider.showMessageDialog(any(), any()) } returns Unit
         
         // Mock heuristic probe to return a simple parser
         val mockParser = mockk<com.klogviewer.domain.parser.LogParser>()

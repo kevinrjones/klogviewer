@@ -87,11 +87,13 @@
 - S3 Log Source: Implemented native support for tailing logs from AWS S3 buckets using the Kotlin SDK, with flexible authentication and session persistence.
 - S3 Connection Persistence: Implemented automatic saving of S3 connection details in user preferences, matching the SFTP behavior for a better user experience.
 - Fix: Intermittent UI Test Failures: Resolved flakiness in the UI test suite by implementing robust synchronization via `waitUntil` in robots and tests, ensuring assertions wait for asynchronous MVI state changes.
+- Plaintext Fallback Consent: Added explicit user confirmation before persisting remote secrets in plaintext when OS secure storage is unavailable.
 
 **Gotchas**
 - Initial discussion on `Result` vs `Either` highlighted the importance of typed errors in functional design.
 - `FileDialog` via `AwtWindow` requires manual state reset on close to avoid dialog re-triggering.
 - Blocking remote reads may not react to coroutine cancellation unless the underlying SSH command/session/input stream is explicitly closed.
+- Non-Unit persistence result contracts can surface in relaxed UI mocks; tests need explicit stubs for save outcomes and error dialogs.
 
 ## Sprint: Walking Skeleton Implementation
 **Title**: Sprint 1 Completion
@@ -1860,3 +1862,65 @@ For each sprint/task
 - `S3UriTest`, `SftpUriTest` (new unit tests).
 - `SftpBrowsingTest`, `SftpReloadTest` (updated integration tests).
 - `S3DirectoryDetectionTest` (verified directory detection logic).
+
+**Title**: Secure Credential Storage with OS Keychain
+**Date/time completed**: 2026-05-25 07:24
+**What was shipped**
+- Added keychain-backed credential protection in `JsonPreferencesRepository` so SFTP/S3 secrets are no longer stored in plaintext JSON when keychain writes succeed.
+- Introduced credential redaction/resolution flow with marker-based persistence and stale credential cleanup when remote connections are removed.
+- Added focused repository tests for secure redaction and keychain cleanup behavior.
+**Key decisions**
+- Kept runtime connection/auth models unchanged and applied protection at the persistence boundary to minimize behavioral risk.
+- Used deterministic credential references derived from connection names for idempotent save/load/delete operations.
+- Implemented graceful fallback: if OS keychain storage is unavailable, persistence behavior remains compatible without breaking existing flows.
+**Gotchas**
+- Public API visibility required secure-store abstractions to be public because `JsonPreferencesRepository` is instantiated from downstream modules/tests.
+- Key-pair passphrase handling needed nullable-safe resolution to avoid forcing missing values to empty strings.
+**Test coverage areas**
+- `PreferencesRepositoryTest` (7/7 passing, including new keychain redaction/cleanup tests).
+- `SftpPersistenceTest` (2/2 passing).
+- `S3PersistenceTest` (2/2 passing).
+- `SftpReloadTest` (1/1 passing).
+- `ConnectionToggleTest` (6/6 passing).
+
+**Title**: Cross-Platform OS Credential Storage (Windows/Linux)
+**Date/time completed**: 2026-05-25 08:35
+**What was shipped**
+- Extended `OsKeychainCredentialStore` to support Linux (`secret-tool`) and Windows (PowerShell `PasswordVault`) in addition to existing macOS `security` support.
+- Refactored command execution into an injectable executor to keep secure-store behavior testable without real OS keychains.
+- Added dedicated cross-platform tests for macOS/Linux/Windows command paths, unsupported platform fallback, and escaping behavior.
+**Key decisions**
+- Kept the `SecureCredentialStore` contract and repository-level marker workflow unchanged so persistence behavior remains backward compatible.
+- Implemented platform-specific command strategies with graceful fallback semantics when platform support or command execution is unavailable.
+- Treated Linux delete exit code `1` as a non-fatal "not found" case to align cleanup behavior with idempotent credential removal.
+**Gotchas**
+- Exposing an injectable command executor in a public constructor required public visibility for the executor/result types to satisfy Kotlin API visibility rules.
+- Windows script generation needed single-quote escaping to safely handle credential values and account names containing `'`.
+**Test coverage areas**
+- `OsKeychainCredentialStoreTest` (4/4 passing).
+- `PreferencesRepositoryTest` (7/7 passing).
+- `SftpPersistenceTest` (2/2 passing).
+- `S3PersistenceTest` (2/2 passing).
+- `SftpReloadTest` (1/1 passing).
+- `ConnectionToggleTest` (6/6 passing).
+
+**Title**: Secure Storage Consent for Plaintext Fallback
+**Date/time completed**: 2026-05-25 09:18
+**What was shipped**
+- Added save-result signaling (`Saved`, `RequiresPlaintextSecretConfirmation`, `Failed`) with persistence options to explicitly control plaintext fallback.
+- Updated credential protection to fail closed for secret persistence unless plaintext fallback is explicitly allowed.
+- Added UI confirmation flow in `KLogViewerViewModel`/`KLogViewerScreen` to ask users before writing plaintext secrets and retry save only on approval.
+- Updated docs and sprint task tracking for the new consent behavior.
+**Key decisions**
+- Kept consent orchestration at the ViewModel boundary to reuse existing SFTP/S3 save paths without refactoring handlers.
+- Preserved secure-store-first behavior and only enabled plaintext fallback through explicit user action.
+- Used pending preference snapshots for deterministic retry when the user approves fallback.
+**Gotchas**
+- Existing Compose UI tests required explicit stubs for `prefsRepository.save(...)` and `DialogProvider.showMessageDialog(...)` after save became result-driven.
+- App shutdown path can receive `RequiresPlaintextSecretConfirmation`; this is logged and exits without silent plaintext writes.
+**Test coverage areas**
+- `PreferencesRepositoryTest` (9/9 passing, including consent-required and explicit-allow fallback cases).
+- `PlaintextSecretFallbackPromptTest` (6/6 passing).
+- `KLogViewerUiTest` (6/6 passing), `DirectoryTabTest` (6/6 passing).
+- `OsKeychainCredentialStoreTest` (4/4 passing), `ConnectionToggleTest` (6/6 passing).
+- `SftpPersistenceTest` (2/2 passing), `S3PersistenceTest` (2/2 passing), `SftpReloadTest` (1/1 passing), app integration directory (2/2 passing).

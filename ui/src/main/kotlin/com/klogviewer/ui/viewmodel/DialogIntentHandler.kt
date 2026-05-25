@@ -19,6 +19,8 @@ class DialogIntentHandler(
             KLogViewerIntent.ShowRecentDialog -> state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
             KLogViewerIntent.ShowSftpDialog -> state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_CONNECT, isAddMode = false) }
             KLogViewerIntent.ShowS3Dialog -> state.update { it.copy(pendingDialog = KLogViewerState.DialogType.S3_CONNECT, isAddMode = false) }
+            KLogViewerIntent.ConfirmPlaintextSecretSave -> Unit
+            KLogViewerIntent.DeclinePlaintextSecretSave -> Unit
             KLogViewerIntent.DismissDialog -> state.update { it.copy(pendingDialog = null) }
         }
     }

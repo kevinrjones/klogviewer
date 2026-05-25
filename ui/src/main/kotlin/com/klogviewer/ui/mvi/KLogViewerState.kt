@@ -67,6 +67,7 @@ data class KLogViewerState(
     val remoteBrowsePath: String = "",
     val currentSftpConfig: SftpConfig? = null,
     val currentS3Config: S3Config? = null,
+    val pendingPlaintextSecretSave: PlaintextSecretSavePrompt? = null,
     val isAddMode: Boolean = false
 ) {
     enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, ADD_DIRECTORY, RECENT_ITEMS, SFTP_CONNECT, SFTP_ADD, SFTP_BROWSE, S3_CONNECT, S3_ADD, S3_BROWSE }
@@ -86,3 +87,8 @@ data class KLogViewerState(
         })
     }
 }
+
+data class PlaintextSecretSavePrompt(
+    val title: String,
+    val message: String
+)

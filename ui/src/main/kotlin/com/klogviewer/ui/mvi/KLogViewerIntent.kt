@@ -47,6 +47,8 @@ sealed interface KLogViewerIntent {
     data object ShowRecentDialog : DialogIntent
     data object ShowSftpDialog : DialogIntent
     data object ShowS3Dialog : DialogIntent
+    data object ConfirmPlaintextSecretSave : DialogIntent
+    data object DeclinePlaintextSecretSave : DialogIntent
     data object DismissDialog : DialogIntent
     
     // SFTP
