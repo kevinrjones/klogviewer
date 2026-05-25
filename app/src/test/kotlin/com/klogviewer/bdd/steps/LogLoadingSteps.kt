@@ -4,6 +4,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.JsonPreferencesRepository
+import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -37,7 +38,7 @@ class LogLoadingSteps {
     private val parser = SimpleLogParser()
     private val logSource = FileLogSource(parser, testDispatcher)
     private val tempDir = File("build/tmp/cucumber").apply { mkdirs() }
-    private val prefsRepository = JsonPreferencesRepository(tempDir)
+    private val prefsRepository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
     private val parserRegistry = ParserRegistry()
     private val heuristicProbe = HeuristicProbe(parserRegistry)
     private lateinit var viewModel: KLogViewerViewModel

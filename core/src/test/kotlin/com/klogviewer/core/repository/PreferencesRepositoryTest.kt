@@ -18,7 +18,7 @@ class PreferencesRepositoryTest {
 
     @Test
     fun `should save and load preferences`() {
-        val repository = JsonPreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         val prefs = UserPreferences(
             windowState = WindowStatePreferences(width = 800, height = 600, x = 100, y = 100),
             recentFiles = listOf("/path/to/file.log"),
@@ -35,7 +35,7 @@ class PreferencesRepositoryTest {
 
     @Test
     fun `should return defaults if file does not exist`() {
-        val repository = JsonPreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         val loaded = repository.load()
         
         expectThat(loaded).isEqualTo(UserPreferences())
@@ -43,7 +43,7 @@ class PreferencesRepositoryTest {
 
     @Test
     fun `should save and load complex preferences including tabs`() {
-        val repository = JsonPreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         val prefs = UserPreferences(
             tabs = listOf(
                 TabPreference(
@@ -75,7 +75,7 @@ class PreferencesRepositoryTest {
 
     @Test
     fun `should handle corrupted json by returning defaults`() {
-        val repository = JsonPreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         val configFile = File(tempDir, "preferences.json")
         configFile.writeText("invalid json")
         
@@ -85,7 +85,7 @@ class PreferencesRepositoryTest {
     }
     @Test
     fun `should save and load sftp connections`() {
-        val repository = JsonPreferencesRepository(tempDir)
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         val prefs = UserPreferences(
             sftpConnections = listOf(
                 SftpConfig(
@@ -253,19 +253,6 @@ class PreferencesRepositoryTest {
         assertTrue(savedJson.contains("fallback-s3-secret"))
         assertFalse(savedJson.contains(CredentialProtectionService.KEYCHAIN_MARKER))
         expectThat(repository.load()).isEqualTo(prefs)
-    }
-
-    private class InMemorySecureCredentialStore : SecureCredentialStore {
-        private val secrets = mutableMapOf<CredentialReference, String>()
-
-        override fun put(reference: CredentialReference, secret: String): Boolean {
-            secrets[reference] = secret
-            return true
-        }
-
-        override fun get(reference: CredentialReference): String? = secrets[reference]
-
-        override fun delete(reference: CredentialReference): Boolean = secrets.remove(reference) != null
     }
 
     private class FailingSecureCredentialStore : SecureCredentialStore {

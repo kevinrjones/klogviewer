@@ -4,6 +4,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.JsonPreferencesRepository
+import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -37,7 +38,7 @@ class RecentItemsTest {
         missingFile.createNewFile()
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -76,7 +77,7 @@ class RecentItemsTest {
         file2.createNewFile()
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -103,7 +104,7 @@ class RecentItemsTest {
         val missingFile = File(tempDir, "missing.log")
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)

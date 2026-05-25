@@ -297,3 +297,16 @@ class OsKeychainCredentialStore internal constructor(
         }
     }
 }
+
+class InMemorySecureCredentialStore : SecureCredentialStore {
+    private val secrets = mutableMapOf<CredentialReference, String>()
+
+    override fun put(reference: CredentialReference, secret: String): Boolean {
+        secrets[reference] = secret
+        return true
+    }
+
+    override fun get(reference: CredentialReference): String? = secrets[reference]
+
+    override fun delete(reference: CredentialReference): Boolean = secrets.remove(reference) != null
+}

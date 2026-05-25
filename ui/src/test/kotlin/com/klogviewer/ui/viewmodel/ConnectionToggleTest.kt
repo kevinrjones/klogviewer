@@ -3,6 +3,7 @@ package com.klogviewer.ui.viewmodel
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.repository.JsonPreferencesRepository
+import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import io.mockk.*
@@ -32,7 +33,7 @@ class ConnectionToggleTest {
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        prefsRepo = JsonPreferencesRepository(tempDir)
+        prefsRepo = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         mockLogSource = mockk(relaxed = true)
         
         viewModel = KLogViewerViewModel(

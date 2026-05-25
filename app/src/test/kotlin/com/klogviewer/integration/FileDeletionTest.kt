@@ -4,6 +4,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.JsonPreferencesRepository
+import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.io.TempDir
 import strikt.api.expectThat
 import strikt.assertions.*
 import java.io.File
+import kotlin.time.Duration.Companion.milliseconds
 
 class FileDeletionTest {
 
@@ -25,7 +27,7 @@ class FileDeletionTest {
         logFile.writeText("2023-01-01 12:00:00 INFO test message\n")
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -44,7 +46,7 @@ class FileDeletionTest {
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(logFile.absolutePath)))
         
         // Wait for initial load
-        delay(500)
+        delay(500.milliseconds)
         expectThat(viewModel.state.value.activeTab?.activeWindow?.logs).isNotNull().hasSize(1)
         expectThat(viewModel.state.value.activeTab?.activeWindow?.missingSourceIds).isNotNull().isEmpty()
 
@@ -52,7 +54,7 @@ class FileDeletionTest {
         logFile.delete()
         
         // 3. Wait for polling (FileLogSource polls every 1s)
-        delay(1500)
+        delay(1500.milliseconds)
         
         // 4. Verify that data is still there but missingSourceIds is updated
         val window = viewModel.state.value.activeTab?.activeWindow!!
@@ -70,7 +72,7 @@ class FileDeletionTest {
         logFile.writeText("2023-01-01 12:00:00 INFO test message\n")
         
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -89,14 +91,14 @@ class FileDeletionTest {
         
         // Wait for initial load (DirectoryLogSource has a 5s rescan delay, so we need to wait at least that long if it missed the first check)
         // Actually, it should miss the first check because FileLogSource.observeLogs is async.
-        delay(7000)
+        delay(7000.milliseconds)
         expectThat(viewModel.state.value.activeTab?.activeWindow?.logs).isNotNull().hasSize(1)
 
         // 2. Delete the file inside the directory
         logFile.delete()
         
         // 3. Wait for directory rescan (default 5s)
-        delay(7000)
+        delay(7000.milliseconds)
         
         // 4. Verify that missingSourceIds is updated
         val window = viewModel.state.value.activeTab?.activeWindow!!

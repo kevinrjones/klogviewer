@@ -4,6 +4,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.JsonPreferencesRepository
+import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.domain.model.*
 import com.klogviewer.ui.mvi.KLogViewerIntent
@@ -23,7 +24,7 @@ class S3PersistenceTest {
     private val registry = ParserRegistry()
     private val heuristicProbe = HeuristicProbe(registry)
     private val source = FileLogSource(parser)
-    private val prefsRepository by lazy { JsonPreferencesRepository(tempDir) }
+    private val prefsRepository by lazy { JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore()) }
     private val logSourceFactory = io.mockk.mockk<com.klogviewer.domain.repository.LogSourceFactory>(relaxed = true)
     private val viewModel by lazy { 
         KLogViewerViewModel(

@@ -4,6 +4,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.JsonPreferencesRepository
+import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.domain.model.*
 import com.klogviewer.ui.mvi.KLogViewerIntent
@@ -40,7 +41,7 @@ class PersistenceIntegrationTest {
         logFile.writeText("2023-10-27 10:00:00 INFO Test message\n")
 
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         
         // 1. Setup initial state and save it
         val initialPrefs = UserPreferences(
@@ -96,7 +97,7 @@ class PersistenceIntegrationTest {
         logFile.writeText("2023-10-27 10:00:00 INFO Test message\n")
 
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -131,7 +132,7 @@ class PersistenceIntegrationTest {
     @Test
     fun `should persist column widths`(): Unit = runBlocking {
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -166,7 +167,7 @@ class PersistenceIntegrationTest {
     @Test
     fun `should persist debounced column width updates when clearing view model`(): Unit = runBlocking {
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)
@@ -191,7 +192,7 @@ class PersistenceIntegrationTest {
     @Test
     fun `should persist auto-scroll state`(): Unit = runBlocking {
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         val parser = SimpleLogParser()
         val registry = ParserRegistry()
         val heuristicProbe = HeuristicProbe(registry)

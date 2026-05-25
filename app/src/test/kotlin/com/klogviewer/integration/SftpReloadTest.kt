@@ -4,6 +4,7 @@ import arrow.core.left
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.repository.JsonPreferencesRepository
+import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.domain.repository.RemoteFileSystem
@@ -45,7 +46,7 @@ class SftpReloadTest {
     @Test
     fun `should mark SFTP source as missing if connection fails on startup`() = runBlocking {
         val prefsDir = File(tempDir, "prefs")
-        val prefsRepo = JsonPreferencesRepository(prefsDir)
+        val prefsRepo = JsonPreferencesRepository(prefsDir, InMemorySecureCredentialStore())
         
         val sftpConfig = SftpConfig(
             name = "My Server",

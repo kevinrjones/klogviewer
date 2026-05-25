@@ -5,6 +5,7 @@ import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.parser.ParserRegistry
 import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.JsonPreferencesRepository
+import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
@@ -37,7 +38,7 @@ class SftpBrowsingTest {
     private val registry = ParserRegistry()
     private val heuristicProbe = HeuristicProbe(registry)
     private val source = FileLogSource(parser)
-    private val prefsRepository by lazy { JsonPreferencesRepository(tempDir) }
+    private val prefsRepository by lazy { JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore()) }
     private val remoteFileSystem = mockk<RemoteFileSystem>()
     private val mockSftpSource = mockk<LogSource>(relaxed = true)
     private val logSourceFactory = mockk<com.klogviewer.domain.repository.LogSourceFactory>(relaxed = true)
@@ -115,7 +116,7 @@ class SftpBrowsingTest {
         viewModel.handleIntent(KLogViewerIntent.ConnectSftp(name, host, 22, "user", auth, path))
         
         // Assert
-        kotlinx.coroutines.delay(100)
+        kotlinx.coroutines.delay(100.milliseconds)
         
         val state = viewModel.state.value
         assertEquals(null, state.pendingDialog)
