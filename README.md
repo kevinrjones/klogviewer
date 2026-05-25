@@ -8,6 +8,10 @@
 
 KLogViewer is a professional-grade, high-density desktop log viewer built with Kotlin and Compose for Desktop. It is designed to handle large log files and complex distributed system events with ease, providing a reactive and highly customizable viewing experience.
 
+## Release Notes
+
+For details on the latest customer-facing release, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
+
 ## Key Features
 
 ### Multiple Tabs & Workspaces
