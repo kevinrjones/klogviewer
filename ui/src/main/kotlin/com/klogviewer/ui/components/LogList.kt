@@ -311,7 +311,7 @@ fun LogEntryRow(
         Row(
             modifier = Modifier
                 .padding(vertical = 0.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Top
         ) {
             LogGutter(
                 entry = entry,
@@ -359,7 +359,7 @@ private fun LogGutter(
 ) {
     Row(
         modifier = Modifier.width(gutterWidth).padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.Top
     ) {
         if (sourceIds.size > 1) {
             val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)

@@ -1067,3 +1067,17 @@ Implemented automatic saving of S3 connection details in user preferences upon c
     - Fixed a regression in `FilterBar` test tags and improved setup in `KLogViewerComplexUiTest`.
 - **Verification**: Added `S3PersistenceTest.kt` and verified all desktop UI tests pass.
 
+## 17:34
+
+### S3/SFTP Connectivity Fixes and Detection Hardening
+
+Recap from the previous entry (`10:45`) up to now:
+
+#### Changes:
+- **Commit `da809fc` (11:00)**: Added S3 connection persistence coverage and UI test-tag standardization, including `S3PersistenceTest.kt` and related UI test/intent updates.
+- **Commit `48e704f` (11:12)**: Fixed incorrect update behavior in `S3LogSource` and refined related S3 setup documentation.
+- **Commit `f3f5ab8` (17:34)**: Added broader S3/SFTP URI and directory-detection tests across `core` and `domain`, with supporting integration updates.
+- **Current Session Fix**: Updated app wiring in `app/src/main/kotlin/Main.kt` to inject `UnifiedRemoteFileSystem()` instead of `SftpFileSystem()`, resolving S3 directory loads that were incorrectly routed through SFTP-only behavior.
+- **Verification**: Ran `./gradlew :app:compileKotlin :core:test --tests "com.klogviewer.core.source.S3DirectoryDetectionTest" --tests "com.klogviewer.core.source.S3LogSourceTest"` successfully.
+- **Git History**: Merge commit `b96a5ff` recorded integration of `feature/connectivity` after the above changes.
+
