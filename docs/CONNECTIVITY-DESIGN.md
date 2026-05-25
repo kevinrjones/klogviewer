@@ -68,6 +68,25 @@ Implement two protocol profiles:
 
 If time is limited in Sprint 13, deliver `plain-line` first and define `syslog` as a backward-compatible extension.
 
+### Requested compatibility targets for Sprint 13
+
+The Sprint 13 scope should explicitly support these sender ecosystems and wire formats:
+
+1. **Java Logback `SocketAppender`**
+   - TCP ingestion profile with Logback socket payload decoding.
+2. **Log4j `SocketAppender`**
+   - TCP ingestion profile with Log4j socket payload decoding.
+3. **NLog network targets**
+   - TCP/UDP ingestion profile for common NLog network layouts.
+4. **Serilog sinks**
+   - TCP/UDP ingestion profile for structured and plain-text Serilog sink payloads.
+5. **Python logging socket handlers**
+   - Support `SocketHandler` (TCP) and `DatagramHandler` (UDP) ingestion.
+6. **Logstash protocol**
+   - Logstash-compatible event ingestion profile and mapping into `LogUpdate`.
+7. **OpenTelemetry logs**
+   - OpenTelemetry log ingestion profile and field mapping into the KLogViewer event model.
+
 ## Transport Semantics: TCP vs UDP
 
 ### TCP listener
@@ -168,10 +187,22 @@ Display identity in source badges and allow filtering by sender.
    - multi-stream interleaving tests
    - high-volume performance tests
    - richer status telemetry
+   - compatibility validation for Logback, Log4j, NLog, Serilog, and Python handlers
 
 3. **Security/Compatibility**
    - TLS TCP mode
    - optional `syslog` profile
+   - protocol profiles for Logstash and OpenTelemetry logs
+
+## Other Protocols to Consider in Later Versions
+
+- GELF (Graylog Extended Log Format)
+- Fluentd Forward protocol
+- Loki Push API
+- Vector ingestion protocol
+- Splunk HEC (HTTP Event Collector)
+- Kafka ingestion bridge
+- Windows Event Forwarding bridge
 
 ## Acceptance Mapping to Sprint 13 Tasks
 
@@ -185,7 +216,12 @@ Canonical task tracking file: `docs/tasks/TASKS-SPRINT-13-NETWORK-LOG-ADAPTERS.m
 - `13.3.7` / `13.3.8`: UI controls + persisted listener configuration
 - `13.3.9`: TLS-enabled TCP listener
 - `13.3.10`: listener + connection status in status bar
+- `13.3.11`–`13.3.15`: framework compatibility profiles (Logback, Log4j, NLog, Serilog, Python)
+- `13.3.16`: Logstash protocol ingestion profile
+- `13.3.17`: OpenTelemetry logs ingestion profile
 - `13.5.4` / `13.5.5`: integration/performance verification
+- `13.5.6` / `13.5.7`: compatibility and protocol integration suites
+- `13.6.x`: later-version protocol candidate evaluation
 
 ## Bottom Line
 

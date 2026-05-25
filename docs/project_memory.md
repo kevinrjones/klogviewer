@@ -1956,3 +1956,19 @@ For each sprint/task
 - Existing task numbering combines sprint labels and legacy IDs, so consistency required adding explicit “moved to Sprint 13” pointers rather than renumbering historical entries.
 **Test coverage areas**
 - N/A (documentation-only task).
+
+## Task: Sprint 13 Protocol Coverage Expansion
+**Title**: Add Logging Ecosystem Compatibility Targets
+**Date/time completed**: 2026-05-25 11:05
+**What was shipped**
+- Updated `docs/sprints/sprint-13-network-log-adapters.md` to explicitly include compatibility targets for Java Logback `SocketAppender`, Log4j `SocketAppender`, NLog network targets, Serilog sinks, Python socket handlers, Logstash protocol, and OpenTelemetry logs.
+- Expanded `docs/tasks/TASKS-SPRINT-13-NETWORK-LOG-ADAPTERS.md` with dedicated implementation tasks (`13.3.11`–`13.3.17`) and matching verification tasks (`13.5.6`, `13.5.7`) for framework/protocol compatibility.
+- Updated `docs/CONNECTIVITY-DESIGN.md` with explicit Sprint 13 compatibility targets and acceptance mapping for Logstash/OpenTelemetry plus framework-specific profiles.
+- Added an explicit later-version protocol candidate list in Sprint and design docs (GELF, Fluentd, Loki, Vector, Splunk HEC, Kafka, Windows Event Forwarding).
+**Key decisions**
+- Kept existing task numbering stable and extended it rather than renumbering, to preserve existing cross-document references.
+- Separated Sprint 13 “must support now” protocols from “later versions” candidates to keep delivery scope clear.
+**Gotchas**
+- OpenTelemetry can be implemented through multiple wire formats, so the sprint documentation frames it as an ingestion profile requirement while deferring concrete transport binding details to implementation design.
+**Test coverage areas**
+- N/A (documentation-only task).
