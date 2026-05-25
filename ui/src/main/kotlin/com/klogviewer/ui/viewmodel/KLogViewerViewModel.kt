@@ -1,20 +1,30 @@
 package com.klogviewer.ui.viewmodel
 
+import com.klogviewer.core.analysis.DefaultLogAnalysisService
+import com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepository
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.repository.AwtClipboard
 import com.klogviewer.core.repository.JavaLocalFileSystem
 import com.klogviewer.core.source.DefaultLogSourceFactory
 import com.klogviewer.core.source.UnifiedRemoteFileSystem
+import com.klogviewer.domain.model.DashboardMetrics
+import com.klogviewer.domain.model.DiffWindow
 import com.klogviewer.domain.model.LogUpdate
+import com.klogviewer.domain.model.TimeSeriesMetricsQuery
 import com.klogviewer.domain.model.UserPreferences
 import com.klogviewer.domain.repository.*
+import com.klogviewer.ui.mappers.toUiMessage
+import com.klogviewer.ui.mvi.DashboardBucketUiModel
+import com.klogviewer.ui.mvi.DashboardUiState
 import com.klogviewer.ui.mvi.KLogViewerEvent
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
 import com.klogviewer.ui.mvi.PlaintextSecretSavePrompt
+import com.klogviewer.ui.mvi.WindowViewMode
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import java.time.format.DateTimeFormatter
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
@@ -27,7 +37,8 @@ class KLogViewerViewModel(
     private val clipboard: Clipboard = AwtClipboard(),
     val localFileSystem: LocalFileSystem = JavaLocalFileSystem(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
-    private val remoteFileSystem: RemoteFileSystem = UnifiedRemoteFileSystem()
+    private val remoteFileSystem: RemoteFileSystem = UnifiedRemoteFileSystem(),
+    private val logAnalysisService: LogAnalysisService = DefaultLogAnalysisService(InMemoryAnalysisMetricsRepository())
 ) {
     private val _state = MutableStateFlow(KLogViewerState())
     val state: StateFlow<KLogViewerState> = _state.asStateFlow()
@@ -192,6 +203,70 @@ class KLogViewerViewModel(
             is KLogViewerIntent.S3Intent -> s3IntentHandler.handle(intent)
             is KLogViewerIntent.DialogIntent -> handleDialogIntent(intent)
             is KLogViewerIntent.RecentItemsIntent -> recentItemsIntentHandler.handle(intent)
+            is KLogViewerIntent.DashboardIntent -> handleDashboardIntent(intent)
+        }
+    }
+
+    private fun handleDashboardIntent(intent: KLogViewerIntent.DashboardIntent) {
+        when (intent) {
+            is KLogViewerIntent.ShowDashboard -> {
+                val windowId = resolveWindowId(intent.windowId) ?: return
+                _state.update { currentState ->
+                    currentState.updateWindow(windowId) { window ->
+                        window.copy(viewMode = WindowViewMode.DASHBOARD, dashboardState = DashboardUiState.Loading)
+                    }
+                }
+                refreshDashboardForWindow(windowId)
+            }
+
+            is KLogViewerIntent.ShowLogs -> {
+                val windowId = resolveWindowId(intent.windowId) ?: return
+                _state.update { currentState ->
+                    currentState.updateWindow(windowId) { window ->
+                        window.copy(viewMode = WindowViewMode.LOGS)
+                    }
+                }
+            }
+
+            is KLogViewerIntent.SelectDashboardBucket -> {
+                _state.update { currentState ->
+                    currentState.updateWindow(intent.windowId) { window ->
+                        val selectedBucket = DashboardBucketUiModel(
+                            from = intent.from,
+                            to = intent.to,
+                            count = window.logs.count { log ->
+                                log.instant?.let { !it.isBefore(intent.from) && !it.isAfter(intent.to) } ?: false
+                            },
+                            timestampFilter = intent.timestampFilter
+                        )
+                        window.copy(
+                            dashboardBucketFilter = selectedBucket,
+                            dashboardFilterQuery = intent.timestampFilter,
+                            dashboardState = when (val dashboardState = window.dashboardState) {
+                                is DashboardUiState.Content -> dashboardState.copy(selectedBucket = selectedBucket)
+                                else -> window.dashboardState
+                            }
+                        )
+                    }
+                }
+                filterLogs(intent.windowId)
+            }
+
+            is KLogViewerIntent.ClearDashboardBucketFilter -> {
+                _state.update { currentState ->
+                    currentState.updateWindow(intent.windowId) { window ->
+                        window.copy(
+                            dashboardBucketFilter = null,
+                            dashboardFilterQuery = null,
+                            dashboardState = when (val dashboardState = window.dashboardState) {
+                                is DashboardUiState.Content -> dashboardState.copy(selectedBucket = null)
+                                else -> window.dashboardState
+                            }
+                        )
+                    }
+                }
+                filterLogs(intent.windowId)
+            }
         }
     }
 
@@ -222,7 +297,62 @@ class KLogViewerViewModel(
             _state.update { currentState ->
                 currentState.updateWindow(windowId) { it.copy(filteredLogs = filteredLogs) }
             }
+
+            val refreshedWindow = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@launch
+            if (refreshedWindow.viewMode == WindowViewMode.DASHBOARD) {
+                refreshDashboardForWindow(windowId)
+            }
         }
+    }
+
+    private fun refreshDashboardForWindow(windowId: String) {
+        scope.launch(Dispatchers.Default) {
+            val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@launch
+            val result = logAnalysisService.dashboardMetrics(
+                TimeSeriesMetricsQuery(
+                    entries = window.filteredLogs,
+                    window = DiffWindow.Unbounded
+                )
+            )
+
+            _state.update { currentState ->
+                currentState.updateWindow(windowId) { currentWindow ->
+                    result.fold(
+                        ifLeft = { failure ->
+                            currentWindow.copy(dashboardState = DashboardUiState.Error(failure.toUiMessage()))
+                        },
+                        ifRight = { metrics ->
+                            currentWindow.copy(dashboardState = metrics.toDashboardUiState())
+                        }
+                    )
+                }
+            }
+        }
+    }
+
+    private fun resolveWindowId(windowId: String?): String? {
+        return windowId ?: _state.value.activeTab?.activeWindow?.id
+    }
+
+    private fun DashboardMetrics.toDashboardUiState(): DashboardUiState {
+        val buckets = timeSeries.buckets.map { bucket ->
+            DashboardBucketUiModel(
+                from = bucket.window.from,
+                to = bucket.window.to,
+                count = bucket.count.value,
+                timestampFilter = DASHBOARD_TIMESTAMP_FORMAT.format(bucket.window.from)
+            )
+        }
+
+        return if (buckets.isEmpty()) {
+            DashboardUiState.Empty("No logs match the current filters")
+        } else {
+            DashboardUiState.Content(buckets = buckets)
+        }
+    }
+
+    companion object {
+        val DASHBOARD_TIMESTAMP_FORMAT: DateTimeFormatter = DateTimeFormatter.ISO_INSTANT
     }
 
 

@@ -4,6 +4,7 @@ import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
+import java.time.Instant
 
 data class LogWindow(
     val id: String,
@@ -26,9 +27,35 @@ data class LogWindow(
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap(),
     val isConnected: Boolean = true,
-    val isDirectory: Boolean = false
+    val isDirectory: Boolean = false,
+    val viewMode: WindowViewMode = WindowViewMode.LOGS,
+    val dashboardState: DashboardUiState = DashboardUiState.Empty("Load logs to view dashboard"),
+    val dashboardBucketFilter: DashboardBucketUiModel? = null,
+    val dashboardFilterQuery: String? = null
 ) {
     val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
+}
+
+enum class WindowViewMode {
+    LOGS,
+    DASHBOARD
+}
+
+data class DashboardBucketUiModel(
+    val from: Instant,
+    val to: Instant,
+    val count: Int,
+    val timestampFilter: String
+)
+
+sealed interface DashboardUiState {
+    data object Loading : DashboardUiState
+    data class Empty(val message: String) : DashboardUiState
+    data class Error(val message: String) : DashboardUiState
+    data class Content(
+        val buckets: List<DashboardBucketUiModel>,
+        val selectedBucket: DashboardBucketUiModel? = null
+    ) : DashboardUiState
 }
 
 data class TabState(

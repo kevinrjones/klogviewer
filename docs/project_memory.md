@@ -2117,3 +2117,24 @@ For each sprint/task
 **Test coverage areas**
 - `LogColumnResizeTest` (14/14 passing).
 - `PersistenceIntegrationTest` (5/5 passing).
+
+## Task: Sprint 9 Dashboard Foundations and Walking Skeleton
+**Title**: Implement Sprint 9 Tasks 14.1 and 14.2
+**Date/time completed**: 2026-05-25 17:48
+**What was shipped**
+- Added analysis foundations across `:domain`, `:core`, and `:ui`: tiny types (`TimeBucketSize`, `AnalysisFieldKey`, `FrequencyCount`, `DiffWindow`), sealed failures (`AnalysisFailure`), repository/service contracts, and default in-memory implementations.
+- Added dashboard vertical slice in primary UI flow with explicit view-mode entry (`Logs` / `Dashboard`) and per-window dashboard state (`loading`, `empty`, `error`, `content`).
+- Wired end-to-end dashboard pipeline from selected `LogWindow` through metrics query to rendered time-bucket bars.
+- Implemented click-through from dashboard bucket selection to existing filtering via `LogFilterService` (`dashboardFilterQuery`) and clear/reset behavior.
+- Added architecture documentation ADRs: `adr-037-analysis-architecture-and-data-flow.md` and `adr-038-compose-charting-strategy-for-dashboard-slice.md`.
+**Key decisions**
+- Kept aggregation and analysis contracts outside composables/viewmodel reducers to preserve clean boundaries and test seams.
+- Used a Compose-native lightweight chart surface for the walking skeleton to validate interactions before introducing a heavier chart dependency.
+- Preserved filter behavior by routing dashboard selection through the existing filtering pipeline rather than creating a separate filter subsystem.
+**Gotchas**
+- Arrow extension availability in this project required explicit `Either` folding and typed `left/right` conversions instead of `map` in some core paths.
+- Dashboard click-through needed deterministic timestamp tokens to avoid ambiguous runtime string reconstruction between UI and filter layers.
+**Test coverage areas**
+- `InMemoryAnalysisMetricsRepositoryTest` (3/3 passing).
+- `DashboardIntentTest` (6/6 passing).
+- `ui/viewmodel` directory regression run (6/6 passing).

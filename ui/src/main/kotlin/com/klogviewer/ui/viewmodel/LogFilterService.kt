@@ -17,7 +17,10 @@ object LogFilterService {
                     entry.timestamp.value.contains(query, ignoreCase = true)
                 }
             }
-            matchesLevel && matchesFilter
+            val matchesDashboardFilter = window.dashboardFilterQuery?.let { query ->
+                entry.timestamp.value.contains(query, ignoreCase = true)
+            } ?: true
+            matchesLevel && matchesFilter && matchesDashboardFilter
         }
         
         if (window.isReversed) filtered.reversed() else filtered

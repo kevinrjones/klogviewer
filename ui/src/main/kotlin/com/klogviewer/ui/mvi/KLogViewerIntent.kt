@@ -3,6 +3,7 @@ package com.klogviewer.ui.mvi
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
+import java.time.Instant
 
 sealed interface KLogViewerIntent {
     sealed interface WorkspaceIntent : KLogViewerIntent
@@ -14,6 +15,7 @@ sealed interface KLogViewerIntent {
     sealed interface RecentItemsIntent : KLogViewerIntent
     sealed interface SftpIntent : KLogViewerIntent
     sealed interface S3Intent : KLogViewerIntent
+    sealed interface DashboardIntent : KLogViewerIntent
 
     data class LoadFiles(val paths: List<String>) : WorkspaceIntent
     data class AddToWorkspace(val paths: List<String>) : WorkspaceIntent
@@ -110,4 +112,15 @@ sealed interface KLogViewerIntent {
     data class SwitchWindow(val id: String) : TabWindowIntent
     data class UpdateColumnWidth(val windowId: String, val column: String, val width: Int) : TabWindowIntent
     data class ChangeParser(val windowId: String, val parserName: String) : TabWindowIntent
+
+    // Dashboard
+    data class ShowDashboard(val windowId: String? = null) : DashboardIntent
+    data class ShowLogs(val windowId: String? = null) : DashboardIntent
+    data class SelectDashboardBucket(
+        val windowId: String,
+        val from: Instant,
+        val to: Instant,
+        val timestampFilter: String
+    ) : DashboardIntent
+    data class ClearDashboardBucketFilter(val windowId: String) : DashboardIntent
 }
