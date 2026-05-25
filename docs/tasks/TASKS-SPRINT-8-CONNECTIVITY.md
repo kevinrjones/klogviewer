@@ -34,17 +34,8 @@
 - [x] 13.2.11. Restore S3 log sources and connection state on application startup
 - [x] 13.2.12. Support adding S3 logs to existing workspace via "+" button dropdown
 
-### 13.3. Network Appenders
-- [ ] 13.3.1. Implement a TCP listener in `:core` to receive logs
-- [ ] 13.3.2. Implement a UDP listener in `:core` to receive logs
-- [ ] 13.3.3. Define a lightweight protocol for streaming logs directly to KLogViewer
-- [ ] 13.3.4. Support multiple concurrent network log streams
-- [ ] 13.3.5. Implement buffer management and overflow handling for high-volume streams
-- [ ] 13.3.6. Add source identification for network streams (sender IP/hostname)
-- [ ] 13.3.7. Implement UI toggle to start/stop network listeners in the toolbar
-- [ ] 13.3.8. Persist listener configuration and auto-start state in user preferences
-- [ ] 13.3.9. Support secure TLS-encrypted TCP listeners
-- [ ] 13.3.10. Display network listener status and connection count in the status bar
+### 13.3. Network Appenders (Moved to Sprint 13)
+- [ ] The full 13.3 scope is now tracked in `docs/tasks/TASKS-SPRINT-13-NETWORK-LOG-ADAPTERS.md`
 
 ### 13.4. Connection Manager
 - [x] 13.4.1. Build a UI for managing saved connections and credentials
@@ -67,6 +58,6 @@
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server
 - [x] 13.5.2. Unit tests for `S3LogSource` with S3 mocks
 - [ ] 13.5.3. Integration tests for S3 directory monitoring and deletion detection
-- [ ] 13.5.4. Integration tests for network log reception and multi-stream interleaving
-- [ ] 13.5.5. Performance testing for high-volume network log streams and buffer limits
+- [ ] 13.5.4. (Moved to Sprint 13) Integration tests for network log reception and multi-stream interleaving
+- [ ] 13.5.5. (Moved to Sprint 13) Performance testing for high-volume network log streams and buffer limits
 - [ ] 13.5.6. Security audit of credential storage implementation
