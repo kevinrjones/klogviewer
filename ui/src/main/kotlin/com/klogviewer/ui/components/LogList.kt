@@ -26,7 +26,6 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -194,9 +193,7 @@ fun LogListHeader(
                         Text(
                             text = column,
                             style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
-                            modifier = Modifier.weight(1f).padding(horizontal = 4.dp),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
                         )
                         
                         ResizeHandle(
@@ -426,7 +423,6 @@ private fun LogEntryCell(
                     textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
                 ),
                 fontSize = 12.sp,
-                overflow = TextOverflow.Clip,
                 modifier = columnModifier.padding(horizontal = 4.dp)
             )
         }
@@ -437,9 +433,7 @@ private fun LogEntryCell(
                 text = value,
                 color = MaterialTheme.colors.onSurface,
                 style = MaterialTheme.typography.caption,
-                modifier = columnModifier.padding(horizontal = 4.dp),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                modifier = columnModifier.padding(horizontal = 4.dp)
             )
         }
     }

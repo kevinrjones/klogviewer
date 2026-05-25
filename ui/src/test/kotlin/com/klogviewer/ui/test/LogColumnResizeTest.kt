@@ -221,6 +221,46 @@ class LogColumnResizeTest {
     }
 
     @Test
+    fun givenNarrowCustomColumn_whenValueIsLong_thenRowHeightIncreasesWithWrappedText() = runComposeUiTest {
+        val shortEntry = LogEntry(
+            timestamp = LogTimestamp("2026-05-25T12:00:00Z"),
+            level = LogLevel.INFO,
+            content = LogContent("short message"),
+            fields = mapOf("thread" to "worker-1")
+        )
+        val longEntry = LogEntry(
+            timestamp = LogTimestamp("2026-05-25T12:00:01Z"),
+            level = LogLevel.INFO,
+            content = LogContent("short message"),
+            fields = mapOf("thread" to "long worker thread name that should wrap into multiple lines in a narrow column")
+        )
+
+        setContent {
+            LogList(
+                logs = listOf(shortEntry, longEntry),
+                filterQueries = emptyList(),
+                isDarkMode = false,
+                columns = listOf("Thread"),
+                columnWidths = mapOf("Thread" to 80),
+                isAutoScrollEnabled = false,
+                windowId = "custom-wrap-test"
+            )
+        }
+
+        waitForIdle()
+
+        val rowNodes = onAllNodes(hasTestTag("log_entry_row"), useUnmergedTree = true).fetchSemanticsNodes()
+        assert(rowNodes.size >= 2) { "Expected at least two log rows, but found ${rowNodes.size}" }
+
+        val firstRowHeight = rowNodes[0].size.height
+        val secondRowHeight = rowNodes[1].size.height
+
+        assert(secondRowHeight > firstRowHeight) {
+            "Expected long custom-column value row to be taller due to wrapping, but first=$firstRowHeight second=$secondRowHeight"
+        }
+    }
+
+    @Test
     fun givenMessageColumnShrinksAfterBeingWide_whenListRecomposes_thenContentWidthAlsoShrinks() = runComposeUiTest {
         val entry = LogEntry(
             timestamp = LogTimestamp("2026-05-25T12:00:00Z"),
