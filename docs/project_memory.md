@@ -11,6 +11,7 @@
 - Robust S3/SFTP directory detection and URI standardization.
 - Fixed S3 Flow context preservation and polling logic.
 - Time filter UX update: replaced free-text `From`/`To` with entry-based date-time dropdown selectors and expanded relative-range presets.
+- Sprint 9 planning restarted with a new analysis/visualization backlog focused on high-performance chart library integration and synchronized date-time controls.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -105,6 +106,7 @@
 - Blocking remote reads may not react to coroutine cancellation unless the underlying SSH command/session/input stream is explicitly closed.
 - Non-Unit persistence result contracts can surface in relaxed UI mocks; tests need explicit stubs for save outcomes and error dialogs.
 - Date/time dropdown values should use stable machine values (`Instant.toString()`) with formatted labels only for display to avoid parse drift.
+- Sprint restarts can leave ADR/task-history drift unless the new sprint scope explicitly supersedes prior checklist assumptions.
 
 ## Sprint: Walking Skeleton Implementation
 **Title**: Sprint 1 Completion
@@ -2266,3 +2268,19 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/TimeRangeFilterSupportTest.kt` (10/10 passing in this environment).
 - `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceTimeRangeTest.kt` (8/8 passing in this environment).
 - `ui/src/test/kotlin/com/klogviewer/ui/viewmodel` regression run (6/6 passing in this environment).
+
+## Task: Sprint 9 Restart Planning (Graphing + Analysis)
+**Title**: Reset Sprint 9 Scope with Performance-First Charting and Date-Time Controls
+**Date/time completed**: 2026-05-26 12:15
+**What was shipped**
+- Replaced `docs/tasks/TASKS-SPRINT-9-ANALYSIS-AND-VISUALIZATION.md` with a fresh restart plan and removed the prior Sprint 9 checklist content.
+- Added a competitive baseline derived from the referenced TechDator log viewer list to anchor required analysis/graphing capabilities.
+- Added a dedicated chart-library selection track with explicit performance benchmarking and a no-custom-chart-engine direction.
+- Added a full date-time control track covering `From`/`To`, presets, timezone correctness, and chart-range/log-range synchronization.
+**Key decisions**
+- Treat Sprint 9 as a clean restart: all items reset to unchecked and prior completion state is considered superseded.
+- Keep charting implementation library-first with a benchmark gate before committing to a single dependency.
+**Gotchas**
+- Existing historical ADRs/checklists remain valid as records, but sprint execution must reference the new restart checklist to avoid scope confusion.
+**Test coverage areas**
+- Documentation-only update; no build or automated tests were run.
