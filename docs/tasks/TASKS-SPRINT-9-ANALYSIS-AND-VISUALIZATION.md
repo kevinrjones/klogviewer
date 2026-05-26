@@ -13,10 +13,10 @@ Observed strengths to cover in our sprint scope:
 - Export/share workflows for downstream analysis (`LogViewer` export, centralized analysis tools)
 
 ### 14.1. Sprint Restart Foundations
-- [ ] 14.1.1. Mark Sprint 9 as restarted and supersede prior Sprint 9 checklist scope
-- [ ] 14.1.2. Create new ADR for Sprint 9 restart scope (graphing + analysis + date-time controls)
-- [ ] 14.1.3. Reconfirm tiny types and sealed failures for analysis workflows (time range, bucket, field key, compare window)
-- [ ] 14.1.4. Define performance budgets for analysis and charts (first paint, interaction latency, refresh time)
+- [x] 14.1.1. Mark Sprint 9 as restarted and supersede prior Sprint 9 checklist scope
+- [x] 14.1.2. Create new ADR for Sprint 9 restart scope (graphing + analysis + date-time controls)
+- [x] 14.1.3. Reconfirm tiny types and sealed failures for analysis workflows (time range, bucket, field key, compare window)
+- [x] 14.1.4. Define performance budgets for analysis and charts (first paint, interaction latency, refresh time)
 
 ### 14.2. Charting Library Selection (Performance First, No Custom Engine)
 - [ ] 14.2.1. Benchmark Compose-capable chart libraries on Desktop with representative datasets (small/medium/large)

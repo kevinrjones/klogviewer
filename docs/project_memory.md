@@ -12,6 +12,7 @@
 - Fixed S3 Flow context preservation and polling logic.
 - Time filter UX update: replaced free-text `From`/`To` with entry-based date-time dropdown selectors and expanded relative-range presets.
 - Sprint 9 planning restarted with a new analysis/visualization backlog focused on high-performance chart library integration and synchronized date-time controls.
+- Sprint 9 restart foundations completed with ADR-backed scope supersession, reconfirmed analysis contracts, and explicit performance budgets.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -107,6 +108,7 @@
 - Non-Unit persistence result contracts can surface in relaxed UI mocks; tests need explicit stubs for save outcomes and error dialogs.
 - Date/time dropdown values should use stable machine values (`Instant.toString()`) with formatted labels only for display to avoid parse drift.
 - Sprint restarts can leave ADR/task-history drift unless the new sprint scope explicitly supersedes prior checklist assumptions.
+- Performance-first charting work needs explicit latency/paint budgets captured early, otherwise library selection can drift without measurable acceptance gates.
 
 ## Sprint: Walking Skeleton Implementation
 **Title**: Sprint 1 Completion
@@ -2282,5 +2284,21 @@ For each sprint/task
 - Keep charting implementation library-first with a benchmark gate before committing to a single dependency.
 **Gotchas**
 - Existing historical ADRs/checklists remain valid as records, but sprint execution must reference the new restart checklist to avoid scope confusion.
+**Test coverage areas**
+- Documentation-only update; no build or automated tests were run.
+
+## Task: Sprint 9 Restart Foundations (14.1)
+**Title**: Implement Sprint 9 Task 14.1 Foundations
+**Date/time completed**: 2026-05-26 12:43
+**What was shipped**
+- Marked Sprint 9 restart foundation checklist items (`14.1.1`–`14.1.4`) as complete in `docs/tasks/TASKS-SPRINT-9-ANALYSIS-AND-VISUALIZATION.md`.
+- Added `docs/adr/adr-039-sprint-9-restart-foundations.md` to formalize restart scope supersession and execution baseline.
+- Reconfirmed analysis tiny types and sealed failure contracts used by restart workflows (`TimeBucketSize`, `AnalysisFieldKey`, `FrequencyCount`, `DiffWindow`, `AnalysisFailure`).
+- Defined explicit performance budgets for Sprint 9 analysis/charting work (first paint, interaction latency p95, refresh latency p95).
+**Key decisions**
+- Keep existing analysis contracts as canonical and avoid re-modeling during restart foundations.
+- Treat the restart task file plus ADR-039 as the authoritative source of Sprint 9 execution scope.
+**Gotchas**
+- Historical sprint/task records remain valid context but should not be used as completion evidence for restarted scope.
 **Test coverage areas**
 - Documentation-only update; no build or automated tests were run.
