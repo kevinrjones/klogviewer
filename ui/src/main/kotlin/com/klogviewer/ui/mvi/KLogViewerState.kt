@@ -28,34 +28,18 @@ data class LogWindow(
     val columnWidths: Map<String, Int> = emptyMap(),
     val isConnected: Boolean = true,
     val isDirectory: Boolean = false,
-    val viewMode: WindowViewMode = WindowViewMode.LOGS,
-    val dashboardState: DashboardUiState = DashboardUiState.Empty("Load logs to view dashboard"),
-    val dashboardBucketFilter: DashboardBucketUiModel? = null,
-    val dashboardFilterQuery: String? = null
+    val timeFilterFrom: String = "",
+    val timeFilterTo: String = "",
+    val timeFilterFromInstant: Instant? = null,
+    val timeFilterToInstant: Instant? = null,
+    val timeFilterPreset: TimeRangePreset? = null,
+    val timeFilterValidationMessage: String? = null
 ) {
     val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
 }
 
-enum class WindowViewMode {
-    LOGS,
-    DASHBOARD
-}
-
-data class DashboardBucketUiModel(
-    val from: Instant,
-    val to: Instant,
-    val count: Int,
-    val timestampFilter: String
-)
-
-sealed interface DashboardUiState {
-    data object Loading : DashboardUiState
-    data class Empty(val message: String) : DashboardUiState
-    data class Error(val message: String) : DashboardUiState
-    data class Content(
-        val buckets: List<DashboardBucketUiModel>,
-        val selectedBucket: DashboardBucketUiModel? = null
-    ) : DashboardUiState
+enum class TimeRangePreset {
+    LAST_5_MINUTES
 }
 
 data class TabState(

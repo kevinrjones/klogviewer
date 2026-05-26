@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.klogviewer.ui.mvi.TimeRangePreset
 
 @Composable
 fun FilterBar(
@@ -47,6 +48,14 @@ fun FilterBar(
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
     onSplitClick: () -> Unit,
+    timeFilterFrom: String,
+    timeFilterTo: String,
+    timeFilterPreset: TimeRangePreset?,
+    timeFilterValidationMessage: String?,
+    onTimeFilterFromChange: (String) -> Unit,
+    onTimeFilterToChange: (String) -> Unit,
+    onApplyLastFiveMinutes: () -> Unit,
+    onClearTimeFilter: () -> Unit,
     matchesCount: Int,
     totalCount: Int,
     modifier: Modifier = Modifier
@@ -182,6 +191,19 @@ fun FilterBar(
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
+            TimeFilterControls(
+                fromValue = timeFilterFrom,
+                toValue = timeFilterTo,
+                preset = timeFilterPreset,
+                validationMessage = timeFilterValidationMessage,
+                onFromChange = onTimeFilterFromChange,
+                onToChange = onTimeFilterToChange,
+                onApplyLastFiveMinutes = onApplyLastFiveMinutes,
+                onClear = onClearTimeFilter
+            )
+
+            Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
+
             // Search Area
             Box(
                 modifier = Modifier
@@ -253,6 +275,126 @@ fun FilterBar(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun TimeFilterControls(
+    fromValue: String,
+    toValue: String,
+    preset: TimeRangePreset?,
+    validationMessage: String?,
+    onFromChange: (String) -> Unit,
+    onToChange: (String) -> Unit,
+    onApplyLastFiveMinutes: () -> Unit,
+    onClear: () -> Unit
+) {
+    var presetMenuExpanded by remember { mutableStateOf(false) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 4.dp)
+    ) {
+        DateTimeFilterInput(
+            value = fromValue,
+            placeholder = "From",
+            testTag = "time_filter_from_input",
+            onValueChange = onFromChange
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        DateTimeFilterInput(
+            value = toValue,
+            placeholder = "To",
+            testTag = "time_filter_to_input",
+            onValueChange = onToChange
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Box {
+            FilterBarIcon(
+                icon = Icons.Default.Schedule,
+                tooltip = if (preset == TimeRangePreset.LAST_5_MINUTES) "Preset: Last 5 minutes" else "Time range presets",
+                onClick = { presetMenuExpanded = true },
+                testTag = "time_filter_preset"
+            )
+            DropdownMenu(
+                expanded = presetMenuExpanded,
+                onDismissRequest = { presetMenuExpanded = false }
+            ) {
+                DropdownMenuItem(onClick = {
+                    presetMenuExpanded = false
+                    onApplyLastFiveMinutes()
+                }) {
+                    Text("Last 5 minutes")
+                }
+            }
+        }
+
+        if (fromValue.isNotBlank() || toValue.isNotBlank() || preset != null) {
+            FilterBarIcon(
+                icon = Icons.Default.Clear,
+                tooltip = "Clear time filter",
+                onClick = onClear,
+                testTag = "time_filter_clear"
+            )
+        }
+
+        validationMessage?.let {
+            Spacer(modifier = Modifier.width(4.dp))
+            TooltipWrapper(tooltip = it) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = it,
+                    tint = MaterialTheme.colors.error,
+                    modifier = Modifier.size(16.dp).testTag("time_filter_validation")
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DateTimeFilterInput(
+    value: String,
+    placeholder: String,
+    testTag: String,
+    onValueChange: (String) -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .width(130.dp)
+            .background(MaterialTheme.colors.onSurface.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth().testTag(testTag),
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            textStyle = MaterialTheme.typography.caption.copy(
+                fontSize = 12.sp,
+                color = MaterialTheme.colors.onSurface
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colors.onSurface),
+            decorationBox = { innerTextField ->
+                Box(contentAlignment = Alignment.CenterStart) {
+                    if (value.isBlank()) {
+                        Text(
+                            text = placeholder,
+                            style = MaterialTheme.typography.caption,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                        )
+                    }
+                    innerTextField()
+                }
+            }
+        )
     }
 }
 

@@ -11,9 +11,8 @@ import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.LogTimestamp
 import com.klogviewer.domain.model.LogUpdate
 import com.klogviewer.domain.repository.LogSource
-import com.klogviewer.ui.mvi.DashboardUiState
 import com.klogviewer.ui.mvi.KLogViewerIntent
-import com.klogviewer.ui.mvi.WindowViewMode
+import com.klogviewer.ui.mvi.TimeRangePreset
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -27,11 +26,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import strikt.api.expectThat
-import strikt.assertions.isA
 import strikt.assertions.isEqualTo
-import strikt.assertions.isFalse
-import strikt.assertions.isNotNull
-import strikt.assertions.isTrue
+import strikt.assertions.isNull
 import java.io.File
 import java.time.Instant
 
@@ -71,79 +67,34 @@ class DashboardIntentTest {
     }
 
     @Test
-    fun `given active log window when show dashboard intent then dashboard content state is populated`() {
-        val testFile = File(tempDir, "dashboard.log").apply { writeText("line1\n") }
+    fun `given active window when applying time filter preset then preset is stored`() {
+        val testFile = File(tempDir, "time-filter.log").apply { writeText("line1\n") }
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
         waitUntilWindowReady()
 
-        viewModel.handleIntent(KLogViewerIntent.ShowDashboard())
-
-        waitUntil {
-            viewModel.state.value.activeTab?.activeWindow?.dashboardState is DashboardUiState.Content
-        }
-        val window = viewModel.state.value.activeTab?.activeWindow
-        expectThat(window).isNotNull()
-        expectThat(window?.viewMode).isEqualTo(WindowViewMode.DASHBOARD)
-        expectThat(window?.dashboardState).isA<DashboardUiState.Content>()
-    }
-
-    @Test
-    fun `given dashboard content when bucket selected then existing log filtering is applied and can be cleared`() {
-        val testFile = File(tempDir, "bucket.log").apply { writeText("line1\n") }
-        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
-        waitUntilWindowReady()
-        viewModel.handleIntent(KLogViewerIntent.ShowDashboard())
-        waitUntil {
-            viewModel.state.value.activeTab?.activeWindow?.dashboardState is DashboardUiState.Content
-        }
+        viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(TimeRangePreset.LAST_5_MINUTES))
 
         val window = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
-        val dashboardState = window.dashboardState as DashboardUiState.Content
-        val bucket = dashboardState.buckets.first()
-
-        viewModel.handleIntent(
-            KLogViewerIntent.SelectDashboardBucket(
-                windowId = window.id,
-                from = bucket.from,
-                to = bucket.to,
-                timestampFilter = bucket.timestampFilter
-            )
-        )
-
-        waitUntil {
-            viewModel.state.value.activeTab?.activeWindow?.dashboardFilterQuery == bucket.timestampFilter
-        }
-        val filteredWindow = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
-        expectThat(filteredWindow.dashboardFilterQuery).isEqualTo(bucket.timestampFilter)
-        expectThat(filteredWindow.filteredLogs.isNotEmpty()).isTrue()
-
-        viewModel.handleIntent(KLogViewerIntent.ClearDashboardBucketFilter(filteredWindow.id))
-        waitUntil {
-            viewModel.state.value.activeTab?.activeWindow?.dashboardFilterQuery == null
-        }
-        expectThat(viewModel.state.value.activeTab?.activeWindow?.dashboardFilterQuery).isEqualTo(null)
+        expectThat(window.timeFilterPreset).isEqualTo(TimeRangePreset.LAST_5_MINUTES)
     }
 
     @Test
-    fun `given dashboard opened on one tab when switching tabs then dashboard state remains isolated per tab`() {
-        val testFile = File(tempDir, "isolation.log").apply { writeText("line1\n") }
+    fun `given first tab has time filter when switching tabs then time filter state remains isolated per tab`() {
+        val testFile = File(tempDir, "tab-isolation.log").apply { writeText("line1\n") }
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
         waitUntilWindowReady()
 
         val firstTabId = requireNotNull(viewModel.state.value.activeTabId)
-        viewModel.handleIntent(KLogViewerIntent.ShowDashboard())
-        waitUntil {
-            viewModel.state.value.activeTab?.activeWindow?.viewMode == WindowViewMode.DASHBOARD
-        }
+        viewModel.handleIntent(KLogViewerIntent.SetTimeFilterFrom("2026-01-01T00:00:00Z"))
 
         viewModel.handleIntent(KLogViewerIntent.AddTab)
         val secondTabWindow = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
-        expectThat(secondTabWindow.viewMode).isEqualTo(WindowViewMode.LOGS)
-        expectThat(secondTabWindow.dashboardFilterQuery != null).isFalse()
+        expectThat(secondTabWindow.timeFilterFrom).isEqualTo("")
+        expectThat(secondTabWindow.timeFilterPreset).isNull()
 
         viewModel.handleIntent(KLogViewerIntent.SwitchTab(firstTabId))
         val firstTabWindow = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
-        expectThat(firstTabWindow.viewMode).isEqualTo(WindowViewMode.DASHBOARD)
+        expectThat(firstTabWindow.timeFilterFrom).isEqualTo("2026-01-01T00:00:00Z")
     }
 
     private fun waitUntil(maxAttempts: Int = 200, predicate: () -> Boolean) {

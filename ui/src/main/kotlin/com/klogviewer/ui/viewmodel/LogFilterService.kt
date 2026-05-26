@@ -7,6 +7,7 @@ import kotlinx.coroutines.withContext
 
 object LogFilterService {
     suspend fun filter(window: LogWindow): List<LogEntry> = withContext(Dispatchers.Default) {
+        val timeRange = TimeRangeFilterSupport.resolveRange(window)
         val filtered = window.logs.filter { entry ->
             val matchesLevel = window.levelFilters.contains(entry.level)
             val matchesFilter = if (window.filterQueries.isEmpty()) {
@@ -17,12 +18,13 @@ object LogFilterService {
                     entry.timestamp.value.contains(query, ignoreCase = true)
                 }
             }
-            val matchesDashboardFilter = window.dashboardFilterQuery?.let { query ->
-                entry.timestamp.value.contains(query, ignoreCase = true)
+            val matchesTimeRange = timeRange?.let { (from, to) ->
+                val entryInstant = TimeRangeFilterSupport.entryInstant(entry) ?: return@let false
+                !entryInstant.isBefore(from) && !entryInstant.isAfter(to)
             } ?: true
-            matchesLevel && matchesFilter && matchesDashboardFilter
+            matchesLevel && matchesFilter && matchesTimeRange
         }
-        
+
         if (window.isReversed) filtered.reversed() else filtered
     }
 }

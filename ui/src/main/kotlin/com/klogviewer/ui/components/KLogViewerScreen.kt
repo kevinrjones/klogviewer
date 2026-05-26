@@ -31,8 +31,7 @@ import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
 import com.klogviewer.ui.mvi.LogWindow
 import com.klogviewer.ui.mvi.TabState
-import com.klogviewer.ui.mvi.WindowViewMode
-import com.klogviewer.ui.mvi.DashboardUiState
+import com.klogviewer.ui.mvi.TimeRangePreset
 import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -346,55 +345,22 @@ private fun LogTopBar(
             isConnected = activeWindow?.isConnected ?: true,
             onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
             onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
+            timeFilterFrom = activeWindow?.timeFilterFrom ?: "",
+            timeFilterTo = activeWindow?.timeFilterTo ?: "",
+            timeFilterPreset = activeWindow?.timeFilterPreset,
+            timeFilterValidationMessage = activeWindow?.timeFilterValidationMessage,
+            onTimeFilterFromChange = { viewModel.handleIntent(KLogViewerIntent.SetTimeFilterFrom(it)) },
+            onTimeFilterToChange = { viewModel.handleIntent(KLogViewerIntent.SetTimeFilterTo(it)) },
+            onApplyLastFiveMinutes = {
+                viewModel.handleIntent(
+                    KLogViewerIntent.ApplyTimeFilterPreset(TimeRangePreset.LAST_5_MINUTES)
+                )
+            },
+            onClearTimeFilter = { viewModel.handleIntent(KLogViewerIntent.ClearTimeFilter) },
             matchesCount = activeWindow?.filteredLogs?.size ?: 0,
             totalCount = activeWindow?.logs?.size ?: 0
         )
 
-        if (activeWindow != null) {
-            val activeViewColor = MaterialTheme.colors.primary
-            val inactiveViewColor = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "View:",
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(
-                    onClick = { viewModel.handleIntent(KLogViewerIntent.ShowLogs(activeWindow.id)) },
-                    enabled = activeWindow.viewMode != WindowViewMode.LOGS,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = inactiveViewColor,
-                        disabledContentColor = activeViewColor
-                    )
-                ) {
-                    Text("Logs")
-                }
-                TextButton(
-                    onClick = { viewModel.handleIntent(KLogViewerIntent.ShowDashboard(activeWindow.id)) },
-                    enabled = activeWindow.viewMode != WindowViewMode.DASHBOARD,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = inactiveViewColor,
-                        disabledContentColor = activeViewColor
-                    )
-                ) {
-                    Text("Dashboard")
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                if (activeWindow.dashboardBucketFilter != null) {
-                    TextButton(onClick = {
-                        viewModel.handleIntent(KLogViewerIntent.ClearDashboardBucketFilter(activeWindow.id))
-                    }) {
-                        Text("Clear range")
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -566,12 +532,6 @@ private fun LogWindowItem(
         ) {
             if (window.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (window.viewMode == WindowViewMode.DASHBOARD) {
-                DashboardContent(
-                    window = window,
-                    viewModel = viewModel,
-                    modifier = Modifier.fillMaxSize()
-                )
             } else if (window.filePath.isEmpty() && window.logs.isEmpty() && !window.isDirectory) {
                 WelcomeScreen(
                     onOpenFile = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) },
@@ -637,134 +597,6 @@ private fun LogWindowItem(
                     isDarkMode = state.isDarkMode,
                     showAnsiColors = window.showAnsiColors
                 )
-            }
-        }
-    }
-}
-
-@Composable
-private fun DashboardContent(
-    window: LogWindow,
-    viewModel: KLogViewerViewModel,
-    modifier: Modifier = Modifier
-) {
-    when (val dashboardState = window.dashboardState) {
-        DashboardUiState.Loading -> {
-            Box(modifier = modifier) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
-        }
-
-        is DashboardUiState.Empty -> {
-            Box(modifier = modifier) {
-                Text(
-                    text = dashboardState.message,
-                    style = MaterialTheme.typography.body2,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
-
-        is DashboardUiState.Error -> {
-            Box(modifier = modifier) {
-                Text(
-                    text = dashboardState.message,
-                    style = MaterialTheme.typography.body2,
-                    color = MaterialTheme.colors.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
-
-        is DashboardUiState.Content -> {
-            val maxCount = dashboardState.buckets.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
-            Column(
-                modifier = modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = "Events per time bucket",
-                    style = MaterialTheme.typography.subtitle2,
-                    fontWeight = FontWeight.SemiBold
-                )
-                dashboardState.selectedBucket?.let {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Filtered by bucket ${it.timestampFilter}",
-                            style = MaterialTheme.typography.caption,
-                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                        )
-                        TextButton(onClick = {
-                            viewModel.handleIntent(KLogViewerIntent.ClearDashboardBucketFilter(window.id))
-                        }) {
-                            Text("Clear")
-                        }
-                    }
-                }
-
-                dashboardState.buckets.forEach { bucket ->
-                    val isSelected = dashboardState.selectedBucket?.timestampFilter == bucket.timestampFilter
-                    val barFraction = (bucket.count.toFloat() / maxCount.toFloat()).coerceIn(0f, 1f)
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                viewModel.handleIntent(
-                                    KLogViewerIntent.SelectDashboardBucket(
-                                        windowId = window.id,
-                                        from = bucket.from,
-                                        to = bucket.to,
-                                        timestampFilter = bucket.timestampFilter
-                                    )
-                                )
-                            },
-                        color = if (isSelected) {
-                            MaterialTheme.colors.primary.copy(alpha = 0.15f)
-                        } else {
-                            MaterialTheme.colors.onSurface.copy(alpha = 0.04f)
-                        }
-                    ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Text(
-                                    text = bucket.timestampFilter,
-                                    style = MaterialTheme.typography.caption,
-                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                                )
-                                Text(
-                                    text = bucket.count.toString(),
-                                    style = MaterialTheme.typography.body2,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(12.dp)
-                                    .background(MaterialTheme.colors.onSurface.copy(alpha = 0.08f))
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .fillMaxWidth(barFraction)
-                                        .background(MaterialTheme.colors.primary.copy(alpha = 0.8f))
-                                )
-                            }
-                        }
-                    }
-                }
             }
         }
     }

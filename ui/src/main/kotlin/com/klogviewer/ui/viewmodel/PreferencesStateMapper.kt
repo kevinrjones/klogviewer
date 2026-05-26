@@ -22,12 +22,25 @@ object PreferencesStateMapper {
                     id = tp.id,
                     title = tp.title,
                     windows = tp.windows.map { wp ->
+                        val fromInstant = TimeRangeFilterSupport.parseInstantOrNull(wp.timeFilterFrom)
+                        val toInstant = TimeRangeFilterSupport.parseInstantOrNull(wp.timeFilterTo)
                         LogWindow(
                             id = wp.id,
                             filePath = wp.filePath,
                             sourceIds = wp.sourceIds,
                             filterQueries = wp.filterQueries,
                             levelFilters = wp.levelFilters,
+                            timeFilterFrom = wp.timeFilterFrom,
+                            timeFilterTo = wp.timeFilterTo,
+                            timeFilterFromInstant = fromInstant,
+                            timeFilterToInstant = toInstant,
+                            timeFilterPreset = TimeRangeFilterSupport.toPreset(wp.timeFilterPresetMinutes),
+                            timeFilterValidationMessage = TimeRangeFilterSupport.validationMessage(
+                                wp.timeFilterFrom,
+                                fromInstant,
+                                wp.timeFilterTo,
+                                toInstant
+                            ),
                             isReversed = wp.isReversed,
                             isAutoScrollEnabled = wp.isAutoScrollEnabled,
                             showAnsiColors = wp.showAnsiColors,
@@ -70,6 +83,9 @@ object PreferencesStateMapper {
                             sourceIds = window.sourceIds,
                             filterQueries = window.filterQueries,
                             levelFilters = window.levelFilters,
+                            timeFilterFrom = window.timeFilterFrom,
+                            timeFilterTo = window.timeFilterTo,
+                            timeFilterPresetMinutes = TimeRangeFilterSupport.toMinutes(window.timeFilterPreset),
                             isReversed = window.isReversed,
                             isAutoScrollEnabled = window.isAutoScrollEnabled,
                             showAnsiColors = window.showAnsiColors,

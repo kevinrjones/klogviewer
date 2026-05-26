@@ -113,7 +113,3 @@ data class FieldFrequencyResult(
     val fieldKey: AnalysisFieldKey,
     val frequencies: List<FieldFrequencyItem>
 )
-
-data class DashboardMetrics(
-    val timeSeries: TimeSeriesMetricsResult
-)
