@@ -22,6 +22,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.ui.mvi.TimeRangePreset
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun FilterBar(
@@ -48,13 +51,14 @@ fun FilterBar(
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
     onSplitClick: () -> Unit,
+    availableTimeFilterInstants: List<Instant>,
     timeFilterFrom: String,
     timeFilterTo: String,
     timeFilterPreset: TimeRangePreset?,
     timeFilterValidationMessage: String?,
     onTimeFilterFromChange: (String) -> Unit,
     onTimeFilterToChange: (String) -> Unit,
-    onApplyLastFiveMinutes: () -> Unit,
+    onApplyTimeFilterPreset: (TimeRangePreset) -> Unit,
     onClearTimeFilter: () -> Unit,
     matchesCount: Int,
     totalCount: Int,
@@ -192,13 +196,14 @@ fun FilterBar(
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
             TimeFilterControls(
+                availableEntryInstants = availableTimeFilterInstants,
                 fromValue = timeFilterFrom,
                 toValue = timeFilterTo,
                 preset = timeFilterPreset,
                 validationMessage = timeFilterValidationMessage,
                 onFromChange = onTimeFilterFromChange,
                 onToChange = onTimeFilterToChange,
-                onApplyLastFiveMinutes = onApplyLastFiveMinutes,
+                onApplyPreset = onApplyTimeFilterPreset,
                 onClear = onClearTimeFilter
             )
 
@@ -280,23 +285,38 @@ fun FilterBar(
 
 @Composable
 private fun TimeFilterControls(
+    availableEntryInstants: List<Instant>,
     fromValue: String,
     toValue: String,
     preset: TimeRangePreset?,
     validationMessage: String?,
     onFromChange: (String) -> Unit,
     onToChange: (String) -> Unit,
-    onApplyLastFiveMinutes: () -> Unit,
+    onApplyPreset: (TimeRangePreset) -> Unit,
     onClear: () -> Unit
 ) {
     var presetMenuExpanded by remember { mutableStateOf(false) }
+    val dateTimeOptions = remember(availableEntryInstants) {
+        availableEntryInstants
+            .asSequence()
+            .distinct()
+            .sorted()
+            .map {
+                TimeFilterDateTimeOption(
+                    value = it.toString(),
+                    label = TIME_FILTER_DISPLAY_FORMATTER.format(it)
+                )
+            }
+            .toList()
+    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(horizontal = 4.dp)
     ) {
-        DateTimeFilterInput(
+        DateTimeFilterDropdown(
             value = fromValue,
+            options = dateTimeOptions,
             placeholder = "From",
             testTag = "time_filter_from_input",
             onValueChange = onFromChange
@@ -304,8 +324,9 @@ private fun TimeFilterControls(
 
         Spacer(modifier = Modifier.width(4.dp))
 
-        DateTimeFilterInput(
+        DateTimeFilterDropdown(
             value = toValue,
+            options = dateTimeOptions,
             placeholder = "To",
             testTag = "time_filter_to_input",
             onValueChange = onToChange
@@ -316,7 +337,7 @@ private fun TimeFilterControls(
         Box {
             FilterBarIcon(
                 icon = Icons.Default.Schedule,
-                tooltip = if (preset == TimeRangePreset.LAST_5_MINUTES) "Preset: Last 5 minutes" else "Time range presets",
+                tooltip = preset?.let { "Preset: ${it.displayLabel()}" } ?: "Time range presets",
                 onClick = { presetMenuExpanded = true },
                 testTag = "time_filter_preset"
             )
@@ -324,11 +345,13 @@ private fun TimeFilterControls(
                 expanded = presetMenuExpanded,
                 onDismissRequest = { presetMenuExpanded = false }
             ) {
-                DropdownMenuItem(onClick = {
-                    presetMenuExpanded = false
-                    onApplyLastFiveMinutes()
-                }) {
-                    Text("Last 5 minutes")
+                TimeRangePreset.entries.forEach { presetOption ->
+                    DropdownMenuItem(onClick = {
+                        presetMenuExpanded = false
+                        onApplyPreset(presetOption)
+                    }) {
+                        Text(presetOption.displayLabel())
+                    }
                 }
             }
         }
@@ -356,45 +379,97 @@ private fun TimeFilterControls(
     }
 }
 
+private val TIME_FILTER_DISPLAY_FORMATTER: DateTimeFormatter = DateTimeFormatter
+    .ofPattern("yyyy-MM-dd HH:mm:ss")
+    .withZone(ZoneOffset.UTC)
+
+private data class TimeFilterDateTimeOption(
+    val value: String,
+    val label: String
+)
+
+private fun TimeRangePreset.displayLabel(): String {
+    return when (this) {
+        TimeRangePreset.LAST_5_MINUTES -> "Last 5 minutes"
+        TimeRangePreset.LAST_15_MINUTES -> "Last 15 minutes"
+        TimeRangePreset.LAST_30_MINUTES -> "Last 30 minutes"
+        TimeRangePreset.LAST_1_HOUR -> "Last 1 hour"
+        TimeRangePreset.LAST_6_HOURS -> "Last 6 hours"
+        TimeRangePreset.LAST_24_HOURS -> "Last 24 hours"
+    }
+}
+
 @Composable
-private fun DateTimeFilterInput(
+private fun DateTimeFilterDropdown(
     value: String,
+    options: List<TimeFilterDateTimeOption>,
     placeholder: String,
     testTag: String,
     onValueChange: (String) -> Unit
 ) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    val selectedText = options.firstOrNull { it.value == value }?.label
+        ?: value.takeIf { it.isNotBlank() }
+        ?: placeholder
+    val hasOptions = options.isNotEmpty()
+
     Box(
         modifier = Modifier
-            .width(130.dp)
+            .width(180.dp)
             .background(MaterialTheme.colors.onSurface.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
-            .padding(horizontal = 8.dp, vertical = 4.dp),
+            .clickable(enabled = hasOptions) { menuExpanded = true }
+            .padding(horizontal = 8.dp, vertical = 6.dp)
+            .testTag(testTag),
         contentAlignment = Alignment.CenterStart
     ) {
-        BasicTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth().testTag(testTag),
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-            textStyle = MaterialTheme.typography.caption.copy(
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.CalendarToday,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp),
+                tint = MaterialTheme.colors.onSurface.copy(alpha = if (hasOptions) 0.8f else 0.45f)
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = selectedText,
+                style = MaterialTheme.typography.caption,
                 fontSize = 12.sp,
-                color = MaterialTheme.colors.onSurface
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colors.onSurface),
-            decorationBox = { innerTextField ->
-                Box(contentAlignment = Alignment.CenterStart) {
-                    if (value.isBlank()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.caption,
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
-                        )
-                    }
-                    innerTextField()
+                color = if (value.isBlank()) {
+                    MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                } else {
+                    MaterialTheme.colors.onSurface
+                },
+                modifier = Modifier.weight(1f)
+            )
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = null,
+                tint = MaterialTheme.colors.onSurface.copy(alpha = if (hasOptions) 0.8f else 0.45f)
+            )
+        }
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false }
+        ) {
+            DropdownMenuItem(onClick = {
+                menuExpanded = false
+                onValueChange("")
+            }) {
+                Text("Any time")
+            }
+            options.forEach { option ->
+                DropdownMenuItem(onClick = {
+                    menuExpanded = false
+                    onValueChange(option.value)
+                }) {
+                    Text(option.label)
                 }
             }
-        )
+        }
     }
 }
 

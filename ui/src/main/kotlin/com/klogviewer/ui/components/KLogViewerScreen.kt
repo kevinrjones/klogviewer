@@ -31,10 +31,10 @@ import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
 import com.klogviewer.ui.mvi.LogWindow
 import com.klogviewer.ui.mvi.TabState
-import com.klogviewer.ui.mvi.TimeRangePreset
 import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
+import com.klogviewer.ui.viewmodel.TimeRangeFilterSupport
 
 @Composable
 fun KLogViewerScreen(
@@ -313,6 +313,16 @@ private fun LogTopBar(
     activeWindow: LogWindow?,
     viewModel: KLogViewerViewModel
 ) {
+    val availableTimeFilterInstants = remember(activeWindow?.logs) {
+        activeWindow?.logs
+            ?.asSequence()
+            ?.mapNotNull(TimeRangeFilterSupport::entryInstant)
+            ?.distinct()
+            ?.sorted()
+            ?.toList()
+            ?: emptyList()
+    }
+
     Column {
         LogTabRow(
             tabs = state.tabs,
@@ -345,16 +355,15 @@ private fun LogTopBar(
             isConnected = activeWindow?.isConnected ?: true,
             onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
             onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
+            availableTimeFilterInstants = availableTimeFilterInstants,
             timeFilterFrom = activeWindow?.timeFilterFrom ?: "",
             timeFilterTo = activeWindow?.timeFilterTo ?: "",
             timeFilterPreset = activeWindow?.timeFilterPreset,
             timeFilterValidationMessage = activeWindow?.timeFilterValidationMessage,
             onTimeFilterFromChange = { viewModel.handleIntent(KLogViewerIntent.SetTimeFilterFrom(it)) },
             onTimeFilterToChange = { viewModel.handleIntent(KLogViewerIntent.SetTimeFilterTo(it)) },
-            onApplyLastFiveMinutes = {
-                viewModel.handleIntent(
-                    KLogViewerIntent.ApplyTimeFilterPreset(TimeRangePreset.LAST_5_MINUTES)
-                )
+            onApplyTimeFilterPreset = { preset ->
+                viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(preset))
             },
             onClearTimeFilter = { viewModel.handleIntent(KLogViewerIntent.ClearTimeFilter) },
             matchesCount = activeWindow?.filteredLogs?.size ?: 0,

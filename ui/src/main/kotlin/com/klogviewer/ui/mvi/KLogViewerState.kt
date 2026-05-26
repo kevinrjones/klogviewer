@@ -39,7 +39,12 @@ data class LogWindow(
 }
 
 enum class TimeRangePreset {
-    LAST_5_MINUTES
+    LAST_5_MINUTES,
+    LAST_15_MINUTES,
+    LAST_30_MINUTES,
+    LAST_1_HOUR,
+    LAST_6_HOURS,
+    LAST_24_HOURS
 }
 
 data class TabState(

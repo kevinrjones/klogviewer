@@ -72,14 +72,8 @@ internal object TimeRangeFilterSupport {
         }
     }
 
-    fun resolveRange(window: LogWindow): Pair<Instant, Instant>? {
-        return when (window.timeFilterPreset) {
-            TimeRangePreset.LAST_5_MINUTES -> {
-                val end = window.logs.asSequence().mapNotNull(::entryInstant).maxOrNull() ?: Instant.now()
-                val start = end.minus(5, ChronoUnit.MINUTES)
-                start to end
-            }
-
+    fun resolveRange(window: LogWindow, now: Instant = Instant.now()): Pair<Instant, Instant>? {
+        return when (val preset = window.timeFilterPreset) {
             null -> {
                 val from = window.timeFilterFromInstant
                 val to = window.timeFilterToInstant
@@ -92,12 +86,24 @@ internal object TimeRangeFilterSupport {
                     if (rangeStart.isAfter(rangeEnd)) null else rangeStart to rangeEnd
                 }
             }
+
+            else -> {
+                val presetMinutes = toMinutes(preset) ?: return null
+                val end = now
+                val start = end.minus(presetMinutes, ChronoUnit.MINUTES)
+                start to end
+            }
         }
     }
 
     fun toPreset(minutes: Long?): TimeRangePreset? {
         return when (minutes) {
             5L -> TimeRangePreset.LAST_5_MINUTES
+            15L -> TimeRangePreset.LAST_15_MINUTES
+            30L -> TimeRangePreset.LAST_30_MINUTES
+            60L -> TimeRangePreset.LAST_1_HOUR
+            360L -> TimeRangePreset.LAST_6_HOURS
+            1_440L -> TimeRangePreset.LAST_24_HOURS
             else -> null
         }
     }
@@ -105,6 +111,11 @@ internal object TimeRangeFilterSupport {
     fun toMinutes(preset: TimeRangePreset?): Long? {
         return when (preset) {
             TimeRangePreset.LAST_5_MINUTES -> 5L
+            TimeRangePreset.LAST_15_MINUTES -> 15L
+            TimeRangePreset.LAST_30_MINUTES -> 30L
+            TimeRangePreset.LAST_1_HOUR -> 60L
+            TimeRangePreset.LAST_6_HOURS -> 360L
+            TimeRangePreset.LAST_24_HOURS -> 1_440L
             null -> null
         }
     }

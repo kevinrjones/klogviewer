@@ -10,6 +10,7 @@
 - Project renamed to KLogViewer (from LogViewer) across all modules, packages, and documentation.
 - Robust S3/SFTP directory detection and URI standardization.
 - Fixed S3 Flow context preservation and polling logic.
+- Time filter UX update: replaced free-text `From`/`To` with entry-based date-time dropdown selectors and expanded relative-range presets.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -17,6 +18,7 @@
 - Selected a Layered Multi-Module structure (`domain`, `core`, `ui`, `app`) for better separation of concerns.
 - Committed to using Tiny Types for core domain concepts to enhance type safety.
 - Transitioned to a streaming Flow-based `LogSource` to support scalability and real-time monitoring.
+- Kept time-filter persistence model minute-based (`timeFilterPresetMinutes`) while expanding enum options so older preferences remain compatible.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -102,6 +104,7 @@
 - `FileDialog` via `AwtWindow` requires manual state reset on close to avoid dialog re-triggering.
 - Blocking remote reads may not react to coroutine cancellation unless the underlying SSH command/session/input stream is explicitly closed.
 - Non-Unit persistence result contracts can surface in relaxed UI mocks; tests need explicit stubs for save outcomes and error dialogs.
+- Date/time dropdown values should use stable machine values (`Instant.toString()`) with formatted labels only for display to avoid parse drift.
 
 ## Sprint: Walking Skeleton Implementation
 **Title**: Sprint 1 Completion
@@ -2224,3 +2227,42 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` direct run (4/4 passing after rewrite).
 - `core/src/test/kotlin/com/klogviewer/core/analysis` regression run (3/3 passing).
 - `ui/src/test/kotlin` regression run (6/6 passing in this environment).
+
+## Task: Time Filter UX Improvements (Datetime Dropdowns + More Presets)
+**Title**: Replace Free-Text Time Inputs with Entry-Based Dropdowns and Expand Presets
+**Date/time completed**: 2026-05-26 11:57
+**What was shipped**
+- Replaced free-text `From`/`To` controls in `FilterBar` with dropdown selectors populated from the active window's log entry date-times.
+- Wired `KLogViewerScreen` to derive available filter instants from parsed entry timestamps and pass them to `FilterBar` for selection.
+- Expanded time presets from only `LAST_5_MINUTES` to `LAST_15_MINUTES`, `LAST_30_MINUTES`, `LAST_1_HOUR`, `LAST_6_HOURS`, and `LAST_24_HOURS`.
+- Updated `TimeRangeFilterSupport` preset resolution and minute mapping (`toMinutes`/`toPreset`) to support all new preset options.
+- Preserved existing validation and clear behavior, including explicit reset to "Any time" for each bound.
+**Key decisions**
+- Kept dropdown option values as canonical `Instant` strings while presenting user-friendly UTC labels in the UI.
+- Used log-entry-derived instants (`entry.instant` with parser fallback) so selectable date-times reflect the actual loaded dataset.
+- Retained minute-based preference persistence to keep backward compatibility with previously stored presets.
+**Gotchas**
+- Mid-refactor compilation risk existed while replacing text-field composables; conversion was completed in one pass to avoid partially renamed symbols.
+- Existing tests in this environment can report duplicate entries in the summary output, so pass/fail status was validated by totals and exit result.
+**Test coverage areas**
+- `TimeRangeFilterSupportTest` (10/10 passing in this environment).
+- `LogFilterServiceTimeRangeTest` (6/6 passing in this environment).
+- `DashboardIntentTest` (4/4 passing in this environment; confirms preset state behavior).
+- `ui/src/test/kotlin` regression run (6/6 passing in this environment).
+
+## Task: Fix Relative Time Presets to Use Current Time
+**Title**: Anchor Last-X-Minutes Presets to Now Instead of Latest Log Entry
+**Date/time completed**: 2026-05-26 12:08
+**What was shipped**
+- Changed preset range resolution in `TimeRangeFilterSupport.resolveRange` to anchor the range end to current time (`Instant.now()`), not the latest timestamp in loaded logs.
+- Added deterministic regression coverage in `TimeRangeFilterSupportTest` by injecting a fixed `now` and asserting the expected preset windows.
+- Updated `LogFilterServiceTimeRangeTest` to validate now-anchored behavior for `LAST_5_MINUTES` and `LAST_1_HOUR`, including a stale-log scenario that now correctly returns no matches.
+**Key decisions**
+- Added a test seam (`resolveRange(window, now)`) so preset-window behavior remains deterministic in unit tests while production continues to use real current time.
+- Kept absolute `From`/`To` filtering semantics unchanged; only preset anchoring logic was modified.
+**Gotchas**
+- Boundary-sensitive tests around exact minute cutoffs can become flaky when using real time; assertions were written with safe offsets away from boundaries.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/TimeRangeFilterSupportTest.kt` (10/10 passing in this environment).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceTimeRangeTest.kt` (8/8 passing in this environment).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel` regression run (6/6 passing in this environment).

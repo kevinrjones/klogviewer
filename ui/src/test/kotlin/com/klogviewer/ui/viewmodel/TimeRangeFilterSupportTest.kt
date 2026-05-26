@@ -69,7 +69,8 @@ class TimeRangeFilterSupportTest {
     }
 
     @Test
-    fun `resolveRange uses latest log instant for last five minutes preset`() {
+    fun `resolveRange uses current time for last five minutes preset`() {
+        val now = Instant.parse("2026-05-26T10:10:00Z")
         val window = LogWindow(
             id = "window-1",
             logs = listOf(
@@ -79,11 +80,47 @@ class TimeRangeFilterSupportTest {
             timeFilterPreset = TimeRangePreset.LAST_5_MINUTES
         )
 
-        val range = TimeRangeFilterSupport.resolveRange(window)
+        val range = TimeRangeFilterSupport.resolveRange(window, now)
 
         expectThat(range).isNotNull()
-        expectThat(range!!.first).isEqualTo(Instant.parse("2026-05-26T09:58:00Z"))
-        expectThat(range.second).isEqualTo(Instant.parse("2026-05-26T10:03:00Z"))
+        expectThat(range!!.first).isEqualTo(Instant.parse("2026-05-26T10:05:00Z"))
+        expectThat(range.second).isEqualTo(Instant.parse("2026-05-26T10:10:00Z"))
+    }
+
+    @Test
+    fun `resolveRange uses current time for longer presets`() {
+        val now = Instant.parse("2026-05-26T10:10:00Z")
+        val window = LogWindow(
+            id = "window-1",
+            logs = listOf(
+                logEntry("2026-05-26T10:00:00Z"),
+                logEntry("2026-05-26T10:03:00Z")
+            ),
+            timeFilterPreset = TimeRangePreset.LAST_1_HOUR
+        )
+
+        val range = TimeRangeFilterSupport.resolveRange(window, now)
+
+        expectThat(range).isNotNull()
+        expectThat(range!!.first).isEqualTo(Instant.parse("2026-05-26T09:10:00Z"))
+        expectThat(range.second).isEqualTo(Instant.parse("2026-05-26T10:10:00Z"))
+    }
+
+    @Test
+    fun `preset minute mapping supports all time range presets`() {
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_5_MINUTES)).isEqualTo(5L)
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_15_MINUTES)).isEqualTo(15L)
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_30_MINUTES)).isEqualTo(30L)
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_1_HOUR)).isEqualTo(60L)
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_6_HOURS)).isEqualTo(360L)
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_24_HOURS)).isEqualTo(1_440L)
+
+        expectThat(TimeRangeFilterSupport.toPreset(5L)).isEqualTo(TimeRangePreset.LAST_5_MINUTES)
+        expectThat(TimeRangeFilterSupport.toPreset(15L)).isEqualTo(TimeRangePreset.LAST_15_MINUTES)
+        expectThat(TimeRangeFilterSupport.toPreset(30L)).isEqualTo(TimeRangePreset.LAST_30_MINUTES)
+        expectThat(TimeRangeFilterSupport.toPreset(60L)).isEqualTo(TimeRangePreset.LAST_1_HOUR)
+        expectThat(TimeRangeFilterSupport.toPreset(360L)).isEqualTo(TimeRangePreset.LAST_6_HOURS)
+        expectThat(TimeRangeFilterSupport.toPreset(1_440L)).isEqualTo(TimeRangePreset.LAST_24_HOURS)
     }
 
     private fun logEntry(isoInstant: String): LogEntry = LogEntry(
