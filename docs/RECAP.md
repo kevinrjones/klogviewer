@@ -1081,3 +1081,36 @@ Recap from the previous entry (`10:45`) up to now:
 - **Verification**: Ran `./gradlew :app:compileKotlin :core:test --tests "com.klogviewer.core.source.S3DirectoryDetectionTest" --tests "com.klogviewer.core.source.S3LogSourceTest"` successfully.
 - **Git History**: Merge commit `b96a5ff` recorded integration of `feature/connectivity` after the above changes.
 
+
+# 2026-05-26
+
+## 09:07
+
+### Sprint 9 Dashboard Analysis/Visualization Delivery and Follow-up Work Recap
+
+Recap from the previous entry (`2026-05-24 17:34`) up to now:
+
+#### Changes:
+- **Commits `ed11db2`, `9fcacf5` (2026-05-24 17:43)**: Updated `docs/RECAP.md` with the prior S3/SFTP connectivity summary.
+- **Commit `ac5eb2a` (2026-05-24 17:44)**: Synced with `origin/main` to bring baseline changes forward.
+- **Commit `26cf27c` (2026-05-25 09:54)**: Implemented secure credential storage with explicit plaintext fallback consent in the UI flow.
+- **Commit `dece3e6` (2026-05-25 10:02)**: Added ADR documentation for secret-storage decisions (`docs/adr/adr-036-secret-storage-decisions.md`).
+- **Commits `b504f99`, `027d721`, `f3a4017`, `cd56837` (2026-05-25)**: Delivered UI polish and release/documentation updates, including v1.5.0 notes and Sprint 13 connectivity planning docs.
+- **Commits `afcc285`, `34f2bbb` (2026-05-25)**: Strengthened tests around column resize behavior and secure credential storage test infrastructure.
+- **Commit `fd235f8` (2026-05-25 20:43)**: Added foundational dashboard analysis architecture and an initial vertical slice for analysis/visualization.
+- **Commit `53a9b67` (2026-05-25 21:07)**: Performed small UI cleanup by removing unused `TextOverflow` usage in `LogList`.
+- **Merge commits `c15c234`, `0bef8b5`, `c7a5613`, `ccf6bd1`**: Integrated feature branches with `main` during the period to keep streams aligned.
+- **Current working session (uncommitted)**: Completed Sprint 9 tasks **14.3** and **14.4** end-to-end:
+    - Added dashboard range controls (presets + custom `from`/`to`) and validation.
+    - Implemented sparse-safe time-series bucketing with zero-gap bucket insertion.
+    - Added normalized log-level distribution metrics (`DEBUG/INFO/WARN/ERROR/FATAL/UNKNOWN`) and interactive dashboard level filtering.
+    - Wired incremental dashboard updates for `LogUpdate.Appended` and reset handling for `LogUpdate.Reset`.
+    - Updated sprint task tracking and project memory (`docs/tasks/TASKS-SPRINT-9-ANALYSIS-AND-VISUALIZATION.md`, `docs/project_memory.md`).
+
+#### Verification:
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/core/src/test/kotlin/com/klogviewer/core/analysis/InMemoryAnalysisMetricsRepositoryTest.kt` → passed (5/5).
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` → passed (12/12).
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/src/test/kotlin/com/klogviewer/ui/viewmodel` → passed (6/6).
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/src/test/kotlin` → passed (6/6).
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/core/src/test/kotlin` → passed (3/3).
+

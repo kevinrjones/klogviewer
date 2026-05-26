@@ -2138,3 +2138,47 @@ For each sprint/task
 - `InMemoryAnalysisMetricsRepositoryTest` (3/3 passing).
 - `DashboardIntentTest` (6/6 passing).
 - `ui/viewmodel` directory regression run (6/6 passing).
+
+## Task: Sprint 9 Time-Series and Level Distribution Metrics
+**Title**: Implement Sprint 9 Tasks 14.3 and 14.4
+**Date/time completed**: 2026-05-25 21:10
+**What was shipped**
+- Extended dashboard analysis models to include normalized log-level distribution and active dashboard window metadata.
+- Implemented level distribution aggregation (`DEBUG/INFO/WARN/ERROR/FATAL/UNKNOWN`) in `InMemoryAnalysisMetricsRepository` and composed dashboard metrics from both time-series and level distribution in `DefaultLogAnalysisService`.
+- Improved time-series aggregation behavior for sparse and out-of-order timestamps by emitting ordered bucket windows with zero-count gaps where needed.
+- Added dashboard date-time range controls with preset selection (`last 5m/15m/60m`, `visible`, `full`, `custom`) and explicit `From <= To` validation flow.
+- Applied selected dashboard range and level selections to log filtering, dashboard metrics queries, and update handling (including explicit `LogUpdate.Appended` incremental path and `LogUpdate.Reset` reset path).
+- Added level distribution rendering in dashboard UI with theme-aware level colors and interactive segment selection/clear behavior.
+- Updated Sprint 9 task checklist to mark all 14.3 and 14.4 items complete.
+**Key decisions**
+- Kept windowing semantics centered on `DiffWindow` and parser-produced `LogEntry.instant` to preserve timezone correctness from active template parsing rules.
+- Implemented appended-log handling as an incremental filter-update path in the ViewModel while preserving the existing full refresh path for other update types.
+- Reused existing filtering pipeline (`LogFilterService`) as the single source of truth for dashboard-driven filters to avoid divergent behavior across views.
+**Gotchas**
+- Arrow extension availability required explicit `fold` chaining in service composition instead of relying on `Either.map/flatMap` in this codebase.
+- Compose theme color access (`MaterialTheme.colors`) must stay in composable context, so level-color helpers need to be composable-aware.
+**Test coverage areas**
+- `InMemoryAnalysisMetricsRepositoryTest` (5/5 passing, including sparse/out-of-order and level distribution unknown-bucket scenarios).
+- `DashboardIntentTest` (6/6 passing after range/level/update-path changes).
+- `core/src/test/kotlin` regression run (3/3 passing in this environment).
+- `ui/src/test/kotlin` regression run (6/6 passing in this environment).
+
+## Task: Dashboard Missing-Timestamp Error as Popup
+**Title**: Keep Dashboard Visible When Range Change Hits Missing Timestamps
+**Date/time completed**: 2026-05-26 09:13
+**What was shipped**
+- Added per-window dashboard popup error state (`dashboardPopupErrorMessage`) so timestamp-related failures can be surfaced without replacing dashboard content.
+- Added a dedicated dashboard intent (`DismissDashboardError`) and ViewModel handling to clear popup state explicitly.
+- Updated dashboard refresh failure handling to show popup for `AnalysisFailure.NoTimestampData` when dashboard content is already visible, while preserving existing content state.
+- Updated `DialogHandler` to render a dashboard error `AlertDialog` (title, message, dismiss/confirm) only for active dashboard windows.
+- Aligned missing-timestamp UI text to `Dashboard requires logs with timestamps`.
+- Added/updated dashboard ViewModel regression coverage to verify popup exposure, content preservation, and dismissal behavior for missing-timestamp failures after range changes.
+**Key decisions**
+- Kept error signaling for this scenario in a separate popup-state channel instead of overloading `DashboardUiState`, preserving the existing dashboard rendering model.
+- Scoped popup behavior to `NoTimestampData` + existing `DashboardUiState.Content` so other failure modes continue to use full dashboard error states.
+**Gotchas**
+- Existing mapper text had drifted (`parsed timestamps`) and needed normalization to match user-visible wording and tests.
+- Deterministic regression coverage required mocking `LogAnalysisService` response sequencing rather than relying on parser/source reload timing in tests.
+**Test coverage areas**
+- `DashboardIntentTest` (14/14 passing, including new missing-timestamp popup/content-preservation scenario).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel` regression run (6/6 passing).
