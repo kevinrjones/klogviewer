@@ -43,11 +43,12 @@ class DashboardIntentTest {
 
     private lateinit var viewModel: KLogViewerViewModel
     private lateinit var logSource: LogSource
+    private lateinit var prefsRepository: JsonPreferencesRepository
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        val prefsRepository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
+        prefsRepository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         logSource = mockk()
         every { logSource.observeLogs(any(), any()) } returns flowOf(
             LogUpdate.Initial(
@@ -426,6 +427,45 @@ class DashboardIntentTest {
         val window = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
         expectThat(window.timeFilterFromInstant).isEqualTo(firstBucket.from)
         expectThat(window.timeFilterToInstant).isEqualTo(firstBucket.to)
+    }
+
+    @Test
+    fun `given dashboard time range selection when restoring from preferences then selected range is remembered`() {
+        val entry1 = logEntry("2026-01-01T00:00:00Z", "early")
+        val entry2 = logEntry("2026-01-01T00:01:00Z", "late")
+        reconfigureLogSource(listOf(entry1, entry2))
+
+        val testFile = File(tempDir, "dashboard-time-filter-persistence.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+
+        val firstBucket = activeDashboardContent().timeSeries.first()
+        viewModel.handleIntent(KLogViewerIntent.SelectDashboardTimeRange(firstBucket.from, firstBucket.to))
+
+        waitUntil {
+            val activeWindow = viewModel.state.value.activeTab?.activeWindow
+            activeWindow?.timeFilterFromInstant == firstBucket.from &&
+                activeWindow.timeFilterToInstant == firstBucket.to
+        }
+
+        val restoredViewModel = KLogViewerViewModel(
+            logSource = logSource,
+            prefsRepository = prefsRepository,
+            heuristicProbe = HeuristicProbe(ParserRegistry())
+        )
+
+        try {
+            val restoredWindow = requireNotNull(restoredViewModel.state.value.activeTab?.activeWindow)
+            expectThat(restoredWindow.timeFilterFrom).isEqualTo(firstBucket.from.toString())
+            expectThat(restoredWindow.timeFilterTo).isEqualTo(firstBucket.to.toString())
+            expectThat(restoredWindow.timeFilterFromInstant).isEqualTo(firstBucket.from)
+            expectThat(restoredWindow.timeFilterToInstant).isEqualTo(firstBucket.to)
+        } finally {
+            restoredViewModel.clear()
+        }
     }
 
     @Test

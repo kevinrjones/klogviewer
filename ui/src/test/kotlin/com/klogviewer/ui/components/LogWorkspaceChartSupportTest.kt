@@ -5,7 +5,6 @@ import com.klogviewer.ui.mvi.DashboardDataState
 import com.klogviewer.ui.mvi.DashboardTimeBucket
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
-import strikt.assertions.contains
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNull
 import java.time.Instant

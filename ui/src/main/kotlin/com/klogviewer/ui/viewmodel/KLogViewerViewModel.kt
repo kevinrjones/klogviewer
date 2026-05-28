@@ -205,7 +205,6 @@ class KLogViewerViewModel(
             is KLogViewerIntent.S3Intent -> s3IntentHandler.handle(intent)
             is KLogViewerIntent.DialogIntent -> handleDialogIntent(intent)
             is KLogViewerIntent.RecentItemsIntent -> recentItemsIntentHandler.handle(intent)
-            else -> Unit
         }
     }
 
@@ -354,6 +353,7 @@ class KLogViewerViewModel(
                 )
             }
         }
+        savePreferences()
         filterLogs(windowId)
     }
 
@@ -374,6 +374,7 @@ class KLogViewerViewModel(
                 )
             }
         }
+        savePreferences()
         filterLogs(windowId)
     }
 

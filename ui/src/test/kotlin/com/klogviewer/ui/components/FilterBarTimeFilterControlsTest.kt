@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
-import com.klogviewer.ui.mvi.TimeRangePreset
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)

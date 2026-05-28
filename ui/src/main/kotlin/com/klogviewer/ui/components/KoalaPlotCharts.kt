@@ -52,8 +52,20 @@ import java.time.format.DateTimeFormatter
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-private val TimeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss")
-    .withZone(ZoneId.systemDefault())
+internal fun timeAxisLabelFormatter(
+    bucketSize: DashboardBucketSize,
+    zoneId: ZoneId = ZoneId.systemDefault()
+): DateTimeFormatter {
+    val pattern = when (bucketSize) {
+        DashboardBucketSize.PER_SECOND -> "HH:mm:ss"
+        DashboardBucketSize.PER_MINUTE -> "HH:mm"
+    }
+    return DateTimeFormatter.ofPattern(pattern).withZone(zoneId)
+}
+
+internal fun timeAxisDateTooltipFormatter(zoneId: ZoneId = ZoneId.systemDefault()): DateTimeFormatter {
+    return DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(zoneId)
+}
 
 internal fun pointerXToBucketIndex(pointerX: Float, plotWidthPx: Float, bucketCount: Int): Int? {
     if (plotWidthPx <= 0f || bucketCount <= 0) {
@@ -210,13 +222,8 @@ fun KoalaPlotTimeSeriesChart(
         return
     }
 
-    val timeFormatter = remember(bucketSize) {
-        val pattern = when (bucketSize) {
-            DashboardBucketSize.PER_SECOND -> "HH:mm:ss"
-            DashboardBucketSize.PER_MINUTE -> "HH:mm"
-        }
-        DateTimeFormatter.ofPattern(pattern).withZone(ZoneId.systemDefault())
-    }
+    val timeFormatter = remember(bucketSize) { timeAxisLabelFormatter(bucketSize) }
+    val dateTooltipFormatter = remember { timeAxisDateTooltipFormatter() }
 
     val sortedBuckets = remember(buckets) {
         buckets.sortedBy { bucket -> bucket.from }
@@ -336,10 +343,32 @@ fun KoalaPlotTimeSeriesChart(
             val nearestIndex = value.roundToInt().coerceIn(0, sortedBuckets.lastIndex)
             val alignedToBucket = abs(value - nearestIndex.toFloat()) < 0.2f || sortedBuckets.size == 1
             if (alignedToBucket) {
-                Text(
-                    text = timeFormatter.format(sortedBuckets[nearestIndex].from),
-                    style = MaterialTheme.typography.caption
-                )
+                val bucket = sortedBuckets[nearestIndex]
+                TooltipArea(
+                    tooltip = {
+                        Surface(
+                            modifier = Modifier.shadow(4.dp),
+                            color = MaterialTheme.colors.surface,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = dateTooltipFormatter.format(bucket.from),
+                                style = MaterialTheme.typography.caption,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    },
+                    delayMillis = 500,
+                    tooltipPlacement = TooltipPlacement.CursorPoint(
+                        alignment = Alignment.BottomEnd,
+                        offset = DpOffset(0.dp, 16.dp)
+                    )
+                ) {
+                    Text(
+                        text = timeFormatter.format(bucket.from),
+                        style = MaterialTheme.typography.caption
+                    )
+                }
             }
         },
         yAxisLabels = { value: Float ->

@@ -2503,3 +2503,35 @@ For each sprint/task
 **Test coverage areas**
 - `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (updated active-range fallback expectation to transient-only `null` when no drag preview exists).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.LogWorkspaceChartSupportTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard X-Axis Hover Date Tooltip
+**Title**: Show `yyyy-MM-dd` Date Tooltip When Hovering X-Axis Time Labels
+**Date/time completed**: 2026-05-28 06:28
+**What was shipped**
+- Updated `KoalaPlotTimeSeriesChart` x-axis labels to keep displaying time while adding hover tooltip support that shows the bucket date as `yyyy-MM-dd`.
+- Added explicit formatter helpers in `KoalaPlotCharts.kt` for time labels and x-axis tooltip dates (`timeAxisLabelFormatter`, `timeAxisDateTooltipFormatter`).
+- Added focused formatter coverage in `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsFormattingTest.kt`.
+**Key decisions**
+- Reused the existing `TooltipArea` styling and placement pattern already used by chart bars for consistency.
+- Kept x-axis label text unchanged (`HH:mm:ss` / `HH:mm`) and surfaced the date only in hover tooltip to satisfy the request without changing chart density.
+**Gotchas**
+- Date rendering is zone-aware (`ZoneId.systemDefault()` in production); tests use explicit fixed zones to keep assertions deterministic.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsFormattingTest.kt` (new formatter behavior and timezone edge-case assertions).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (regression check for existing chart interaction helpers).
+- `./gradlew :ui:test --tests com.klogviewer.ui.components.KoalaPlotChartsFormattingTest --tests com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest` (`BUILD SUCCESSFUL`).
+
+## Task: Persist Dashboard Time Filters in Preferences
+**Title**: Remember Dashboard Time Range Filters Across Session Restore
+**Date/time completed**: 2026-05-28 06:46
+**What was shipped**
+- Updated `KLogViewerViewModel` dashboard time-range update and clear flows to persist preferences immediately after time filter changes.
+- Added a regression test in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` to verify dashboard-selected `from/to` time filters survive ViewModel recreation.
+**Key decisions**
+- Kept the fix minimal and aligned with existing persistence behavior by reusing the existing `savePreferences()` mechanism in chart-driven time filter paths.
+- Focused persistence verification on `from/to` values and parsed instants (the actual filter contract) rather than preset labeling.
+**Gotchas**
+- The initial regression assertion on preset failed because restored preset metadata may be `null` even when `from/to` range values are correctly persisted and restored.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (new dashboard time-range persistence round-trip assertion).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest --tests com.klogviewer.ui.viewmodel.KLogViewerViewModelTest` (`BUILD SUCCESSFUL`).
