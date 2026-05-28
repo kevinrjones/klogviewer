@@ -46,6 +46,9 @@ import io.github.koalaplot.core.pie.PieChart
 import io.github.koalaplot.core.xygraph.FloatLinearAxisModel
 import io.github.koalaplot.core.xygraph.XYGraph
 import io.github.koalaplot.core.util.ExperimentalKoalaPlotApi
+import io.github.koalaplot.core.xygraph.AxisContent
+import io.github.koalaplot.core.xygraph.AxisStyle
+import io.github.koalaplot.core.xygraph.GridStyle
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -331,51 +334,65 @@ fun KoalaPlotTimeSeriesChart(
         xAxisModel = xAxisModel,
         yAxisModel = yAxisModel,
         modifier = chartModifier,
-        xAxisTitle = { Text("Time", style = MaterialTheme.typography.caption) },
-        yAxisTitle = {
-            Text(
-                "Count",
-                style = MaterialTheme.typography.caption,
-                modifier = Modifier.graphicsLayer { rotationZ = -90f }
-            )
-        },
-        xAxisLabels = { value: Float ->
-            val nearestIndex = value.roundToInt().coerceIn(0, sortedBuckets.lastIndex)
-            val alignedToBucket = abs(value - nearestIndex.toFloat()) < 0.2f || sortedBuckets.size == 1
-            if (alignedToBucket) {
-                val bucket = sortedBuckets[nearestIndex]
-                TooltipArea(
-                    tooltip = {
-                        Surface(
-                            modifier = Modifier.shadow(4.dp),
-                            color = MaterialTheme.colors.surface,
-                            shape = RoundedCornerShape(4.dp)
-                        ) {
-                            Text(
-                                text = dateTooltipFormatter.format(bucket.from),
-                                style = MaterialTheme.typography.caption,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                    },
-                    delayMillis = 500,
-                    tooltipPlacement = TooltipPlacement.CursorPoint(
-                        alignment = Alignment.BottomEnd,
-                        offset = DpOffset(0.dp, 16.dp)
-                    )
-                ) {
-                    Text(
-                        text = timeFormatter.format(bucket.from),
-                        style = MaterialTheme.typography.caption
-                    )
+        xAxisContent = AxisContent(
+            style = AxisStyle(),
+            title = {
+                Text("Time", style = MaterialTheme.typography.caption)
+            },
+            labels = { value: Float ->
+                val nearestIndex = value.roundToInt().coerceIn(0, sortedBuckets.lastIndex)
+                val alignedToBucket = abs(value - nearestIndex.toFloat()) < 0.2f || sortedBuckets.size == 1
+                if (alignedToBucket) {
+                    val bucket = sortedBuckets[nearestIndex]
+                    TooltipArea(
+                        tooltip = {
+                            Surface(
+                                modifier = Modifier.shadow(4.dp),
+                                color = MaterialTheme.colors.surface,
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = dateTooltipFormatter.format(bucket.from),
+                                    style = MaterialTheme.typography.caption,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                )
+                            }
+                        },
+                        delayMillis = 500,
+                        tooltipPlacement = TooltipPlacement.CursorPoint(
+                            alignment = Alignment.BottomEnd,
+                            offset = DpOffset(0.dp, 16.dp)
+                        )
+                    ) {
+                        Text(
+                            text = timeFormatter.format(bucket.from),
+                            style = MaterialTheme.typography.caption
+                        )
+                    }
                 }
             }
-        },
-        yAxisLabels = { value: Float ->
-            if (value == value.toInt().toFloat()) {
-                Text("${value.toInt()}", style = MaterialTheme.typography.caption)
-            }
-        }
+        ),
+        yAxisContent = AxisContent(
+            title = {
+                Text(
+                    "Count",
+                    style = MaterialTheme.typography.caption,
+                    modifier = Modifier.graphicsLayer { rotationZ = -90f }
+                )
+            },
+            labels = { value: Float ->
+                if (value == value.toInt().toFloat()) {
+                    Text("${value.toInt()}", style = MaterialTheme.typography.caption)
+                }
+            },
+            style = AxisStyle()
+        ),
+        gridStyle = GridStyle(
+            horizontalMajorStyle = null,
+            verticalMajorStyle = null,
+            horizontalMinorStyle = null,
+            verticalMinorStyle = null
+        ),
     ) {
         VerticalBarPlot(
             xData = xValues,

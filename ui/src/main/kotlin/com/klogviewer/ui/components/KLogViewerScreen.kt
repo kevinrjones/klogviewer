@@ -103,7 +103,6 @@ private fun DialogHandler(
                 KLogViewerState.DialogType.OPEN_DIRECTORY -> "Select Log Directory"
                 KLogViewerState.DialogType.ADD -> "Add Log File"
                 KLogViewerState.DialogType.ADD_DIRECTORY -> "Add Log Directory"
-                else -> ""
             }
             val path = if (pendingDialog == KLogViewerState.DialogType.OPEN_DIRECTORY ||
                 pendingDialog == KLogViewerState.DialogType.ADD_DIRECTORY
@@ -129,7 +128,6 @@ private fun DialogHandler(
                             paths
                         )
                     )
-                    else -> {}
                 }
             }
         }
