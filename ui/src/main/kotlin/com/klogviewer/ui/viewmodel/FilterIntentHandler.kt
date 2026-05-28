@@ -3,6 +3,7 @@ package com.klogviewer.ui.viewmodel
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
+import com.klogviewer.ui.mvi.TimeRangePreset
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -72,7 +73,7 @@ class FilterIntentHandler(
                         window.copy(
                             timeFilterFrom = fromValue,
                             timeFilterFromInstant = fromInstant,
-                            timeFilterPreset = null,
+                            timeFilterPreset = manualPresetOrNull(fromValue, window.timeFilterTo),
                             timeFilterValidationMessage = validationMessage
                         )
                     }
@@ -94,7 +95,7 @@ class FilterIntentHandler(
                         window.copy(
                             timeFilterTo = toValue,
                             timeFilterToInstant = toInstant,
-                            timeFilterPreset = null,
+                            timeFilterPreset = manualPresetOrNull(window.timeFilterFrom, toValue),
                             timeFilterValidationMessage = validationMessage
                         )
                     }
@@ -105,9 +106,25 @@ class FilterIntentHandler(
             is KLogViewerIntent.ApplyTimeFilterPreset -> {
                 state.update { currentState ->
                     currentState.updateActiveWindow { window ->
+                        val resolvedRange = TimeRangeFilterSupport.resolvePresetSelection(window, intent.preset)
+                        val fromInstant = resolvedRange?.first
+                        val toInstant = resolvedRange?.second
+                        val fromValue = fromInstant?.toString().orEmpty()
+                        val toValue = toInstant?.toString().orEmpty()
+                        val validationMessage = TimeRangeFilterSupport.validationMessage(
+                            fromValue,
+                            fromInstant,
+                            toValue,
+                            toInstant
+                        )
+
                         window.copy(
+                            timeFilterFrom = fromValue,
+                            timeFilterTo = toValue,
+                            timeFilterFromInstant = fromInstant,
+                            timeFilterToInstant = toInstant,
                             timeFilterPreset = intent.preset,
-                            timeFilterValidationMessage = null
+                            timeFilterValidationMessage = validationMessage
                         )
                     }
                 }
@@ -145,6 +162,14 @@ class FilterIntentHandler(
                 onFilterLogs(state.value.activeTab?.activeWindow?.id)
                 onSavePreferences()
             }
+        }
+    }
+
+    private fun manualPresetOrNull(fromValue: String, toValue: String): TimeRangePreset? {
+        return if (fromValue.isNotBlank() || toValue.isNotBlank()) {
+            TimeRangePreset.CUSTOM
+        } else {
+            null
         }
     }
 }

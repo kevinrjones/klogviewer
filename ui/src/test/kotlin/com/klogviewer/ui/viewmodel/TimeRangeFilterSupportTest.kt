@@ -107,6 +107,55 @@ class TimeRangeFilterSupportTest {
     }
 
     @Test
+    fun `resolveRange uses explicit from and to values for custom preset`() {
+        val window = LogWindow(
+            id = "window-1",
+            logs = listOf(
+                logEntry("2026-05-26T10:00:00Z"),
+                logEntry("2026-05-26T10:03:00Z")
+            ),
+            timeFilterFrom = "2026-05-26T10:00:00Z",
+            timeFilterTo = "2026-05-26T10:03:00Z",
+            timeFilterFromInstant = Instant.parse("2026-05-26T10:00:00Z"),
+            timeFilterToInstant = Instant.parse("2026-05-26T10:03:00Z"),
+            timeFilterPreset = TimeRangePreset.CUSTOM
+        )
+
+        val range = TimeRangeFilterSupport.resolveRange(window)
+
+        expectThat(range).isNotNull()
+        expectThat(range!!.first).isEqualTo(Instant.parse("2026-05-26T10:00:00Z"))
+        expectThat(range.second).isEqualTo(Instant.parse("2026-05-26T10:03:00Z"))
+    }
+
+    @Test
+    fun `resolvePresetSelection supports visible and full loaded ranges`() {
+        val window = LogWindow(
+            id = "window-1",
+            logs = listOf(
+                logEntry("2026-05-26T09:58:00Z"),
+                logEntry("2026-05-26T10:00:00Z"),
+                logEntry("2026-05-26T10:03:00Z")
+            ),
+            filteredLogs = listOf(
+                logEntry("2026-05-26T10:00:00Z"),
+                logEntry("2026-05-26T10:03:00Z")
+            )
+        )
+
+        val visibleRange = TimeRangeFilterSupport.resolvePresetSelection(window, TimeRangePreset.VISIBLE_WINDOW)
+        val fullRange = TimeRangeFilterSupport.resolvePresetSelection(window, TimeRangePreset.FULL_LOADED_RANGE)
+
+        expectThat(visibleRange).isNotNull()
+        expectThat(visibleRange!!.first).isEqualTo(Instant.parse("2026-05-26T10:00:00Z"))
+        expectThat(visibleRange.second).isEqualTo(Instant.parse("2026-05-26T10:03:00Z"))
+
+        expectThat(fullRange).isNotNull()
+        expectThat(fullRange!!.first).isEqualTo(Instant.parse("2026-05-26T09:58:00Z"))
+        expectThat(fullRange.second).isEqualTo(Instant.parse("2026-05-26T10:03:00Z"))
+    }
+
+    @Test
     fun `preset minute mapping supports all time range presets`() {
         expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_5_MINUTES)).isEqualTo(5L)
         expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_15_MINUTES)).isEqualTo(15L)
@@ -114,6 +163,9 @@ class TimeRangeFilterSupportTest {
         expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_1_HOUR)).isEqualTo(60L)
         expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_6_HOURS)).isEqualTo(360L)
         expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.LAST_24_HOURS)).isEqualTo(1_440L)
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.VISIBLE_WINDOW)).isNull()
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.FULL_LOADED_RANGE)).isNull()
+        expectThat(TimeRangeFilterSupport.toMinutes(TimeRangePreset.CUSTOM)).isNull()
 
         expectThat(TimeRangeFilterSupport.toPreset(5L)).isEqualTo(TimeRangePreset.LAST_5_MINUTES)
         expectThat(TimeRangeFilterSupport.toPreset(15L)).isEqualTo(TimeRangePreset.LAST_15_MINUTES)
@@ -121,6 +173,7 @@ class TimeRangeFilterSupportTest {
         expectThat(TimeRangeFilterSupport.toPreset(60L)).isEqualTo(TimeRangePreset.LAST_1_HOUR)
         expectThat(TimeRangeFilterSupport.toPreset(360L)).isEqualTo(TimeRangePreset.LAST_6_HOURS)
         expectThat(TimeRangeFilterSupport.toPreset(1_440L)).isEqualTo(TimeRangePreset.LAST_24_HOURS)
+        expectThat(TimeRangeFilterSupport.toPreset(2L)).isNull()
     }
 
     private fun logEntry(isoInstant: String): LogEntry = LogEntry(

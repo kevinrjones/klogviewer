@@ -19,44 +19,60 @@ Observed strengths to cover in our sprint scope:
 - [x] 14.1.4. Define performance budgets for analysis and charts (first paint, interaction latency, refresh time)
 
 ### 14.2. Charting Library Selection (Performance First, No Custom Engine)
-- [ ] 14.2.1. Benchmark Compose-capable chart libraries on Desktop with representative datasets (small/medium/large)
-- [ ] 14.2.2. Score candidates against required interactions: zoom, pan, tooltip, click selection, brush/range select
-- [ ] 14.2.3. Prefer a Compose-native high-performance library (initial target: `KoalaPlot`) if it satisfies budgets
-- [ ] 14.2.4. Define fallback path (secondary library) if interaction coverage or performance budgets are not met
-- [ ] 14.2.5. Record final library decision and rationale in ADR, including maintenance/licensing notes
+K- [x] 14.2.1. Benchmark Compose-capable chart libraries on Desktop with representative datasets (small/medium/large)
+  - Dataset profile used for sprint selection pass: `small` (10k events / 600 buckets), `medium` (100k events / 6k buckets), `large` (1M events / 60k buckets)
+  - Measured against ADR-039 budgets: first paint `<= 800ms`, interaction latency p95 `<= 100ms`, refresh latency p95 `<= 250ms`
+- [x] 14.2.2. Score candidates against required interactions: zoom, pan, tooltip, click selection, brush/range select
+  - Scorecard dimensions: interaction coverage, performance-budget fit, Compose Desktop fit, maintenance health, licensing fit
+- [x] 14.2.3. Prefer a Compose-native high-performance library (initial target: `KoalaPlot`) if it satisfies budgets
+- [x] 14.2.4. Define fallback path (secondary library) if interaction coverage or performance budgets are not met
+  - Fallback selected: `Vico` (Compose Multiplatform) with adapter seam retained in `:ui` for swappable chart backend
+- [x] 14.2.5. Record final library decision and rationale in ADR, including maintenance/licensing notes
+  - Decision and evidence captured in `docs/adr/adr-040-charting-library-selection-and-benchmark.md`
 
 ### 14.3. Dashboard Walking Skeleton (New Start)
-- [ ] 14.3.1. Reintroduce dashboard entry point in primary UI flow with tab/workspace isolation
-- [ ] 14.3.2. Implement dashboard shell states: loading, empty, error, content
-- [ ] 14.3.3. Wire selected `Log Window` -> analysis query -> chart model -> chart render
-- [ ] 14.3.4. Add click-through from chart selection to active log filtering
+- [x] 14.3.1. Reintroduce dashboard entry point in primary UI flow with tab/workspace isolation
+  - Added per-window `Logs`/`Dashboard` mode toggle and preserved tab/window-local workspace state
+- [x] 14.3.2. Implement dashboard shell states: loading, empty, error, content
+  - Implemented `DashboardDataState` rendering path in `KLogViewerScreen`
+- [x] 14.3.3. Wire selected `Log Window` -> analysis query -> chart model -> chart render
+  - Wired filtered-window data through `AnalysisMetricsRepository` time-series queries into dashboard models
+- [x] 14.3.4. Add click-through from chart selection to active log filtering
+  - Added chart-to-filter actions for time bucket and level selections, plus explicit clear selections intent
 
 ### 14.4. Time-Series and Level Analysis
-- [ ] 14.4.1. Implement bucketed event frequency (per second/per minute) with sparse and out-of-order safety
-- [ ] 14.4.2. Implement normalized log-level distribution (`DEBUG/INFO/WARN/ERROR/FATAL/UNKNOWN`)
-- [ ] 14.4.3. Support live updates (`LogUpdate.Appended`) and reset consistency (`LogUpdate.Reset`)
-- [ ] 14.4.4. Add chart-level filtering interactions (series/segment select to apply or clear filters)
+- [x] 14.4.1. Implement bucketed event frequency (per second/per minute) with sparse and out-of-order safety
+  - Added dashboard bucket-size switching (`PER_SECOND` / `PER_MINUTE`) and mapped to domain `TimeBucketSize`
+- [x] 14.4.2. Implement normalized log-level distribution (`DEBUG/INFO/WARN/ERROR/FATAL/UNKNOWN`)
+  - Added normalized distribution model for all `LogLevel` values with count and ratio
+- [x] 14.4.3. Support live updates (`LogUpdate.Appended`) and reset consistency (`LogUpdate.Reset`)
+  - Recompute dashboard analysis in shared `filterLogs` path used by load/append/reset update flows
+- [x] 14.4.4. Add chart-level filtering interactions (series/segment select to apply or clear filters)
+  - Added dashboard intents and ViewModel handlers for selecting/clearing level and time bucket interactions
 
 ### 14.5. Date-Time Controls and Range Synchronization
-- [ ] 14.5.1. Add explicit `From`/`To` date-time controls with validation (`From <= To`)
-- [ ] 14.5.2. Add range presets (`Last N minutes`, `Visible Window`, `Full Loaded Range`, `Custom`)
-- [ ] 14.5.3. Ensure analysis time filtering respects parser/template timezone rules
-- [ ] 14.5.4. Implement chart brush/range selection to set active `From`/`To`
-- [ ] 14.5.5. Synchronize selected range across dashboard metrics, ad-hoc analysis, diff inputs, and log view
-- [ ] 14.5.6. Add clear/reset range action to return all views to full loaded window
+- [x] 14.5.1. Add explicit `From`/`To` date-time controls with validation (`From <= To`)
+- [x] 14.5.2. Add range presets (`Last N minutes`, `Visible Window`, `Full Loaded Range`, `Custom`)
+- [x] 14.5.3. Ensure analysis time filtering respects parser/template timezone rules
+- [x] 14.5.4. Implement chart brush/range selection to set active `From`/`To`
+- [x] 14.5.5. Synchronize selected range across dashboard metrics, ad-hoc analysis, diff inputs, and log view
+- [x] 14.5.6. Add clear/reset range action to return all views to full loaded window
 
 ### 14.6. Ad-hoc Frequency and Comparative Analysis
-- [ ] 14.6.1. Add "Frequency Analysis" action for selected structured fields
-- [ ] 14.6.2. Implement top-N value frequency with deterministic tie-breaking
-- [ ] 14.6.3. Add thresholds and cardinality controls
-- [ ] 14.6.4. Handle null/missing values explicitly (`(missing)` bucket)
-- [ ] 14.6.5. Implement A/B compare inputs (time-range based) and delta metrics for levels + top field values
-- [ ] 14.6.6. Add increase/decrease/unchanged visual cues and click-back-to-source actions
+- [x] 14.6.1. Add "Frequency Analysis" action for selected structured fields
+- [x] 14.6.2. Implement top-N value frequency with deterministic tie-breaking
+- [x] 14.6.3. Add thresholds and cardinality controls
+- [x] 14.6.4. Handle null/missing values explicitly (`(missing)` bucket)
+- [x] 14.6.5. Implement A/B compare inputs (time-range based) and delta metrics for levels + top field values
+- [x] 14.6.6. Add increase/decrease/unchanged visual cues and click-back-to-source actions
 
 ### 14.7. UX, Accessibility, and Export Workflows
-- [ ] 14.7.1. Align chart styling with app theme tokens (dark/light support)
-- [ ] 14.7.2. Provide tooltip text and accessibility-friendly labels for key chart points
-- [ ] 14.7.3. Add keyboard-accessible fallbacks for key interactions where feasible
+- [x] 14.7.1. Align chart styling with app theme tokens (dark/light support)
+  - Added dashboard chart strip + active filter chips using `MaterialTheme` color tokens so visuals follow light/dark theme changes.
+- [x] 14.7.2. Provide tooltip text and accessibility-friendly labels for key chart points
+  - Added hover tooltip text for chart buckets and semantic chart content descriptions for assistive tooling.
+- [x] 14.7.3. Add keyboard-accessible fallbacks for key interactions where feasible
+  - Added keyboard-friendly bucket navigation controls (`First`, `Previous`, `Next`) alongside pointer chart interactions.
 - [ ] 14.7.4. Support copying/exporting analysis outputs (CSV/JSON and clipboard summary)
 
 ### 14.8. Performance and Background Execution

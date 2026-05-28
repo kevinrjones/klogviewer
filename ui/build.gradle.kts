@@ -18,6 +18,7 @@ dependencies {
     implementation(compose.material)
     implementation(compose.materialIconsExtended)
     implementation(compose.ui)
+    implementation(libs.koalaplot.core)
     
     testImplementation(libs.junit.jupiter.api)
     testRuntimeOnly(libs.junit.jupiter.engine)

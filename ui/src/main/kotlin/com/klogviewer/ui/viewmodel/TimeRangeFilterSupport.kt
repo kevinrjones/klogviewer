@@ -74,19 +74,29 @@ internal object TimeRangeFilterSupport {
 
     fun resolveRange(window: LogWindow, now: Instant = Instant.now()): Pair<Instant, Instant>? {
         return when (val preset = window.timeFilterPreset) {
-            null -> {
-                val from = window.timeFilterFromInstant
-                val to = window.timeFilterToInstant
+            null,
+            TimeRangePreset.VISIBLE_WINDOW,
+            TimeRangePreset.FULL_LOADED_RANGE,
+            TimeRangePreset.CUSTOM -> resolveExplicitRange(window)
 
-                if (from == null && to == null) {
-                    null
-                } else {
-                    val rangeStart = from ?: Instant.MIN
-                    val rangeEnd = to ?: Instant.MAX
-                    if (rangeStart.isAfter(rangeEnd)) null else rangeStart to rangeEnd
-                }
+            else -> {
+                val presetMinutes = toMinutes(preset) ?: return null
+                val end = now
+                val start = end.minus(presetMinutes, ChronoUnit.MINUTES)
+                start to end
             }
+        }
+    }
 
+    fun resolvePresetSelection(
+        window: LogWindow,
+        preset: TimeRangePreset,
+        now: Instant = Instant.now()
+    ): Pair<Instant, Instant>? {
+        return when (preset) {
+            TimeRangePreset.VISIBLE_WINDOW -> rangeFromEntries(window.filteredLogs) ?: rangeFromEntries(window.logs)
+            TimeRangePreset.FULL_LOADED_RANGE -> rangeFromEntries(window.logs)
+            TimeRangePreset.CUSTOM -> resolveExplicitRange(window)
             else -> {
                 val presetMinutes = toMinutes(preset) ?: return null
                 val end = now
@@ -116,8 +126,33 @@ internal object TimeRangeFilterSupport {
             TimeRangePreset.LAST_1_HOUR -> 60L
             TimeRangePreset.LAST_6_HOURS -> 360L
             TimeRangePreset.LAST_24_HOURS -> 1_440L
+            TimeRangePreset.VISIBLE_WINDOW,
+            TimeRangePreset.FULL_LOADED_RANGE,
+            TimeRangePreset.CUSTOM,
             null -> null
         }
+    }
+
+    private fun resolveExplicitRange(window: LogWindow): Pair<Instant, Instant>? {
+        val from = window.timeFilterFromInstant
+        val to = window.timeFilterToInstant
+
+        if (from == null && to == null) {
+            return null
+        }
+
+        val rangeStart = from ?: Instant.MIN
+        val rangeEnd = to ?: Instant.MAX
+        return if (rangeStart.isAfter(rangeEnd)) null else rangeStart to rangeEnd
+    }
+
+    private fun rangeFromEntries(entries: List<LogEntry>): Pair<Instant, Instant>? {
+        val instants = entries.mapNotNull(::entryInstant)
+        if (instants.isEmpty()) return null
+
+        val min = instants.minOrNull() ?: return null
+        val max = instants.maxOrNull() ?: return null
+        return min to max
     }
 
     private fun parseEpoch(value: String): Instant? {

@@ -22,9 +22,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.ui.mvi.TimeRangePreset
-import java.time.Instant
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
 
 @Composable
 fun FilterBar(
@@ -51,7 +48,6 @@ fun FilterBar(
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
     onSplitClick: () -> Unit,
-    availableTimeFilterInstants: List<Instant>,
     timeFilterFrom: String,
     timeFilterTo: String,
     timeFilterPreset: TimeRangePreset?,
@@ -196,7 +192,6 @@ fun FilterBar(
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
             TimeFilterControls(
-                availableEntryInstants = availableTimeFilterInstants,
                 fromValue = timeFilterFrom,
                 toValue = timeFilterTo,
                 preset = timeFilterPreset,
@@ -285,7 +280,6 @@ fun FilterBar(
 
 @Composable
 private fun TimeFilterControls(
-    availableEntryInstants: List<Instant>,
     fromValue: String,
     toValue: String,
     preset: TimeRangePreset?,
@@ -296,39 +290,28 @@ private fun TimeFilterControls(
     onClear: () -> Unit
 ) {
     var presetMenuExpanded by remember { mutableStateOf(false) }
-    val dateTimeOptions = remember(availableEntryInstants) {
-        availableEntryInstants
-            .asSequence()
-            .distinct()
-            .sorted()
-            .map {
-                TimeFilterDateTimeOption(
-                    value = it.toString(),
-                    label = TIME_FILTER_DISPLAY_FORMATTER.format(it)
-                )
-            }
-            .toList()
-    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(horizontal = 4.dp)
     ) {
-        DateTimeFilterDropdown(
+        DateTimeFilterInput(
             value = fromValue,
-            options = dateTimeOptions,
-            placeholder = "From",
+            label = "From",
             testTag = "time_filter_from_input",
+            clearTag = "time_filter_clear_from",
+            clearTooltip = "Clear From",
             onValueChange = onFromChange
         )
 
         Spacer(modifier = Modifier.width(4.dp))
 
-        DateTimeFilterDropdown(
+        DateTimeFilterInput(
             value = toValue,
-            options = dateTimeOptions,
-            placeholder = "To",
+            label = "To",
             testTag = "time_filter_to_input",
+            clearTag = "time_filter_clear_to",
+            clearTooltip = "Clear To",
             onValueChange = onToChange
         )
 
@@ -379,14 +362,7 @@ private fun TimeFilterControls(
     }
 }
 
-private val TIME_FILTER_DISPLAY_FORMATTER: DateTimeFormatter = DateTimeFormatter
-    .ofPattern("yyyy-MM-dd HH:mm:ss")
-    .withZone(ZoneOffset.UTC)
-
-private data class TimeFilterDateTimeOption(
-    val value: String,
-    val label: String
-)
+private const val TIME_FILTER_PLACEHOLDER = "YYYY-MM-DD HH:mm:ss"
 
 private fun TimeRangePreset.displayLabel(): String {
     return when (this) {
@@ -396,81 +372,64 @@ private fun TimeRangePreset.displayLabel(): String {
         TimeRangePreset.LAST_1_HOUR -> "Last 1 hour"
         TimeRangePreset.LAST_6_HOURS -> "Last 6 hours"
         TimeRangePreset.LAST_24_HOURS -> "Last 24 hours"
+        TimeRangePreset.VISIBLE_WINDOW -> "Visible window"
+        TimeRangePreset.FULL_LOADED_RANGE -> "Full loaded range"
+        TimeRangePreset.CUSTOM -> "Custom"
     }
 }
 
 @Composable
-private fun DateTimeFilterDropdown(
+private fun DateTimeFilterInput(
     value: String,
-    options: List<TimeFilterDateTimeOption>,
-    placeholder: String,
+    label: String,
     testTag: String,
+    clearTag: String,
+    clearTooltip: String,
     onValueChange: (String) -> Unit
 ) {
-    var menuExpanded by remember { mutableStateOf(false) }
-    val selectedText = options.firstOrNull { it.value == value }?.label
-        ?: value.takeIf { it.isNotBlank() }
-        ?: placeholder
-    val hasOptions = options.isNotEmpty()
-
-    Box(
-        modifier = Modifier
-            .width(180.dp)
-            .background(MaterialTheme.colors.onSurface.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
-            .clickable(enabled = hasOptions) { menuExpanded = true }
-            .padding(horizontal = 8.dp, vertical = 6.dp)
-            .testTag(testTag),
-        contentAlignment = Alignment.CenterStart
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = {
+            Text(
+                text = TIME_FILTER_PLACEHOLDER,
+                style = MaterialTheme.typography.caption,
+                fontSize = 12.sp
+            )
+        },
+        singleLine = true,
+        textStyle = MaterialTheme.typography.caption.copy(fontSize = 12.sp),
+        leadingIcon = {
             Icon(
                 imageVector = Icons.Default.CalendarToday,
                 contentDescription = null,
-                modifier = Modifier.size(14.dp),
-                tint = MaterialTheme.colors.onSurface.copy(alpha = if (hasOptions) 0.8f else 0.45f)
+                modifier = Modifier.size(14.dp)
             )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = selectedText,
-                style = MaterialTheme.typography.caption,
-                fontSize = 12.sp,
-                color = if (value.isBlank()) {
-                    MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
-                } else {
-                    MaterialTheme.colors.onSurface
-                },
-                modifier = Modifier.weight(1f)
-            )
-            Icon(
-                imageVector = Icons.Default.ArrowDropDown,
-                contentDescription = null,
-                tint = MaterialTheme.colors.onSurface.copy(alpha = if (hasOptions) 0.8f else 0.45f)
-            )
-        }
-
-        DropdownMenu(
-            expanded = menuExpanded,
-            onDismissRequest = { menuExpanded = false }
-        ) {
-            DropdownMenuItem(onClick = {
-                menuExpanded = false
-                onValueChange("")
-            }) {
-                Text("Any time")
-            }
-            options.forEach { option ->
-                DropdownMenuItem(onClick = {
-                    menuExpanded = false
-                    onValueChange(option.value)
-                }) {
-                    Text(option.label)
+        },
+        trailingIcon = {
+            if (value.isNotBlank()) {
+                TooltipWrapper(tooltip = clearTooltip) {
+                    IconButton(
+                        onClick = { onValueChange("") },
+                        modifier = Modifier.size(24.dp).testTag(clearTag)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = clearTooltip,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
                 }
             }
-        }
-    }
+        },
+        modifier = Modifier.width(200.dp).testTag(testTag),
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
+            focusedIndicatorColor = MaterialTheme.colors.primary,
+            unfocusedIndicatorColor = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.disabled)
+        )
+    )
 }
 
 @Composable

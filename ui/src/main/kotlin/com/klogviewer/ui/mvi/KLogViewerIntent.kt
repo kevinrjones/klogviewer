@@ -3,11 +3,13 @@ package com.klogviewer.ui.mvi
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
+import java.time.Instant
 
 sealed interface KLogViewerIntent {
     sealed interface WorkspaceIntent : KLogViewerIntent
     sealed interface UiToggleIntent : KLogViewerIntent
     sealed interface FilterIntent : KLogViewerIntent
+    sealed interface DashboardIntent : KLogViewerIntent
     sealed interface TabWindowIntent : KLogViewerIntent
     sealed interface EntryIntent : KLogViewerIntent
     sealed interface DialogIntent : KLogViewerIntent
@@ -36,6 +38,25 @@ sealed interface KLogViewerIntent {
     data class SetTimeFilterTo(val to: String) : FilterIntent
     data class ApplyTimeFilterPreset(val preset: TimeRangePreset) : FilterIntent
     data object ClearTimeFilter : FilterIntent
+
+    data object ShowDashboard : DashboardIntent
+    data object ShowLogs : DashboardIntent
+    data class SetDashboardBucketSize(val bucketSize: DashboardBucketSize) : DashboardIntent
+    data class SelectDashboardTimeBucket(val bucketFrom: Instant) : DashboardIntent
+    data class SelectDashboardTimeRange(val from: Instant, val to: Instant) : DashboardIntent
+    data class SelectDashboardLevel(val level: LogLevel) : DashboardIntent
+    data class SetDashboardFrequencyField(val fieldKey: String) : DashboardIntent
+    data class SetDashboardFrequencyTopN(val topN: Int) : DashboardIntent
+    data class SetDashboardFrequencyThreshold(val threshold: Int) : DashboardIntent
+    data class SetDashboardFrequencyCardinalityLimit(val limit: Int) : DashboardIntent
+    data class SelectDashboardFrequencyValue(val value: String) : DashboardIntent
+    data class SetDashboardCompareBaselineFrom(val from: String) : DashboardIntent
+    data class SetDashboardCompareBaselineTo(val to: String) : DashboardIntent
+    data class SetDashboardCompareComparisonFrom(val from: String) : DashboardIntent
+    data class SetDashboardCompareComparisonTo(val to: String) : DashboardIntent
+    data object RunDashboardComparison : DashboardIntent
+    data object ClearDashboardComparison : DashboardIntent
+    data object ClearDashboardSelections : DashboardIntent
     
     data class SelectEntry(val entry: com.klogviewer.domain.model.LogEntry?) : EntryIntent
     data class ToggleEntrySelection(val index: Int, val isShiftPressed: Boolean = false, val isMetaPressed: Boolean = false) : EntryIntent

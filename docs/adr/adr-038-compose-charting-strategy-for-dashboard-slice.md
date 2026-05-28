@@ -1,7 +1,7 @@
 # ADR-038: Compose Charting Strategy for Dashboard Walking Skeleton
 
 ## Status
-Accepted
+Superseded by `adr-040-charting-library-selection-and-benchmark.md`
 
 ## Context
 

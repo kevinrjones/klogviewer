@@ -19,6 +19,7 @@ mockk = "1.13.17"
 slf4j = "2.0.18"
 strikt = "0.35.1"
 updateVersion-version = "0.54.0"
+koalaplot-core = "0.11.0"
 
 [libraries]
 jetbrains-compose-ui-test-junit4 = { module = "org.jetbrains.compose.ui:ui-test-junit4", version.ref = "compose" }
@@ -48,6 +49,7 @@ logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "lo
 logstash-logback-encoder = { module = "net.logstash.logback:logstash-logback-encoder", version.ref = "logstash-logback-encoder" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 strikt-core = { module = "io.strikt:strikt-core", version.ref = "strikt" }
+koalaplot-core = { module = "io.github.koalaplot:koalaplot-core", version.ref = "koalaplot-core" }
 
 [plugins]
 catalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "catalogUpdateVersion-version" }

@@ -13,6 +13,12 @@
 - Time filter UX update: replaced free-text `From`/`To` with entry-based date-time dropdown selectors and expanded relative-range presets.
 - Sprint 9 planning restarted with a new analysis/visualization backlog focused on high-performance chart library integration and synchronized date-time controls.
 - Sprint 9 restart foundations completed with ADR-backed scope supersession, reconfirmed analysis contracts, and explicit performance budgets.
+- Sprint 9 chart-library selection (14.2) completed with benchmark-gated primary/fallback decisions and ADR-backed rationale.
+- Sprint 9 dashboard walking skeleton and time-series/level analysis (`14.3`/`14.4`) reintroduced with per-window dashboard mode, shell states, and interaction-driven filtering.
+- Sprint 9 date-time controls and range synchronization (`14.5`) completed with explicit `From`/`To` synchronization across presets and dashboard range interactions.
+- Sprint 9 ad-hoc frequency and comparative analysis (`14.6`) completed with structured-field top-N analysis, explicit missing-value handling, and A/B delta workflows.
+- Sprint 9 UX/accessibility slice (`14.7.1`–`14.7.3`) completed with a rendered dashboard chart strip, active filter chips, tooltip/semantic labeling, and keyboard fallback interactions.
+- Dashboard KoalaPlot time-series now supports drag-to-select bucket ranges using pointer-to-index mapping while preserving existing single-click filtering behavior.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -21,6 +27,10 @@
 - Committed to using Tiny Types for core domain concepts to enhance type safety.
 - Transitioned to a streaming Flow-based `LogSource` to support scalability and real-time monitoring.
 - Kept time-filter persistence model minute-based (`timeFilterPresetMinutes`) while expanding enum options so older preferences remain compatible.
+- Standardized non-minute time-range presets (`Visible Window`, `Full Loaded Range`, `Custom`) as explicit `From`/`To`-derived ranges while keeping relative presets (`Last N minutes`) now-anchored.
+- Standardized dashboard click-back filtering for structured fields using internal query tokens (`@field:<key>=<value>`) so frequency and compare interactions can round-trip into the active log filter state.
+- Kept dashboard chart interactions mapped to existing selection intents (bucket/level/frequency) to preserve current filter semantics while adding hover/keyboard UX affordances.
+- Reused existing `SelectDashboardTimeRange` intent flow for drag-range selection to avoid chart-model or library changes.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -107,8 +117,12 @@
 - Blocking remote reads may not react to coroutine cancellation unless the underlying SSH command/session/input stream is explicitly closed.
 - Non-Unit persistence result contracts can surface in relaxed UI mocks; tests need explicit stubs for save outcomes and error dialogs.
 - Date/time dropdown values should use stable machine values (`Instant.toString()`) with formatted labels only for display to avoid parse drift.
+- Back-to-back dashboard intents can race asynchronous filter recomputation; stale result suppression is required to avoid older analysis snapshots overriding newer interactive selections.
+- `Visible Window` depends on current filtered logs, so applying it immediately recalculates against the active filter state rather than raw loaded data.
 - Sprint restarts can leave ADR/task-history drift unless the new sprint scope explicitly supersedes prior checklist assumptions.
 - Performance-first charting work needs explicit latency/paint budgets captured early, otherwise library selection can drift without measurable acceptance gates.
+- Earlier dashboard-primitive ADR decisions can conflict with restart scope; supersession links must be explicit to avoid implementation drift.
+- Dashboard interaction tests can become flaky if select/clear actions race on async recomputation; explicit clear intents and eventual-state assertions keep tests stable.
 
 ## Sprint: Walking Skeleton Implementation
 **Title**: Sprint 1 Completion
@@ -2302,3 +2316,190 @@ For each sprint/task
 - Historical sprint/task records remain valid context but should not be used as completion evidence for restarted scope.
 **Test coverage areas**
 - Documentation-only update; no build or automated tests were run.
+
+## Task: Sprint 9 Charting Library Selection (14.2)
+**Title**: Complete Benchmark-Gated Chart Library Selection
+**Date/time completed**: 2026-05-26 20:49
+**What was shipped**
+- Updated `docs/tasks/TASKS-SPRINT-9-ANALYSIS-AND-VISUALIZATION.md` to complete `14.2.1`-`14.2.5` and add explicit benchmark dataset profiles, scoring dimensions, and evidence linkage.
+- Added `docs/adr/adr-040-charting-library-selection-and-benchmark.md` capturing candidate set, benchmark/scoring gate, primary selection (`KoalaPlot`), fallback path (`Vico`), and licensing/maintenance notes.
+- Marked `docs/adr/adr-038-compose-charting-strategy-for-dashboard-slice.md` as superseded by ADR-040 to remove restart-scope ambiguity.
+**Key decisions**
+- Keep Sprint 9 charting implementation library-first with `KoalaPlot` as primary when benchmark gates are satisfied.
+- Predefine `Vico` as fallback and preserve a chart adapter seam in `:ui` so backend swap does not alter `:domain` analysis contracts.
+**Gotchas**
+- Selection documentation and execution checklist must stay synchronized; otherwise completion claims can drift from decision records.
+**Test coverage areas**
+- Documentation-only update; no build or automated tests were run.
+
+## Task: Sprint 9 Dashboard + Time-Series/Level Analysis (14.3/14.4)
+**Title**: Reintroduce Dashboard Walking Skeleton and Analysis Interactions
+**Date/time completed**: 2026-05-26 20:59
+**What was shipped**
+- Added dashboard-capable UI MVI state and intents (`workspaceMode`, dashboard shell/content state, bucket/selection intents) and wired them through `KLogViewerViewModel`.
+- Reintroduced dashboard entry in the primary UI flow with per-window `Logs`/`Dashboard` toggle and dashboard shell rendering (`loading`, `empty`, `error`, `content`) in `KLogViewerScreen`.
+- Wired filtered window data into bucketed time-series analysis (per-second/per-minute) and normalized level distribution (`DEBUG/INFO/WARN/ERROR/FATAL/UNKNOWN`), including live recomputation in load/append/reset paths.
+- Implemented chart-level click-through actions for bucket and level selection to apply/clear active filters, plus explicit clear-selection behavior.
+- Updated Sprint 9 task checklist to mark `14.3.1`–`14.3.4` and `14.4.1`–`14.4.4` complete with implementation notes.
+**Key decisions**
+- Reused existing `AnalysisMetricsRepository` and shared `filterLogs` recomputation path instead of introducing a second analysis pipeline, preserving consistency with active filter behavior.
+- Kept dashboard state window-local so split windows and tabs remain isolated while sharing global app shell behavior.
+**Gotchas**
+- Async recomputation after interaction can race test expectations; tests were stabilized using explicit eventual-state waits and `ClearDashboardSelections` for deterministic reset checks.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (`12/12` passing).
+- `core/src/test/kotlin/com/klogviewer/core/analysis/InMemoryAnalysisMetricsRepositoryTest.kt` (`3/3` passing).
+- `ui/src/test/kotlin/com/klogviewer/ui` regression run (`6/6` passing in this environment).
+
+## Task: Sprint 9 Date-Time Controls & Range Synchronization (14.5)
+**Title**: Complete Synchronized Date-Time Controls and Preset Range Flows
+**Date/time completed**: 2026-05-27 10:03
+**What was shipped**
+- Expanded `TimeRangePreset` to support `VISIBLE_WINDOW`, `FULL_LOADED_RANGE`, and `CUSTOM`, and updated filter UI labels to expose these options.
+- Added explicit dashboard range-selection intent (`SelectDashboardTimeRange`) and wired dashboard bucket interactions to set synchronized `From`/`To` values.
+- Updated `FilterIntentHandler` and `TimeRangeFilterSupport` so preset selection resolves concrete ranges and keeps `From`/`To` state, validation, and preset semantics aligned.
+- Ensured clear/reset behavior returns range fields to full-window defaults and clears dashboard range selections.
+- Marked Sprint 9 checklist items `14.5.1`–`14.5.6` complete in `docs/tasks/TASKS-SPRINT-9-ANALYSIS-AND-VISUALIZATION.md`.
+**Key decisions**
+- Kept `Last N minutes` as now-anchored relative presets while modeling `Visible Window`/`Full Loaded Range`/`Custom` as explicit `From`/`To` range states.
+- Reused the existing filtering path (`filterLogs`) for synchronization so dashboard selections and log-list filtering stay consistent without a parallel range pipeline.
+**Gotchas**
+- `Visible Window` is computed from currently filtered logs, so selecting it can tighten range iteratively depending on active filters.
+- Test summaries in this environment can include duplicate display entries; verification relied on aggregate pass counts and exit status.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (`16/16` passing).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/TimeRangeFilterSupportTest.kt` (`14/14` passing).
+
+## Task: Sprint 9 Ad-hoc Frequency + Comparative Analysis (14.6)
+**Title**: Add Structured Frequency Analysis and A/B Delta Workflows to Dashboard
+**Date/time completed**: 2026-05-27 11:11
+**What was shipped**
+- Extended dashboard MVI contracts with frequency-analysis controls (field selection, top-N, threshold, cardinality), compare-range inputs, and delta-oriented result models.
+- Implemented frequency and comparison logic in `KLogViewerViewModel`, including deterministic top-N ordering, explicit `(missing)` field bucketing, and level/field delta direction cues (`INCREASE`/`DECREASE`/`UNCHANGED`).
+- Added structured-field click-back actions by mapping dashboard selections to internal field filter tokens and updated `LogFilterService` to evaluate these field queries.
+- Added stale-result suppression for asynchronous filter recomputation using per-window generation tracking, preventing older background computations from overriding newer dashboard interactions.
+- Updated `KLogViewerScreen` dashboard UI with frequency controls/results, A/B range inputs, run/clear compare actions, and clickable delta rows.
+- Marked Sprint 9 checklist items `14.6.1`–`14.6.6` complete in `docs/tasks/TASKS-SPRINT-9-ANALYSIS-AND-VISUALIZATION.md`.
+**Key decisions**
+- Reused `AnalysisMetricsRepository.frequencyAnalysis` and `DiffWindow` contracts from `:domain`/`:core` to keep 14.6 behavior aligned with existing analysis seams instead of introducing a separate aggregation engine.
+- Kept compare execution explicit (`Run compare`) while compare-input edits only update state and invalidate stale background filter generations for deterministic behavior.
+**Gotchas**
+- Test output in this environment can display duplicate entries; verification decisions should rely on aggregate pass/fail totals and exit status.
+- Filter recomputation races can manifest as flaky dashboard selection state unless stale generation updates are dropped.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (`26/26` passing).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel` regression run (`6/6` passing in this environment).
+- `ui/src/test/kotlin/com/klogviewer/ui` regression run (`6/6` passing in this environment).
+- `core/src/test/kotlin/com/klogviewer/core/analysis/InMemoryAnalysisMetricsRepositoryTest.kt` (`3/3` passing).
+
+## Task: Sprint 9 KoalaPlot Charting Engine Integration
+**Title**: Integrate KoalaPlot for Time-Series and Level Distribution Charts
+**Date/time completed**: 2026-05-27 15:55
+**What was shipped**
+- Integrated `KoalaPlot` (v0.11.0) charting library into the project, replacing the previous custom-drawn `Canvas` charting engine.
+- Created `ui/src/main/kotlin/com/klogviewer/ui/components/KoalaPlotCharts.kt` containing `KoalaPlotTimeSeriesChart` (XYGraph with VerticalBarPlot) and `KoalaPlotLevelDistributionChart` (PieChart).
+- Migrated the `Dashboard` and `LogTimeFrequencyPanel` to use KoalaPlot-based charts while preserving all existing interactivity (click-to-filter, bucket selection, color coding).
+- Cleaned up the codebase by removing the obsolete custom chart implementation and related hit-testing logic from `KLogViewerScreen.kt`.
+- Augmented the `DashboardContent` with a Pie chart for level distribution alongside the existing detailed list.
+**Key decisions**
+- Used `KoalaPlot` as the primary charting engine to leverage its mature Compose-native API, zoom/pan support, and better rendering performance over custom solutions.
+- Separated chart components into a dedicated file (`KoalaPlotCharts.kt`) to improve the maintainability and readability of the main `KLogViewerScreen.kt` file.
+- Opted for `graphicsLayer` rotation for axis titles to ensure consistent layout across different platforms.
+**Gotchas**
+- KoalaPlot 0.11.0 API has some mismatches with earlier documentation (e.g., `PieChart` uses `values` instead of `data`, `VerticalBarPlot` uses `xData`/`yData` and a 4-parameter `bar` lambda).
+- `ExperimentalKoalaPlotApi` opt-in is required for both `XYGraph` and `PieChart` components.
+- X-axis labels in `CategoryAxisModel` will overlap if there are many categories; manual thinning of labels is required (e.g., using indices and a step).
+- `VerticalBarPlot` bar lambda in 0.11.0 has the signature `(BarScope, Int, Int, VerticalBarPlotEntry<X, Y>)`. When used as a trailing lambda without specifying the receiver, it takes 3 arguments: `(index: Int, seriesIndex: Int, entry: VerticalBarPlotEntry<X, Y>)`.
+- `XYGraph` overload resolution can be ambiguous if only some parameters are provided. Using named arguments and ensuring `@Composable` title lambdas are provided is a reliable workaround to force the `@Composable` overload over the `(X) -> String` one.
+- **Update (2026-05-27 16:28)**: Finalized the time-series chart with `FloatLinearAxisModel`, centered bars, and subtle borders. This provides the best balance of SolarWinds-style aesthetics and KoalaPlot's automatic label management.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/LogWorkspaceChartSupportTest.kt` (`6/6` passing).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (`26/26` passing).
+
+## Task: Sprint 9 UX + Accessibility Dashboard Slice (14.7.1-14.7.3)
+**Title**: Add Rendered Time-Series Chart Strip, Filter Chips, and Keyboard Fallbacks
+**Date/time completed**: 2026-05-27 11:42
+**What was shipped**
+- Replaced list-only time-series rendering in `KLogViewerScreen` dashboard with a rendered chart strip (`Canvas`) that supports hover inspection and click-to-filter bucket selection.
+- Added active dashboard filter chips for selected bucket, level, and structured frequency value, each with direct clear actions wired to existing intents.
+- Added keyboard-friendly bucket navigation controls (`First bucket`, `Previous`, `Next`) as interaction fallbacks for non-pointer workflows.
+- Added tooltip guidance and semantic content descriptions for chart accessibility/readability and updated Sprint task tracking to complete `14.7.1`–`14.7.3`.
+- Added `DashboardChartSupportTest` to cover bucket index mapping for chart hit-testing and boundary conditions.
+**Key decisions**
+- Reused current dashboard selection intents instead of introducing new filtering pathways so chart/click/chip/fallback controls stay behaviorally consistent.
+- Implemented chart hit-testing via a small pure helper (`dashboardBucketIndexForOffset`) to keep interaction logic deterministic and unit-testable.
+**Gotchas**
+- `pointerMoveFilter` requires Compose experimental opt-in in this module; build failed until `@OptIn(ExperimentalComposeUiApi::class)` was added.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/DashboardChartSupportTest.kt` (`6/6` passing in this environment).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (`26/26` passing in this environment).
+- `ui/src/test/kotlin/com/klogviewer/ui` regression run (`6/6` passing in this environment).
+
+## Task: Dashboard KoalaPlot Drag-to-Select Range
+**Title**: Add Drag Range Selection to Existing Time-Series Bars
+**Date/time completed**: 2026-05-27 20:52
+**What was shipped**
+- Added drag gesture handling to `KoalaPlotTimeSeriesChart` so users can select contiguous time-bucket ranges across bars.
+- Implemented deterministic pointer coordinate mapping helpers (`pointerXToBucketIndex`, `bucketRangeFromDrag`) with clamping and nearest-index rounding.
+- Wired range selection through existing UI flows in `KLogViewerScreen` (`LogWorkspace`, `LogTimeFrequencyPanel`, `DashboardContent`) to reuse `SelectDashboardTimeRange(from, to)`.
+- Kept current charting stack (`KoalaPlot`) and existing `DashboardTimeBucket` model unchanged, preserving single-bucket click, tooltip, and axis behavior.
+**Key decisions**
+- Map drag coordinates to bar indexes over an index-based x-domain (`0..lastIndex`) to keep selection logic stable regardless of timestamp spacing.
+- Reuse existing intent-based filter application so range selection remains consistent with current clear-selection and dashboard synchronization behavior.
+**Gotchas**
+- Compose pointer API in this environment does not expose a standalone `consume` import; consumption is performed via `PointerInputChange.consume()`.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (new mapping/range edge-case coverage).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (added multi-bucket range filter application assertion).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" --tests "com.klogviewer.ui.components.LogWorkspaceChartSupportTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard KoalaPlot Selection Feedback Visibility
+**Title**: Add Obvious Single/Range Selection Feedback and Time Filter Chips
+**Date/time completed**: 2026-05-27 21:04
+**What was shipped**
+- Enhanced `KoalaPlotTimeSeriesChart` to render explicit visual states for unselected, selected, and selected-range bars with theme-based fill alpha, stronger borders, and top-marker cues.
+- Added active range visualization support by mapping current time filters to selected bar index ranges and drawing a subtle range overlay behind selected bars.
+- Added hover interactivity cues (`pointerHoverIcon`) and accessibility semantics per bar describing bucket window, event count, and selection status.
+- Updated both Dashboard and compact time-frequency panel flows to surface active time selection as removable chips (`Bucket:` / `Range:`) using existing clear-selection behavior.
+- Added focused helper coverage for chart selection-state mapping and dashboard time-filter chip label resolution.
+**Key decisions**
+- Reused existing dashboard state (`selectedBucketFrom`, `timeFilterFromInstant`, `timeFilterToInstant`) to infer selection feedback rather than introducing a new chart-model contract.
+- Applied selection feedback for any active time filter aligned to chart buckets (including manual `From/To`), per user clarification.
+**Gotchas**
+- One dashboard test run showed a transient timeout in this environment; rerun of the same targeted suite passed without code changes.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (added selected-index-range + visual-state helper assertions).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/LogWorkspaceChartSupportTest.kt` (added active time-selection label mapping assertions).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.LogWorkspaceChartSupportTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard KoalaPlot Live Drag Highlight Feedback
+**Title**: Show Selection Styling While Dragging Before Filter Commit
+**Date/time completed**: 2026-05-27 21:18
+**What was shipped**
+- Updated `KoalaPlotTimeSeriesChart` to compute a transient drag-preview bucket range from pointer coordinates and use it as the active visual selection during drag.
+- Applied the transient active range to both bar styling (fill/border/top marker) and the selected-range overlay so feedback appears immediately while dragging.
+- Kept existing drag-end behavior intact: selected single bucket/range still commits via existing callbacks and dashboard filter flow.
+**Key decisions**
+- Added a focused helper (`activeBucketSelectionRange`) that prioritizes in-progress drag range and falls back to committed selection when no drag is active.
+- Reused existing pointer-index mapping (`bucketRangeFromDrag`) rather than introducing any chart-model or chart-library changes.
+**Gotchas**
+- `onDragEnd` clears transient drag state immediately after emitting selection callbacks, so visual feedback during drag must be derived before callback-driven state round-trip.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (added active-range precedence and fallback assertions).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.LogWorkspaceChartSupportTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard KoalaPlot Post-Selection Color Reset
+**Title**: Revert Bar Highlight Styling After Selection Re-render
+**Date/time completed**: 2026-05-27 21:25
+**What was shipped**
+- Adjusted `KoalaPlotTimeSeriesChart` to apply selected bar/range styling only while an active drag gesture is in progress.
+- Removed fallback from transient drag selection to committed dashboard filter selection for chart visual highlighting.
+- Preserved existing drag/click selection commit behavior and existing tooltip/filter flows.
+**Key decisions**
+- Kept pointer-to-index mapping unchanged and only narrowed when the mapped range is consumed for visual state.
+- Retained helper structure (`activeBucketSelectionRange`) but made it transient-only to match the required “revert after re-show” behavior.
+**Gotchas**
+- This change intentionally separates visual highlight persistence from active filter persistence; active filters remain visible via chips while bars reset styling after drag ends.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (updated active-range fallback expectation to transient-only `null` when no drag preview exists).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.LogWorkspaceChartSupportTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
