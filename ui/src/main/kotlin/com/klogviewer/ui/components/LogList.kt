@@ -95,28 +95,30 @@ fun LogList(
                             .testTag("log_lazy_column")
                     ) {
                         itemsIndexed(logs) { index, entry ->
-                            LogEntryRow(
-                                entry = entry,
-                                lineNumber = index + 1,
-                                filterQueries = filterQueries,
-                                isDarkMode = isDarkMode,
-                                contentWidth = contentWidth,
-                                gutterWidth = gutterWidth,
-                                showAnsiColors = showAnsiColors,
-                                sourceIds = sourceIds,
-                                missingSourceIds = missingSourceIds,
-                                columns = displayColumns,
-                                columnWidths = columnWidths,
-                                isSelected = selectedIndices.contains(index),
-                                onClick = { isShift, isMeta -> 
-                                    if (isShift || isMeta) {
-                                        onToggleSelection(index, isShift, isMeta)
-                                    } else {
-                                        onEntryClick(entry)
-                                    }
-                                },
-                                modifier = Modifier.testTag("log_entry_row")
-                            )
+                            Box(modifier = Modifier.testTag("log_entry_row")) {
+                                LogEntryRow(
+                                    entry = entry,
+                                    lineNumber = index + 1,
+                                    filterQueries = filterQueries,
+                                    isDarkMode = isDarkMode,
+                                    contentWidth = contentWidth,
+                                    gutterWidth = gutterWidth,
+                                    showAnsiColors = showAnsiColors,
+                                    sourceIds = sourceIds,
+                                    missingSourceIds = missingSourceIds,
+                                    columns = displayColumns,
+                                    columnWidths = columnWidths,
+                                    isSelected = selectedIndices.contains(index),
+                                    onClick = { isShift, isMeta ->
+                                        if (isShift || isMeta) {
+                                            onToggleSelection(index, isShift, isMeta)
+                                        } else {
+                                            onEntryClick(entry)
+                                        }
+                                    },
+                                    modifier = Modifier.testTag("log_entry_row_$index")
+                                )
+                            }
                         }
                     }
                 }

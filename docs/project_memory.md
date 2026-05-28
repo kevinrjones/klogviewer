@@ -2535,3 +2535,86 @@ For each sprint/task
 **Test coverage areas**
 - `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (new dashboard time-range persistence round-trip assertion).
 - `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest --tests com.klogviewer.ui.viewmodel.KLogViewerViewModelTest` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard Level Distribution UX Redesign
+**Title**: Replace Crowded Pie Labels with Donut + Clickable Severity Legend
+**Date/time completed**: 2026-05-28 08:39
+**What was shipped**
+- Redesigned dashboard level distribution to use a cleaner donut chart (no on-slice labels) with a center summary and improved empty/zero-data rendering.
+- Replaced the old plain level list with ordered severity rows that show level color, count, percentage, and a compact horizontal distribution bar for every level.
+- Preserved click-to-filter behavior by wiring chart slice and legend-row clicks back to existing dashboard level-selection intents.
+- Added hover/selection/focus affordances and semantics metadata for better interaction clarity and keyboard/accessibility support.
+- Added deterministic helper tests for severity ordering and percentage formatting that avoids misleading tiny non-zero values as `0%`.
+**Key decisions**
+- Kept the existing `KoalaPlot` stack and intent contracts, implementing UX improvements at the presentation layer to minimize behavioral risk.
+- Standardized level ordering in UI helpers to severity order (`DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, `UNKNOWN`) regardless of counts.
+- Introduced percentage formatting thresholds (`<0.1%`, one decimal under 10%, rounded integer at 10%+) to balance precision and readability.
+**Gotchas**
+- An initial broad patch accidentally malformed `KLogViewerScreen.kt`; it was reverted immediately and re-applied in smaller patches.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (added level-order + percentage-format assertions).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --no-daemon` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" --no-daemon` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard Level Distribution Pie Label Restoration
+**Title**: Restore Visible Donut Slice Labels for Level Distribution
+**Date/time completed**: 2026-05-28 09:17
+**What was shipped**
+- Restored visible labels on level-distribution donut slices so level text and percentage are shown directly on the chart.
+- Added a dedicated label-formatting helper in `KoalaPlotCharts.kt` to keep chart label text consistent with existing percentage rounding rules.
+**Key decisions**
+- Kept the clickable legend rows and selected-slice emphasis unchanged, adding labels as a focused regression fix rather than redesigning the component again.
+- Reused `formatLevelDistributionPercentage` thresholds to avoid duplicated formatting logic and keep legend/chart percentages aligned.
+**Gotchas**
+- Label text needed to remain compact to avoid visual overload while still addressing the “missing labels” feedback.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (added slice-label formatting assertions).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --no-daemon` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard Level Distribution Donut Offset Fix
+**Title**: Prevent Slice Labels From Distorting Donut Geometry
+**Date/time completed**: 2026-05-28 09:58
+**What was shipped**
+- Updated level-distribution pie labels to use compact formatting for very small slices (single-letter level code + percentage) to avoid oversized labels in dense distributions.
+- Forced slice labels to render on a single line (`maxLines = 1`, `softWrap = false`) with clipping so label wrapping no longer stretches chart layout and creates an offset donut appearance.
+**Key decisions**
+- Kept visible on-chart labels per prior user feedback while reducing label footprint specifically for tiny-slice scenarios.
+- Preserved existing severity order, percentage thresholds, selected-level behavior, and center summary content.
+**Gotchas**
+- KoalaPlot label placement can react poorly to wrapped multi-line labels in constrained wedge-label space; controlling label line count is necessary for stable geometry.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (updated slice-label formatting expectations for compact tiny-slice labels).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --no-daemon` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --no-daemon` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard Level Distribution Label Clipping Fix
+**Title**: Keep Donut Slice Labels Visible Within Chart Bounds
+**Date/time completed**: 2026-05-28 10:12
+**What was shipped**
+- Added inner padding around the level-distribution pie render area so top-edge labels no longer clip outside the chart container.
+- Kept donut center sizing proportional to the padded pie diameter to preserve visual balance after adding label headroom.
+**Key decisions**
+- Chose a layout-safe fix (chart inset) instead of removing labels, preserving on-chart label visibility requested earlier.
+- Left existing level ordering, click-to-filter behavior, and tiny-slice label compaction unchanged.
+**Gotchas**
+- KoalaPlot label placement can exceed slice bounds in skewed distributions; without an inset, labels near 12 o’clock are vulnerable to clipping.
+**Test coverage areas**
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.KoalaPlotChartsFormattingTest" --no-daemon` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --no-daemon` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard Level Distribution Pie Rendering Stabilization
+**Title**: Remove In-Slice Labels and Normalize Donut Values for Skewed Data
+**Date/time completed**: 2026-05-28 10:26
+**What was shipped**
+- Removed in-slice pie labels from `KoalaPlotLevelDistributionChart` and kept level/count/percentage labeling in the existing severity legend rows to eliminate overlap and clipping.
+- Normalized donut slice values via `normalizedPieValues(...)` before rendering so skewed distributions still render as a stable full circle.
+- Increased donut chart inset padding and retained centered total/selection summary text for clearer visual balance.
+**Key decisions**
+- Chose a legend-first labeling strategy (already present in `KLogViewerScreen`) over chart-edge labels to guarantee readability across dominant DEBUG scenarios.
+- Kept existing click-to-filter behavior and severity color mapping unchanged to avoid interaction regressions.
+**Gotchas**
+- Skewed datasets can expose floating-ratio sum drift; normalizing chart values avoids subtle rendering artifacts while preserving actual percentages in legend text.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (replaced slice-label tests with `normalizedPieValues` skewed/edge-case coverage).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.KoalaPlotChartsFormattingTest" --no-daemon` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --no-daemon` (`BUILD SUCCESSFUL`).

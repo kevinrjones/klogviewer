@@ -17,6 +17,24 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
         }
     }
 
+    private fun rowMatcher(index: Int): SemanticsMatcher {
+        return matcher("log_entry_row_$index")
+    }
+
+    private fun lazyColumnMatcher(): SemanticsMatcher {
+        val listTagMatcher = hasTestTag("log_lazy_column")
+        return if (windowId != null) {
+            listTagMatcher and hasAnyAncestor(hasTestTag("window_$windowId"))
+        } else {
+            listTagMatcher
+        }
+    }
+
+    private fun scrollToRow(index: Int) {
+        composeTestRule.onNode(lazyColumnMatcher(), useUnmergedTree = true)
+            .performScrollToIndex(index)
+    }
+
     fun assertLogCount(expectedCount: Int) {
         composeTestRule.waitUntil(timeoutMillis = 5000) {
             composeTestRule.onAllNodes(matcher("log_entry_row"), useUnmergedTree = true)
@@ -35,15 +53,17 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
     }
 
     fun clickOnRow(index: Int) {
-        composeTestRule.onAllNodes(matcher("log_entry_row"), useUnmergedTree = true)[index]
+        scrollToRow(index)
+        composeTestRule.onNode(rowMatcher(index), useUnmergedTree = true)
             .performClick()
     }
 
     fun clickOnRowWithModifiers(index: Int, shift: Boolean = false, meta: Boolean = false) {
+        scrollToRow(index)
         if (shift) composeTestRule.onRoot().performKeyInput { keyDown(Key.ShiftLeft) }
         if (meta) composeTestRule.onRoot().performKeyInput { keyDown(Key.MetaLeft) }
         
-        composeTestRule.onAllNodes(matcher("log_entry_row"), useUnmergedTree = true)[index]
+        composeTestRule.onNode(rowMatcher(index), useUnmergedTree = true)
             .performMouseInput { click() }
         
         if (meta) composeTestRule.onRoot().performKeyInput { keyUp(Key.MetaLeft) }
@@ -51,7 +71,8 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
     }
 
     fun assertRowSelected(index: Int, isSelected: Boolean = true) {
-        composeTestRule.onAllNodes(matcher("log_entry_row"), useUnmergedTree = true)[index]
+        scrollToRow(index)
+        composeTestRule.onNode(rowMatcher(index), useUnmergedTree = true)
             .assert(if (isSelected) isSelected() else isNotSelected())
     }
 

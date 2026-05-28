@@ -1,7 +1,10 @@
 package com.klogviewer.ui.components
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.icons.Icons
@@ -14,8 +17,10 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -965,45 +970,12 @@ private fun DashboardContent(
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        KoalaPlotLevelDistributionChart(
+        DashboardLevelDistributionSection(
             slices = content.levelDistribution,
-            onLevelSelect = { level ->
-                onLevelSelect(
-                    content.levelDistribution.find { it.level == level }
-                        ?: DashboardLevelSlice(level, 0, 0f)
-                )
-            },
+            selectedLevel = content.selectedLevel,
+            onLevelSelect = onLevelSelect,
             modifier = Modifier.padding(horizontal = 8.dp)
         )
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        content.levelDistribution.forEach { slice ->
-            val isSelected = content.selectedLevel == slice.level
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .clickable { onLevelSelect(slice) },
-                backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.15f) else MaterialTheme.colors.surface
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = slice.level.name,
-                        style = MaterialTheme.typography.body2,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = "${slice.count} (${(slice.ratio * 100).toInt()}%)",
-                        style = MaterialTheme.typography.caption
-                    )
-                }
-            }
-        }
 
         Spacer(modifier = Modifier.height(12.dp))
         Text(
@@ -1239,6 +1211,144 @@ private fun DashboardContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DashboardLevelDistributionSection(
+    slices: List<DashboardLevelSlice>,
+    selectedLevel: LogLevel?,
+    onLevelSelect: (DashboardLevelSlice) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val orderedSlices = remember(slices) { orderedLevelDistributionSlices(slices) }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        KoalaPlotLevelDistributionChart(
+            slices = orderedSlices,
+            selectedLevel = selectedLevel,
+            onLevelSelect = { level ->
+                onLevelSelect(
+                    orderedSlices.firstOrNull { it.level == level }
+                        ?: DashboardLevelSlice(level = level, count = 0, ratio = 0f)
+                )
+            },
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .testTag("dashboard_level_distribution_chart")
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        orderedSlices.forEach { slice ->
+            DashboardLevelDistributionRow(
+                slice = slice,
+                isSelected = selectedLevel == slice.level,
+                onSelect = { onLevelSelect(slice) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardLevelDistributionRow(
+    slice: DashboardLevelSlice,
+    isSelected: Boolean,
+    onSelect: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val levelColor = dashboardLevelColor(slice.level)
+    val borderColor = when {
+        isSelected -> MaterialTheme.colors.primary
+        isHovered -> MaterialTheme.colors.onSurface.copy(alpha = 0.32f)
+        else -> MaterialTheme.colors.onSurface.copy(alpha = 0.14f)
+    }
+    val backgroundColor = when {
+        isSelected -> MaterialTheme.colors.primary.copy(alpha = 0.14f)
+        isHovered -> MaterialTheme.colors.onSurface.copy(alpha = 0.04f)
+        else -> MaterialTheme.colors.surface
+    }
+    val percentageText = formatLevelDistributionPercentage(slice.ratio)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .hoverable(interactionSource)
+            .focusable()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                role = Role.Button,
+                onClick = onSelect
+            )
+            .semantics(mergeDescendants = true) {
+                selected = isSelected
+                contentDescription = "${slice.level.name}: ${slice.count} events, $percentageText"
+            }
+            .testTag("dashboard_level_row_${slice.level.name.lowercase()}"),
+        backgroundColor = backgroundColor,
+        border = BorderStroke(if (isSelected) 1.5.dp else 1.dp, borderColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(levelColor, CircleShape)
+                    )
+                    Text(
+                        text = slice.level.name,
+                        style = MaterialTheme.typography.body2,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+
+                Text(
+                    text = "${slice.count} ($percentageText)",
+                    style = MaterialTheme.typography.caption,
+                    textAlign = TextAlign.End
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            LinearProgressIndicator(
+                progress = slice.ratio.coerceIn(0f, 1f),
+                color = levelColor,
+                backgroundColor = levelColor.copy(alpha = if (isSelected) 0.28f else 0.18f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun dashboardLevelColor(level: LogLevel): Color {
+    val colors = KLogViewerTheme.logColors
+    return when (level) {
+        LogLevel.DEBUG -> colors.debug
+        LogLevel.INFO -> colors.info
+        LogLevel.WARN -> colors.warn
+        LogLevel.ERROR -> colors.error
+        LogLevel.FATAL -> colors.fatal
+        LogLevel.UNKNOWN -> colors.unknown
     }
 }
 

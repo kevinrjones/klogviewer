@@ -1,5 +1,7 @@
 package com.klogviewer.ui.components
 
+import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.ui.mvi.DashboardLevelSlice
 import com.klogviewer.ui.mvi.DashboardTimeBucket
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
@@ -7,6 +9,7 @@ import strikt.assertions.containsExactly
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNull
 import java.time.Instant
+import kotlin.math.abs
 
 class KoalaPlotChartsPointerMappingTest {
 
@@ -105,6 +108,69 @@ class KoalaPlotChartsPointerMappingTest {
         )
 
         expectThat(range).isNull()
+    }
+
+    @Test
+    fun `given unsorted level slices when ordering then severity order is stable`() {
+        val orderedLevels = orderedLevelDistributionSlices(
+            listOf(
+                DashboardLevelSlice(level = LogLevel.ERROR, count = 2, ratio = 0.2f),
+                DashboardLevelSlice(level = LogLevel.UNKNOWN, count = 1, ratio = 0.1f),
+                DashboardLevelSlice(level = LogLevel.DEBUG, count = 3, ratio = 0.3f),
+                DashboardLevelSlice(level = LogLevel.FATAL, count = 1, ratio = 0.1f),
+                DashboardLevelSlice(level = LogLevel.INFO, count = 4, ratio = 0.4f),
+                DashboardLevelSlice(level = LogLevel.WARN, count = 5, ratio = 0.5f)
+            )
+        ).map { it.level }
+
+        expectThat(orderedLevels).containsExactly(
+            LogLevel.DEBUG,
+            LogLevel.INFO,
+            LogLevel.WARN,
+            LogLevel.ERROR,
+            LogLevel.FATAL,
+            LogLevel.UNKNOWN
+        )
+    }
+
+    @Test
+    fun `given level ratio when formatting percentage then tiny and regular values are represented clearly`() {
+        expectThat(formatLevelDistributionPercentage(0f)).isEqualTo("0%")
+        expectThat(formatLevelDistributionPercentage(0.0005f)).isEqualTo("<0.1%")
+        expectThat(formatLevelDistributionPercentage(0.004f)).isEqualTo("0.4%")
+        expectThat(formatLevelDistributionPercentage(0.076f)).isEqualTo("7.6%")
+        expectThat(formatLevelDistributionPercentage(0.125f)).isEqualTo("13%")
+    }
+
+    @Test
+    fun `given skewed non-normalized slices when deriving pie values then values remain visible and normalized`() {
+        val values = normalizedPieValues(
+            listOf(
+                DashboardLevelSlice(level = LogLevel.DEBUG, count = 163000, ratio = 0.994f),
+                DashboardLevelSlice(level = LogLevel.INFO, count = 640, ratio = 0.0039f),
+                DashboardLevelSlice(level = LogLevel.WARN, count = 120, ratio = 0.0007f),
+                DashboardLevelSlice(level = LogLevel.ERROR, count = 61, ratio = 0.0003f)
+            )
+        )
+
+        expectThat(values.size).isEqualTo(4)
+        expectThat(abs(values.sum() - 1f) < 0.0001f).isEqualTo(true)
+        expectThat(abs(values[0] - 0.9941f) < 0.001f).isEqualTo(true)
+        expectThat(abs(values[1] - 0.0039f) < 0.001f).isEqualTo(true)
+        expectThat(abs(values[2] - 0.0007f) < 0.001f).isEqualTo(true)
+        expectThat(abs(values[3] - 0.0003f) < 0.001f).isEqualTo(true)
+    }
+
+    @Test
+    fun `given non-positive ratios when deriving pie values then normalization remains safe`() {
+        val values = normalizedPieValues(
+            listOf(
+                DashboardLevelSlice(level = LogLevel.DEBUG, count = 0, ratio = -1f),
+                DashboardLevelSlice(level = LogLevel.INFO, count = 0, ratio = 0f)
+            )
+        )
+
+        expectThat(values).containsExactly(0f, 0f)
     }
 
     private fun dashboardBuckets(): List<DashboardTimeBucket> {

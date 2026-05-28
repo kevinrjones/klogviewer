@@ -8,6 +8,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -39,6 +40,7 @@ import com.klogviewer.ui.mvi.DashboardBucketSize
 import com.klogviewer.ui.mvi.DashboardLevelSlice
 import com.klogviewer.ui.mvi.DashboardTimeBucket
 import com.klogviewer.ui.theme.KLogViewerTheme
+import com.klogviewer.ui.theme.LogLevelColors
 import io.github.koalaplot.core.bar.VerticalBarPlot
 import io.github.koalaplot.core.bar.VerticalBarPlotEntry
 import io.github.koalaplot.core.pie.DefaultSlice
@@ -52,6 +54,7 @@ import io.github.koalaplot.core.xygraph.GridStyle
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -68,6 +71,43 @@ internal fun timeAxisLabelFormatter(
 
 internal fun timeAxisDateTooltipFormatter(zoneId: ZoneId = ZoneId.systemDefault()): DateTimeFormatter {
     return DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(zoneId)
+}
+
+internal fun orderedLevelDistributionSlices(slices: List<DashboardLevelSlice>): List<DashboardLevelSlice> {
+    return slices.sortedBy { slice ->
+        when (slice.level) {
+            LogLevel.DEBUG -> 0
+            LogLevel.INFO -> 1
+            LogLevel.WARN -> 2
+            LogLevel.ERROR -> 3
+            LogLevel.FATAL -> 4
+            LogLevel.UNKNOWN -> 5
+        }
+    }
+}
+
+internal fun formatLevelDistributionPercentage(ratio: Float): String {
+    val normalizedRatio = ratio.coerceIn(0f, 1f)
+    if (normalizedRatio == 0f) {
+        return "0%"
+    }
+
+    val percentage = normalizedRatio * 100f
+    return when {
+        percentage < 0.1f -> "<0.1%"
+        percentage < 10f -> String.format(Locale.US, "%.1f%%", percentage)
+        else -> "${percentage.roundToInt()}%"
+    }
+}
+
+internal fun normalizedPieValues(slices: List<DashboardLevelSlice>): List<Float> {
+    val nonNegativeRatios = slices.map { slice -> slice.ratio.coerceAtLeast(0f) }
+    val ratioSum = nonNegativeRatios.sum()
+    if (ratioSum <= 0f) {
+        return nonNegativeRatios
+    }
+
+    return nonNegativeRatios.map { ratio -> ratio / ratioSum }
 }
 
 internal fun pointerXToBucketIndex(pointerX: Float, plotWidthPx: Float, bucketCount: Int): Int? {
@@ -482,43 +522,99 @@ fun KoalaPlotTimeSeriesChart(
 @Composable
 fun KoalaPlotLevelDistributionChart(
     slices: List<DashboardLevelSlice>,
+    selectedLevel: LogLevel?,
     onLevelSelect: (LogLevel) -> Unit,
     modifier: Modifier = Modifier,
-    chartSize: Dp = 200.dp
+    chartSize: Dp = 180.dp
 ) {
-    if (slices.isEmpty()) {
+    val piePadding = 20.dp
+    val orderedSlices = remember(slices) { orderedLevelDistributionSlices(slices) }
+    val totalCount = orderedSlices.sumOf { it.count }
+    val selectedSlice = orderedSlices.firstOrNull { it.level == selectedLevel }
+    val visibleSlices = orderedSlices.filter { it.count > 0 }
+    val normalizedValues = remember(visibleSlices) { normalizedPieValues(visibleSlices) }
+    val pieDiameter = chartSize - (piePadding * 2)
+
+    if (orderedSlices.isEmpty()) {
         Box(modifier = modifier.size(chartSize), contentAlignment = Alignment.Center) {
-            Text("No data available", style = MaterialTheme.typography.caption)
+            Text("No level data", style = MaterialTheme.typography.caption)
         }
         return
     }
 
     val colors = KLogViewerTheme.logColors
 
-    PieChart(
-        values = slices.map { it.ratio },
-        modifier = modifier.size(chartSize),
-        slice = { index ->
-            val level = slices[index].level
-            val color = when (level) {
-                LogLevel.DEBUG -> colors.debug
-                LogLevel.INFO -> colors.info
-                LogLevel.WARN -> colors.warn
-                LogLevel.ERROR -> colors.error
-                LogLevel.FATAL -> colors.fatal
-                LogLevel.UNKNOWN -> colors.unknown
-            }
-            DefaultSlice(
-                color = color,
-                clickable = true,
-                onClick = { onLevelSelect(level) }
+    Box(
+        modifier = modifier
+            .size(chartSize)
+            .semantics {
+                val selectedSummary = selectedSlice?.let {
+                    "Selected ${it.level.name}: ${it.count} (${formatLevelDistributionPercentage(it.ratio)})"
+                }
+                contentDescription = listOfNotNull(
+                    "Level distribution donut chart",
+                    "Total events: $totalCount",
+                    "Detailed level values are listed below the chart",
+                    selectedSummary
+                ).joinToString(separator = ". ")
+            },
+        contentAlignment = Alignment.Center
+    ) {
+        if (totalCount > 0 && visibleSlices.isNotEmpty()) {
+            PieChart(
+                values = normalizedValues,
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(piePadding),
+                slice = { index ->
+                    val level = visibleSlices[index].level
+                    val color = levelDistributionColor(level = level, colors = colors)
+                    val alpha = if (selectedLevel == null || selectedLevel == level) 1f else 0.35f
+                    DefaultSlice(
+                        color = color.copy(alpha = alpha),
+                        clickable = true,
+                        onClick = { onLevelSelect(level) }
+                    )
+                },
+                label = {}
             )
-        },
-        label = { index ->
-            Text(
-                text = "${slices[index].level}: ${(slices[index].ratio * 100).toInt()}%",
-                style = MaterialTheme.typography.caption
+        } else {
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .border(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.16f), CircleShape)
+                    .background(MaterialTheme.colors.onSurface.copy(alpha = 0.04f), CircleShape)
             )
         }
-    )
+
+        Box(
+            modifier = Modifier
+                .size(pieDiameter * 0.58f)
+                .background(MaterialTheme.colors.surface, CircleShape)
+                .border(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.18f), CircleShape),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = (selectedSlice?.count ?: totalCount).toString(),
+                    style = MaterialTheme.typography.subtitle1
+                )
+                Text(
+                    text = selectedSlice?.level?.name ?: "events",
+                    style = MaterialTheme.typography.caption
+                )
+            }
+        }
+    }
+}
+
+private fun levelDistributionColor(level: LogLevel, colors: LogLevelColors): Color {
+    return when (level) {
+        LogLevel.DEBUG -> colors.debug
+        LogLevel.INFO -> colors.info
+        LogLevel.WARN -> colors.warn
+        LogLevel.ERROR -> colors.error
+        LogLevel.FATAL -> colors.fatal
+        LogLevel.UNKNOWN -> colors.unknown
+    }
 }
