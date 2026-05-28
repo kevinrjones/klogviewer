@@ -2618,3 +2618,17 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (replaced slice-label tests with `normalizedPieValues` skewed/edge-case coverage).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.KoalaPlotChartsFormattingTest" --no-daemon` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --no-daemon` (`BUILD SUCCESSFUL`).
+
+## Task: Dashboard A/B and Frequency Analysis Documentation
+**Title**: Document Exact Dashboard A/B and Frequency Analysis Behavior
+**Date/time completed**: 2026-05-28 10:34
+**What was shipped**
+- Added `docs/DASHBOARD-AB-COMPARISON.md` describing A/B range inputs, validation rules, run/clear behavior, and exact level/field delta computation.
+- Added `docs/DASHBOARD-FREQUENCY-ANALYSIS.md` describing available field derivation, top-N/threshold/cardinality behavior, repository + ViewModel frequency pipeline, and click-to-filter query behavior.
+**Key decisions**
+- Kept both documents code-anchored, explicitly referencing the production files where parsing, filtering, and delta logic are implemented.
+- Documented nuanced behavior (inclusive diff-window bounds, substring matching for `@field:` queries, and shared frequency controls reused by A/B field deltas) to avoid ambiguity for dashboard users and maintainers.
+**Gotchas**
+- Frequency analysis and A/B comparison use the same high-level controls but apply them at slightly different pipeline points; documenting the exact order was necessary for accuracy.
+**Test coverage areas**
+- Documentation-only task; no code changes and no test execution required.
