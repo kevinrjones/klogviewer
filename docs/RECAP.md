@@ -1114,3 +1114,71 @@ Recap from the previous entry (`2026-05-24 17:34`) up to now:
 - `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/src/test/kotlin` → passed (6/6).
 - `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/core/src/test/kotlin` → passed (3/3).
 
+
+# 2026-05-27
+
+## 08:08
+
+### Sprint 9 Restart Recap (From Last Recap Entry to Now)
+
+Recap from the previous entry (`2026-05-26 09:07`) up to now:
+
+#### Changes:
+- **Commit `42f0a46` (2026-05-26 10:54)**: Updated `docs/RECAP.md` and `docs/project_memory.md` with a prior Sprint 9 analysis/visualization recap snapshot.
+- **Commit `f3026d6` (2026-05-26 11:53)**: Added dashboard time-range filtering and preset support in the UI flow.
+- **Commit `30cb173` (2026-05-26 12:14)**: Improved time-filter UX by refining presets and replacing free-text datetime entry with dropdown-based controls.
+- **Commit `050f039` (2026-05-26 12:43)**: Restarted Sprint 9 planning scope in `docs/tasks/TASKS-SPRINT-9-ANALYSIS-AND-VISUALIZATION.md` with updated feature direction.
+- **Commit `49de815` (2026-05-26 20:47)**: Added `docs/adr/adr-039-sprint-9-restart-foundations.md` to formalize restart foundations, architecture constraints, and performance budgets.
+- **Current working session (uncommitted)**:
+    - Completed Sprint 9 **14.2** documentation package by adding `docs/adr/adr-040-charting-library-selection-and-benchmark.md`, superseding the earlier charting ADR decision path, and updating sprint tasks/project memory to reflect chart-library benchmarking and selection outcomes.
+    - Completed Sprint 9 **14.3** and **14.4** implementation work by adding per-window `Logs`/`Dashboard` workspace modes, dashboard intent/state models, dashboard metric computation and selection behavior in `KLogViewerViewModel`, and dashboard UI shells/interactions in `KLogViewerScreen`.
+    - Expanded dashboard behavior coverage in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` and aligned Sprint 9 tracking docs with delivered items.
+
+#### Verification:
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` → passed (12/12).
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/core/src/test/kotlin/com/klogviewer/core/analysis/InMemoryAnalysisMetricsRepositoryTest.kt` → passed (3/3).
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/src/test/kotlin/com/klogviewer/ui` → passed (6/6).
+- `run_test /Users/kevinjones/Dropbox/projects/utilities/LogViewer/ui/src/test/kotlin/com/klogviewer/ui/viewmodel` → passed (6/6).
+
+
+# 2026-05-28
+
+## 06:07
+
+### Time Filter Controls Refactor and Tolerance Behavior Recap
+
+Recap from the previous entry (`2026-05-27 08:08`) up to now:
+
+#### Changes:
+- **Git commits reviewed**: No new commits were recorded after `2026-05-27 08:08` (latest repository commit remains `49de815` from `2026-05-26 20:47`).
+- **Current working session (uncommitted)**:
+    - Replaced `From`/`To` timestamp dropdown controls in `ui/src/main/kotlin/com/klogviewer/ui/components/FilterBar.kt` with direct date-time text inputs, including labels, placeholder guidance (`YYYY-MM-DD HH:mm:ss`), and per-field clear actions.
+    - Removed per-log-entry timestamp option derivation/wiring from `ui/src/main/kotlin/com/klogviewer/ui/components/KLogViewerScreen.kt` so time controls are no longer backed by large dropdown lists.
+    - Implemented explicit ±1 second boundary tolerance in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogFilterService.kt` (`from - 1s`, `to + 1s`) for active time-range evaluation while preserving exclusion of entries without timestamps when time filtering is active.
+    - Expanded regression coverage in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceTimeRangeTest.kt` for from-only/to-only/combined-range tolerance and missing-timestamp exclusion scenarios.
+    - Added UI regression coverage in `ui/src/test/kotlin/com/klogviewer/ui/components/FilterBarTimeFilterControlsTest.kt` to verify direct input controls (not per-entry dropdowns) and clear-from/clear-to/clear-all behavior.
+
+#### Verification:
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest" --tests "com.klogviewer.ui.viewmodel.TimeRangeFilterSupportTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" --tests "com.klogviewer.ui.components.FilterBarTimeFilterControlsTest"` → passed.
+
+
+# 2026-05-29
+
+## 06:57
+
+### Dashboard UX Hardening and Log-Level Presentation Cleanup Recap
+
+Recap from the previous entry (`2026-05-28 06:07`) up to now:
+
+#### Changes:
+- **Commit `3209e62` (2026-05-28 06:28)**: Added ADR-040 charting-library selection/benchmark documentation and delivered related Sprint 9 dashboard/time-filter implementation updates across UI, ViewModel/state, tests, and tracking docs.
+- **Commit `b119268` (2026-05-28 07:50)**: Added dashboard chart x-axis hover date tooltips and persisted dashboard time filters, with supporting UI/ViewModel test coverage.
+- **Commit `1229d0a` (2026-05-28 08:35)**: Updated Compose dependencies and simplified KoalaPlot axis configuration in the dashboard charting layer.
+- **Commit `d20ed85` (2026-05-28 10:30)**: Improved log-list interactions and dashboard level-distribution UX, including pointer-mapping test coverage and UI test-robot updates.
+- **Commit `ba5516a` (2026-05-28 10:44)**: Added detailed documentation for dashboard A/B comparison and frequency analysis workflows.
+- **Commit `35a8499` (2026-05-29 06:48)**: Added dashboard UX hardening tests and completed the log-level presentation cleanup so rows show only explicit raw `fields["level"]` values while the dashboard Summary no longer renders `Level distribution`.
+- **Repository state at recap time**: No additional uncommitted changes (`git status --short` clean).
+
+#### Verification:
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` → passed (`BUILD SUCCESSFUL`).
+

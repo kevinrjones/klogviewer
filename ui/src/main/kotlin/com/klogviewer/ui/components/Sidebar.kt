@@ -21,6 +21,7 @@ import com.klogviewer.domain.model.LogLevel
 @Composable
 fun Sidebar(
     isExpanded: Boolean,
+    showLevels: Boolean,
     levelFilters: Set<LogLevel>,
     onToggleLevel: (LogLevel) -> Unit,
     onToggleAllLevels: () -> Unit,
@@ -60,39 +61,41 @@ fun Sidebar(
 
                 Divider(modifier = Modifier.padding(vertical = 4.dp))
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                        tint = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
-                    )
-                    Text(
-                        text = "Levels (${LogLevel.entries.size})",
-                        style = MaterialTheme.typography.subtitle2.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
-                    )
-                }
+                if (showLevels) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
+                        )
+                        Text(
+                            text = "Levels (${LogLevel.entries.size})",
+                            style = MaterialTheme.typography.subtitle2.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
+                        )
+                    }
 
-                LogLevelToggle(
-                    label = "All",
-                    isEnabled = levelFilters.size == LogLevel.entries.size,
-                    count = levelCounts.values.sum(),
-                    onToggle = onToggleAllLevels
-                )
-
-                LogLevel.entries.forEach { level ->
                     LogLevelToggle(
-                        level = level,
-                        isEnabled = levelFilters.contains(level),
-                        count = levelCounts[level] ?: 0,
-                        onToggle = { onToggleLevel(level) }
+                        label = "All",
+                        isEnabled = levelFilters.size == LogLevel.entries.size,
+                        count = levelCounts.values.sum(),
+                        onToggle = onToggleAllLevels
                     )
+
+                    LogLevel.entries.forEach { level ->
+                        LogLevelToggle(
+                            level = level,
+                            isEnabled = levelFilters.contains(level),
+                            count = levelCounts[level] ?: 0,
+                            onToggle = { onToggleLevel(level) }
+                        )
+                    }
                 }
             }
             

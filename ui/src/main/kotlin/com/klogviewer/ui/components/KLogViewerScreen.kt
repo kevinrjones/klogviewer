@@ -1,10 +1,10 @@
 package com.klogviewer.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.icons.Icons
@@ -14,28 +14,28 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.*
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.klogviewer.ui.mvi.KLogViewerIntent
-import com.klogviewer.ui.mvi.KLogViewerState
-import com.klogviewer.ui.mvi.LogWindow
-import com.klogviewer.ui.mvi.TabState
-import com.klogviewer.ui.mvi.WindowViewMode
-import com.klogviewer.ui.mvi.DashboardUiState
+import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.SftpConfig
+import com.klogviewer.ui.mvi.*
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
+import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlin.math.abs
+
+private val dashboardLogger = KotlinLogging.logger {}
 
 @Composable
 fun KLogViewerScreen(
@@ -77,6 +77,7 @@ fun KLogViewerScreen(
             ) {
                 Sidebar(
                     isExpanded = state.isSidebarExpanded,
+                    showLevels = activeWindow?.hasRawLevelFieldInLogs == true,
                     levelFilters = activeWindow?.levelFilters ?: emptySet(),
                     onToggleLevel = { level -> viewModel.handleIntent(KLogViewerIntent.ToggleLevel(level)) },
                     onToggleAllLevels = { viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels) },
@@ -112,7 +113,6 @@ private fun DialogHandler(
                 KLogViewerState.DialogType.OPEN_DIRECTORY -> "Select Log Directory"
                 KLogViewerState.DialogType.ADD -> "Add Log File"
                 KLogViewerState.DialogType.ADD_DIRECTORY -> "Add Log Directory"
-                else -> ""
             }
             val path = if (pendingDialog == KLogViewerState.DialogType.OPEN_DIRECTORY ||
                 pendingDialog == KLogViewerState.DialogType.ADD_DIRECTORY
@@ -138,7 +138,6 @@ private fun DialogHandler(
                             paths
                         )
                     )
-                    else -> {}
                 }
             }
         }
@@ -346,55 +345,20 @@ private fun LogTopBar(
             isConnected = activeWindow?.isConnected ?: true,
             onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
             onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
+            timeFilterFrom = activeWindow?.timeFilterFrom ?: "",
+            timeFilterTo = activeWindow?.timeFilterTo ?: "",
+            timeFilterPreset = activeWindow?.timeFilterPreset,
+            timeFilterValidationMessage = activeWindow?.timeFilterValidationMessage,
+            onTimeFilterFromChange = { viewModel.handleIntent(KLogViewerIntent.SetTimeFilterFrom(it)) },
+            onTimeFilterToChange = { viewModel.handleIntent(KLogViewerIntent.SetTimeFilterTo(it)) },
+            onApplyTimeFilterPreset = { preset ->
+                viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(preset))
+            },
+            onClearTimeFilter = { viewModel.handleIntent(KLogViewerIntent.ClearTimeFilter) },
             matchesCount = activeWindow?.filteredLogs?.size ?: 0,
             totalCount = activeWindow?.logs?.size ?: 0
         )
 
-        if (activeWindow != null) {
-            val activeViewColor = MaterialTheme.colors.primary
-            val inactiveViewColor = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "View:",
-                    style = MaterialTheme.typography.caption,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                TextButton(
-                    onClick = { viewModel.handleIntent(KLogViewerIntent.ShowLogs(activeWindow.id)) },
-                    enabled = activeWindow.viewMode != WindowViewMode.LOGS,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = inactiveViewColor,
-                        disabledContentColor = activeViewColor
-                    )
-                ) {
-                    Text("Logs")
-                }
-                TextButton(
-                    onClick = { viewModel.handleIntent(KLogViewerIntent.ShowDashboard(activeWindow.id)) },
-                    enabled = activeWindow.viewMode != WindowViewMode.DASHBOARD,
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = inactiveViewColor,
-                        disabledContentColor = activeViewColor
-                    )
-                ) {
-                    Text("Dashboard")
-                }
-                Spacer(modifier = Modifier.weight(1f))
-                if (activeWindow.dashboardBucketFilter != null) {
-                    TextButton(onClick = {
-                        viewModel.handleIntent(KLogViewerIntent.ClearDashboardBucketFilter(activeWindow.id))
-                    }) {
-                        Text("Clear range")
-                    }
-                }
-            }
-        }
     }
 }
 
@@ -507,6 +471,27 @@ private fun LogWindowItem(
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(
+                        onClick = { viewModel.handleIntent(KLogViewerIntent.ShowLogs) },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            text = "Logs",
+                            fontWeight = if (window.workspaceMode == WorkspaceMode.LOGS) FontWeight.Bold else FontWeight.Normal,
+                            fontSize = 12.sp
+                        )
+                    }
+                    TextButton(
+                        onClick = { viewModel.handleIntent(KLogViewerIntent.ShowDashboard) },
+                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
+                    ) {
+                        Text(
+                            text = "Dashboard",
+                            fontWeight = if (window.workspaceMode == WorkspaceMode.DASHBOARD) FontWeight.Bold else FontWeight.Normal,
+                            fontSize = 12.sp
+                        )
+                    }
+
                     if (isWindowActive && showSplitIndicator) {
                         Surface(
                             color = MaterialTheme.colors.primary.copy(alpha = 0.1f),
@@ -566,12 +551,6 @@ private fun LogWindowItem(
         ) {
             if (window.isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            } else if (window.viewMode == WindowViewMode.DASHBOARD) {
-                DashboardContent(
-                    window = window,
-                    viewModel = viewModel,
-                    modifier = Modifier.fillMaxSize()
-                )
             } else if (window.filePath.isEmpty() && window.logs.isEmpty() && !window.isDirectory) {
                 WelcomeScreen(
                     onOpenFile = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) },
@@ -580,48 +559,14 @@ private fun LogWindowItem(
                     onConnectS3 = { viewModel.handleIntent(KLogViewerIntent.ShowS3Dialog) },
                     onShowRecent = { viewModel.handleIntent(KLogViewerIntent.ShowRecentDialog) }
                 )
+            } else if (window.workspaceMode == WorkspaceMode.DASHBOARD) {
+                DashboardWorkspace(window = window, viewModel = viewModel)
             } else {
-                LogList(
-                    logs = window.filteredLogs,
-                    filterQueries = window.filterQueries,
+                LogWorkspace(
+                    window = window,
+                    isWindowActive = isWindowActive,
                     isDarkMode = state.isDarkMode,
-                    sourceIds = window.sourceIds,
-                    missingSourceIds = window.missingSourceIds,
-                    columns = window.columns,
-                    columnWidths = window.columnWidths,
-                    isAutoScrollEnabled = window.isAutoScrollEnabled,
-                    showAnsiColors = window.showAnsiColors,
-                    selectedIndices = window.selectedIndices,
-                    onEntryClick = {
-                        if (isWindowActive) {
-                            viewModel.handleIntent(KLogViewerIntent.SelectEntry(it))
-                        } else {
-                            viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
-                        }
-                    },
-                    onToggleSelection = { index, isShift, isMeta ->
-                        if (isWindowActive) {
-                            viewModel.handleIntent(
-                                KLogViewerIntent.ToggleEntrySelection(
-                                    index,
-                                    isShift,
-                                    isMeta
-                                )
-                            )
-                        } else {
-                            viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
-                        }
-                    },
-                    onColumnResize = { column, width ->
-                        viewModel.handleIntent(
-                            KLogViewerIntent.UpdateColumnWidth(
-                                window.id,
-                                column,
-                                width
-                            )
-                        )
-                    },
-                    windowId = window.id
+                    viewModel = viewModel
                 )
             }
         }
@@ -643,130 +588,1468 @@ private fun LogWindowItem(
 }
 
 @Composable
-private fun DashboardContent(
+private fun LogWorkspace(
     window: LogWindow,
-    viewModel: KLogViewerViewModel,
-    modifier: Modifier = Modifier
+    isWindowActive: Boolean,
+    isDarkMode: Boolean,
+    viewModel: KLogViewerViewModel
 ) {
-    when (val dashboardState = window.dashboardState) {
-        DashboardUiState.Loading -> {
-            Box(modifier = modifier) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            }
+    val dashboardContent = logTimeFrequencyContent(window.dashboardDataState)
+
+    Column(modifier = Modifier.fillMaxSize()) {
+        dashboardContent?.let { content ->
+            LogTimeFrequencyPanel(
+                content = content,
+                activeTimeFilterFrom = window.timeFilterFromInstant,
+                activeTimeFilterTo = window.timeFilterToInstant,
+                onBucketSelect = { bucket ->
+                    viewModel.handleIntent(KLogViewerIntent.SelectDashboardTimeRange(bucket.from, bucket.to))
+                },
+                onBucketRangeSelect = { fromBucket, toBucket ->
+                    viewModel.handleIntent(
+                        KLogViewerIntent.SelectDashboardTimeRange(fromBucket.from, toBucket.to)
+                    )
+                },
+                onLevelSelect = { level ->
+                    viewModel.handleIntent(KLogViewerIntent.SelectDashboardLevel(level))
+                },
+                onFrequencyValueSelect = { value ->
+                    viewModel.handleIntent(KLogViewerIntent.SelectDashboardFrequencyValue(value))
+                },
+                onClearTimeSelection = {
+                    viewModel.handleIntent(KLogViewerIntent.ClearDashboardSelections)
+                }
+            )
         }
 
-        is DashboardUiState.Empty -> {
-            Box(modifier = modifier) {
-                Text(
-                    text = dashboardState.message,
-                    style = MaterialTheme.typography.body2,
-                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
-                    modifier = Modifier.align(Alignment.Center)
+        LogList(
+            logs = window.filteredLogs,
+            filterQueries = window.filterQueries,
+            isDarkMode = isDarkMode,
+            sourceIds = window.sourceIds,
+            missingSourceIds = window.missingSourceIds,
+            columns = window.columns,
+            columnWidths = window.columnWidths,
+            isAutoScrollEnabled = window.isAutoScrollEnabled,
+            showAnsiColors = window.showAnsiColors,
+            selectedIndices = window.selectedIndices,
+            onEntryClick = {
+                if (isWindowActive) {
+                    viewModel.handleIntent(KLogViewerIntent.SelectEntry(it))
+                } else {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+            },
+            onToggleSelection = { index, isShift, isMeta ->
+                if (isWindowActive) {
+                    viewModel.handleIntent(
+                        KLogViewerIntent.ToggleEntrySelection(
+                            index,
+                            isShift,
+                            isMeta
+                        )
+                    )
+                } else {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+            },
+            onColumnResize = { column, width ->
+                viewModel.handleIntent(
+                    KLogViewerIntent.UpdateColumnWidth(
+                        window.id,
+                        column,
+                        width
+                    )
                 )
-            }
-        }
+            },
+            windowId = window.id,
+            modifier = Modifier.weight(1f)
+        )
+    }
+}
 
-        is DashboardUiState.Error -> {
-            Box(modifier = modifier) {
-                Text(
-                    text = dashboardState.message,
-                    style = MaterialTheme.typography.body2,
-                    color = MaterialTheme.colors.error,
-                    modifier = Modifier.align(Alignment.Center)
-                )
-            }
-        }
+@Composable
+private fun LogTimeFrequencyPanel(
+    content: DashboardDataState.Content,
+    activeTimeFilterFrom: java.time.Instant?,
+    activeTimeFilterTo: java.time.Instant?,
+    onBucketSelect: (DashboardTimeBucket) -> Unit,
+    onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -> Unit,
+    onLevelSelect: (LogLevel) -> Unit,
+    onFrequencyValueSelect: (String) -> Unit,
+    onClearTimeSelection: () -> Unit
+) {
+    if (content.timeSeries.isEmpty()) {
+        return
+    }
 
-        is DashboardUiState.Content -> {
-            val maxCount = dashboardState.buckets.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
-            Column(
-                modifier = modifier
-                    .verticalScroll(rememberScrollState())
-                    .padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+    val activeTimeSelection = remember(
+        content.timeSeries,
+        content.selectedBucketFrom,
+        activeTimeFilterFrom,
+        activeTimeFilterTo
+    ) {
+        resolveDashboardTimeSelection(
+            content = content,
+            activeTimeFilterFrom = activeTimeFilterFrom,
+            activeTimeFilterTo = activeTimeFilterTo
+        )
+    }
+
+    Surface(
+        color = MaterialTheme.colors.surface,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 6.dp)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Events per time bucket",
-                    style = MaterialTheme.typography.subtitle2,
+                    text = "Time frequency",
+                    style = MaterialTheme.typography.caption,
                     fontWeight = FontWeight.SemiBold
                 )
-                dashboardState.selectedBucket?.let {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text(
-                            text = "Filtered by bucket ${it.timestampFilter}",
-                            style = MaterialTheme.typography.caption,
-                            color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                        )
-                        TextButton(onClick = {
-                            viewModel.handleIntent(KLogViewerIntent.ClearDashboardBucketFilter(window.id))
-                        }) {
-                            Text("Clear")
-                        }
+                Text(
+                    text = "${content.totalEvents} events",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                )
+            }
+
+            KoalaPlotTimeSeriesChart(
+                buckets = content.timeSeries,
+                bucketSize = content.bucketSize,
+                selectedBucketFrom = content.selectedBucketFrom,
+                selectedRangeFrom = activeTimeFilterFrom,
+                selectedRangeTo = activeTimeFilterTo,
+                onBucketSelect = onBucketSelect,
+                onBucketRangeSelect = onBucketRangeSelect,
+                chartHeight = 120.dp
+            )
+
+            DashboardActiveFilters(
+                activeTimeSelection = activeTimeSelection,
+                selectedLevel = content.selectedLevel,
+                selectedFrequencyValue = content.selectedFrequencyValue,
+                onClearTimeSelection = onClearTimeSelection,
+                onClearLevel = {
+                    content.selectedLevel?.let(onLevelSelect)
+                },
+                onClearFrequencyValue = {
+                    content.selectedFrequencyValue?.let(onFrequencyValueSelect)
+                }
+            )
+        }
+    }
+    Divider(modifier = Modifier.fillMaxWidth())
+}
+
+@Composable
+private fun DashboardWorkspace(
+    window: LogWindow,
+    viewModel: KLogViewerViewModel
+) {
+    when (val dashboardState = window.dashboardDataState) {
+        DashboardDataState.Empty -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text(
+                    text = "No log events to analyze for the current filters.",
+                    style = MaterialTheme.typography.body2,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+        is DashboardDataState.Error -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = dashboardState.message,
+                        color = MaterialTheme.colors.error,
+                        style = MaterialTheme.typography.body2,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(onClick = { viewModel.handleIntent(KLogViewerIntent.ShowDashboard) }) {
+                        Text("Retry")
                     }
                 }
+            }
+        }
 
-                dashboardState.buckets.forEach { bucket ->
-                    val isSelected = dashboardState.selectedBucket?.timestampFilter == bucket.timestampFilter
-                    val barFraction = (bucket.count.toFloat() / maxCount.toFloat()).coerceIn(0f, 1f)
-                    Surface(
+        DashboardDataState.Loading -> {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+
+        is DashboardDataState.Content -> {
+            DashboardContent(
+                content = dashboardState,
+                activeTimeFilterFrom = window.timeFilterFromInstant,
+                activeTimeFilterTo = window.timeFilterToInstant,
+                onBucketSizeChange = { bucketSize ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardBucketSize(bucketSize))
+                },
+                onBucketSelect = { bucket ->
+                    viewModel.handleIntent(KLogViewerIntent.SelectDashboardTimeRange(bucket.from, bucket.to))
+                },
+                onBucketRangeSelect = { fromBucket, toBucket ->
+                    viewModel.handleIntent(
+                        KLogViewerIntent.SelectDashboardTimeRange(fromBucket.from, toBucket.to)
+                    )
+                },
+                onLevelSelect = { slice ->
+                    viewModel.handleIntent(KLogViewerIntent.SelectDashboardLevel(slice.level))
+                },
+                onFrequencyFieldChange = { field ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField(field))
+                },
+                onFrequencyTopNChange = { topN ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyTopN(topN))
+                },
+                onFrequencyThresholdChange = { threshold ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(threshold))
+                },
+                onFrequencyCardinalityLimitChange = { limit ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyCardinalityLimit(limit))
+                },
+                onFrequencyValueSelect = { value ->
+                    viewModel.handleIntent(KLogViewerIntent.SelectDashboardFrequencyValue(value))
+                },
+                onCompareBaselineFromChange = { from ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineFrom(from))
+                },
+                onCompareBaselineToChange = { to ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo(to))
+                },
+                onCompareComparisonFromChange = { from ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonFrom(from))
+                },
+                onCompareComparisonToChange = { to ->
+                    viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonTo(to))
+                },
+                onRunComparison = { viewModel.handleIntent(KLogViewerIntent.RunDashboardComparison) },
+                onClearComparison = { viewModel.handleIntent(KLogViewerIntent.ClearDashboardComparison) },
+                onCompareLevelSelect = { level ->
+                    viewModel.handleIntent(KLogViewerIntent.SelectDashboardLevel(level))
+                },
+                onCompareFrequencyValueSelect = { value ->
+                    viewModel.handleIntent(KLogViewerIntent.SelectDashboardFrequencyValue(value))
+                },
+                onClearSelections = { viewModel.handleIntent(KLogViewerIntent.ClearDashboardSelections) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardContent(
+    content: DashboardDataState.Content,
+    activeTimeFilterFrom: java.time.Instant?,
+    activeTimeFilterTo: java.time.Instant?,
+    onBucketSizeChange: (DashboardBucketSize) -> Unit,
+    onBucketSelect: (DashboardTimeBucket) -> Unit,
+    onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -> Unit,
+    onLevelSelect: (DashboardLevelSlice) -> Unit,
+    onFrequencyFieldChange: (String) -> Unit,
+    onFrequencyTopNChange: (Int) -> Unit,
+    onFrequencyThresholdChange: (Int) -> Unit,
+    onFrequencyCardinalityLimitChange: (Int) -> Unit,
+    onFrequencyValueSelect: (String) -> Unit,
+    onCompareBaselineFromChange: (String) -> Unit,
+    onCompareBaselineToChange: (String) -> Unit,
+    onCompareComparisonFromChange: (String) -> Unit,
+    onCompareComparisonToChange: (String) -> Unit,
+    onRunComparison: () -> Unit,
+    onClearComparison: () -> Unit,
+    onCompareLevelSelect: (LogLevel) -> Unit,
+    onCompareFrequencyValueSelect: (String) -> Unit,
+    onClearSelections: () -> Unit
+) {
+    LaunchedEffect(content.aggregationCompletedAtEpochMillis) {
+        val renderLatencyMs =
+            (System.currentTimeMillis() - content.aggregationCompletedAtEpochMillis).coerceAtLeast(0)
+        dashboardLogger.info {
+            "Dashboard render complete totalEvents=${content.totalEvents} " +
+                "sampledEvents=${content.samplingInfo.sampledCount} " +
+                "samplingMode=${content.samplingInfo.mode} " +
+                "renderLatencyMs=$renderLatencyMs"
+        }
+    }
+
+    var isSummaryExpanded by remember { mutableStateOf(true) }
+    var isFrequencyExpanded by remember { mutableStateOf(true) }
+    var isComparisonExpanded by remember { mutableStateOf(true) }
+    val showLevelDistribution = remember(content.availableFrequencyFields, content.levelDistribution) {
+        val hasLevelColumn = content.availableFrequencyFields.contains("level")
+        val hasRenderableLevelData = content.levelDistribution.any { slice ->
+            slice.level != LogLevel.UNKNOWN && slice.count > 0
+        }
+        hasLevelColumn && hasRenderableLevelData
+    }
+
+    val comparisonState = content.comparisonState
+    val activeTimeSelection = remember(
+        content.timeSeries,
+        content.selectedBucketFrom,
+        activeTimeFilterFrom,
+        activeTimeFilterTo
+    ) {
+        resolveDashboardTimeSelection(
+            content = content,
+            activeTimeFilterFrom = activeTimeFilterFrom,
+            activeTimeFilterTo = activeTimeFilterTo
+        )
+    }
+
+    val frequencyHeaderState = content.selectedFrequencyField?.let { "Field: $it" } ?: "No field selected"
+    val comparisonHasInput = remember(comparisonState) {
+        val baseline = comparisonState.baselineRange
+        val comparison = comparisonState.comparisonRange
+        (baseline.from.isNotBlank() || baseline.to.isNotBlank()) &&
+            (comparison.from.isNotBlank() || comparison.to.isNotBlank())
+    }
+    val comparisonHeaderState = when {
+        comparisonState.baselineRange.validationMessage != null || comparisonState.comparisonRange.validationMessage != null -> "Invalid range"
+        comparisonHasInput -> "Configured"
+        else -> "No ranges"
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(8.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                TextButton(onClick = { onBucketSizeChange(DashboardBucketSize.PER_SECOND) }) {
+                    Text(
+                        text = "Per second",
+                        fontWeight = if (content.bucketSize == DashboardBucketSize.PER_SECOND) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+                TextButton(onClick = { onBucketSizeChange(DashboardBucketSize.PER_MINUTE) }) {
+                    Text(
+                        text = "Per minute",
+                        fontWeight = if (content.bucketSize == DashboardBucketSize.PER_MINUTE) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+            OutlinedButton(onClick = onClearSelections) {
+                Text("Clear selections")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        DashboardAnalysisScopeBanner(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+        DashboardSectionHeader(
+            title = "Summary",
+            stateLabel = "${content.totalEvents} events",
+            expanded = isSummaryExpanded,
+            onToggle = { isSummaryExpanded = !isSummaryExpanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+        if (isSummaryExpanded) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Time-series frequency",
+                style = MaterialTheme.typography.subtitle1,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            KoalaPlotTimeSeriesChart(
+                buckets = content.timeSeries,
+                bucketSize = content.bucketSize,
+                selectedBucketFrom = content.selectedBucketFrom,
+                selectedRangeFrom = activeTimeFilterFrom,
+                selectedRangeTo = activeTimeFilterTo,
+                onBucketSelect = onBucketSelect,
+                onBucketRangeSelect = onBucketRangeSelect
+            )
+
+            DashboardActiveFilters(
+                activeTimeSelection = activeTimeSelection,
+                selectedLevel = content.selectedLevel,
+                selectedFrequencyValue = content.selectedFrequencyValue,
+                onClearTimeSelection = onClearSelections,
+                onClearLevel = {
+                    content.selectedLevel?.let { level ->
+                        onLevelSelect(
+                            content.levelDistribution.firstOrNull { it.level == level }
+                                ?: DashboardLevelSlice(level = level, count = 0, ratio = 0f)
+                        )
+                    }
+                },
+                onClearFrequencyValue = {
+                    content.selectedFrequencyValue?.let(onFrequencyValueSelect)
+                }
+            )
+
+            DashboardBucketKeyboardFallback(
+                buckets = content.timeSeries,
+                selectedBucketFrom = content.selectedBucketFrom,
+                onBucketSelect = onBucketSelect
+            )
+
+            if (showLevelDistribution) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Level distribution",
+                    style = MaterialTheme.typography.subtitle1,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                DashboardLevelDistributionSection(
+                    slices = content.levelDistribution,
+                    selectedLevel = content.selectedLevel,
+                    onLevelSelect = onLevelSelect,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
+
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        DashboardSectionHeader(
+            title = "Frequency Analysis",
+            stateLabel = frequencyHeaderState,
+            expanded = isFrequencyExpanded,
+            onToggle = { isFrequencyExpanded = !isFrequencyExpanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+
+        if (isFrequencyExpanded) {
+            Spacer(modifier = Modifier.height(8.dp))
+            FrequencyAnalysisSection(
+                content = content,
+                onFrequencyFieldChange = onFrequencyFieldChange,
+                onFrequencyTopNChange = onFrequencyTopNChange,
+                onFrequencyThresholdChange = onFrequencyThresholdChange,
+                onFrequencyCardinalityLimitChange = onFrequencyCardinalityLimitChange,
+                onFrequencyValueSelect = onFrequencyValueSelect,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        DashboardSectionHeader(
+            title = "A/B Comparison",
+            stateLabel = comparisonHeaderState,
+            expanded = isComparisonExpanded,
+            onToggle = { isComparisonExpanded = !isComparisonExpanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+
+        if (isComparisonExpanded) {
+            Spacer(modifier = Modifier.height(8.dp))
+            AbComparisonSection(
+                comparisonState = comparisonState,
+                selectedFrequencyField = content.selectedFrequencyField,
+                frequencyThreshold = content.frequencyThreshold,
+                frequencyTopN = content.frequencyTopN,
+                frequencyCardinalityLimit = content.frequencyCardinalityLimit,
+                onCompareBaselineFromChange = onCompareBaselineFromChange,
+                onCompareBaselineToChange = onCompareBaselineToChange,
+                onCompareComparisonFromChange = onCompareComparisonFromChange,
+                onCompareComparisonToChange = onCompareComparisonToChange,
+                onRunComparison = onRunComparison,
+                onClearComparison = onClearComparison,
+                onCompareLevelSelect = onCompareLevelSelect,
+                onCompareFrequencyValueSelect = onCompareFrequencyValueSelect,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardAnalysisScopeBanner(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        backgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.08f)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Text(
+                text = "Analysis scope: current filtered logs",
+                style = MaterialTheme.typography.caption,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "All dashboard metrics below use logs matching your active filters.",
+                style = MaterialTheme.typography.caption
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardSectionHeader(
+    title: String,
+    stateLabel: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onToggle)
+            .padding(vertical = 2.dp),
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 2.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, style = MaterialTheme.typography.subtitle1)
+                Text(
+                    text = stateLabel,
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.74f)
+                )
+            }
+            Text(
+                text = if (expanded) "▾" else "▸",
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .semantics { contentDescription = if (expanded) "Collapse $title" else "Expand $title" }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FrequencyAnalysisSection(
+    content: DashboardDataState.Content,
+    onFrequencyFieldChange: (String) -> Unit,
+    onFrequencyTopNChange: (Int) -> Unit,
+    onFrequencyThresholdChange: (Int) -> Unit,
+    onFrequencyCardinalityLimitChange: (Int) -> Unit,
+    onFrequencyValueSelect: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "Find common values for one structured field.",
+            style = MaterialTheme.typography.caption
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Analyze field",
+            style = MaterialTheme.typography.caption,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            text = "Choose one field to rank values by frequency.",
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+        )
+
+        if (content.availableFrequencyFields.isEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "No structured fields available for frequency analysis.",
+                style = MaterialTheme.typography.caption
+            )
+            return
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            content.availableFrequencyFields.forEach { field ->
+                val isSelected = content.selectedFrequencyField == field
+                OutlinedButton(
+                    onClick = { onFrequencyFieldChange(field) },
+                    modifier = Modifier.testTag("frequency_field_$field")
+                ) {
+                    Text(
+                        text = field,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        DashboardNumberControl(
+            label = "Top N",
+            helper = "Maximum number of rows to show after filtering.",
+            value = content.frequencyTopN,
+            step = 1,
+            onChange = onFrequencyTopNChange
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        DashboardNumberControl(
+            label = "Threshold",
+            helper = "Hide values with counts below this minimum.",
+            value = content.frequencyThreshold,
+            step = 1,
+            onChange = onFrequencyThresholdChange
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        DashboardNumberControl(
+            label = "Cardinality limit",
+            helper = "Limit unique values considered before Top N is applied.",
+            value = content.frequencyCardinalityLimit,
+            step = 10,
+            onChange = onFrequencyCardinalityLimitChange
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Ranked values",
+            style = MaterialTheme.typography.caption,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        val maxCount = content.frequencyItems.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
+        if (content.frequencyItems.isEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = when {
+                    content.selectedFrequencyField == null -> "Select a field to see value frequency."
+                    content.frequencyThreshold > 1 -> "No values meet the current threshold. Lower the threshold to see more."
+                    else -> "No values found for this field in the current filtered logs."
+                },
+                style = MaterialTheme.typography.caption
+            )
+        } else {
+            Spacer(modifier = Modifier.height(6.dp))
+            content.frequencyItems.forEachIndexed { index, item ->
+                val isSelected = content.selectedFrequencyValue == item.value
+                val valueLabel = if (item.value == "(missing)") "(missing)" else item.value
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 3.dp)
+                        .clickable { onFrequencyValueSelect(item.value) },
+                    backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.15f) else MaterialTheme.colors.surface,
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.45f) else MaterialTheme.colors.onSurface.copy(alpha = 0.16f)
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "#${index + 1}",
+                                style = MaterialTheme.typography.caption,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+                            )
+                            Text(
+                                text = "${item.count}",
+                                style = MaterialTheme.typography.caption,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = valueLabel,
+                            style = MaterialTheme.typography.body2,
+                            color = if (item.value == "(missing)") {
+                                MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                            } else {
+                                MaterialTheme.colors.onSurface
+                            },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(6.dp))
+                        LinearProgressIndicator(
+                            progress = item.count.toFloat() / maxCount.toFloat(),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+            }
+
+            if (content.frequencyItems.size >= minOf(content.frequencyTopN, content.frequencyCardinalityLimit)) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Showing top values from the first ${content.frequencyCardinalityLimit} unique values considered.",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Select a value to add or remove a field filter.",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun AbComparisonSection(
+    comparisonState: DashboardComparisonState,
+    selectedFrequencyField: String?,
+    frequencyThreshold: Int,
+    frequencyTopN: Int,
+    frequencyCardinalityLimit: Int,
+    onCompareBaselineFromChange: (String) -> Unit,
+    onCompareBaselineToChange: (String) -> Unit,
+    onCompareComparisonFromChange: (String) -> Unit,
+    onCompareComparisonToChange: (String) -> Unit,
+    onRunComparison: () -> Unit,
+    onClearComparison: () -> Unit,
+    onCompareLevelSelect: (LogLevel) -> Unit,
+    onCompareFrequencyValueSelect: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val baselineRange = comparisonState.baselineRange
+    val comparisonRange = comparisonState.comparisonRange
+    val hasBaselineInput = baselineRange.from.isNotBlank() || baselineRange.to.isNotBlank()
+    val hasComparisonInput = comparisonRange.from.isNotBlank() || comparisonRange.to.isNotBlank()
+    val hasValidationError = baselineRange.validationMessage != null || comparisonRange.validationMessage != null
+    val canRunComparison = hasBaselineInput && hasComparisonInput && !hasValidationError
+    val hasNoWindowMatches = comparisonState.levelDeltas.isNotEmpty() &&
+        comparisonState.levelDeltas.all { it.baselineCount == 0 && it.comparisonCount == 0 }
+    val hasNoMeaningfulDeltas = comparisonState.levelDeltas.isNotEmpty() &&
+        comparisonState.levelDeltas.all { it.delta == 0 } &&
+        comparisonState.fieldDeltas.all { (it.delta ?: 0) == 0 }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "Compare log behavior between two time windows.",
+            style = MaterialTheme.typography.caption
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.06f),
+            border = BorderStroke(1.dp, MaterialTheme.colors.primary.copy(alpha = 0.3f))
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Text(
+                    text = "Baseline window (reference)",
+                    style = MaterialTheme.typography.caption,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = baselineRange.from,
+                    onValueChange = onCompareBaselineFromChange,
+                    label = { Text("From (optional)") },
+                    placeholder = { Text("2026-05-28T10:30:00Z") },
+                    isError = baselineRange.validationMessage != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("compare_baseline_from_input")
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = baselineRange.to,
+                    onValueChange = onCompareBaselineToChange,
+                    label = { Text("To (optional)") },
+                    placeholder = { Text("2026-05-28 10:30:00 or 1716892200") },
+                    isError = baselineRange.validationMessage != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("compare_baseline_to_input")
+                )
+                baselineRange.validationMessage?.let { message ->
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colors.error,
+                        style = MaterialTheme.typography.caption,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colors.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.18f))
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Text(
+                    text = "Comparison window (new period)",
+                    style = MaterialTheme.typography.caption,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = comparisonRange.from,
+                    onValueChange = onCompareComparisonFromChange,
+                    label = { Text("From (optional)") },
+                    placeholder = { Text("2026-05-28T10:30:00Z") },
+                    isError = comparisonRange.validationMessage != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("compare_comparison_from_input")
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = comparisonRange.to,
+                    onValueChange = onCompareComparisonToChange,
+                    label = { Text("To (optional)") },
+                    placeholder = { Text("2026-05-28 10:30:00 or 1716892200") },
+                    isError = comparisonRange.validationMessage != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("compare_comparison_to_input")
+                )
+                comparisonRange.validationMessage?.let { message ->
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colors.error,
+                        style = MaterialTheme.typography.caption,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "Leave From or To empty for an open-ended range.",
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+        )
+
+        if (!hasBaselineInput || !hasComparisonInput) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Enter at least one bound for both Baseline and Comparison windows.",
+                style = MaterialTheme.typography.caption
+            )
+        } else if (hasValidationError) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Fix the highlighted date/time input to run comparison.",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.error
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = onRunComparison,
+                enabled = canRunComparison,
+                modifier = Modifier.testTag("run_comparison_button")
+            ) {
+                Text("Run comparison")
+            }
+            OutlinedButton(
+                onClick = onClearComparison,
+                modifier = Modifier.testTag("clear_comparison_button")
+            ) {
+                Text("Clear")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Level deltas",
+            style = MaterialTheme.typography.caption,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            text = "Direction legend: ↑ increase, ↓ decrease, = unchanged",
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+        )
+
+        when {
+            !hasBaselineInput || !hasComparisonInput -> {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Enter ranges and run comparison to view deltas.",
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+            hasValidationError -> {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Invalid range. Fix the highlighted input values.",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.error
+                )
+            }
+
+            hasNoWindowMatches -> {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "No matching log entries in Baseline and/or Comparison for the current filtered logs.",
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+            else -> {
+                Spacer(modifier = Modifier.height(6.dp))
+                comparisonState.levelDeltas.forEach { delta ->
+                    val isImportantIncrease =
+                        (delta.level == LogLevel.ERROR || delta.level == LogLevel.WARN || delta.level == LogLevel.FATAL) &&
+                            delta.direction == DashboardDeltaDirection.INCREASE
+                    val directionIndicator = dashboardDirectionIndicator(delta.direction, delta.delta)
+                    Card(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable {
-                                viewModel.handleIntent(
-                                    KLogViewerIntent.SelectDashboardBucket(
-                                        windowId = window.id,
-                                        from = bucket.from,
-                                        to = bucket.to,
-                                        timestampFilter = bucket.timestampFilter
-                                    )
-                                )
-                            },
-                        color = if (isSelected) {
-                            MaterialTheme.colors.primary.copy(alpha = 0.15f)
-                        } else {
-                            MaterialTheme.colors.onSurface.copy(alpha = 0.04f)
-                        }
+                            .padding(vertical = 3.dp)
+                            .clickable { onCompareLevelSelect(delta.level) },
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = if (isImportantIncrease) {
+                                MaterialTheme.colors.error.copy(alpha = 0.45f)
+                            } else {
+                                MaterialTheme.colors.onSurface.copy(alpha = 0.16f)
+                            }
+                        )
                     ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
+                        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = bucket.timestampFilter,
-                                    style = MaterialTheme.typography.caption,
-                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                                    text = if (isImportantIncrease) "${delta.level.name} (important increase)" else delta.level.name,
+                                    style = MaterialTheme.typography.body2,
+                                    fontWeight = if (isImportantIncrease) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isImportantIncrease) MaterialTheme.colors.error else MaterialTheme.colors.onSurface
                                 )
                                 Text(
-                                    text = bucket.count.toString(),
-                                    style = MaterialTheme.typography.body2,
-                                    fontWeight = FontWeight.Medium
+                                    text = "Baseline ${delta.baselineCount} · Comparison ${delta.comparisonCount}",
+                                    style = MaterialTheme.typography.caption
                                 )
                             }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(12.dp)
-                                    .background(MaterialTheme.colors.onSurface.copy(alpha = 0.08f))
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxHeight()
-                                        .fillMaxWidth(barFraction)
-                                        .background(MaterialTheme.colors.primary.copy(alpha = 0.8f))
-                                )
-                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "$directionIndicator (${dashboardDirectionLabel(delta.direction)})",
+                                color = dashboardDirectionColor(delta.direction),
+                                style = MaterialTheme.typography.caption,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.testTag("level_delta_direction_${delta.level.name}")
+                            )
                         }
+                    }
+                }
+
+                if (hasNoMeaningfulDeltas) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "No significant changes found with current field and limits.",
+                        style = MaterialTheme.typography.caption,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Field deltas",
+            style = MaterialTheme.typography.caption,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+        if (selectedFrequencyField == null) {
+            Text(
+                text = "Select a Frequency Analysis field to enable A/B field deltas.",
+                style = MaterialTheme.typography.caption
+            )
+        } else {
+            Text(
+                text = "Field deltas use Frequency Analysis field, threshold, Top N, and cardinality settings.",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+            )
+            Text(
+                text = "Current controls: field=$selectedFrequencyField, threshold=$frequencyThreshold, topN=$frequencyTopN, cardinality=$frequencyCardinalityLimit",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.62f)
+            )
+
+            if (comparisonState.fieldDeltas.isEmpty() && canRunComparison && !hasNoWindowMatches) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "No significant changes found with current field and limits.",
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+            val maxAbsoluteDelta = comparisonState.fieldDeltas.maxOfOrNull { abs(it.delta ?: 0) } ?: 0
+            comparisonState.fieldDeltas.forEach { delta ->
+                val baselineCount = delta.count - (delta.delta ?: 0)
+                val absoluteDelta = abs(delta.delta ?: 0)
+                val emphasize = maxAbsoluteDelta > 0 && absoluteDelta >= maxOf(2, maxAbsoluteDelta)
+                val label = if (delta.value == "(missing)") "(missing)" else delta.value
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 6.dp)
+                        .clickable { onCompareFrequencyValueSelect(delta.value) },
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (emphasize) {
+                            MaterialTheme.colors.primary.copy(alpha = 0.4f)
+                        } else {
+                            MaterialTheme.colors.onSurface.copy(alpha = 0.16f)
+                        }
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.body2,
+                            fontWeight = if (emphasize) FontWeight.Bold else FontWeight.Normal,
+                            color = if (delta.value == "(missing)") {
+                                MaterialTheme.colors.onSurface.copy(alpha = 0.58f)
+                            } else {
+                                MaterialTheme.colors.onSurface
+                            },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Baseline $baselineCount · Comparison ${delta.count} · ${dashboardDirectionIndicator(delta.direction, delta.delta ?: 0)}",
+                            style = MaterialTheme.typography.caption,
+                            color = dashboardDirectionColor(delta.direction)
+                        )
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DashboardLevelDistributionSection(
+    slices: List<DashboardLevelSlice>,
+    selectedLevel: LogLevel?,
+    onLevelSelect: (DashboardLevelSlice) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val orderedSlices = remember(slices) { orderedLevelDistributionSlices(slices) }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        KoalaPlotLevelDistributionChart(
+            slices = orderedSlices,
+            selectedLevel = selectedLevel,
+            onLevelSelect = { level ->
+                onLevelSelect(
+                    orderedSlices.firstOrNull { it.level == level }
+                        ?: DashboardLevelSlice(level = level, count = 0, ratio = 0f)
+                )
+            },
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .testTag("dashboard_level_distribution_chart")
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        orderedSlices.forEach { slice ->
+            DashboardLevelDistributionRow(
+                slice = slice,
+                isSelected = selectedLevel == slice.level,
+                onSelect = { onLevelSelect(slice) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardLevelDistributionRow(
+    slice: DashboardLevelSlice,
+    isSelected: Boolean,
+    onSelect: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+    val levelColor = dashboardLevelColor(slice.level)
+    val borderColor = when {
+        isSelected -> MaterialTheme.colors.primary
+        isHovered -> MaterialTheme.colors.onSurface.copy(alpha = 0.32f)
+        else -> MaterialTheme.colors.onSurface.copy(alpha = 0.14f)
+    }
+    val backgroundColor = when {
+        isSelected -> MaterialTheme.colors.primary.copy(alpha = 0.14f)
+        isHovered -> MaterialTheme.colors.onSurface.copy(alpha = 0.04f)
+        else -> MaterialTheme.colors.surface
+    }
+    val percentageText = formatLevelDistributionPercentage(slice.ratio)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .hoverable(interactionSource)
+            .focusable()
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current,
+                role = Role.Button,
+                onClick = onSelect
+            )
+            .semantics(mergeDescendants = true) {
+                selected = isSelected
+                contentDescription = "${slice.level.name}: ${slice.count} events, $percentageText"
+            }
+            .testTag("dashboard_level_row_${slice.level.name.lowercase()}"),
+        backgroundColor = backgroundColor,
+        border = BorderStroke(if (isSelected) 1.5.dp else 1.dp, borderColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(levelColor, CircleShape)
+                    )
+                    Text(
+                        text = slice.level.name,
+                        style = MaterialTheme.typography.body2,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
+                }
+
+                Text(
+                    text = "${slice.count} ($percentageText)",
+                    style = MaterialTheme.typography.caption,
+                    textAlign = TextAlign.End
+                )
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            LinearProgressIndicator(
+                progress = slice.ratio.coerceIn(0f, 1f),
+                color = levelColor,
+                backgroundColor = levelColor.copy(alpha = if (isSelected) 0.28f else 0.18f),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(6.dp)
+            )
+        }
+    }
+}
+
+@Composable
+private fun dashboardLevelColor(level: LogLevel): Color {
+    val colors = KLogViewerTheme.logColors
+    return when (level) {
+        LogLevel.DEBUG -> colors.debug
+        LogLevel.INFO -> colors.info
+        LogLevel.WARN -> colors.warn
+        LogLevel.ERROR -> colors.error
+        LogLevel.FATAL -> colors.fatal
+        LogLevel.UNKNOWN -> colors.unknown
+    }
+}
+
+
+@Composable
+private fun DashboardActiveFilters(
+    activeTimeSelection: DashboardTimeSelection?,
+    selectedLevel: LogLevel?,
+    selectedFrequencyValue: String?,
+    onClearTimeSelection: () -> Unit,
+    onClearLevel: () -> Unit,
+    onClearFrequencyValue: () -> Unit
+) {
+    val hasFilters = activeTimeSelection != null || selectedLevel != null || !selectedFrequencyValue.isNullOrBlank()
+    if (!hasFilters) {
+        return
+    }
+
+    Text(
+        text = "Active filters",
+        style = MaterialTheme.typography.caption,
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        activeTimeSelection?.let { timeSelection ->
+            DashboardFilterChip(
+                label = timeSelection.label,
+                onRemove = onClearTimeSelection,
+                removeActionDescription = "Remove active time filter",
+                chipDescription = "Active time filter chip, ${timeSelection.label}"
+            )
+        }
+        selectedLevel?.let { level ->
+            DashboardFilterChip(label = "Level: ${level.name}", onRemove = onClearLevel)
+        }
+        selectedFrequencyValue?.takeIf { it.isNotBlank() }?.let { value ->
+            DashboardFilterChip(label = "Field value: $value", onRemove = onClearFrequencyValue)
+        }
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+}
+
+@Composable
+private fun DashboardFilterChip(
+    label: String,
+    onRemove: () -> Unit,
+    removeActionDescription: String = "Remove filter",
+    chipDescription: String = label
+) {
+    Surface(
+        shape = MaterialTheme.shapes.small,
+        color = MaterialTheme.colors.primary.copy(alpha = 0.12f),
+        modifier = Modifier
+            .height(26.dp)
+            .semantics { contentDescription = chipDescription }
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.caption,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Icon(
+                imageVector = Icons.Default.Close,
+                contentDescription = removeActionDescription,
+                modifier = Modifier.size(14.dp).clickable(onClick = onRemove)
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardBucketKeyboardFallback(
+    buckets: List<DashboardTimeBucket>,
+    selectedBucketFrom: java.time.Instant?,
+    onBucketSelect: (DashboardTimeBucket) -> Unit
+) {
+    if (buckets.isEmpty()) {
+        return
+    }
+
+    val selectedIndex = buckets.indexOfFirst { it.from == selectedBucketFrom }
+    val anchorIndex = if (selectedIndex >= 0) selectedIndex else 0
+    val previousIndex = (anchorIndex - 1).coerceAtLeast(0)
+    val nextIndex = (anchorIndex + 1).coerceAtMost(buckets.lastIndex)
+    val selectedLabel = buckets.getOrNull(anchorIndex)?.let(::formatDashboardBucketLabel) ?: "None"
+
+    Text(
+        text = "Keyboard fallback",
+        style = MaterialTheme.typography.caption,
+        modifier = Modifier.padding(horizontal = 8.dp)
+    )
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        OutlinedButton(onClick = { onBucketSelect(buckets.first()) }) {
+            Text("First bucket")
+        }
+        OutlinedButton(onClick = { onBucketSelect(buckets[previousIndex]) }) {
+            Text("Previous")
+        }
+        OutlinedButton(onClick = { onBucketSelect(buckets[nextIndex]) }) {
+            Text("Next")
+        }
+    }
+    Text(
+        text = "Current bucket: $selectedLabel",
+        style = MaterialTheme.typography.caption,
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+    )
+}
+
+internal data class DashboardTimeSelection(
+    val label: String,
+    val from: java.time.Instant,
+    val to: java.time.Instant
+)
+
+internal fun resolveDashboardTimeSelection(
+    content: DashboardDataState.Content,
+    activeTimeFilterFrom: java.time.Instant?,
+    activeTimeFilterTo: java.time.Instant?
+): DashboardTimeSelection? {
+    val selectedBucket = content.timeSeries.firstOrNull { it.from == content.selectedBucketFrom }
+    if (selectedBucket != null) {
+        return DashboardTimeSelection(
+            label = "Bucket: ${selectedBucket.from} → ${selectedBucket.to}",
+            from = selectedBucket.from,
+            to = selectedBucket.to
+        )
+    }
+
+    if (activeTimeFilterFrom == null || activeTimeFilterTo == null || activeTimeFilterFrom.isAfter(activeTimeFilterTo)) {
+        return null
+    }
+
+    val selectedBuckets = content.timeSeries
+        .asSequence()
+        .filter { bucket -> bucket.from >= activeTimeFilterFrom && bucket.to <= activeTimeFilterTo }
+        .toList()
+    if (selectedBuckets.isEmpty()) {
+        return null
+    }
+
+    val rangeFrom = selectedBuckets.first().from
+    val rangeTo = selectedBuckets.last().to
+    val prefix = if (selectedBuckets.size == 1) "Bucket" else "Range"
+    return DashboardTimeSelection(
+        label = "$prefix: $rangeFrom → $rangeTo",
+        from = rangeFrom,
+        to = rangeTo
+    )
+}
+
+
+internal fun logTimeFrequencyContent(
+    dashboardState: DashboardDataState
+): DashboardDataState.Content? {
+    return (dashboardState as? DashboardDataState.Content)
+        ?.takeIf { it.timeSeries.isNotEmpty() }
+}
+
+private fun formatDashboardBucketLabel(bucket: DashboardTimeBucket): String {
+    return "${bucket.from} → ${bucket.to} (${bucket.count})"
+}
+
+@Composable
+private fun DashboardNumberControl(
+    label: String,
+    helper: String,
+    value: Int,
+    step: Int,
+    onChange: (Int) -> Unit
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "$label: $value", style = MaterialTheme.typography.caption)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                TextButton(
+                    onClick = { onChange((value - step).coerceAtLeast(1)) },
+                    modifier = Modifier.semantics {
+                        contentDescription = "Decrease $label"
+                    }
+                ) {
+                    Text("-")
+                }
+                TextButton(
+                    onClick = { onChange(value + step) },
+                    modifier = Modifier.semantics {
+                        contentDescription = "Increase $label"
+                    }
+                ) {
+                    Text("+")
+                }
+            }
+        }
+        Text(
+            text = helper,
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+        )
+    }
+}
+
+private fun dashboardDirectionIndicator(direction: DashboardDeltaDirection, delta: Int): String {
+    return when (direction) {
+        DashboardDeltaDirection.INCREASE -> "↑ +${kotlin.math.abs(delta)}"
+        DashboardDeltaDirection.DECREASE -> "↓ -${kotlin.math.abs(delta)}"
+        DashboardDeltaDirection.UNCHANGED -> "= 0"
+    }
+}
+
+private fun dashboardDirectionLabel(direction: DashboardDeltaDirection): String {
+    return when (direction) {
+        DashboardDeltaDirection.INCREASE -> "Increase"
+        DashboardDeltaDirection.DECREASE -> "Decrease"
+        DashboardDeltaDirection.UNCHANGED -> "Unchanged"
+    }
+}
+
+@Composable
+private fun dashboardDirectionColor(direction: DashboardDeltaDirection): Color {
+    return when (direction) {
+        DashboardDeltaDirection.INCREASE -> Color(0xFF2E7D32)
+        DashboardDeltaDirection.DECREASE -> Color(0xFFC62828)
+        DashboardDeltaDirection.UNCHANGED -> MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
     }
 }
 

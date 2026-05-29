@@ -121,32 +121,34 @@ class KLogViewerComplexUiTest {
             clickAddFile()
         }
 
-        logList {
-            // Click row 0
-            clickOnRow(0)
-            assertRowSelected(0, true)
-            
-            // Shift-Click row 2 -> should select 0, 1, 2
-            clickOnRowWithModifiers(2, shift = true)
-            assertRowSelected(0, true)
-            assertRowSelected(1, true)
-            assertRowSelected(2, true)
-            assertRowSelected(3, false)
-            
-            // Meta-Click row 4 -> should toggle 4
-            clickOnRowWithModifiers(4, meta = true)
-            assertRowSelected(0, true)
-            assertRowSelected(1, true)
-            assertRowSelected(2, true)
-            assertRowSelected(3, false)
-            assertRowSelected(4, true)
-            
-            // Meta-Click row 1 -> should toggle 1 off
-            clickOnRowWithModifiers(1, meta = true)
-            assertRowSelected(0, true)
-            assertRowSelected(1, false)
-            assertRowSelected(2, true)
-            assertRowSelected(4, true)
+        window("window1") {
+            logList {
+                // Click row 0
+                clickOnRow(0)
+                assertRowSelected(0, true)
+
+                // Shift-Click row 2 -> should select 0, 1, 2
+                clickOnRowWithModifiers(2, shift = true)
+                assertRowSelected(0, true)
+                assertRowSelected(1, true)
+                assertRowSelected(2, true)
+                assertRowSelected(3, false)
+
+                // Meta-Click row 4 -> should toggle 4
+                clickOnRowWithModifiers(4, meta = true)
+                assertRowSelected(0, true)
+                assertRowSelected(1, true)
+                assertRowSelected(2, true)
+                assertRowSelected(3, false)
+                assertRowSelected(4, true)
+
+                // Meta-Click row 1 -> should toggle 1 off
+                clickOnRowWithModifiers(1, meta = true)
+                assertRowSelected(0, true)
+                assertRowSelected(1, false)
+                assertRowSelected(2, true)
+                assertRowSelected(4, true)
+            }
         }
     }
 

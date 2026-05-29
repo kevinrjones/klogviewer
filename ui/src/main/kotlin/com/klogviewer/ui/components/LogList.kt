@@ -95,28 +95,30 @@ fun LogList(
                             .testTag("log_lazy_column")
                     ) {
                         itemsIndexed(logs) { index, entry ->
-                            LogEntryRow(
-                                entry = entry,
-                                lineNumber = index + 1,
-                                filterQueries = filterQueries,
-                                isDarkMode = isDarkMode,
-                                contentWidth = contentWidth,
-                                gutterWidth = gutterWidth,
-                                showAnsiColors = showAnsiColors,
-                                sourceIds = sourceIds,
-                                missingSourceIds = missingSourceIds,
-                                columns = displayColumns,
-                                columnWidths = columnWidths,
-                                isSelected = selectedIndices.contains(index),
-                                onClick = { isShift, isMeta -> 
-                                    if (isShift || isMeta) {
-                                        onToggleSelection(index, isShift, isMeta)
-                                    } else {
-                                        onEntryClick(entry)
-                                    }
-                                },
-                                modifier = Modifier.testTag("log_entry_row")
-                            )
+                            Box(modifier = Modifier.testTag("log_entry_row")) {
+                                LogEntryRow(
+                                    entry = entry,
+                                    lineNumber = index + 1,
+                                    filterQueries = filterQueries,
+                                    isDarkMode = isDarkMode,
+                                    contentWidth = contentWidth,
+                                    gutterWidth = gutterWidth,
+                                    showAnsiColors = showAnsiColors,
+                                    sourceIds = sourceIds,
+                                    missingSourceIds = missingSourceIds,
+                                    columns = displayColumns,
+                                    columnWidths = columnWidths,
+                                    isSelected = selectedIndices.contains(index),
+                                    onClick = { isShift, isMeta ->
+                                        if (isShift || isMeta) {
+                                            onToggleSelection(index, isShift, isMeta)
+                                        } else {
+                                            onEntryClick(entry)
+                                        }
+                                    },
+                                    modifier = Modifier.testTag("log_entry_row_$index")
+                                )
+                            }
                         }
                     }
                 }
@@ -394,14 +396,10 @@ private fun LogEntryCell(
             )
         }
         "Level" -> {
-            val displayLevel = when {
-                entry.fields["level"] != null && entry.fields["level"] != "UNKNOWN" -> {
-                    entry.fields["level"]!!
-                }
-                entry.level != LogLevel.UNKNOWN -> "[${entry.level}]"
-                else -> ""
-            }
-            val color = if (entry.level == LogLevel.UNKNOWN && entry.fields.containsKey("level") && entry.fields["level"] != "UNKNOWN") {
+            val displayLevel = entry.fields["level"]
+                ?.takeIf { it != "UNKNOWN" }
+                ?: ""
+            val color = if (entry.level == LogLevel.UNKNOWN && displayLevel.isNotBlank()) {
                 MaterialTheme.colors.onSurface
             } else {
                 getLevelColor(entry.level, logColors)

@@ -3,6 +3,7 @@ package com.klogviewer.ui.viewmodel
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
+import com.klogviewer.ui.mvi.TimeRangePreset
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
@@ -58,6 +59,94 @@ class FilterIntentHandler(
                 onFilterLogs(state.value.activeTab?.activeWindow?.id)
                 onSavePreferences()
             }
+            is KLogViewerIntent.SetTimeFilterFrom -> {
+                state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        val fromValue = intent.from.trim()
+                        val fromInstant = TimeRangeFilterSupport.parseInstantOrNull(fromValue)
+                        val validationMessage = TimeRangeFilterSupport.validationMessage(
+                            fromValue,
+                            fromInstant,
+                            window.timeFilterTo,
+                            window.timeFilterToInstant
+                        )
+                        window.copy(
+                            timeFilterFrom = fromValue,
+                            timeFilterFromInstant = fromInstant,
+                            timeFilterPreset = manualPresetOrNull(fromValue, window.timeFilterTo),
+                            timeFilterValidationMessage = validationMessage
+                        )
+                    }
+                }
+                onFilterLogs(state.value.activeTab?.activeWindow?.id)
+                onSavePreferences()
+            }
+            is KLogViewerIntent.SetTimeFilterTo -> {
+                state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        val toValue = intent.to.trim()
+                        val toInstant = TimeRangeFilterSupport.parseInstantOrNull(toValue)
+                        val validationMessage = TimeRangeFilterSupport.validationMessage(
+                            window.timeFilterFrom,
+                            window.timeFilterFromInstant,
+                            toValue,
+                            toInstant
+                        )
+                        window.copy(
+                            timeFilterTo = toValue,
+                            timeFilterToInstant = toInstant,
+                            timeFilterPreset = manualPresetOrNull(window.timeFilterFrom, toValue),
+                            timeFilterValidationMessage = validationMessage
+                        )
+                    }
+                }
+                onFilterLogs(state.value.activeTab?.activeWindow?.id)
+                onSavePreferences()
+            }
+            is KLogViewerIntent.ApplyTimeFilterPreset -> {
+                state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        val resolvedRange = TimeRangeFilterSupport.resolvePresetSelection(window, intent.preset)
+                        val fromInstant = resolvedRange?.first
+                        val toInstant = resolvedRange?.second
+                        val fromValue = fromInstant?.toString().orEmpty()
+                        val toValue = toInstant?.toString().orEmpty()
+                        val validationMessage = TimeRangeFilterSupport.validationMessage(
+                            fromValue,
+                            fromInstant,
+                            toValue,
+                            toInstant
+                        )
+
+                        window.copy(
+                            timeFilterFrom = fromValue,
+                            timeFilterTo = toValue,
+                            timeFilterFromInstant = fromInstant,
+                            timeFilterToInstant = toInstant,
+                            timeFilterPreset = intent.preset,
+                            timeFilterValidationMessage = validationMessage
+                        )
+                    }
+                }
+                onFilterLogs(state.value.activeTab?.activeWindow?.id)
+                onSavePreferences()
+            }
+            KLogViewerIntent.ClearTimeFilter -> {
+                state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        window.copy(
+                            timeFilterFrom = "",
+                            timeFilterTo = "",
+                            timeFilterFromInstant = null,
+                            timeFilterToInstant = null,
+                            timeFilterPreset = null,
+                            timeFilterValidationMessage = null
+                        )
+                    }
+                }
+                onFilterLogs(state.value.activeTab?.activeWindow?.id)
+                onSavePreferences()
+            }
             KLogViewerIntent.ToggleAllLevels -> {
                 state.update { currentState ->
                     currentState.updateActiveWindow { window ->
@@ -73,6 +162,14 @@ class FilterIntentHandler(
                 onFilterLogs(state.value.activeTab?.activeWindow?.id)
                 onSavePreferences()
             }
+        }
+    }
+
+    private fun manualPresetOrNull(fromValue: String, toValue: String): TimeRangePreset? {
+        return if (fromValue.isNotBlank() || toValue.isNotBlank()) {
+            TimeRangePreset.CUSTOM
+        } else {
+            null
         }
     }
 }

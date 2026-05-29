@@ -9,13 +9,13 @@ sealed interface KLogViewerIntent {
     sealed interface WorkspaceIntent : KLogViewerIntent
     sealed interface UiToggleIntent : KLogViewerIntent
     sealed interface FilterIntent : KLogViewerIntent
+    sealed interface DashboardIntent : KLogViewerIntent
     sealed interface TabWindowIntent : KLogViewerIntent
     sealed interface EntryIntent : KLogViewerIntent
     sealed interface DialogIntent : KLogViewerIntent
     sealed interface RecentItemsIntent : KLogViewerIntent
     sealed interface SftpIntent : KLogViewerIntent
     sealed interface S3Intent : KLogViewerIntent
-    sealed interface DashboardIntent : KLogViewerIntent
 
     data class LoadFiles(val paths: List<String>) : WorkspaceIntent
     data class AddToWorkspace(val paths: List<String>) : WorkspaceIntent
@@ -34,6 +34,29 @@ sealed interface KLogViewerIntent {
     data object ClearFilterQueries : FilterIntent
     data class ToggleLevel(val level: LogLevel) : FilterIntent
     data object ToggleAllLevels : FilterIntent
+    data class SetTimeFilterFrom(val from: String) : FilterIntent
+    data class SetTimeFilterTo(val to: String) : FilterIntent
+    data class ApplyTimeFilterPreset(val preset: TimeRangePreset) : FilterIntent
+    data object ClearTimeFilter : FilterIntent
+
+    data object ShowDashboard : DashboardIntent
+    data object ShowLogs : DashboardIntent
+    data class SetDashboardBucketSize(val bucketSize: DashboardBucketSize) : DashboardIntent
+    data class SelectDashboardTimeBucket(val bucketFrom: Instant) : DashboardIntent
+    data class SelectDashboardTimeRange(val from: Instant, val to: Instant) : DashboardIntent
+    data class SelectDashboardLevel(val level: LogLevel) : DashboardIntent
+    data class SetDashboardFrequencyField(val fieldKey: String) : DashboardIntent
+    data class SetDashboardFrequencyTopN(val topN: Int) : DashboardIntent
+    data class SetDashboardFrequencyThreshold(val threshold: Int) : DashboardIntent
+    data class SetDashboardFrequencyCardinalityLimit(val limit: Int) : DashboardIntent
+    data class SelectDashboardFrequencyValue(val value: String) : DashboardIntent
+    data class SetDashboardCompareBaselineFrom(val from: String) : DashboardIntent
+    data class SetDashboardCompareBaselineTo(val to: String) : DashboardIntent
+    data class SetDashboardCompareComparisonFrom(val from: String) : DashboardIntent
+    data class SetDashboardCompareComparisonTo(val to: String) : DashboardIntent
+    data object RunDashboardComparison : DashboardIntent
+    data object ClearDashboardComparison : DashboardIntent
+    data object ClearDashboardSelections : DashboardIntent
     
     data class SelectEntry(val entry: com.klogviewer.domain.model.LogEntry?) : EntryIntent
     data class ToggleEntrySelection(val index: Int, val isShiftPressed: Boolean = false, val isMetaPressed: Boolean = false) : EntryIntent
@@ -112,15 +135,4 @@ sealed interface KLogViewerIntent {
     data class SwitchWindow(val id: String) : TabWindowIntent
     data class UpdateColumnWidth(val windowId: String, val column: String, val width: Int) : TabWindowIntent
     data class ChangeParser(val windowId: String, val parserName: String) : TabWindowIntent
-
-    // Dashboard
-    data class ShowDashboard(val windowId: String? = null) : DashboardIntent
-    data class ShowLogs(val windowId: String? = null) : DashboardIntent
-    data class SelectDashboardBucket(
-        val windowId: String,
-        val from: Instant,
-        val to: Instant,
-        val timestampFilter: String
-    ) : DashboardIntent
-    data class ClearDashboardBucketFilter(val windowId: String) : DashboardIntent
 }

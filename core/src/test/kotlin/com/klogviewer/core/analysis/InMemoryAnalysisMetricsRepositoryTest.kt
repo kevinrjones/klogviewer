@@ -7,6 +7,7 @@ import com.klogviewer.domain.model.LogContent
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.LogTimestamp
+import com.klogviewer.domain.model.TimeBucketSize
 import com.klogviewer.domain.model.TimeSeriesMetricsQuery
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
@@ -38,6 +39,34 @@ class InMemoryAnalysisMetricsRepositoryTest {
                     Instant.parse("2026-01-01T00:00:00Z"),
                     Instant.parse("2026-01-01T00:00:01Z")
                 )
+            }
+        )
+    }
+
+    @Test
+    suspend fun `given sparse out-of-order timestamps when computing minute buckets then buckets are chronological and sparse-safe`() {
+        val entries = listOf(
+            logEntry("2026-01-01T00:02:45Z", "late"),
+            logEntry("2026-01-01T00:00:30Z", "early"),
+            logEntry("2026-01-01T00:02:01Z", "mid")
+        )
+
+        val result = repository.timeSeriesMetrics(
+            TimeSeriesMetricsQuery(
+                entries = entries,
+                bucketSize = TimeBucketSize.ONE_MINUTE
+            )
+        )
+
+        result.fold(
+            ifLeft = { failure -> throw AssertionError("Expected success but was $failure") },
+            ifRight = { metrics ->
+                expectThat(metrics.buckets).hasSize(2)
+                expectThat(metrics.buckets.map { it.window.from }).containsExactly(
+                    Instant.parse("2026-01-01T00:00:00Z"),
+                    Instant.parse("2026-01-01T00:02:00Z")
+                )
+                expectThat(metrics.buckets.map { it.count.value }).containsExactly(1, 2)
             }
         )
     }
@@ -89,6 +118,42 @@ class InMemoryAnalysisMetricsRepositoryTest {
             ifRight = { frequency ->
                 expectThat(frequency.frequencies.map { it.value }).containsExactly("A", "(missing)")
                 expectThat(frequency.frequencies.map { it.count.value }).containsExactly(2, 1)
+            }
+        )
+    }
+
+    @Test
+    suspend fun `given high-cardinality field frequency query when counts tie then ordering and limit are deterministic`() {
+        val fieldKey = AnalysisFieldKey.from("service").fold(
+            ifLeft = { failure -> throw AssertionError("Unexpected failure creating key: $failure") },
+            ifRight = { it }
+        )
+        val entries = listOf(
+            logEntry("2026-01-01T00:00:00Z", "1", fields = mapOf("service" to "A")),
+            logEntry("2026-01-01T00:00:01Z", "2", fields = mapOf("service" to "A")),
+            logEntry("2026-01-01T00:00:02Z", "3", fields = mapOf("service" to "B")),
+            logEntry("2026-01-01T00:00:03Z", "4", fields = mapOf("service" to "B")),
+            logEntry("2026-01-01T00:00:04Z", "5", fields = mapOf("service" to "C")),
+            logEntry("2026-01-01T00:00:05Z", "6", fields = mapOf("service" to "C")),
+            logEntry("2026-01-01T00:00:06Z", "7"),
+            logEntry("2026-01-01T00:00:07Z", "8"),
+            logEntry("2026-01-01T00:00:08Z", "9", fields = mapOf("service" to "D"))
+        )
+
+        val result = repository.frequencyAnalysis(
+            com.klogviewer.domain.model.FieldFrequencyQuery(
+                entries = entries,
+                fieldKey = fieldKey,
+                limit = 4,
+                window = DiffWindow.Unbounded
+            )
+        )
+
+        result.fold(
+            ifLeft = { failure -> throw AssertionError("Expected success but was $failure") },
+            ifRight = { frequency ->
+                expectThat(frequency.frequencies.map { it.value }).containsExactly("(missing)", "A", "B", "C")
+                expectThat(frequency.frequencies.map { it.count.value }).containsExactly(2, 2, 2, 2)
             }
         )
     }

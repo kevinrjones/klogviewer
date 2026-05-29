@@ -6,10 +6,110 @@ import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
 import java.time.Instant
 
+enum class WorkspaceMode {
+    LOGS,
+    DASHBOARD
+}
+
+enum class DashboardBucketSize {
+    PER_SECOND,
+    PER_MINUTE
+}
+
+data class DashboardTimeBucket(
+    val from: Instant,
+    val to: Instant,
+    val count: Int
+)
+
+data class DashboardLevelSlice(
+    val level: LogLevel,
+    val count: Int,
+    val ratio: Float
+)
+
+enum class DashboardDeltaDirection {
+    INCREASE,
+    DECREASE,
+    UNCHANGED
+}
+
+data class DashboardFieldFrequencyItem(
+    val value: String,
+    val count: Int,
+    val delta: Int? = null,
+    val direction: DashboardDeltaDirection = DashboardDeltaDirection.UNCHANGED
+)
+
+data class DashboardLevelDelta(
+    val level: LogLevel,
+    val baselineCount: Int,
+    val comparisonCount: Int,
+    val delta: Int,
+    val direction: DashboardDeltaDirection
+)
+
+data class DashboardCompareRangeInput(
+    val from: String = "",
+    val to: String = "",
+    val fromInstant: Instant? = null,
+    val toInstant: Instant? = null,
+    val validationMessage: String? = null
+)
+
+data class DashboardComparisonState(
+    val baselineRange: DashboardCompareRangeInput = DashboardCompareRangeInput(),
+    val comparisonRange: DashboardCompareRangeInput = DashboardCompareRangeInput(),
+    val levelDeltas: List<DashboardLevelDelta> = emptyList(),
+    val fieldDeltas: List<DashboardFieldFrequencyItem> = emptyList()
+)
+
+data class DashboardSamplingInfo(
+    val originalCount: Int,
+    val sampledCount: Int,
+    val mode: DashboardSamplingMode
+)
+
+enum class DashboardSamplingMode {
+    FULL,
+    DETERMINISTIC
+}
+
+sealed interface DashboardDataState {
+    data object Loading : DashboardDataState
+    data object Empty : DashboardDataState
+    data class Error(val message: String) : DashboardDataState
+    data class Content(
+        val bucketSize: DashboardBucketSize,
+        val totalEvents: Int,
+        val timeSeries: List<DashboardTimeBucket>,
+        val levelDistribution: List<DashboardLevelSlice>,
+        val availableFrequencyFields: List<String> = emptyList(),
+        val selectedFrequencyField: String? = null,
+        val frequencyTopN: Int = 10,
+        val frequencyThreshold: Int = 1,
+        val frequencyCardinalityLimit: Int = 100,
+        val frequencyItems: List<DashboardFieldFrequencyItem> = emptyList(),
+        val selectedBucketFrom: Instant? = null,
+        val selectedLevel: LogLevel? = null,
+        val selectedFrequencyValue: String? = null,
+        val comparisonState: DashboardComparisonState = DashboardComparisonState(),
+        val samplingInfo: DashboardSamplingInfo = DashboardSamplingInfo(
+            originalCount = totalEvents,
+            sampledCount = totalEvents,
+            mode = DashboardSamplingMode.FULL
+        ),
+        val aggregationCompletedAtEpochMillis: Long = System.currentTimeMillis()
+    ) : DashboardDataState
+}
+
 data class LogWindow(
     val id: String,
     val logs: List<LogEntry> = emptyList(),
     val filteredLogs: List<LogEntry> = emptyList(),
+    val workspaceMode: WorkspaceMode = WorkspaceMode.LOGS,
+    val dashboardBucketSize: DashboardBucketSize = DashboardBucketSize.PER_MINUTE,
+    val dashboardDataState: DashboardDataState = DashboardDataState.Empty,
     val isLoading: Boolean = false,
     val error: String? = null,
     val filePath: String = "",
@@ -28,34 +128,27 @@ data class LogWindow(
     val columnWidths: Map<String, Int> = emptyMap(),
     val isConnected: Boolean = true,
     val isDirectory: Boolean = false,
-    val viewMode: WindowViewMode = WindowViewMode.LOGS,
-    val dashboardState: DashboardUiState = DashboardUiState.Empty("Load logs to view dashboard"),
-    val dashboardBucketFilter: DashboardBucketUiModel? = null,
-    val dashboardFilterQuery: String? = null
+    val timeFilterFrom: String = "",
+    val timeFilterTo: String = "",
+    val timeFilterFromInstant: Instant? = null,
+    val timeFilterToInstant: Instant? = null,
+    val timeFilterPreset: TimeRangePreset? = null,
+    val timeFilterValidationMessage: String? = null
 ) {
     val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
+    val hasRawLevelFieldInLogs: Boolean get() = logs.any { entry -> entry.fields.containsKey("level") }
 }
 
-enum class WindowViewMode {
-    LOGS,
-    DASHBOARD
-}
-
-data class DashboardBucketUiModel(
-    val from: Instant,
-    val to: Instant,
-    val count: Int,
-    val timestampFilter: String
-)
-
-sealed interface DashboardUiState {
-    data object Loading : DashboardUiState
-    data class Empty(val message: String) : DashboardUiState
-    data class Error(val message: String) : DashboardUiState
-    data class Content(
-        val buckets: List<DashboardBucketUiModel>,
-        val selectedBucket: DashboardBucketUiModel? = null
-    ) : DashboardUiState
+enum class TimeRangePreset {
+    LAST_5_MINUTES,
+    LAST_15_MINUTES,
+    LAST_30_MINUTES,
+    LAST_1_HOUR,
+    LAST_6_HOURS,
+    LAST_24_HOURS,
+    VISIBLE_WINDOW,
+    FULL_LOADED_RANGE,
+    CUSTOM
 }
 
 data class TabState(

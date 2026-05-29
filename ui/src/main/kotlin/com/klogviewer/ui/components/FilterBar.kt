@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.klogviewer.ui.mvi.TimeRangePreset
 
 @Composable
 fun FilterBar(
@@ -47,6 +48,14 @@ fun FilterBar(
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
     onSplitClick: () -> Unit,
+    timeFilterFrom: String,
+    timeFilterTo: String,
+    timeFilterPreset: TimeRangePreset?,
+    timeFilterValidationMessage: String?,
+    onTimeFilterFromChange: (String) -> Unit,
+    onTimeFilterToChange: (String) -> Unit,
+    onApplyTimeFilterPreset: (TimeRangePreset) -> Unit,
+    onClearTimeFilter: () -> Unit,
     matchesCount: Int,
     totalCount: Int,
     modifier: Modifier = Modifier
@@ -182,6 +191,19 @@ fun FilterBar(
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
+            TimeFilterControls(
+                fromValue = timeFilterFrom,
+                toValue = timeFilterTo,
+                preset = timeFilterPreset,
+                validationMessage = timeFilterValidationMessage,
+                onFromChange = onTimeFilterFromChange,
+                onToChange = onTimeFilterToChange,
+                onApplyPreset = onApplyTimeFilterPreset,
+                onClear = onClearTimeFilter
+            )
+
+            Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
+
             // Search Area
             Box(
                 modifier = Modifier
@@ -254,6 +276,160 @@ fun FilterBar(
             }
         }
     }
+}
+
+@Composable
+private fun TimeFilterControls(
+    fromValue: String,
+    toValue: String,
+    preset: TimeRangePreset?,
+    validationMessage: String?,
+    onFromChange: (String) -> Unit,
+    onToChange: (String) -> Unit,
+    onApplyPreset: (TimeRangePreset) -> Unit,
+    onClear: () -> Unit
+) {
+    var presetMenuExpanded by remember { mutableStateOf(false) }
+
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.padding(horizontal = 4.dp)
+    ) {
+        DateTimeFilterInput(
+            value = fromValue,
+            label = "From",
+            testTag = "time_filter_from_input",
+            clearTag = "time_filter_clear_from",
+            clearTooltip = "Clear From",
+            onValueChange = onFromChange
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        DateTimeFilterInput(
+            value = toValue,
+            label = "To",
+            testTag = "time_filter_to_input",
+            clearTag = "time_filter_clear_to",
+            clearTooltip = "Clear To",
+            onValueChange = onToChange
+        )
+
+        Spacer(modifier = Modifier.width(4.dp))
+
+        Box {
+            FilterBarIcon(
+                icon = Icons.Default.Schedule,
+                tooltip = preset?.let { "Preset: ${it.displayLabel()}" } ?: "Time range presets",
+                onClick = { presetMenuExpanded = true },
+                testTag = "time_filter_preset"
+            )
+            DropdownMenu(
+                expanded = presetMenuExpanded,
+                onDismissRequest = { presetMenuExpanded = false }
+            ) {
+                TimeRangePreset.entries.forEach { presetOption ->
+                    DropdownMenuItem(onClick = {
+                        presetMenuExpanded = false
+                        onApplyPreset(presetOption)
+                    }) {
+                        Text(presetOption.displayLabel())
+                    }
+                }
+            }
+        }
+
+        if (fromValue.isNotBlank() || toValue.isNotBlank() || preset != null) {
+            FilterBarIcon(
+                icon = Icons.Default.Clear,
+                tooltip = "Clear time filter",
+                onClick = onClear,
+                testTag = "time_filter_clear"
+            )
+        }
+
+        validationMessage?.let {
+            Spacer(modifier = Modifier.width(4.dp))
+            TooltipWrapper(tooltip = it) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = it,
+                    tint = MaterialTheme.colors.error,
+                    modifier = Modifier.size(16.dp).testTag("time_filter_validation")
+                )
+            }
+        }
+    }
+}
+
+private const val TIME_FILTER_PLACEHOLDER = "YYYY-MM-DD HH:mm:ss"
+
+private fun TimeRangePreset.displayLabel(): String {
+    return when (this) {
+        TimeRangePreset.LAST_5_MINUTES -> "Last 5 minutes"
+        TimeRangePreset.LAST_15_MINUTES -> "Last 15 minutes"
+        TimeRangePreset.LAST_30_MINUTES -> "Last 30 minutes"
+        TimeRangePreset.LAST_1_HOUR -> "Last 1 hour"
+        TimeRangePreset.LAST_6_HOURS -> "Last 6 hours"
+        TimeRangePreset.LAST_24_HOURS -> "Last 24 hours"
+        TimeRangePreset.VISIBLE_WINDOW -> "Visible window"
+        TimeRangePreset.FULL_LOADED_RANGE -> "Full loaded range"
+        TimeRangePreset.CUSTOM -> "Custom"
+    }
+}
+
+@Composable
+private fun DateTimeFilterInput(
+    value: String,
+    label: String,
+    testTag: String,
+    clearTag: String,
+    clearTooltip: String,
+    onValueChange: (String) -> Unit
+) {
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        placeholder = {
+            Text(
+                text = TIME_FILTER_PLACEHOLDER,
+                style = MaterialTheme.typography.caption,
+                fontSize = 12.sp
+            )
+        },
+        singleLine = true,
+        textStyle = MaterialTheme.typography.caption.copy(fontSize = 12.sp),
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.CalendarToday,
+                contentDescription = null,
+                modifier = Modifier.size(14.dp)
+            )
+        },
+        trailingIcon = {
+            if (value.isNotBlank()) {
+                TooltipWrapper(tooltip = clearTooltip) {
+                    IconButton(
+                        onClick = { onValueChange("") },
+                        modifier = Modifier.size(24.dp).testTag(clearTag)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Clear,
+                            contentDescription = clearTooltip,
+                            modifier = Modifier.size(14.dp)
+                        )
+                    }
+                }
+            }
+        },
+        modifier = Modifier.width(200.dp).testTag(testTag),
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
+            focusedIndicatorColor = MaterialTheme.colors.primary,
+            unfocusedIndicatorColor = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.disabled)
+        )
+    )
 }
 
 @Composable
