@@ -50,8 +50,6 @@ Supports a wide variety of log formats out-of-the-box, including:
 
 ## Screenshots
 
-*(Screenshots will be added soon)*
-
 ### Welcome Screen
 ![KLogViewer Main Interface](docs/images/screenshots/welcome_screen.png)
 *The welcome screen with a simple file picker to select a log file to open.*
