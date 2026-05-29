@@ -17,6 +17,7 @@ import com.klogviewer.ui.mvi.TimeRangePreset
 import com.klogviewer.ui.mvi.WorkspaceMode
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
@@ -47,7 +48,8 @@ class DashboardIntentTest {
 
     @BeforeEach
     fun setup() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        val testDispatcher = UnconfinedTestDispatcher()
+        Dispatchers.setMain(testDispatcher)
         prefsRepository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         logSource = mockk()
         every { logSource.observeLogs(any(), any()) } returns flowOf(
@@ -62,7 +64,11 @@ class DashboardIntentTest {
         viewModel = KLogViewerViewModel(
             logSource = logSource,
             prefsRepository = prefsRepository,
-            heuristicProbe = HeuristicProbe(ParserRegistry())
+            heuristicProbe = HeuristicProbe(ParserRegistry()),
+            scope = CoroutineScope(testDispatcher),
+            dashboardRecomputeDebounceMs = 0L,
+            dashboardSamplingThreshold = 6,
+            dashboardSamplingTargetSize = 3
         )
     }
 
@@ -635,6 +641,68 @@ class DashboardIntentTest {
                 activeWindow?.timeFilterTo.isNullOrEmpty() &&
                 selectedBucketFrom == null
         }
+    }
+
+    @Test
+    fun `given high-volume append updates when dashboard is open then content remains responsive`() {
+        val initialEntries = (0 until 200).map { index ->
+            logEntry(
+                timestamp = "2026-01-01T00:00:${(index % 60).toString().padStart(2, '0')}Z",
+                content = "initial-$index",
+                fields = mapOf("service" to "svc-${index % 8}")
+            )
+        }
+        val appendedEntries = (200 until 400).map { index ->
+            logEntry(
+                timestamp = "2026-01-01T00:01:${(index % 60).toString().padStart(2, '0')}Z",
+                content = "append-$index",
+                fields = mapOf("service" to "svc-${index % 8}")
+            )
+        }
+
+        every { logSource.observeLogs(any(), any()) } returns flowOf(
+            LogUpdate.Initial(entries = initialEntries).right(),
+            LogUpdate.Appended(entries = appendedEntries).right()
+        )
+
+        val testFile = File(tempDir, "dashboard-high-volume.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntil {
+            val activeWindow = viewModel.state.value.activeTab?.activeWindow
+            activeWindow?.logs?.size == 400 && activeWindow.filteredLogs.size == 400
+        }
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+
+        val content = activeDashboardContent()
+        expectThat(content.totalEvents).isEqualTo(400)
+        expectThat(content.samplingInfo.mode.name).isEqualTo("DETERMINISTIC")
+    }
+
+    @Test
+    fun `given large filtered dataset when dashboard is shown then deterministic sampling metadata is reported`() {
+        val largeEntries = (0 until 12).map { index ->
+            logEntry(
+                timestamp = "2026-01-01T00:00:${index.toString().padStart(2, '0')}Z",
+                content = "entry-$index",
+                fields = mapOf("service" to "svc-${index % 4}")
+            )
+        }
+        reconfigureLogSource(largeEntries)
+
+        val testFile = File(tempDir, "dashboard-sampling.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        Thread.sleep(25)
+
+        waitUntilDashboardContentReady()
+        val content = activeDashboardContent()
+        expectThat(content.samplingInfo.mode.name).isEqualTo("DETERMINISTIC")
+        expectThat(content.samplingInfo.originalCount).isEqualTo(12)
+        expectThat(content.samplingInfo.sampledCount).isEqualTo(3)
     }
 
     private fun waitUntil(maxAttempts: Int = 200, predicate: () -> Boolean) {

@@ -28,6 +28,9 @@ import kotlin.time.Duration.Companion.milliseconds
 private val logger = KotlinLogging.logger {}
 private const val DASHBOARD_FIELD_QUERY_PREFIX = "@field:"
 private const val MISSING_BUCKET_VALUE = "(missing)"
+private const val DASHBOARD_RECOMPUTE_DEBOUNCE_MS = 75L
+private const val DASHBOARD_SAMPLING_THRESHOLD = 50_000
+private const val DASHBOARD_SAMPLING_TARGET_SIZE = 20_000
 
 class KLogViewerViewModel(
     private val logSource: LogSource,
@@ -38,7 +41,10 @@ class KLogViewerViewModel(
     val localFileSystem: LocalFileSystem = JavaLocalFileSystem(),
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
     private val remoteFileSystem: RemoteFileSystem = UnifiedRemoteFileSystem(),
-    private val analysisMetricsRepository: AnalysisMetricsRepository = InMemoryAnalysisMetricsRepository()
+    private val analysisMetricsRepository: AnalysisMetricsRepository = InMemoryAnalysisMetricsRepository(),
+    private val dashboardRecomputeDebounceMs: Long = DASHBOARD_RECOMPUTE_DEBOUNCE_MS,
+    private val dashboardSamplingThreshold: Int = DASHBOARD_SAMPLING_THRESHOLD,
+    private val dashboardSamplingTargetSize: Int = DASHBOARD_SAMPLING_TARGET_SIZE
 ) {
     private val _state = MutableStateFlow(KLogViewerState())
     val state: StateFlow<KLogViewerState> = _state.asStateFlow()
@@ -62,6 +68,7 @@ class KLogViewerViewModel(
     private var saveJob: Job? = null
     private var pendingPreferencesForPlaintextSecretSave: UserPreferences? = null
     private val filterGenerationByWindow = mutableMapOf<String, Long>()
+    private val filterRecomputeJobByWindow = mutableMapOf<String, Job>()
 
     private val recentItemsManager = RecentItemsManager(localFileSystem)
     
@@ -170,6 +177,10 @@ class KLogViewerViewModel(
     fun clear() {
         savePreferences(currentState = _state.value, debounce = false)
         logLoadingCoordinator.cancelAll()
+        synchronized(filterRecomputeJobByWindow) {
+            filterRecomputeJobByWindow.values.forEach { job -> job.cancel() }
+            filterRecomputeJobByWindow.clear()
+        }
         scope.cancel()
     }
 
@@ -584,6 +595,9 @@ class KLogViewerViewModel(
             val next = (filterGenerationByWindow[windowId] ?: 0L) + 1L
             filterGenerationByWindow[windowId] = next
         }
+        synchronized(filterRecomputeJobByWindow) {
+            filterRecomputeJobByWindow.remove(windowId)?.cancel()
+        }
     }
 
     private fun clearDashboardSelections(windowId: String) {
@@ -628,33 +642,64 @@ class KLogViewerViewModel(
             filterGenerationByWindow[windowId] = next
             next
         }
-        
-        scope.launch(Dispatchers.Default) {
-            val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@launch
-            val filteredLogs = LogFilterService.filter(window)
-            val dashboardDataState = buildDashboardDataState(
-                filteredLogs = filteredLogs,
-                bucketSize = window.dashboardBucketSize,
-                previousState = window.dashboardDataState
-            )
 
-            val isLatestGeneration = synchronized(filterGenerationByWindow) {
-                filterGenerationByWindow[windowId] == generation
+        val recomputeJob = scope.launch {
+            if (dashboardRecomputeDebounceMs > 0L) {
+                delay(dashboardRecomputeDebounceMs)
             }
-            if (!isLatestGeneration) {
-                return@launch
-            }
-            
-            _state.update { currentState ->
-                currentState.updateWindow(windowId) {
-                    it.copy(
-                        filteredLogs = filteredLogs,
-                        dashboardDataState = dashboardDataState
-                    )
+
+            withContext(Dispatchers.Default) {
+                val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@withContext
+
+                val filterStartedAtNanos = System.nanoTime()
+                val filteredLogs = LogFilterService.filter(window)
+                val filterLatencyMs = nanosToMillis(System.nanoTime() - filterStartedAtNanos)
+
+                val aggregationStartedAtNanos = System.nanoTime()
+                val dashboardDataState = buildDashboardDataState(
+                    filteredLogs = filteredLogs,
+                    bucketSize = window.dashboardBucketSize,
+                    previousState = window.dashboardDataState
+                )
+                val aggregationLatencyMs = nanosToMillis(System.nanoTime() - aggregationStartedAtNanos)
+
+                val isLatestGeneration = synchronized(filterGenerationByWindow) {
+                    filterGenerationByWindow[windowId] == generation
+                }
+                if (!isLatestGeneration) {
+                    logger.debug {
+                        "Ignoring stale dashboard aggregation result for windowId=$windowId generation=$generation"
+                    }
+                    return@withContext
+                }
+
+                val samplingInfo = (dashboardDataState as? DashboardDataState.Content)?.samplingInfo
+                logger.info {
+                    "Dashboard aggregation complete for windowId=$windowId " +
+                        "filteredCount=${filteredLogs.size} filterLatencyMs=$filterLatencyMs " +
+                        "aggregationLatencyMs=$aggregationLatencyMs " +
+                        "samplingMode=${samplingInfo?.mode ?: DashboardSamplingMode.FULL} " +
+                        "sampledCount=${samplingInfo?.sampledCount ?: filteredLogs.size}"
+                }
+
+                _state.update { currentState ->
+                    currentState.updateWindow(windowId) {
+                        it.copy(
+                            filteredLogs = filteredLogs,
+                            dashboardDataState = dashboardDataState
+                        )
+                    }
                 }
             }
         }
+
+        synchronized(filterRecomputeJobByWindow) {
+            filterRecomputeJobByWindow.remove(windowId)?.cancel()
+            filterRecomputeJobByWindow[windowId] = recomputeJob
+        }
     }
+
+    private fun nanosToMillis(nanos: Long): Long = nanos / 1_000_000
 
     private suspend fun buildDashboardDataState(
         filteredLogs: List<LogEntry>,
@@ -663,8 +708,14 @@ class KLogViewerViewModel(
     ): DashboardDataState {
         if (filteredLogs.isEmpty()) return DashboardDataState.Empty
 
+        val sampledEntries = deterministicSample(
+            entries = filteredLogs,
+            threshold = dashboardSamplingThreshold,
+            targetSize = dashboardSamplingTargetSize
+        )
+
         val previousContent = previousState as? DashboardDataState.Content
-        val availableFrequencyFields = filteredLogs.asSequence()
+        val availableFrequencyFields = sampledEntries.entries.asSequence()
             .flatMap { entry -> entry.fields.keys.asSequence() }
             .distinct()
             .sorted()
@@ -676,7 +727,7 @@ class KLogViewerViewModel(
         val frequencyThreshold = (previousContent?.frequencyThreshold ?: 1).coerceAtLeast(1)
         val frequencyCardinalityLimit = (previousContent?.frequencyCardinalityLimit ?: 100).coerceAtLeast(1)
         val frequencyItems = computeFrequencyItems(
-            entries = filteredLogs,
+            entries = sampledEntries.entries,
             selectedField = selectedFrequencyField,
             cardinalityLimit = frequencyCardinalityLimit,
             threshold = frequencyThreshold,
@@ -685,7 +736,7 @@ class KLogViewerViewModel(
         val selectedFrequencyValue = previousContent?.selectedFrequencyValue
             ?.takeIf { selectedValue -> frequencyItems.any { it.value == selectedValue } }
         val comparisonState = computeComparisonState(
-            entries = filteredLogs,
+            entries = sampledEntries.entries,
             previousState = previousContent?.comparisonState ?: DashboardComparisonState(),
             selectedField = selectedFrequencyField,
             threshold = frequencyThreshold,
@@ -695,7 +746,7 @@ class KLogViewerViewModel(
 
         val timeSeriesResult = analysisMetricsRepository.timeSeriesMetrics(
             TimeSeriesMetricsQuery(
-                entries = filteredLogs,
+                entries = sampledEntries.entries,
                 bucketSize = bucketSize.toDomainBucketSize(),
                 window = DiffWindow.Unbounded
             )
@@ -717,7 +768,7 @@ class KLogViewerViewModel(
                         )
                     }
                     .toList()
-                val levelDistribution = computeNormalizedLevelDistribution(filteredLogs)
+                val levelDistribution = computeNormalizedLevelDistribution(sampledEntries.entries)
                 val selectedBucketFrom = previousContent?.selectedBucketFrom
                     ?.takeIf { selectedFrom -> timeSeries.any { it.from == selectedFrom } }
                 val selectedLevel = previousContent?.selectedLevel
@@ -737,11 +788,53 @@ class KLogViewerViewModel(
                     selectedBucketFrom = selectedBucketFrom,
                     selectedLevel = selectedLevel,
                     selectedFrequencyValue = selectedFrequencyValue,
-                    comparisonState = comparisonState
+                    comparisonState = comparisonState,
+                    samplingInfo = DashboardSamplingInfo(
+                        originalCount = sampledEntries.originalCount,
+                        sampledCount = sampledEntries.entries.size,
+                        mode = sampledEntries.mode
+                    ),
+                    aggregationCompletedAtEpochMillis = System.currentTimeMillis()
                 )
             }
         )
     }
+
+    private fun deterministicSample(
+        entries: List<LogEntry>,
+        threshold: Int,
+        targetSize: Int
+    ): SampledEntries {
+        if (entries.size <= threshold || targetSize <= 0 || entries.size <= targetSize) {
+            return SampledEntries(
+                entries = entries,
+                originalCount = entries.size,
+                mode = DashboardSamplingMode.FULL
+            )
+        }
+
+        val step = entries.size.toDouble() / targetSize.toDouble()
+        val sampled = List(targetSize) { index ->
+            val sourceIndex = (index * step).toInt().coerceIn(0, entries.lastIndex)
+            entries[sourceIndex]
+        }
+
+        logger.info {
+            "Applied deterministic sampling originalCount=${entries.size} sampledCount=${sampled.size} step=${"%.3f".format(step)}"
+        }
+
+        return SampledEntries(
+            entries = sampled,
+            originalCount = entries.size,
+            mode = DashboardSamplingMode.DETERMINISTIC
+        )
+    }
+
+    private data class SampledEntries(
+        val entries: List<LogEntry>,
+        val originalCount: Int,
+        val mode: DashboardSamplingMode
+    )
 
     private suspend fun computeFrequencyItems(
         entries: List<LogEntry>,

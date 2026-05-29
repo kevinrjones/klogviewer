@@ -32,7 +32,10 @@ import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.mvi.*
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.math.abs
+
+private val dashboardLogger = KotlinLogging.logger {}
 
 @Composable
 fun KLogViewerScreen(
@@ -872,6 +875,17 @@ private fun DashboardContent(
     onCompareFrequencyValueSelect: (String) -> Unit,
     onClearSelections: () -> Unit
 ) {
+    LaunchedEffect(content.aggregationCompletedAtEpochMillis) {
+        val renderLatencyMs =
+            (System.currentTimeMillis() - content.aggregationCompletedAtEpochMillis).coerceAtLeast(0)
+        dashboardLogger.info {
+            "Dashboard render complete totalEvents=${content.totalEvents} " +
+                "sampledEvents=${content.samplingInfo.sampledCount} " +
+                "samplingMode=${content.samplingInfo.mode} " +
+                "renderLatencyMs=$renderLatencyMs"
+        }
+    }
+
     var isSummaryExpanded by remember { mutableStateOf(true) }
     var isFrequencyExpanded by remember { mutableStateOf(true) }
     var isComparisonExpanded by remember { mutableStateOf(true) }

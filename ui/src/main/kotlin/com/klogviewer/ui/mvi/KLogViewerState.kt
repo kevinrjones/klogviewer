@@ -64,6 +64,17 @@ data class DashboardComparisonState(
     val fieldDeltas: List<DashboardFieldFrequencyItem> = emptyList()
 )
 
+data class DashboardSamplingInfo(
+    val originalCount: Int,
+    val sampledCount: Int,
+    val mode: DashboardSamplingMode
+)
+
+enum class DashboardSamplingMode {
+    FULL,
+    DETERMINISTIC
+}
+
 sealed interface DashboardDataState {
     data object Loading : DashboardDataState
     data object Empty : DashboardDataState
@@ -82,7 +93,13 @@ sealed interface DashboardDataState {
         val selectedBucketFrom: Instant? = null,
         val selectedLevel: LogLevel? = null,
         val selectedFrequencyValue: String? = null,
-        val comparisonState: DashboardComparisonState = DashboardComparisonState()
+        val comparisonState: DashboardComparisonState = DashboardComparisonState(),
+        val samplingInfo: DashboardSamplingInfo = DashboardSamplingInfo(
+            originalCount = totalEvents,
+            sampledCount = totalEvents,
+            mode = DashboardSamplingMode.FULL
+        ),
+        val aggregationCompletedAtEpochMillis: Long = System.currentTimeMillis()
     ) : DashboardDataState
 }
 

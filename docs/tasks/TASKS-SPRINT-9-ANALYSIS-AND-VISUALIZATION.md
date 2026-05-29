@@ -76,11 +76,11 @@ K- [x] 14.2.1. Benchmark Compose-capable chart libraries on Desktop with represe
 - [ ] 14.7.4. Support copying/exporting analysis outputs (CSV/JSON and clipboard summary)
 
 ### 14.8. Performance and Background Execution
-- [ ] 14.8.1. Run heavy aggregations on `Dispatchers.Default`; keep UI thread free of blocking work
-- [ ] 14.8.2. Add cancellation/debounce for rapid filter/range changes to prevent stale results
-- [ ] 14.8.3. Add deterministic sampling mode for very large datasets
-- [ ] 14.8.4. Add instrumentation logs for aggregation latency, render latency, and sampling decisions
-- [ ] 14.8.5. Validate charts remain responsive under high-volume append scenarios
+- [x] 14.8.1. Run heavy aggregations on `Dispatchers.Default`; keep UI thread free of blocking work
+- [x] 14.8.2. Add cancellation/debounce for rapid filter/range changes to prevent stale results
+- [x] 14.8.3. Add deterministic sampling mode for very large datasets
+- [x] 14.8.4. Add instrumentation logs for aggregation latency, render latency, and sampling decisions
+- [x] 14.8.5. Validate charts remain responsive under high-volume append scenarios
 
 ### 14.9. Verification & Testing
 - [ ] 14.9.1. Unit tests for time bucketing and sparse/out-of-order timestamp handling

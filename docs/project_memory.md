@@ -2701,3 +2701,22 @@ For each sprint/task
 **Test coverage areas**
 - `ui/src/test/kotlin/com/klogviewer/ui/test/DashboardUxHardeningUiTest.kt` (added `givenDashboardWithOnlyUnknownRawLevels_whenRenderingSummary_thenLevelDistributionChartIsHidden`).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 9 Performance and Background Execution (14.8)
+**Title**: Add Debounced Background Aggregation, Deterministic Sampling, and Latency Instrumentation
+**Date/time completed**: 2026-05-29 08:45
+**What was shipped**
+- Added per-window recomputation scheduling in `KLogViewerViewModel` with cancellation and debounce-aware orchestration around `filterLogs(...)`, while keeping expensive filtering/aggregation on `Dispatchers.Default`.
+- Added deterministic sampling for large datasets before dashboard aggregation and surfaced sampling metadata (`FULL` vs `DETERMINISTIC`, original/sample counts) in `DashboardDataState.Content`.
+- Added instrumentation logs for filter/aggregation/sampling decisions in `KLogViewerViewModel` and render-latency logging in `KLogViewerScreen` keyed by aggregation completion timestamp.
+- Extended dashboard intent tests with deterministic sampling and high-volume append responsiveness coverage, and updated Sprint task tracking to mark all `14.8.*` items complete.
+**Key decisions**
+- Kept sampling deterministic and index-step based to ensure repeatable chart analysis outcomes for identical inputs.
+- Preserved existing dashboard semantics by inserting sampling and instrumentation into the existing `filterLogs -> buildDashboardDataState` pipeline instead of changing analysis contracts.
+- Stored lightweight instrumentation metadata directly in dashboard content state to support render-latency logging without introducing additional side channels.
+**Gotchas**
+- Test stability required avoiding brittle debounce-timing assertions in Compose/UI harnesses; final coverage focuses on deterministic sampling and high-volume append responsiveness.
+- Full `:ui:test` currently contains unrelated failing UI tests in `com.klogviewer.ui.test` that are outside the `14.8` scope; focused changed-path verification was used for this task.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (added deterministic sampling metadata and high-volume append responsiveness assertions).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
