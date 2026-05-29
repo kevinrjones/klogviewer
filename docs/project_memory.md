@@ -2828,3 +2828,22 @@ For each sprint/task
 - `./gradlew :core:test --tests "com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest"` (`BUILD SUCCESSFUL`).
 - `for i in {1..30}; do ./gradlew :ui:test --tests "...ordering remains deterministic" --tests "...tie ordering..." --tests "...thresholded values are limited..." ...; done` (`PASS 30/30`).
 - `for i in {1..20}; do ./gradlew :ui:test --tests "...comparison..." ...; done` (`PASS 20/20`).
+
+## Task: Windows CI Stabilization for Tab Management Integration Test
+**Title**: Harden TabManagement Async Waits for Deterministic Per-Tab State Assertions
+**Date/time completed**: 2026-05-29 12:02
+**What was shipped**
+- Reworked `TabManagementTest` to use explicit tab/window-scoped async wait helpers instead of short `state.first` + `withTimeout(2000ms)` checks that could time out on slower Windows CI.
+- Updated the failing scenario `should maintain independent filter queries and logs per tab` to wait for exact window convergence (`logs`, `filterQueries`, `filteredLogs`) per tab before asserting isolation.
+- Applied the same deterministic load waiting pattern to nearby split-window and multi-selection tests in the same class.
+- Moved test log fixtures to `@TempDir`-scoped files for stable per-test filesystem behavior.
+**Key decisions**
+- Kept production code unchanged because tab state transitions are synchronous and the flake source was test synchronization around async loading/filter recomputation.
+- Preferred state-specific convergence predicates over generic active-tab content checks to avoid stale-state observations.
+**Gotchas**
+- A loaded active window can still transiently expose stale filter-derived data; waits must include both control state and data shape, not just `logs.isNotEmpty()`.
+**Test coverage areas**
+- `app/src/test/kotlin/com/klogviewer/integration/TabManagementTest.kt` (tab/window deterministic waits and fixture setup).
+- `./gradlew :app:test --tests "com.klogviewer.integration.TabManagementTest"` (`BUILD SUCCESSFUL`).
+- `for i in {1..40}; do ./gradlew :app:test --tests "com.klogviewer.integration.TabManagementTest.should maintain independent filter queries and logs per tab" ...; done` (`PASS 40/40`).
+- `./gradlew :app:test --tests "com.klogviewer.integration.*"` (`BUILD SUCCESSFUL`).

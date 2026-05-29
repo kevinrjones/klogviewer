@@ -7,8 +7,10 @@ import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.core.source.FileLogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
+import com.klogviewer.ui.mvi.LogWindow
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -38,74 +40,68 @@ class TabManagementTest {
     @Test
     fun `should maintain independent filter queries and logs per tab`() = runBlocking {
         // Create first tab with a log
-        val file1 = File.createTempFile("log1", ".log").apply {
-            writeText("2023-10-27 10:00:00 [INFO] Log entry one\n")
-            deleteOnExit()
-        }
+        val file1 = createTempLogFile(
+            "log1",
+            "2023-10-27 10:00:00 [INFO] Log entry one\n"
+        )
         val tab1Id = viewModel.state.value.activeTabId!!
+        val tab1WindowId = viewModel.state.value.activeTab?.activeWindowId!!
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file1.absolutePath)))
-        
-        // Wait for load
-        withTimeout(2000.milliseconds) {
-            viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && (it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false) }
-        }
+
+        waitUntilWindowLoaded(tab1Id, tab1WindowId, expectedLogCount = 1)
         
         viewModel.handleIntent(KLogViewerIntent.AddFilterQuery("entry one"))
-        withTimeout(2000.milliseconds) {
-            viewModel.state.first { it.activeTab?.activeWindow?.filteredLogs?.size == 1 }
-        }
-        assertEquals(1, viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.size)
+        waitUntilFilterApplied(tab1Id, tab1WindowId, expectedQueries = listOf("entry one"), expectedFilteredCount = 1)
+
+        assertEquals(1, windowState(tab1Id, tab1WindowId)?.filteredLogs?.size)
 
         // Add second tab
         viewModel.handleIntent(KLogViewerIntent.AddTab)
         val tab2Id = viewModel.state.value.activeTabId!!
+        val tab2WindowId = viewModel.state.value.activeTab?.activeWindowId!!
         assertNotEquals(tab1Id, tab2Id)
         
         // Load different log into second tab
-        val file2 = File.createTempFile("log2", ".log").apply {
-            writeText("2023-10-27 10:00:01 [ERROR] Something failed\n")
-            deleteOnExit()
-        }
+        val file2 = createTempLogFile(
+            "log2",
+            "2023-10-27 10:00:01 [ERROR] Something failed\n"
+        )
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file2.absolutePath)))
-        
-        // Wait for load
-        withTimeout(2000.milliseconds) {
-            viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false && (it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false) }
-        }
+
+        waitUntilWindowLoaded(tab2Id, tab2WindowId, expectedLogCount = 1)
         
         viewModel.handleIntent(KLogViewerIntent.AddFilterQuery("failed"))
-        withTimeout(2000.milliseconds) {
-            viewModel.state.first { it.activeTab?.activeWindow?.filteredLogs?.size == 1 }
-        }
-        assertEquals(1, viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.size)
+        waitUntilFilterApplied(tab2Id, tab2WindowId, expectedQueries = listOf("failed"), expectedFilteredCount = 1)
+
+        assertEquals(1, windowState(tab2Id, tab2WindowId)?.filteredLogs?.size)
         
         // Switch back to tab 1
         viewModel.handleIntent(KLogViewerIntent.SwitchTab(tab1Id))
-        assertEquals(listOf("entry one"), viewModel.state.value.activeTab?.activeWindow?.filterQueries)
-        assertEquals(1, viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.size)
-        assertEquals("Log entry one", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value)
+        waitUntilActiveTab(tab1Id)
+        assertEquals(listOf("entry one"), windowState(tab1Id, tab1WindowId)?.filterQueries)
+        assertEquals(1, windowState(tab1Id, tab1WindowId)?.filteredLogs?.size)
+        assertEquals("Log entry one", windowState(tab1Id, tab1WindowId)?.filteredLogs?.get(0)?.content?.value)
         
         // Switch to tab 2
         viewModel.handleIntent(KLogViewerIntent.SwitchTab(tab2Id))
-        assertEquals(listOf("failed"), viewModel.state.value.activeTab?.activeWindow?.filterQueries)
-        assertEquals(1, viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.size)
-        assertEquals("Something failed", viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value)
+        waitUntilActiveTab(tab2Id)
+        assertEquals(listOf("failed"), windowState(tab2Id, tab2WindowId)?.filterQueries)
+        assertEquals(1, windowState(tab2Id, tab2WindowId)?.filteredLogs?.size)
+        assertEquals("Something failed", windowState(tab2Id, tab2WindowId)?.filteredLogs?.get(0)?.content?.value)
     }
 
     @Test
     fun `should support multiple split windows in a single tab`() = runBlocking {
-        val file1 = File.createTempFile("log1", ".log").apply {
-            writeText("2023-10-27 10:00:00 [INFO] Log entry one\n")
-            deleteOnExit()
-        }
+        val file1 = createTempLogFile(
+            "log1",
+            "2023-10-27 10:00:00 [INFO] Log entry one\n"
+        )
+        val tabId = viewModel.state.value.activeTabId!!
+        val firstWindowId = viewModel.state.value.activeTab?.activeWindowId!!
         
         // Load into first window
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file1.absolutePath)))
-        withTimeout(2000.milliseconds) {
-            viewModel.state.first { it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false }
-        }
-        
-        val firstWindowId = viewModel.state.value.activeTab?.activeWindowId!!
+        waitUntilWindowLoaded(tabId, firstWindowId, expectedLogCount = 1)
         
         // Split
         viewModel.handleIntent(KLogViewerIntent.SplitHorizontal)
@@ -114,16 +110,12 @@ class TabManagementTest {
         assertEquals(2, viewModel.state.value.activeTab?.windows?.size)
         
         // Load into second window
-        val file2 = File.createTempFile("log2", ".log").apply {
-            writeText("2023-10-27 10:00:01 [ERROR] Something failed\n")
-            deleteOnExit()
-        }
+        val file2 = createTempLogFile(
+            "log2",
+            "2023-10-27 10:00:01 [ERROR] Something failed\n"
+        )
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file2.absolutePath)))
-        withTimeout(2000.milliseconds) {
-            viewModel.state.first { tabState ->
-                tabState.activeTab?.windows?.find { it.id == secondWindowId }?.logs?.isNotEmpty() ?: false
-            }
-        }
+        waitUntilWindowLoaded(tabId, secondWindowId, expectedLogCount = 1)
         
         // Verify independent logs
         val tab = viewModel.state.value.activeTab!!
@@ -203,17 +195,19 @@ class TabManagementTest {
 
     @Test
     fun `should support multi-selection via ToggleEntrySelection`() = runBlocking {
-        val file = File.createTempFile("log1", ".log").apply {
-            writeText("2023-10-27 10:00:00 [INFO] Line 1\n")
-            appendText("2023-10-27 10:00:01 [INFO] Line 2\n")
-            appendText("2023-10-27 10:00:02 [INFO] Line 3\n")
-            appendText("2023-10-27 10:00:03 [INFO] Line 4\n")
-            deleteOnExit()
-        }
+        val file = createTempLogFile(
+            "log1",
+            """
+            2023-10-27 10:00:00 [INFO] Line 1
+            2023-10-27 10:00:01 [INFO] Line 2
+            2023-10-27 10:00:02 [INFO] Line 3
+            2023-10-27 10:00:03 [INFO] Line 4
+            """.trimIndent() + "\n"
+        )
+        val tabId = viewModel.state.value.activeTabId!!
+        val windowId = viewModel.state.value.activeTab?.activeWindowId!!
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(file.absolutePath)))
-        withTimeout(2000.milliseconds) {
-            viewModel.state.first { it.activeTab?.activeWindow?.logs?.size == 4 }
-        }
+        waitUntilWindowLoaded(tabId, windowId, expectedLogCount = 4)
         
         // Select first line
         viewModel.handleIntent(KLogViewerIntent.ToggleEntrySelection(0))
@@ -231,5 +225,55 @@ class TabManagementTest {
         // Select without modifiers should clear others
         viewModel.handleIntent(KLogViewerIntent.ToggleEntrySelection(1))
         assertEquals(setOf(1), viewModel.state.value.activeTab?.activeWindow?.selectedIndices)
+    }
+
+    private fun createTempLogFile(prefix: String, content: String): File {
+        val file = File(tempDir, "$prefix-${System.nanoTime()}.log")
+        file.writeText(content)
+        return file
+    }
+
+    private fun windowState(tabId: String, windowId: String): LogWindow? {
+        val tab = viewModel.state.value.tabs.find { it.id == tabId } ?: return null
+        return tab.windows.find { it.id == windowId }
+    }
+
+    private suspend fun waitUntilWindowLoaded(tabId: String, windowId: String, expectedLogCount: Int) {
+        waitUntil {
+            val window = windowState(tabId, windowId) ?: return@waitUntil false
+            !window.isLoading && window.logs.size == expectedLogCount
+        }
+    }
+
+    private suspend fun waitUntilFilterApplied(
+        tabId: String,
+        windowId: String,
+        expectedQueries: List<String>,
+        expectedFilteredCount: Int
+    ) {
+        waitUntil {
+            val window = windowState(tabId, windowId) ?: return@waitUntil false
+            window.filterQueries == expectedQueries && window.filteredLogs.size == expectedFilteredCount
+        }
+    }
+
+    private suspend fun waitUntilActiveTab(tabId: String) {
+        waitUntil { viewModel.state.value.activeTabId == tabId }
+    }
+
+    private suspend fun waitUntil(
+        timeoutMillis: Long = 10_000,
+        pollIntervalMillis: Long = 20,
+        predicate: () -> Boolean
+    ) {
+        try {
+            withTimeout(timeoutMillis.milliseconds) {
+                while (!predicate()) {
+                    delay(pollIntervalMillis.milliseconds)
+                }
+            }
+        } catch (_: TimeoutCancellationException) {
+            throw AssertionError("Condition was not met in time")
+        }
     }
 }
