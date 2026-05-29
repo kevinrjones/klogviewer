@@ -44,7 +44,8 @@ class KLogViewerViewModel(
     private val analysisMetricsRepository: AnalysisMetricsRepository = InMemoryAnalysisMetricsRepository(),
     private val dashboardRecomputeDebounceMs: Long = DASHBOARD_RECOMPUTE_DEBOUNCE_MS,
     private val dashboardSamplingThreshold: Int = DASHBOARD_SAMPLING_THRESHOLD,
-    private val dashboardSamplingTargetSize: Int = DASHBOARD_SAMPLING_TARGET_SIZE
+    private val dashboardSamplingTargetSize: Int = DASHBOARD_SAMPLING_TARGET_SIZE,
+    private val dashboardComputationDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
     private val _state = MutableStateFlow(KLogViewerState())
     val state: StateFlow<KLogViewerState> = _state.asStateFlow()
@@ -232,23 +233,23 @@ class KLogViewerViewModel(
     }
 
     private fun handleDashboardIntent(intent: KLogViewerIntent.DashboardIntent) {
-        val activeWindow = _state.value.activeTab?.activeWindow ?: return
+        val activeWindowId = _state.value.activeTab?.activeWindow?.id ?: return
         when (intent) {
             KLogViewerIntent.ShowDashboard -> {
                 _state.update { state ->
-                    state.updateWindow(activeWindow.id) { window ->
+                    state.updateWindow(activeWindowId) { window ->
                         window.copy(
                             workspaceMode = WorkspaceMode.DASHBOARD,
                             dashboardDataState = DashboardDataState.Loading
                         )
                     }
                 }
-                filterLogs(activeWindow.id)
+                filterLogs(activeWindowId)
             }
 
             KLogViewerIntent.ShowLogs -> {
                 _state.update { state ->
-                    state.updateWindow(activeWindow.id) { window ->
+                    state.updateWindow(activeWindowId) { window ->
                         window.copy(workspaceMode = WorkspaceMode.LOGS)
                     }
                 }
@@ -256,7 +257,7 @@ class KLogViewerViewModel(
 
             is KLogViewerIntent.SetDashboardBucketSize -> {
                 _state.update { state ->
-                    state.updateWindow(activeWindow.id) { window ->
+                    state.updateWindow(activeWindowId) { window ->
                         val nextDashboardState = when (val currentDashboardState = window.dashboardDataState) {
                             is DashboardDataState.Content -> currentDashboardState.copy(
                                 bucketSize = intent.bucketSize,
@@ -271,40 +272,40 @@ class KLogViewerViewModel(
                         )
                     }
                 }
-                filterLogs(activeWindow.id)
+                filterLogs(activeWindowId)
             }
 
-            is KLogViewerIntent.SelectDashboardTimeBucket -> applyDashboardTimeBucketSelection(activeWindow.id, intent.bucketFrom)
+            is KLogViewerIntent.SelectDashboardTimeBucket -> applyDashboardTimeBucketSelection(activeWindowId, intent.bucketFrom)
             is KLogViewerIntent.SelectDashboardTimeRange -> applyDashboardTimeRangeSelection(
-                activeWindow.id,
+                activeWindowId,
                 intent.from,
                 intent.to
             )
-            is KLogViewerIntent.SelectDashboardLevel -> applyDashboardLevelSelection(activeWindow.id, intent.level)
-            is KLogViewerIntent.SetDashboardFrequencyField -> applyDashboardFrequencyFieldSelection(activeWindow.id, intent.fieldKey)
-            is KLogViewerIntent.SetDashboardFrequencyTopN -> applyDashboardFrequencyTopN(activeWindow.id, intent.topN)
-            is KLogViewerIntent.SetDashboardFrequencyThreshold -> applyDashboardFrequencyThreshold(activeWindow.id, intent.threshold)
+            is KLogViewerIntent.SelectDashboardLevel -> applyDashboardLevelSelection(activeWindowId, intent.level)
+            is KLogViewerIntent.SetDashboardFrequencyField -> applyDashboardFrequencyFieldSelection(activeWindowId, intent.fieldKey)
+            is KLogViewerIntent.SetDashboardFrequencyTopN -> applyDashboardFrequencyTopN(activeWindowId, intent.topN)
+            is KLogViewerIntent.SetDashboardFrequencyThreshold -> applyDashboardFrequencyThreshold(activeWindowId, intent.threshold)
             is KLogViewerIntent.SetDashboardFrequencyCardinalityLimit -> {
-                applyDashboardFrequencyCardinalityLimit(activeWindow.id, intent.limit)
+                applyDashboardFrequencyCardinalityLimit(activeWindowId, intent.limit)
             }
             is KLogViewerIntent.SelectDashboardFrequencyValue -> {
-                applyDashboardFrequencyValueSelection(activeWindow.id, intent.value)
+                applyDashboardFrequencyValueSelection(activeWindowId, intent.value)
             }
             is KLogViewerIntent.SetDashboardCompareBaselineFrom -> {
-                applyDashboardCompareBaselineFrom(activeWindow.id, intent.from)
+                applyDashboardCompareBaselineFrom(activeWindowId, intent.from)
             }
             is KLogViewerIntent.SetDashboardCompareBaselineTo -> {
-                applyDashboardCompareBaselineTo(activeWindow.id, intent.to)
+                applyDashboardCompareBaselineTo(activeWindowId, intent.to)
             }
             is KLogViewerIntent.SetDashboardCompareComparisonFrom -> {
-                applyDashboardCompareComparisonFrom(activeWindow.id, intent.from)
+                applyDashboardCompareComparisonFrom(activeWindowId, intent.from)
             }
             is KLogViewerIntent.SetDashboardCompareComparisonTo -> {
-                applyDashboardCompareComparisonTo(activeWindow.id, intent.to)
+                applyDashboardCompareComparisonTo(activeWindowId, intent.to)
             }
-            KLogViewerIntent.RunDashboardComparison -> filterLogs(activeWindow.id)
-            KLogViewerIntent.ClearDashboardComparison -> clearDashboardComparison(activeWindow.id)
-            KLogViewerIntent.ClearDashboardSelections -> clearDashboardSelections(activeWindow.id)
+            KLogViewerIntent.RunDashboardComparison -> filterLogs(activeWindowId)
+            KLogViewerIntent.ClearDashboardComparison -> clearDashboardComparison(activeWindowId)
+            KLogViewerIntent.ClearDashboardSelections -> clearDashboardSelections(activeWindowId)
         }
     }
 
@@ -394,19 +395,17 @@ class KLogViewerViewModel(
     }
 
     private fun applyDashboardLevelSelection(windowId: String, level: LogLevel) {
-        val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return
-        val dashboardState = window.dashboardDataState as? DashboardDataState.Content ?: return
-        val isClearingSelection = dashboardState.selectedLevel == level
-
         _state.update { state ->
             state.updateWindow(windowId) { currentWindow ->
-                val allLevels = LogLevel.entries.toSet()
                 val currentDashboardData = currentWindow.dashboardDataState as? DashboardDataState.Content
+                    ?: return@updateWindow currentWindow
+                val isClearingSelection = currentDashboardData.selectedLevel == level
+                val allLevels = LogLevel.entries.toSet()
                 currentWindow.copy(
                     levelFilters = if (isClearingSelection) allLevels else setOf(level),
-                    dashboardDataState = currentDashboardData?.copy(
+                    dashboardDataState = currentDashboardData.copy(
                         selectedLevel = if (isClearingSelection) null else level
-                    ) ?: currentWindow.dashboardDataState
+                    )
                 )
             }
         }
@@ -653,7 +652,7 @@ class KLogViewerViewModel(
                     delay(dashboardRecomputeDebounceMs.milliseconds)
                 }
 
-                withContext(Dispatchers.Default) {
+                withContext(dashboardComputationDispatcher) {
                     val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@withContext
 
                     val filterStartedAtNanos = System.nanoTime()
@@ -688,10 +687,24 @@ class KLogViewerViewModel(
                     }
 
                     _state.update { currentState ->
+                        val isLatestAtApplyTime = synchronized(filterRecomputeLock) {
+                            filterGenerationByWindow[windowId] == generation
+                        }
+                        if (!isLatestAtApplyTime) {
+                            logger.debug {
+                                "Skipping stale dashboard aggregation apply for windowId=$windowId generation=$generation"
+                            }
+                            return@update currentState
+                        }
+
                         currentState.updateWindow(windowId) {
+                            val dashboardDataStateToApply = mergeDashboardSelectionsWithLatestState(
+                                computedState = dashboardDataState,
+                                latestWindow = it
+                            )
                             it.copy(
                                 filteredLogs = filteredLogs,
-                                dashboardDataState = dashboardDataState
+                                dashboardDataState = dashboardDataStateToApply
                             )
                         }
                     }
@@ -704,6 +717,28 @@ class KLogViewerViewModel(
 
         previousJob?.cancel()
         recomputeJob.start()
+    }
+
+    private fun mergeDashboardSelectionsWithLatestState(
+        computedState: DashboardDataState,
+        latestWindow: LogWindow
+    ): DashboardDataState {
+        val computedContent = computedState as? DashboardDataState.Content ?: return computedState
+        val latestContent = latestWindow.dashboardDataState as? DashboardDataState.Content ?: return computedState
+
+        val selectedBucketFrom = latestContent.selectedBucketFrom
+            ?.takeIf { selectedFrom -> computedContent.timeSeries.any { bucket -> bucket.from == selectedFrom } }
+        val selectedLevel = latestContent.selectedLevel
+            ?.takeIf { selected -> latestWindow.levelFilters == setOf(selected) }
+            ?.takeIf { selected -> computedContent.levelDistribution.any { distribution -> distribution.level == selected && distribution.count > 0 } }
+        val selectedFrequencyValue = latestContent.selectedFrequencyValue
+            ?.takeIf { selectedValue -> computedContent.frequencyItems.any { item -> item.value == selectedValue } }
+
+        return computedContent.copy(
+            selectedBucketFrom = selectedBucketFrom,
+            selectedLevel = selectedLevel,
+            selectedFrequencyValue = selectedFrequencyValue
+        )
     }
 
     private fun nanosToMillis(nanos: Long): Long = nanos / 1_000_000

@@ -2889,3 +2889,25 @@ For each sprint/task
 - `for i in {1..40}; do ./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given tied frequency counts when limiting top n then ordering is deterministic by value ascending" ...; done` (`PASS 40/40`).
 - `./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` and `for i in {1..20}; do ./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" ...; done` (`PASS 20/20`).
 - `./gradlew :core:test --tests "com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Desktop CI Stabilization for Dashboard Level Selection + Recompute Races
+**Title**: Close Recompute Apply-Time Generation Race and Keep Dashboard Selections Synchronized
+**Date/time completed**: 2026-05-29 15:22
+**What was shipped**
+- Updated `KLogViewerViewModel.filterLogs` to guard stale recompute results twice: once before apply and again at apply-time inside `_state.update`, preventing old generations from overwriting newer dashboard intent state in the check→apply race window.
+- Updated `KLogViewerViewModel` dashboard intent handling to capture only stable `windowId` (not window snapshots), and made `applyDashboardLevelSelection` compute toggle/clear decisions from the latest in-update window state.
+- Added merge protection when applying recompute results so latest dashboard selections (`selectedLevel`, `selectedBucketFrom`, `selectedFrequencyValue`) remain synchronized with active filters/state.
+- Added injectable `dashboardComputationDispatcher` (default `Dispatchers.Default`) and wired dashboard tests to pass the shared test dispatcher.
+- Updated `DashboardIntentTest` to use `StandardTestDispatcher` and expanded timeout diagnostics (`workspace mode`, state class, level filters, selected level, selected bucket, frequency controls/items, queries, log counts, sampling info).
+**Key decisions**
+- Treated frequency-ordering and level-toggle CI failures as one ViewModel recompute-state consistency issue, not a comparator-only issue.
+- Fixed production race conditions first, then tightened test scheduler control and diagnostics for deterministic CI behavior.
+- Kept user-facing semantics unchanged: dashboard level selection toggles exact active level filters and clear restores full level set with null dashboard selection.
+**Gotchas**
+- A generation check performed only before `_state.update` is insufficient; generation can advance between the check and apply, allowing stale results to overwrite newer intent state under CI concurrency.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/KLogViewerViewModel.kt` (dashboard intent/recompute apply race hardening and state merge protection).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (dispatcher control + richer debug snapshot for level/frequency failures).
+- `./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given dashboard content when selecting level then level selection toggles filter" --tests "...tied frequency counts..." --tests "...top n and threshold..." --tests "...selected dashboard time bucket when clearing selections..." --tests "...frequency field selection when selecting value then dashboard filter query toggles"` (`BUILD SUCCESSFUL`).
+- `for i in {1..20}; do ./gradlew :ui:desktopTest --tests "...five dashboard scenarios..." ...; done` (`PASS 20/20`).
+- `./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` and `for i in {1..20}; do ./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" ...; done` (`PASS 20/20`).

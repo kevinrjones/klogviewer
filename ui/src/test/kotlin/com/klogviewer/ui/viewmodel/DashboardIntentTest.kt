@@ -25,9 +25,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestDispatcher
 import kotlinx.coroutines.test.TestScope
-import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -59,7 +59,7 @@ class DashboardIntentTest {
 
     @BeforeEach
     fun setup() {
-        testDispatcher = UnconfinedTestDispatcher()
+        testDispatcher = StandardTestDispatcher()
         testScope = TestScope(testDispatcher)
         Dispatchers.setMain(testDispatcher)
         prefsRepository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
@@ -80,7 +80,8 @@ class DashboardIntentTest {
             scope = testScope,
             dashboardRecomputeDebounceMs = 0L,
             dashboardSamplingThreshold = 6,
-            dashboardSamplingTargetSize = 3
+            dashboardSamplingTargetSize = 3,
+            dashboardComputationDispatcher = testDispatcher
         )
     }
 
@@ -955,16 +956,24 @@ class DashboardIntentTest {
     private fun dashboardDebugSnapshot(): String {
         val activeWindow = viewModel.state.value.activeTab?.activeWindow ?: return "No active window"
         val content = activeWindow.dashboardDataState as? DashboardDataState.Content
+
+        val baseState = buildString {
+            append("workspaceMode=${activeWindow.workspaceMode}, ")
+            append("dashboardState=${activeWindow.dashboardDataState::class.simpleName}, ")
+            append("levelFilters=${activeWindow.levelFilters}, ")
+            append("filterQueries=${activeWindow.filterQueries}, ")
+            append("logs=${activeWindow.logs.size}, filtered=${activeWindow.filteredLogs.size}")
+        }
+
         return if (content == null) {
-            "dashboardState=${activeWindow.dashboardDataState::class.simpleName}, " +
-                "logs=${activeWindow.logs.size}, filtered=${activeWindow.filteredLogs.size}, " +
-                "queries=${activeWindow.filterQueries}"
+            baseState
         } else {
-            "dashboardState=Content, field=${content.selectedFrequencyField}, " +
-                "threshold=${content.frequencyThreshold}, topN=${content.frequencyTopN}, " +
-                "items=${content.frequencyItems.map { "${it.value}:${it.count}" }}, " +
-                "logs=${activeWindow.logs.size}, filtered=${activeWindow.filteredLogs.size}, " +
-                "queries=${activeWindow.filterQueries}"
+            "$baseState, selectedLevel=${content.selectedLevel}, selectedBucket=${content.selectedBucketFrom}, " +
+                "selectedFrequencyField=${content.selectedFrequencyField}, selectedFrequencyValue=${content.selectedFrequencyValue}, " +
+                "frequencyThreshold=${content.frequencyThreshold}, frequencyTopN=${content.frequencyTopN}, " +
+                "frequencyCardinalityLimit=${content.frequencyCardinalityLimit}, " +
+                "frequencyItems=${content.frequencyItems.map { "${it.value}:${it.count}" }}, " +
+                "samplingMode=${content.samplingInfo.mode}, sampled=${content.samplingInfo.sampledCount}/${content.samplingInfo.originalCount}"
         }
     }
 
