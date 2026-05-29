@@ -270,13 +270,11 @@ class DashboardIntentTest {
         waitUntilDashboardContentReady()
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
 
-        waitUntil {
-            activeDashboardContent().selectedFrequencyField == "service"
-        }
+        waitUntilFrequencyFieldSelected("service")
 
         val selectedValue = "auth"
         waitUntil {
-            activeDashboardContent().frequencyItems.any { it.value == selectedValue }
+            activeDashboardContentOrNull()?.frequencyItems?.any { it.value == selectedValue } == true
         }
 
         viewModel.handleIntent(KLogViewerIntent.SelectDashboardFrequencyValue(selectedValue))
@@ -317,7 +315,7 @@ class DashboardIntentTest {
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
 
         waitUntil {
-            activeDashboardContent().frequencyItems.any { it.value == "(missing)" }
+            activeDashboardContentOrNull()?.frequencyItems?.any { it.value == "(missing)" } == true
         }
     }
 
@@ -343,9 +341,73 @@ class DashboardIntentTest {
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(2))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyTopN(1))
 
-        waitUntil {
-            activeDashboardContent().frequencyItems.map { it.value } == listOf("a")
-        }
+        waitUntilFrequencyControlsApplied(
+            selectedField = "team",
+            threshold = 2,
+            topN = 1,
+            expectedValues = listOf("a")
+        )
+    }
+
+    @Test
+    fun `given tied frequency counts when limiting top n then ordering is deterministic by value ascending`() {
+        reconfigureLogSource(
+            listOf(
+                logEntry("2026-01-01T00:00:00Z", "first", fields = mapOf("team" to "b")),
+                logEntry("2026-01-01T00:00:01Z", "second", fields = mapOf("team" to "a")),
+                logEntry("2026-01-01T00:00:02Z", "third", fields = mapOf("team" to "b")),
+                logEntry("2026-01-01T00:00:03Z", "fourth", fields = mapOf("team" to "a")),
+                logEntry("2026-01-01T00:00:04Z", "fifth", fields = mapOf("team" to "c"))
+            )
+        )
+
+        val testFile = File(tempDir, "dashboard-frequency-tie-ordering.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("team"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(2))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyTopN(2))
+
+        waitUntilFrequencyControlsApplied(
+            selectedField = "team",
+            threshold = 2,
+            topN = 2,
+            expectedValues = listOf("a", "b")
+        )
+    }
+
+    @Test
+    fun `given threshold and top n controls when applying frequency analysis then thresholded values are limited by top n`() {
+        reconfigureLogSource(
+            listOf(
+                logEntry("2026-01-01T00:00:00Z", "first", fields = mapOf("team" to "a")),
+                logEntry("2026-01-01T00:00:01Z", "second", fields = mapOf("team" to "a")),
+                logEntry("2026-01-01T00:00:02Z", "third", fields = mapOf("team" to "a")),
+                logEntry("2026-01-01T00:00:03Z", "fourth", fields = mapOf("team" to "b")),
+                logEntry("2026-01-01T00:00:04Z", "fifth", fields = mapOf("team" to "b")),
+                logEntry("2026-01-01T00:00:05Z", "sixth", fields = mapOf("team" to "c"))
+            )
+        )
+
+        val testFile = File(tempDir, "dashboard-frequency-threshold-topn.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("team"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(2))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyTopN(1))
+
+        waitUntilFrequencyControlsApplied(
+            selectedField = "team",
+            threshold = 2,
+            topN = 1,
+            expectedValues = listOf("a")
+        )
     }
 
     @Test
@@ -380,6 +442,7 @@ class DashboardIntentTest {
         viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
         waitUntilDashboardContentReady()
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
+        waitUntilFrequencyFieldSelected("service")
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineFrom("2026-01-01T00:00:00Z"))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo("2026-01-01T00:00:00Z"))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonFrom("2026-01-01T00:00:01Z"))
@@ -443,6 +506,7 @@ class DashboardIntentTest {
         viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
         waitUntilDashboardContentReady()
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
+        waitUntilFrequencyFieldSelected("service")
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineFrom("2026-01-01T00:00:00Z"))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo("2026-01-01T00:00:01Z"))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonFrom("2026-01-01T00:00:10Z"))
@@ -500,6 +564,7 @@ class DashboardIntentTest {
         viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
         waitUntilDashboardContentReady()
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
+        waitUntilFrequencyFieldSelected("service")
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineFrom("2026-01-01T00:00:00Z"))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo("2026-01-01T00:00:00Z"))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonFrom("2026-01-01T00:00:01Z"))
@@ -549,6 +614,7 @@ class DashboardIntentTest {
         viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
         waitUntilDashboardContentReady()
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
+        waitUntilFrequencyFieldSelected("service")
         viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(1))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineFrom("2026-01-01T00:00:00Z"))
         viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo("2026-01-01T00:00:00Z"))
@@ -838,9 +904,34 @@ class DashboardIntentTest {
         }
     }
 
+    private fun waitUntilFrequencyFieldSelected(fieldKey: String) {
+        waitUntil {
+            activeDashboardContentOrNull()?.selectedFrequencyField == fieldKey
+        }
+    }
+
+    private fun waitUntilFrequencyControlsApplied(
+        selectedField: String,
+        threshold: Int,
+        topN: Int,
+        expectedValues: List<String>
+    ) {
+        waitUntil {
+            val content = activeDashboardContentOrNull() ?: return@waitUntil false
+            content.selectedFrequencyField == selectedField &&
+                content.frequencyThreshold == threshold &&
+                content.frequencyTopN == topN &&
+                content.frequencyItems.map { it.value } == expectedValues
+        }
+    }
+
+    private fun activeDashboardContentOrNull(): DashboardDataState.Content? {
+        val activeWindow = viewModel.state.value.activeTab?.activeWindow ?: return null
+        return activeWindow.dashboardDataState as? DashboardDataState.Content
+    }
+
     private fun activeDashboardContent(): DashboardDataState.Content {
-        val activeWindow = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
-        val content = activeWindow.dashboardDataState as? DashboardDataState.Content
+        val content = activeDashboardContentOrNull()
         expectThat(content).isNotNull()
         return requireNotNull(content)
     }

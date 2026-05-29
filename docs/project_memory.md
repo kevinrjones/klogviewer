@@ -2809,3 +2809,22 @@ For each sprint/task
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given frequency field selection when selecting value then dashboard filter query toggles" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given top n and threshold controls when applying frequency analysis then ordering remains deterministic"` (`BUILD SUCCESSFUL`).
 - `for i in {1..20}; do ./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" ...; done` (`PASS 20/20`).
 - `for i in {1..30}; do ./gradlew :ui:test --tests "...toggles" --tests "...ordering remains deterministic" ...; done` (`PASS 30/30`).
+
+## Task: Dashboard Frequency Control Determinism and Stale-State Guarding
+**Title**: Harden DashboardIntent Frequency/Comparison Tests for CI-Stable Recompute Semantics
+**Date/time completed**: 2026-05-29 11:31
+**What was shipped**
+- Hardened `DashboardIntentTest` frequency-control synchronization to wait for the combined post-recompute state (`selected field` + `threshold` + `top N` + expected values) instead of asserting on any prior dashboard content.
+- Added explicit invariants tests for deterministic tie ordering (`a` before `b` when counts are equal) and threshold + top-N behavior under controlled fixtures.
+- Added readiness waits after `SetDashboardFrequencyField("service")` in nearby comparison tests before issuing compare-range intents and running comparison.
+**Key decisions**
+- Kept production code unchanged after confirming deterministic semantics already exist in `KLogViewerViewModel.computeFrequencyItems` and `InMemoryAnalysisMetricsRepository.frequencyAnalysis`; fixed the true flake source in test-state synchronization.
+- Standardized waits around specific transitions rather than generic `DashboardDataState.Content` presence to avoid stale-content observations under CI scheduling.
+**Gotchas**
+- Dashboard recomputation is asynchronous and generation-based; `Content` may exist while still reflecting pre-intent controls, so tests must gate on the exact control state they assert.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (new control-convergence helper waits and additional invariants tests).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests "com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest"` (`BUILD SUCCESSFUL`).
+- `for i in {1..30}; do ./gradlew :ui:test --tests "...ordering remains deterministic" --tests "...tie ordering..." --tests "...thresholded values are limited..." ...; done` (`PASS 30/30`).
+- `for i in {1..20}; do ./gradlew :ui:test --tests "...comparison..." ...; done` (`PASS 20/20`).
