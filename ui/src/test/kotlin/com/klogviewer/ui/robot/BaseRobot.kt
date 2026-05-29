@@ -42,7 +42,11 @@ abstract class BaseRobot(protected val composeTestRule: ComposeUiTest) {
     }
 
     fun assertTextExists(text: String) {
-        onNodeWithText(text).assertExists()
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodesWithText(text, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+        onNodeWithText(text, useUnmergedTree = true).assertExists()
     }
 
     fun assertTextDoesNotExist(text: String) {

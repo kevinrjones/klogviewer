@@ -2,6 +2,7 @@ package com.klogviewer.ui.robot
 
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.*
 import androidx.compose.ui.unit.Dp
 
@@ -21,6 +22,13 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
         return matcher("log_entry_row_$index")
     }
 
+    private fun waitForAnyRow() {
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodes(matcher("log_entry_row"), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+    }
+
     private fun lazyColumnMatcher(): SemanticsMatcher {
         val listTagMatcher = hasTestTag("log_lazy_column")
         return if (windowId != null) {
@@ -31,8 +39,13 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
     }
 
     private fun scrollToRow(index: Int) {
+        waitForAnyRow()
         composeTestRule.onNode(lazyColumnMatcher(), useUnmergedTree = true)
             .performScrollToIndex(index)
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodes(rowMatcher(index), useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     fun assertLogCount(expectedCount: Int) {
@@ -48,6 +61,10 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
             textMatcher and hasAnyAncestor(hasTestTag("window_$windowId"))
         } else {
             textMatcher
+        }
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            composeTestRule.onAllNodes(finalMatcher, useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
         }
         composeTestRule.onNode(finalMatcher, useUnmergedTree = true).assertExists()
     }
@@ -72,6 +89,11 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
 
     fun assertRowSelected(index: Int, isSelected: Boolean = true) {
         scrollToRow(index)
+        composeTestRule.waitUntil(timeoutMillis = 5000) {
+            val nodes = composeTestRule.onAllNodes(rowMatcher(index), useUnmergedTree = true).fetchSemanticsNodes()
+            nodes.isNotEmpty() &&
+                ((nodes.first().config.getOrElse(SemanticsProperties.Selected) { false }) == isSelected)
+        }
         composeTestRule.onNode(rowMatcher(index), useUnmergedTree = true)
             .assert(if (isSelected) isSelected() else isNotSelected())
     }

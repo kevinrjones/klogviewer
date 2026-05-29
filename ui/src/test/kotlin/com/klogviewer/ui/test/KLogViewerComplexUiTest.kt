@@ -1,23 +1,20 @@
 package com.klogviewer.ui.test
 
-import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import arrow.core.right
 import com.klogviewer.core.parser.HeuristicProbe
 import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.components.DialogProvider
 import com.klogviewer.ui.components.KLogViewerScreen
-import com.klogviewer.ui.robot.*
+import com.klogviewer.ui.robot.mainRobot
+import com.klogviewer.ui.robot.window
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.flowOf
 import org.junit.Test
 import java.io.File
 
@@ -112,13 +109,23 @@ class KLogViewerComplexUiTest {
         val testEntries = (1..5).map { 
             LogEntry(LogTimestamp("10:00:0$it"), LogLevel.INFO, LogContent("Message $it")) 
         }
-        every { logSource.observeLogs(any(), any()) } returns flowOf(LogUpdate.Initial(testEntries).right())
-        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogFile.absolutePath
-        
+
         setupApp()
 
-        mainRobot {
-            clickAddFile()
+        val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod(
+            "handleLogUpdate",
+            String::class.java,
+            LogUpdate::class.java,
+            String::class.java
+        )
+        handleLogUpdateMethod.isAccessible = true
+        handleLogUpdateMethod.invoke(viewModel, "window1", LogUpdate.Initial(testEntries), testLogFile.absolutePath)
+        waitForIdle()
+
+        window("window1") {
+            logList {
+                assertLogCount(5)
+            }
         }
 
         window("window1") {

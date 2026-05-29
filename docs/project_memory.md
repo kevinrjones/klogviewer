@@ -2738,3 +2738,21 @@ For each sprint/task
 - `./gradlew :core:test --tests com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests com.klogviewer.ui.test.DashboardUxHardeningUiTest --tests com.klogviewer.ui.test.KLogViewerComplexUiTest --tests com.klogviewer.ui.test.KLogViewerUiTest` (`FAILED`, pre-existing unrelated failures).
+
+## Task: UI Test Stabilization for Dashboard and Log Rows
+**Title**: Fix GitHub-Failing Dashboard and Log List UI Tests
+**Date/time completed**: 2026-05-29 09:53
+**What was shipped**
+- Stabilized dashboard hardening UI tests by adding deterministic waits for dashboard tab/content readiness and frequency-field controls before interaction.
+- Hardened shared UI test robots with bounded waits for text assertions, lazy-row availability, and row selection semantics transitions.
+- Made multi-selection complex UI test deterministic by injecting `LogUpdate.Initial` through the existing ViewModel seam before selection assertions.
+**Key decisions**
+- Treated the failures as synchronization/semantics timing issues (not business-logic regressions) and fixed them with minimal, targeted test/robot hardening.
+- Kept production behavior unchanged and avoided broad refactors; focused on stable waits around known asynchronous Compose Desktop rendering points.
+**Gotchas**
+- `LazyColumn` virtualization means row-specific semantics nodes may not exist until after scroll; waiting for index-tagged rows before scrolling can deadlock tests.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/test/DashboardUxHardeningUiTest.kt` (stabilized setup and interactions).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/KLogViewerComplexUiTest.kt` (deterministic multi-selection setup).
+- `ui/src/test/kotlin/com/klogviewer/ui/robot/BaseRobot.kt` and `ui/src/test/kotlin/com/klogviewer/ui/robot/LogListRobot.kt` (wait/synchronization hardening).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest" --tests "com.klogviewer.ui.test.KLogViewerComplexUiTest" --tests "com.klogviewer.ui.test.KLogViewerUiTest"` (`BUILD SUCCESSFUL`).

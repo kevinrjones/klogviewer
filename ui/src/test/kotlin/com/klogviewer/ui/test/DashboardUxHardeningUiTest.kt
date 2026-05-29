@@ -98,8 +98,10 @@ class DashboardUxHardeningUiTest {
         mainRobot {
             clickAddFile()
         }
+        waitUntilAtLeastOneExists(hasText("Dashboard"), 5_000)
         waitForIdle()
         onNodeWithText("Dashboard").performClick()
+        waitUntilAtLeastOneExists(hasText("Analysis scope: current filtered logs"), 5_000)
         waitForIdle()
     }
 
@@ -158,6 +160,7 @@ class DashboardUxHardeningUiTest {
     fun givenComparisonRun_whenDeltasRender_thenDirectionTextAndAccessibilityLabelsArePresent() = runComposeUiTest {
         setupApp()
 
+        waitUntilAtLeastOneExists(hasTestTag("frequency_field_service"), 5_000)
         onNodeWithTag("frequency_field_service").performClick()
         onNodeWithTag("compare_baseline_from_input").performTextInput("2026-01-01T00:00:00Z")
         onNodeWithTag("compare_baseline_to_input").performTextInput("2026-01-01T00:00:00Z")
