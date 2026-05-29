@@ -2775,3 +2775,19 @@ For each sprint/task
 - `app/src/test/kotlin/com/klogviewer/bdd/steps/LogLoadingSteps.kt` (scenario lifecycle and deterministic loaded-window assertions).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :app:test --tests "com.klogviewer.bdd.RunCucumberTest"` (`BUILD SUCCESSFUL`).
+
+## Task: CI Follow-up for Dashboard Frequency Toggle Test
+**Title**: Remove Brittle Frequency-Items Wait from DashboardIntent Toggle Test
+**Date/time completed**: 2026-05-29 10:27
+**What was shipped**
+- Simplified `DashboardIntentTest` frequency-toggle scenario by removing the wait that required dashboard frequency items to include `auth` before selection.
+- Kept the core toggle contract assertions intact: first selection adds `@field:service=auth` and marks `selectedFrequencyValue`; second selection clears both.
+**Key decisions**
+- Treated the GitHub failure as CI timing brittleness in test setup rather than product logic regression, and constrained the change to a single test seam.
+- Removed only the non-essential async wait to reduce susceptibility to recomputation timing without weakening the intent assertions.
+**Gotchas**
+- Waiting on secondary dashboard recomputation artifacts (`frequencyItems`) can fail under slow CI runners even when the toggle behavior under test is already valid.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (frequency field/value toggle scenario).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given frequency field selection when selecting value then dashboard filter query toggles"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).

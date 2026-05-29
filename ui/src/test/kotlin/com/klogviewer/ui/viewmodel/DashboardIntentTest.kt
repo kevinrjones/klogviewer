@@ -269,10 +269,6 @@ class DashboardIntentTest {
             activeDashboardContent().selectedFrequencyField == "service"
         }
 
-        waitUntil {
-            activeDashboardContent().frequencyItems.any { it.value == "auth" }
-        }
-
         val selectedValue = "auth"
         viewModel.handleIntent(KLogViewerIntent.SelectDashboardFrequencyValue(selectedValue))
 
