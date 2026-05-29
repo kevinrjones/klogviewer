@@ -12,6 +12,8 @@ KLogViewer is a professional-grade, high-density desktop log viewer built with K
 
 For details on the latest customer-facing release, see [RELEASE_NOTES.md](RELEASE_NOTES.md).
 
+For the complete release history, see [ALL_RELEASES.md](ALL_RELEASES.md).
+
 ## Key Features
 
 ### Multiple Tabs & Workspaces
