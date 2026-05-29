@@ -36,6 +36,27 @@ class KLogViewerUiTest {
         LogEntry(LogTimestamp("2023-01-01 10:00:02"), LogLevel.DEBUG, LogContent("Third log message (debug)"))
     )
 
+    private val testEntriesWithRawLevel = listOf(
+        LogEntry(
+            timestamp = LogTimestamp("2023-01-01 10:00:00"),
+            level = LogLevel.INFO,
+            content = LogContent("First log message"),
+            fields = mapOf("level" to "INFO")
+        ),
+        LogEntry(
+            timestamp = LogTimestamp("2023-01-01 10:00:01"),
+            level = LogLevel.ERROR,
+            content = LogContent("Second log message (error)"),
+            fields = mapOf("level" to "ERROR")
+        ),
+        LogEntry(
+            timestamp = LogTimestamp("2023-01-01 10:00:02"),
+            level = LogLevel.DEBUG,
+            content = LogContent("Third log message (debug)"),
+            fields = mapOf("level" to "DEBUG")
+        )
+    )
+
     private fun ComposeUiTest.setupApp() {
         every { prefsRepository.load() } returns UserPreferences(
             tabs = listOf(
@@ -111,6 +132,23 @@ class KLogViewerUiTest {
     }
 
     @Test
+    fun givenLogsWithoutRawLevelField_whenLoaded_thenSidebarLevelsPaneIsHidden() = runComposeUiTest {
+        setupApp()
+
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
+        every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
+            LogUpdate.Initial(testEntries).right()
+        )
+
+        mainRobot {
+            clickAddFile()
+        }
+
+        onNodeWithText("Levels (${LogLevel.entries.size})").assertDoesNotExist()
+        onNodeWithTag("level_toggle_All").assertDoesNotExist()
+    }
+
+    @Test
     fun givenLogsWithRawLevelField_whenLoaded_thenRawLevelValueIsShownInLogRows() = runComposeUiTest {
         setupApp()
 
@@ -136,12 +174,29 @@ class KLogViewerUiTest {
     }
 
     @Test
-    fun givenLogsLoaded_whenLevelFiltered_thenListIsUpdated() = runComposeUiTest {
+    fun givenLogsWithRawLevelField_whenLoaded_thenSidebarLevelsPaneIsShown() = runComposeUiTest {
         setupApp()
-        
+
         every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
         every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
-            LogUpdate.Initial(testEntries).right()
+            LogUpdate.Initial(testEntriesWithRawLevel).right()
+        )
+
+        mainRobot {
+            clickAddFile()
+        }
+
+        onNodeWithText("Levels (${LogLevel.entries.size})").assertExists()
+        onNodeWithTag("level_toggle_All").assertExists()
+    }
+
+    @Test
+    fun givenLogsLoaded_whenLevelFiltered_thenListIsUpdated() = runComposeUiTest {
+        setupApp()
+
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
+        every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
+            LogUpdate.Initial(testEntriesWithRawLevel).right()
         )
 
         mainRobot {

@@ -37,6 +37,16 @@ class DashboardUxHardeningUiTest {
         logEntry("2026-01-01T00:00:01Z", "second", LogLevel.ERROR, mapOf("service" to "billing")),
         logEntry("2026-01-01T00:00:02Z", "third", LogLevel.ERROR, mapOf("service" to "billing"))
     )
+    private val testEntriesWithRawLevel = listOf(
+        logEntry("2026-01-01T00:00:00Z", "first", LogLevel.INFO, mapOf("service" to "auth", "level" to "INFO")),
+        logEntry("2026-01-01T00:00:01Z", "second", LogLevel.ERROR, mapOf("service" to "billing", "level" to "ERROR")),
+        logEntry("2026-01-01T00:00:02Z", "third", LogLevel.ERROR, mapOf("service" to "billing", "level" to "ERROR"))
+    )
+    private val testEntriesWithUnknownRawLevel = listOf(
+        logEntry("2026-01-01T00:00:00Z", "first", LogLevel.UNKNOWN, mapOf("service" to "auth", "level" to "UNKNOWN")),
+        logEntry("2026-01-01T00:00:01Z", "second", LogLevel.UNKNOWN, mapOf("service" to "billing", "level" to "UNKNOWN")),
+        logEntry("2026-01-01T00:00:02Z", "third", LogLevel.UNKNOWN, mapOf("service" to "billing", "level" to "UNKNOWN"))
+    )
 
     private fun logEntry(
         instantIso: String,
@@ -54,7 +64,7 @@ class DashboardUxHardeningUiTest {
         )
     }
 
-    private fun ComposeUiTest.setupApp() {
+    private fun ComposeUiTest.setupApp(entries: List<LogEntry> = testEntries) {
         every { prefsRepository.load() } returns UserPreferences(
             tabs = listOf(
                 TabPreference(
@@ -70,7 +80,7 @@ class DashboardUxHardeningUiTest {
         every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
         every { dialogProvider.showMessageDialog(any(), any()) } returns Unit
         every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
-            LogUpdate.Initial(testEntries).right()
+            LogUpdate.Initial(entries).right()
         )
 
         val parser = mockk<LogParser>(relaxed = true)
@@ -108,6 +118,26 @@ class DashboardUxHardeningUiTest {
 
             onNodeWithTag("run_comparison_button").assertExists().assertIsNotEnabled()
             onNodeWithTag("clear_comparison_button").assertExists().assertIsEnabled()
+        }
+
+    @Test
+    fun givenDashboardWithRawLevels_whenRenderingSummary_thenLevelDistributionChartIsVisible() =
+        runComposeUiTest {
+            setupApp(testEntriesWithRawLevel)
+
+            waitUntilAtLeastOneExists(hasText("Level distribution"), 5_000)
+            waitUntilAtLeastOneExists(hasTestTag("dashboard_level_row_error"), 5_000)
+            onNodeWithText("Level distribution").assertExists()
+            onNodeWithTag("dashboard_level_row_error").assertExists()
+        }
+
+    @Test
+    fun givenDashboardWithOnlyUnknownRawLevels_whenRenderingSummary_thenLevelDistributionChartIsHidden() =
+        runComposeUiTest {
+            setupApp(testEntriesWithUnknownRawLevel)
+
+            onNodeWithText("Level distribution").assertDoesNotExist()
+            onNodeWithTag("dashboard_level_distribution_chart").assertDoesNotExist()
         }
 
     @Test

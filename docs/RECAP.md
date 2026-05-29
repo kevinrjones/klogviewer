@@ -1161,3 +1161,24 @@ Recap from the previous entry (`2026-05-27 08:08`) up to now:
 #### Verification:
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest" --tests "com.klogviewer.ui.viewmodel.TimeRangeFilterSupportTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" --tests "com.klogviewer.ui.components.FilterBarTimeFilterControlsTest"` → passed.
 
+
+# 2026-05-29
+
+## 06:57
+
+### Dashboard UX Hardening and Log-Level Presentation Cleanup Recap
+
+Recap from the previous entry (`2026-05-28 06:07`) up to now:
+
+#### Changes:
+- **Commit `3209e62` (2026-05-28 06:28)**: Added ADR-040 charting-library selection/benchmark documentation and delivered related Sprint 9 dashboard/time-filter implementation updates across UI, ViewModel/state, tests, and tracking docs.
+- **Commit `b119268` (2026-05-28 07:50)**: Added dashboard chart x-axis hover date tooltips and persisted dashboard time filters, with supporting UI/ViewModel test coverage.
+- **Commit `1229d0a` (2026-05-28 08:35)**: Updated Compose dependencies and simplified KoalaPlot axis configuration in the dashboard charting layer.
+- **Commit `d20ed85` (2026-05-28 10:30)**: Improved log-list interactions and dashboard level-distribution UX, including pointer-mapping test coverage and UI test-robot updates.
+- **Commit `ba5516a` (2026-05-28 10:44)**: Added detailed documentation for dashboard A/B comparison and frequency analysis workflows.
+- **Commit `35a8499` (2026-05-29 06:48)**: Added dashboard UX hardening tests and completed the log-level presentation cleanup so rows show only explicit raw `fields["level"]` values while the dashboard Summary no longer renders `Level distribution`.
+- **Repository state at recap time**: No additional uncommitted changes (`git status --short` clean).
+
+#### Verification:
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` → passed (`BUILD SUCCESSFUL`).
+

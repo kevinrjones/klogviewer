@@ -19,7 +19,7 @@
 - Sprint 9 ad-hoc frequency and comparative analysis (`14.6`) completed with structured-field top-N analysis, explicit missing-value handling, and A/B delta workflows.
 - Sprint 9 UX/accessibility slice (`14.7.1`–`14.7.3`) completed with a rendered dashboard chart strip, active filter chips, tooltip/semantic labeling, and keyboard fallback interactions.
 - Dashboard KoalaPlot time-series now supports drag-to-select bucket ranges using pointer-to-index mapping while preserving existing single-click filtering behavior.
-- Log row level cells now show only explicit parsed level fields (blank when absent), and the dashboard Summary no longer renders the `Level distribution` section.
+- Log row level cells now show only explicit parsed level fields (blank when absent), with conditional level analytics UI: the left `Levels` pane and dashboard `Level distribution` section render only when raw `level` fields are present.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -2668,4 +2668,36 @@ For each sprint/task
 **Test coverage areas**
 - `ui/src/test/kotlin/com/klogviewer/ui/test/KLogViewerUiTest.kt` (added inferred-level absence and explicit raw-level presence assertions).
 - `ui/src/test/kotlin/com/klogviewer/ui/test/DashboardUxHardeningUiTest.kt` (added absence assertions for `Level distribution` UI).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Conditional Levels Pane and Dashboard Distribution Visibility
+**Title**: Show Level UI Only When Raw Level Field Exists
+**Date/time completed**: 2026-05-29 07:04
+**What was shipped**
+- Sidebar level controls now render only when the active window logs include an explicit raw `fields["level"]`; otherwise the left pane remains blank in that section.
+- Dashboard Summary now conditionally renders `Level distribution` (pie + rows) only when the dashboard content includes a raw `level` field among available frequency fields.
+- Existing log-row behavior remains: only explicit raw level values are shown in the `Level` column, with no inferred bracketed fallback.
+**Key decisions**
+- Derived sidebar visibility from `LogWindow.logs` raw-field presence (`hasRawLevelFieldInLogs`) so the main left pane reflects source-schema availability.
+- Derived dashboard visibility from `DashboardDataState.Content.availableFrequencyFields` to align with currently analyzed/filtered dashboard data.
+**Gotchas**
+- Compose desktop semantics for the KoalaPlot chart node were not reliable for positive existence assertions; tests were stabilized by asserting deterministic summary heading and level-row tags.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/test/KLogViewerUiTest.kt` (added sidebar show/hide assertions and aligned level-filter interaction fixture to raw-level data).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/DashboardUxHardeningUiTest.kt` (kept no-raw-level absence checks and added raw-level presence checks via heading + `dashboard_level_row_error`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Level Distribution Rendering Guardrails
+**Title**: Hide Dashboard Level Distribution for UNKNOWN-Only Level Data
+**Date/time completed**: 2026-05-29 07:17
+**What was shipped**
+- Tightened dashboard Summary rendering so `Level distribution` appears only when logs expose a raw `level` field and there is chartable, non-`UNKNOWN` level data.
+- Preserved existing sidebar behavior where the left `Levels` controls remain schema-driven (`fields["level"]` present) and stay hidden for logs without a `level` column.
+**Key decisions**
+- Kept schema detection and chart-data readiness as separate checks: column presence controls eligibility, while non-`UNKNOWN` slice counts control dashboard chart visibility.
+- Avoided inference from normalized fallback levels so `UNKNOWN`-only datasets cannot trigger misleading level analytics.
+**Gotchas**
+- `levelDistribution` is built from normalized `LogLevel`, so chart visibility needed an explicit `UNKNOWN` exclusion to prevent false-positive rendering.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/test/DashboardUxHardeningUiTest.kt` (added `givenDashboardWithOnlyUnknownRawLevels_whenRenderingSummary_thenLevelDistributionChartIsHidden`).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` (`BUILD SUCCESSFUL`).

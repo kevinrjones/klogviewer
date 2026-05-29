@@ -119,6 +119,7 @@ data class LogWindow(
     val timeFilterValidationMessage: String? = null
 ) {
     val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
+    val hasRawLevelFieldInLogs: Boolean get() = logs.any { entry -> entry.fields.containsKey("level") }
 }
 
 enum class TimeRangePreset {

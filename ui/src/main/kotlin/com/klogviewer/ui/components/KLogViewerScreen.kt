@@ -74,6 +74,7 @@ fun KLogViewerScreen(
             ) {
                 Sidebar(
                     isExpanded = state.isSidebarExpanded,
+                    showLevels = activeWindow?.hasRawLevelFieldInLogs == true,
                     levelFilters = activeWindow?.levelFilters ?: emptySet(),
                     onToggleLevel = { level -> viewModel.handleIntent(KLogViewerIntent.ToggleLevel(level)) },
                     onToggleAllLevels = { viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels) },
@@ -874,6 +875,13 @@ private fun DashboardContent(
     var isSummaryExpanded by remember { mutableStateOf(true) }
     var isFrequencyExpanded by remember { mutableStateOf(true) }
     var isComparisonExpanded by remember { mutableStateOf(true) }
+    val showLevelDistribution = remember(content.availableFrequencyFields, content.levelDistribution) {
+        val hasLevelColumn = content.availableFrequencyFields.contains("level")
+        val hasRenderableLevelData = content.levelDistribution.any { slice ->
+            slice.level != LogLevel.UNKNOWN && slice.count > 0
+        }
+        hasLevelColumn && hasRenderableLevelData
+    }
 
     val comparisonState = content.comparisonState
     val activeTimeSelection = remember(
@@ -991,6 +999,23 @@ private fun DashboardContent(
                 selectedBucketFrom = content.selectedBucketFrom,
                 onBucketSelect = onBucketSelect
             )
+
+            if (showLevelDistribution) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Level distribution",
+                    style = MaterialTheme.typography.subtitle1,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                DashboardLevelDistributionSection(
+                    slices = content.levelDistribution,
+                    selectedLevel = content.selectedLevel,
+                    onLevelSelect = onLevelSelect,
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                )
+            }
 
         }
 
