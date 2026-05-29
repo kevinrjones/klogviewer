@@ -22,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestDispatcher
@@ -392,6 +393,48 @@ class DashboardIntentTest {
             topN = 2,
             expectedValues = listOf("a", "b")
         )
+    }
+
+    @Test
+    fun `given overlapping log updates and frequency controls when recomputing then latest dashboard controls and deterministic ordering are preserved`() {
+        val initialEntries = listOf(
+            logEntry("2026-01-01T00:00:00Z", "first", fields = mapOf("team" to "b")),
+            logEntry("2026-01-01T00:00:01Z", "second", fields = mapOf("team" to "a")),
+            logEntry("2026-01-01T00:00:02Z", "third", fields = mapOf("team" to "b")),
+            logEntry("2026-01-01T00:00:03Z", "fourth", fields = mapOf("team" to "a"))
+        )
+        val appendedEntries = listOf(
+            logEntry("2026-01-01T00:00:04Z", "fifth", fields = mapOf("team" to "c")),
+            logEntry("2026-01-01T00:00:05Z", "sixth", fields = mapOf("team" to "d"))
+        )
+        every { logSource.observeLogs(any(), any()) } returns flow {
+            emit(LogUpdate.Initial(entries = initialEntries).right())
+            delay(5)
+            emit(LogUpdate.Appended(entries = appendedEntries).right())
+        }
+
+        val testFile = File(tempDir, "dashboard-frequency-concurrent.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("team"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(2))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyTopN(2))
+
+        waitUntil {
+            viewModel.state.value.activeTab?.activeWindow?.logs?.size == 6
+        }
+        waitUntilFrequencyControlsApplied(
+            selectedField = "team",
+            threshold = 2,
+            topN = 2,
+            expectedValues = listOf("a", "b")
+        )
+
+        val content = activeDashboardContent()
+        expectThat(content.frequencyItems.map { it.count }).isEqualTo(listOf(2, 2))
     }
 
     @Test
@@ -905,7 +948,23 @@ class DashboardIntentTest {
                 }
             }
         } catch (_: TimeoutCancellationException) {
-            throw AssertionError("Condition was not met in time")
+            throw AssertionError("Condition was not met in time. ${dashboardDebugSnapshot()}")
+        }
+    }
+
+    private fun dashboardDebugSnapshot(): String {
+        val activeWindow = viewModel.state.value.activeTab?.activeWindow ?: return "No active window"
+        val content = activeWindow.dashboardDataState as? DashboardDataState.Content
+        return if (content == null) {
+            "dashboardState=${activeWindow.dashboardDataState::class.simpleName}, " +
+                "logs=${activeWindow.logs.size}, filtered=${activeWindow.filteredLogs.size}, " +
+                "queries=${activeWindow.filterQueries}"
+        } else {
+            "dashboardState=Content, field=${content.selectedFrequencyField}, " +
+                "threshold=${content.frequencyThreshold}, topN=${content.frequencyTopN}, " +
+                "items=${content.frequencyItems.map { "${it.value}:${it.count}" }}, " +
+                "logs=${activeWindow.logs.size}, filtered=${activeWindow.filteredLogs.size}, " +
+                "queries=${activeWindow.filterQueries}"
         }
     }
 

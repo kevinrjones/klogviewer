@@ -67,6 +67,7 @@ class KLogViewerViewModel(
 
     private var saveJob: Job? = null
     private var pendingPreferencesForPlaintextSecretSave: UserPreferences? = null
+    private val filterRecomputeLock = Any()
     private val filterGenerationByWindow = mutableMapOf<String, Long>()
     private val filterRecomputeJobByWindow = mutableMapOf<String, Job>()
 
@@ -177,10 +178,13 @@ class KLogViewerViewModel(
     fun clear() {
         savePreferences(currentState = _state.value, debounce = false)
         logLoadingCoordinator.cancelAll()
-        synchronized(filterRecomputeJobByWindow) {
-            filterRecomputeJobByWindow.values.forEach { job -> job.cancel() }
+        val jobsToCancel = synchronized(filterRecomputeLock) {
+            val jobs = filterRecomputeJobByWindow.values.toList()
             filterRecomputeJobByWindow.clear()
+            filterGenerationByWindow.clear()
+            jobs
         }
+        jobsToCancel.forEach { job -> job.cancel() }
         scope.cancel()
     }
 
@@ -591,13 +595,12 @@ class KLogViewerViewModel(
     }
 
     private fun invalidatePendingFilterResults(windowId: String) {
-        synchronized(filterGenerationByWindow) {
+        val previousJob = synchronized(filterRecomputeLock) {
             val next = (filterGenerationByWindow[windowId] ?: 0L) + 1L
             filterGenerationByWindow[windowId] = next
+            filterRecomputeJobByWindow.remove(windowId)
         }
-        synchronized(filterRecomputeJobByWindow) {
-            filterRecomputeJobByWindow.remove(windowId)?.cancel()
-        }
+        previousJob?.cancel()
     }
 
     private fun clearDashboardSelections(windowId: String) {
@@ -637,66 +640,70 @@ class KLogViewerViewModel(
     private fun filterLogs(windowId: String?) {
         if (windowId == null) return
 
-        val generation = synchronized(filterGenerationByWindow) {
-            val next = (filterGenerationByWindow[windowId] ?: 0L) + 1L
-            filterGenerationByWindow[windowId] = next
-            next
-        }
+        val generation: Long
+        val recomputeJob: Job
+        val previousJob: Job?
 
-        val recomputeJob = scope.launch {
-            if (dashboardRecomputeDebounceMs > 0L) {
-                delay(dashboardRecomputeDebounceMs)
+        synchronized(filterRecomputeLock) {
+            generation = (filterGenerationByWindow[windowId] ?: 0L) + 1L
+            filterGenerationByWindow[windowId] = generation
+
+            recomputeJob = scope.launch(start = CoroutineStart.LAZY) {
+                if (dashboardRecomputeDebounceMs > 0L) {
+                    delay(dashboardRecomputeDebounceMs.milliseconds)
+                }
+
+                withContext(Dispatchers.Default) {
+                    val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@withContext
+
+                    val filterStartedAtNanos = System.nanoTime()
+                    val filteredLogs = LogFilterService.filter(window)
+                    val filterLatencyMs = nanosToMillis(System.nanoTime() - filterStartedAtNanos)
+
+                    val aggregationStartedAtNanos = System.nanoTime()
+                    val dashboardDataState = buildDashboardDataState(
+                        filteredLogs = filteredLogs,
+                        bucketSize = window.dashboardBucketSize,
+                        previousState = window.dashboardDataState
+                    )
+                    val aggregationLatencyMs = nanosToMillis(System.nanoTime() - aggregationStartedAtNanos)
+
+                    val isLatestGeneration = synchronized(filterRecomputeLock) {
+                        filterGenerationByWindow[windowId] == generation
+                    }
+                    if (!isLatestGeneration) {
+                        logger.debug {
+                            "Ignoring stale dashboard aggregation result for windowId=$windowId generation=$generation"
+                        }
+                        return@withContext
+                    }
+
+                    val samplingInfo = (dashboardDataState as? DashboardDataState.Content)?.samplingInfo
+                    logger.info {
+                        "Dashboard aggregation complete for windowId=$windowId " +
+                            "filteredCount=${filteredLogs.size} filterLatencyMs=$filterLatencyMs " +
+                            "aggregationLatencyMs=$aggregationLatencyMs " +
+                            "samplingMode=${samplingInfo?.mode ?: DashboardSamplingMode.FULL} " +
+                            "sampledCount=${samplingInfo?.sampledCount ?: filteredLogs.size}"
+                    }
+
+                    _state.update { currentState ->
+                        currentState.updateWindow(windowId) {
+                            it.copy(
+                                filteredLogs = filteredLogs,
+                                dashboardDataState = dashboardDataState
+                            )
+                        }
+                    }
+                }
             }
 
-            withContext(Dispatchers.Default) {
-                val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@withContext
-
-                val filterStartedAtNanos = System.nanoTime()
-                val filteredLogs = LogFilterService.filter(window)
-                val filterLatencyMs = nanosToMillis(System.nanoTime() - filterStartedAtNanos)
-
-                val aggregationStartedAtNanos = System.nanoTime()
-                val dashboardDataState = buildDashboardDataState(
-                    filteredLogs = filteredLogs,
-                    bucketSize = window.dashboardBucketSize,
-                    previousState = window.dashboardDataState
-                )
-                val aggregationLatencyMs = nanosToMillis(System.nanoTime() - aggregationStartedAtNanos)
-
-                val isLatestGeneration = synchronized(filterGenerationByWindow) {
-                    filterGenerationByWindow[windowId] == generation
-                }
-                if (!isLatestGeneration) {
-                    logger.debug {
-                        "Ignoring stale dashboard aggregation result for windowId=$windowId generation=$generation"
-                    }
-                    return@withContext
-                }
-
-                val samplingInfo = (dashboardDataState as? DashboardDataState.Content)?.samplingInfo
-                logger.info {
-                    "Dashboard aggregation complete for windowId=$windowId " +
-                        "filteredCount=${filteredLogs.size} filterLatencyMs=$filterLatencyMs " +
-                        "aggregationLatencyMs=$aggregationLatencyMs " +
-                        "samplingMode=${samplingInfo?.mode ?: DashboardSamplingMode.FULL} " +
-                        "sampledCount=${samplingInfo?.sampledCount ?: filteredLogs.size}"
-                }
-
-                _state.update { currentState ->
-                    currentState.updateWindow(windowId) {
-                        it.copy(
-                            filteredLogs = filteredLogs,
-                            dashboardDataState = dashboardDataState
-                        )
-                    }
-                }
-            }
-        }
-
-        synchronized(filterRecomputeJobByWindow) {
-            filterRecomputeJobByWindow.remove(windowId)?.cancel()
+            previousJob = filterRecomputeJobByWindow.remove(windowId)
             filterRecomputeJobByWindow[windowId] = recomputeJob
         }
+
+        previousJob?.cancel()
+        recomputeJob.start()
     }
 
     private fun nanosToMillis(nanos: Long): Long = nanos / 1_000_000

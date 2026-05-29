@@ -2868,3 +2868,24 @@ For each sprint/task
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.PlaintextSecretFallbackPromptTest"` (`BUILD SUCCESSFUL`).
 - `for i in {1..40}; do ./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.PlaintextSecretFallbackPromptTest" ...; done` (`PASS 40/40`).
 - `for i in {1..20}; do ./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.*" ...; done` (`PASS 20/20`).
+
+## Task: Desktop CI Stabilization for Dashboard Frequency Tie Ordering
+**Title**: Serialize Dashboard Recompute Job Registration to Preserve Latest Control State
+**Date/time completed**: 2026-05-29 14:36
+**What was shipped**
+- Updated `KLogViewerViewModel.filterLogs` to use a single recompute lock for generation increments and job-map updates, register recompute jobs lazily before start, and cancel prior jobs only after latest-job registration.
+- Updated `invalidatePendingFilterResults`/`clear` to use the same lock and clear generation state consistently, preventing stale/canceled recompute tracking across rapid intent sequences.
+- Added a new dashboard/ViewModel regression in `DashboardIntentTest` for overlapping log updates + frequency controls, and improved wait-timeout diagnostics with a dashboard state snapshot.
+**Key decisions**
+- Treated this as a ViewModel integration race risk (job replacement window) rather than repository sorting logic, since repository tie-order tests already pass.
+- Kept deterministic semantics unchanged (count desc, then value asc; threshold before top-N) and fixed orchestration so latest dashboard controls converge reliably.
+- Kept overlap regression at the non-sampling boundary (`<= dashboardSamplingThreshold`) to avoid invalid expectations caused by deterministic sampling mode.
+**Gotchas**
+- A naïve overlap fixture with 7 logs accidentally enabled deterministic sampling (`threshold=6`), producing valid but different frequency output and masking the intended recompute-race assertion.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/KLogViewerViewModel.kt` (recompute sequencing hardening).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (overlap regression and timeout diagnostics).
+- `./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given tied frequency counts when limiting top n then ordering is deterministic by value ascending" --tests "...overlapping log updates..."` (`BUILD SUCCESSFUL`).
+- `for i in {1..40}; do ./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given tied frequency counts when limiting top n then ordering is deterministic by value ascending" ...; done` (`PASS 40/40`).
+- `./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` and `for i in {1..20}; do ./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" ...; done` (`PASS 20/20`).
+- `./gradlew :core:test --tests "com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest"` (`BUILD SUCCESSFUL`).
