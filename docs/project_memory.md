@@ -2791,3 +2791,21 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (frequency field/value toggle scenario).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given frequency field selection when selecting value then dashboard filter query toggles"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Async Flakiness Hardening for DashboardIntentTest
+**Title**: Stabilize Dashboard Intent Async Waits for CI Determinism
+**Date/time completed**: 2026-05-29 11:11
+**What was shipped**
+- Reworked `DashboardIntentTest` shared `waitUntil` helper to use coroutine timeout/delay polling instead of blocking `Thread.sleep` loops.
+- Removed fixed sleep before dashboard assertions and restored a deterministic readiness wait before selecting the `auth` frequency value in the toggle scenario.
+- Kept business assertions unchanged for both failing scenarios (`frequency toggle` and `top N + threshold deterministic ordering`).
+**Key decisions**
+- Treated failures as async test-harness flakiness and constrained fixes to test code only, avoiding production behavior changes.
+- Used stress-loop validation as the acceptance bar to confirm CI resilience rather than relying on single-pass green runs.
+**Gotchas**
+- Time-based waits that block test threads can intermittently miss coroutine-driven recomputation windows, especially under slower CI scheduling.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (scheduler-friendly waits and frequency toggle readiness).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given frequency field selection when selecting value then dashboard filter query toggles" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given top n and threshold controls when applying frequency analysis then ordering remains deterministic"` (`BUILD SUCCESSFUL`).
+- `for i in {1..20}; do ./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" ...; done` (`PASS 20/20`).
+- `for i in {1..30}; do ./gradlew :ui:test --tests "...toggles" --tests "...ordering remains deterministic" ...; done` (`PASS 30/30`).

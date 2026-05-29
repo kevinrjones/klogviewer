@@ -21,10 +21,14 @@ import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -36,6 +40,7 @@ import strikt.assertions.isNull
 import strikt.assertions.isTrue
 import java.io.File
 import java.time.Instant
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DashboardIntentTest {
@@ -270,6 +275,10 @@ class DashboardIntentTest {
         }
 
         val selectedValue = "auth"
+        waitUntil {
+            activeDashboardContent().frequencyItems.any { it.value == selectedValue }
+        }
+
         viewModel.handleIntent(KLogViewerIntent.SelectDashboardFrequencyValue(selectedValue))
 
         waitUntil {
@@ -793,7 +802,6 @@ class DashboardIntentTest {
         waitUntilWindowReady()
 
         viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
-        Thread.sleep(25)
 
         waitUntilDashboardContentReady()
         val content = activeDashboardContent()
@@ -803,12 +811,17 @@ class DashboardIntentTest {
     }
 
     private fun waitUntil(timeoutMillis: Long = 5_000, pollIntervalMillis: Long = 10, predicate: () -> Boolean) {
-        val deadline = System.currentTimeMillis() + timeoutMillis
-        while (System.currentTimeMillis() < deadline) {
-            if (predicate()) return
-            Thread.sleep(pollIntervalMillis)
+        try {
+            runBlocking {
+                withTimeout(timeoutMillis.milliseconds) {
+                    while (!predicate()) {
+                        delay(pollIntervalMillis.milliseconds)
+                    }
+                }
+            }
+        } catch (_: TimeoutCancellationException) {
+            throw AssertionError("Condition was not met in time")
         }
-        throw AssertionError("Condition was not met in time")
     }
 
     private fun waitUntilWindowReady() {
