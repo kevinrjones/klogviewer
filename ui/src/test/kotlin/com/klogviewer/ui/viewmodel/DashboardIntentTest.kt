@@ -269,7 +269,11 @@ class DashboardIntentTest {
             activeDashboardContent().selectedFrequencyField == "service"
         }
 
-        val selectedValue = activeDashboardContent().frequencyItems.first().value
+        waitUntil {
+            activeDashboardContent().frequencyItems.any { it.value == "auth" }
+        }
+
+        val selectedValue = "auth"
         viewModel.handleIntent(KLogViewerIntent.SelectDashboardFrequencyValue(selectedValue))
 
         waitUntil {
@@ -802,10 +806,11 @@ class DashboardIntentTest {
         expectThat(content.samplingInfo.sampledCount).isEqualTo(3)
     }
 
-    private fun waitUntil(maxAttempts: Int = 200, predicate: () -> Boolean) {
-        repeat(maxAttempts) {
+    private fun waitUntil(timeoutMillis: Long = 5_000, pollIntervalMillis: Long = 10, predicate: () -> Boolean) {
+        val deadline = System.currentTimeMillis() + timeoutMillis
+        while (System.currentTimeMillis() < deadline) {
             if (predicate()) return
-            Thread.sleep(10)
+            Thread.sleep(pollIntervalMillis)
         }
         throw AssertionError("Condition was not met in time")
     }

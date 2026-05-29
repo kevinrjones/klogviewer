@@ -1,27 +1,31 @@
 package com.klogviewer.core.source
 
 import arrow.core.Either
+import aws.sdk.kotlin.services.s3.S3Client
+import aws.sdk.kotlin.services.s3.model.GetObjectRequest
+import aws.sdk.kotlin.services.s3.model.GetObjectResponse
+import aws.sdk.kotlin.services.s3.model.HeadObjectRequest
+import aws.sdk.kotlin.services.s3.model.HeadObjectResponse
+import aws.smithy.kotlin.runtime.content.ByteStream
 import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.domain.model.*
-import io.mockk.*
-import kotlinx.coroutines.*
+import io.mockk.coEvery
+import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
 import strikt.api.expectThat
 import strikt.assertions.hasSize
-import strikt.assertions.isA
 import strikt.assertions.isEqualTo
-import aws.sdk.kotlin.services.s3.S3Client
-import aws.sdk.kotlin.services.s3.model.*
-import aws.smithy.kotlin.runtime.content.ByteStream
 import kotlin.time.Duration.Companion.milliseconds
 
 class S3LogSourceTest {
 
+    @Suppress("UNCHECKED_CAST")
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `should poll logs from S3 bucket`() = runTest {
         // Arrange
@@ -75,6 +79,7 @@ class S3LogSourceTest {
         expectThat(appendedResult.entries[0].content).isEqualTo(LogContent("Appended"))
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `should handle object not found by emitting error and stopping`() = runTest {
         // Arrange

@@ -2756,3 +2756,22 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/test/KLogViewerComplexUiTest.kt` (deterministic multi-selection setup).
 - `ui/src/test/kotlin/com/klogviewer/ui/robot/BaseRobot.kt` and `ui/src/test/kotlin/com/klogviewer/ui/robot/LogListRobot.kt` (wait/synchronization hardening).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest" --tests "com.klogviewer.ui.test.KLogViewerComplexUiTest" --tests "com.klogviewer.ui.test.KLogViewerUiTest"` (`BUILD SUCCESSFUL`).
+
+## Task: CI Stabilization for Dashboard Intent Toggle and Cucumber Log Loading
+**Title**: Fix GitHub-Failing DashboardIntent and RunCucumber Tests
+**Date/time completed**: 2026-05-29 10:10
+**What was shipped**
+- Hardened `DashboardIntentTest` frequency-toggle case to select a deterministic value (`auth`) and wait for frequency items before toggling the dashboard filter query assertion.
+- Stabilized Cucumber log-loading step definitions by using scenario-scoped coroutine lifecycle (instead of per-step `runTest` cancellation), isolated per-scenario preferences storage, and window-targeted readiness polling.
+- Updated BDD assertions to validate loaded parsed entries from the loaded window's `logs`, eliminating flaky dependence on asynchronous `filteredLogs` recomputation timing.
+**Key decisions**
+- Treated both failures as timing/state-observation issues in tests, keeping production code unchanged and limiting edits to test seams.
+- Preferred deterministic test fixtures and scenario isolation over broad synchronization changes in app code.
+**Gotchas**
+- Cucumber step methods running with `runTest` can cancel background scope when the step returns, causing downstream `Then` assertions to observe incomplete state.
+- Shared temp preference directories can leak persisted filters across scenarios and produce zero visible entries despite successful file load.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (frequency field/value toggle stability).
+- `app/src/test/kotlin/com/klogviewer/bdd/steps/LogLoadingSteps.kt` (scenario lifecycle and deterministic loaded-window assertions).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :app:test --tests "com.klogviewer.bdd.RunCucumberTest"` (`BUILD SUCCESSFUL`).
