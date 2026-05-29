@@ -15,6 +15,7 @@ import com.klogviewer.ui.mvi.DashboardDataState
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.TimeRangePreset
 import com.klogviewer.ui.mvi.WorkspaceMode
+import com.klogviewer.ui.mvi.DashboardDeltaDirection
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.CoroutineScope
@@ -226,6 +227,27 @@ class DashboardIntentTest {
     }
 
     @Test
+    fun `given unknown level entries when rendering dashboard then unknown level slice reflects unknown count`() {
+        reconfigureLogSource(
+            listOf(
+                logEntry("2026-01-01T00:00:00Z", "known", level = LogLevel.INFO),
+                logEntry("2026-01-01T00:00:01Z", "unknown-1", level = LogLevel.UNKNOWN),
+                logEntry("2026-01-01T00:00:02Z", "unknown-2", level = LogLevel.UNKNOWN)
+            )
+        )
+
+        val testFile = File(tempDir, "dashboard-unknown-level.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+
+        val unknownSlice = activeDashboardContent().levelDistribution.first { it.level == LogLevel.UNKNOWN }
+        expectThat(unknownSlice.count).isEqualTo(2)
+    }
+
+    @Test
     fun `given frequency field selection when selecting value then dashboard filter query toggles`() {
         reconfigureLogSource(
             listOf(
@@ -360,6 +382,81 @@ class DashboardIntentTest {
             comparisonState.levelDeltas.any { it.delta != 0 } &&
                 comparisonState.fieldDeltas.any { (it.delta ?: 0) != 0 }
         }
+    }
+
+    @Test
+    fun `given compare ranges when running comparison then deltas are correct and sorted by impact`() {
+        reconfigureLogSource(
+            listOf(
+                logEntry(
+                    "2026-01-01T00:00:00Z",
+                    "baseline-a",
+                    level = LogLevel.INFO,
+                    fields = mapOf("service" to "auth")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:01Z",
+                    "baseline-b",
+                    level = LogLevel.INFO,
+                    fields = mapOf("service" to "billing")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:10Z",
+                    "comparison-a",
+                    level = LogLevel.INFO,
+                    fields = mapOf("service" to "auth")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:11Z",
+                    "comparison-b",
+                    level = LogLevel.ERROR,
+                    fields = mapOf("service" to "auth")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:12Z",
+                    "comparison-c",
+                    level = LogLevel.ERROR,
+                    fields = mapOf("service" to "auth")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:13Z",
+                    "comparison-d",
+                    level = LogLevel.WARN,
+                    fields = mapOf("service" to "db")
+                )
+            )
+        )
+
+        val testFile = File(tempDir, "dashboard-compare-ordering.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineFrom("2026-01-01T00:00:00Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo("2026-01-01T00:00:01Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonFrom("2026-01-01T00:00:10Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonTo("2026-01-01T00:00:13Z"))
+        viewModel.handleIntent(KLogViewerIntent.RunDashboardComparison)
+
+        waitUntil {
+            val comparisonState = activeDashboardContent().comparisonState
+            comparisonState.fieldDeltas.isNotEmpty() && comparisonState.levelDeltas.any { it.delta != 0 }
+        }
+
+        val comparisonState = activeDashboardContent().comparisonState
+        val infoDelta = comparisonState.levelDeltas.first { it.level == LogLevel.INFO }
+        val errorDelta = comparisonState.levelDeltas.first { it.level == LogLevel.ERROR }
+        val warnDelta = comparisonState.levelDeltas.first { it.level == LogLevel.WARN }
+        expectThat(infoDelta.delta).isEqualTo(-1)
+        expectThat(infoDelta.direction).isEqualTo(DashboardDeltaDirection.DECREASE)
+        expectThat(errorDelta.delta).isEqualTo(2)
+        expectThat(errorDelta.direction).isEqualTo(DashboardDeltaDirection.INCREASE)
+        expectThat(warnDelta.delta).isEqualTo(1)
+
+        expectThat(comparisonState.fieldDeltas.map { it.value }).isEqualTo(listOf("auth", "db", "billing"))
+        expectThat(comparisonState.fieldDeltas.map { it.delta }).isEqualTo(listOf(2, 1, -1))
     }
 
     @Test

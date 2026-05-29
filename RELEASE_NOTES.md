@@ -13,6 +13,13 @@
 
 ## New Features
 
+### Analysis & Visualization
+
+- Added a per-window **Dashboard** workspace for time-series graphing, normalized level distribution, and ad-hoc field frequency analysis.
+- Added synchronized date-time controls (`From` / `To` + presets) with chart click/brush interactions to keep log filtering and analytics aligned.
+- Added explicit A/B comparison workflows with baseline/comparison windows, deterministic delta ordering, and click-back investigation flow.
+- Added deterministic large-dataset sampling, background aggregation (`Dispatchers.Default`), and latency instrumentation to keep dashboard interactions responsive under high-volume append streams.
+
 ### S3 Connectivity
 
 - Connect to S3 buckets and load remote logs directly.

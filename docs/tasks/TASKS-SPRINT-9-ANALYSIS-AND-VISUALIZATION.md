@@ -83,20 +83,20 @@ K- [x] 14.2.1. Benchmark Compose-capable chart libraries on Desktop with represe
 - [x] 14.8.5. Validate charts remain responsive under high-volume append scenarios
 
 ### 14.9. Verification & Testing
-- [ ] 14.9.1. Unit tests for time bucketing and sparse/out-of-order timestamp handling
-- [ ] 14.9.2. Unit tests for level distribution with unknown-level mapping
-- [ ] 14.9.3. Unit tests for ad-hoc frequency (high cardinality, null/missing, deterministic ordering)
-- [ ] 14.9.4. Unit tests for A/B delta computation correctness and ordering
-- [ ] 14.9.5. UI tests for dashboard states and chart interactions (zoom/pan/tooltip/click/brush)
-- [ ] 14.9.6. UI tests for `From`/`To` controls, presets, and validation messaging
-- [ ] 14.9.7. Integration tests for `LogUpdate.Initial`, `Appended`, `Reset` analysis consistency
-- [ ] 14.9.8. Performance tests validating budgets on large datasets and live append streams
+- [x] 14.9.1. Unit tests for time bucketing and sparse/out-of-order timestamp handling
+- [x] 14.9.2. Unit tests for level distribution with unknown-level mapping
+- [x] 14.9.3. Unit tests for ad-hoc frequency (high cardinality, null/missing, deterministic ordering)
+- [x] 14.9.4. Unit tests for A/B delta computation correctness and ordering
+- [x] 14.9.5. UI tests for dashboard states and chart interactions (zoom/pan/tooltip/click/brush)
+- [x] 14.9.6. UI tests for `From`/`To` controls, presets, and validation messaging
+- [x] 14.9.7. Integration tests for `LogUpdate.Initial`, `Appended`, `Reset` analysis consistency
+- [x] 14.9.8. Performance tests validating budgets on large datasets and live append streams
 
 ### 14.10. Documentation & Rollout Readiness
-- [ ] 14.10.1. Update Sprint 9 documentation with accepted ADR links and final architecture diagram
-- [ ] 14.10.2. Update user docs with graphing, analysis, and date-time control usage flows
-- [ ] 14.10.3. Add release-note draft entries for analysis and visualization capabilities
-- [ ] 14.10.4. Record sprint completion outcomes in `docs/project_memory.md`
+- [x] 14.10.1. Update Sprint 9 documentation with accepted ADR links and final architecture diagram
+- [x] 14.10.2. Update user docs with graphing, analysis, and date-time control usage flows
+- [x] 14.10.3. Add release-note draft entries for analysis and visualization capabilities
+- [x] 14.10.4. Record sprint completion outcomes in `docs/project_memory.md`
 
 ### 14.11. Dashboard UX Hardening: Frequency Analysis + A/B Comparison
 - [x] 14.11.1. Add an always-visible analysis scope banner in the dashboard sidebar clarifying that all metrics use the current filtered logs

@@ -119,6 +119,29 @@ The A/B field-delta computation uses the same dashboard controls as frequency an
 
 Changing those values affects both frequency list output and A/B field-delta output on next recomputation.
 
+## User flow: date-time controls + A/B comparison
+
+1. Open a loaded log window and switch to **Dashboard** mode.
+2. Set the analysis scope first (optional but recommended):
+   - use dashboard `From` / `To`,
+   - apply a time preset, or
+   - brush/select a chart range.
+3. In **A/B Comparison**, provide baseline and comparison windows:
+   - each side accepts `From` and/or `To` (blank bounds are open-ended),
+   - invalid input shows inline validation under the affected range.
+4. Select a frequency field (if you need field deltas) and tune `Top N` / `Threshold` / `Cardinality limit`.
+5. Click **Run comparison** to compute deltas (manual-run semantics); editing ranges clears stale deltas until the next explicit run.
+6. Use **Clear** to reset comparison ranges/deltas and return to neutral comparison state.
+
+### Reading results
+
+- **Level deltas** always include every `LogLevel` with explicit direction (`INCREASE` / `DECREASE` / `UNCHANGED`).
+- **Field deltas** are sorted deterministically by:
+  1. absolute delta descending,
+  2. comparison count descending,
+  3. value ascending.
+- Missing structured values remain visible as `(missing)` when they pass threshold/top-N/cardinality gates.
+
 ## Relevant implementation references
 
 - `ui/src/main/kotlin/com/klogviewer/ui/components/KLogViewerScreen.kt`

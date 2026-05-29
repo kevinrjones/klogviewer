@@ -2720,3 +2720,21 @@ For each sprint/task
 **Test coverage areas**
 - `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (added deterministic sampling metadata and high-volume append responsiveness assertions).
 - `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 9 Verification & Rollout Readiness (14.9 + 14.10)
+**Title**: Complete Verification Coverage and Rollout Documentation for Dashboard Analytics
+**Date/time completed**: 2026-05-29 09:11
+**What was shipped**
+- Added repository-level unit coverage in `core/src/test/kotlin/com/klogviewer/core/analysis/InMemoryAnalysisMetricsRepositoryTest.kt` for sparse/out-of-order minute bucketing and deterministic high-cardinality frequency ordering with `(missing)` handling.
+- Extended `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` with explicit unknown-level distribution mapping assertions and deterministic A/B delta correctness/ordering checks.
+- Updated Sprint/user/release documentation: added accepted ADR links and final dashboard architecture flow in `docs/sprints/sprint-9-analysis-and-visualization.md`, added end-user usage flows in `docs/DASHBOARD-FREQUENCY-ANALYSIS.md` and `docs/DASHBOARD-AB-COMPARISON.md`, and added Sprint 9 analysis/visualization draft entries in `RELEASE_NOTES.md`.
+- Marked all `14.9.*` and `14.10.*` tasks complete in `docs/tasks/TASKS-SPRINT-9-ANALYSIS-AND-VISUALIZATION.md`.
+**Key decisions**
+- Added narrowly targeted assertions around deterministic ordering and unknown-level mapping rather than broad refactors, preserving existing dashboard behavior.
+- Kept rollout docs code-anchored and cross-linked to accepted ADRs so Sprint 9 implementation rationale remains traceable.
+**Gotchas**
+- Related `:ui:test` suites (`DashboardUxHardeningUiTest`, `KLogViewerComplexUiTest`, `KLogViewerUiTest`) still contain known pre-existing failures outside this change set; changed-path tests were validated independently.
+**Test coverage areas**
+- `./gradlew :core:test --tests com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.test.DashboardUxHardeningUiTest --tests com.klogviewer.ui.test.KLogViewerComplexUiTest --tests com.klogviewer.ui.test.KLogViewerUiTest` (`FAILED`, pre-existing unrelated failures).

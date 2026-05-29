@@ -108,6 +108,25 @@ Frequency controls are also reused by A/B field deltas:
 
 So changing frequency controls affects both the frequency list and A/B field-delta results.
 
+## User flow: graphing + date-time controls + frequency analysis
+
+1. Open a loaded log window and switch to **Dashboard** mode.
+2. Review the time-series chart and pick bucket granularity (`Per second` / `Per minute`) for the current troubleshooting horizon.
+3. Narrow the active scope with date-time controls:
+   - set `From` / `To` directly, or
+   - apply a preset (`Last N minutes`, `Visible Window`, `Full Loaded Range`, `Custom`), or
+   - select a chart bucket/range to push the same bounds into `From` / `To`.
+4. In **Frequency Analysis**:
+   - choose `Analyze field`,
+   - tune `Top N`, `Threshold`, and `Cardinality limit`,
+   - click a value to apply/remove the generated `@field:` filter token.
+5. If needed, clear dashboard selections to return to the broader loaded time window and recompute metrics.
+
+### Large-dataset behavior
+
+- For very large filtered datasets, dashboard analysis can run in deterministic sampling mode.
+- Sampling metadata (`mode`, `originalCount`, `sampledCount`) is carried in dashboard state so users can interpret chart/frequency outputs with the correct scope context.
+
 ## Relevant implementation references
 
 - `ui/src/main/kotlin/com/klogviewer/ui/components/KLogViewerScreen.kt`
