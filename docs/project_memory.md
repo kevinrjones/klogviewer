@@ -19,6 +19,7 @@
 - Sprint 9 ad-hoc frequency and comparative analysis (`14.6`) completed with structured-field top-N analysis, explicit missing-value handling, and A/B delta workflows.
 - Sprint 9 UX/accessibility slice (`14.7.1`–`14.7.3`) completed with a rendered dashboard chart strip, active filter chips, tooltip/semantic labeling, and keyboard fallback interactions.
 - Dashboard KoalaPlot time-series now supports drag-to-select bucket ranges using pointer-to-index mapping while preserving existing single-click filtering behavior.
+- Log row level cells now show only explicit parsed level fields (blank when absent), and the dashboard Summary no longer renders the `Level distribution` section.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -2632,3 +2633,39 @@ For each sprint/task
 - Frequency analysis and A/B comparison use the same high-level controls but apply them at slightly different pipeline points; documenting the exact order was necessary for accuracy.
 **Test coverage areas**
 - Documentation-only task; no code changes and no test execution required.
+
+## Task: Dashboard UX Hardening Implementation (14.11 + 14.12)
+**Title**: Implement Dashboard UX Hardening for Frequency Analysis and A/B Comparison
+**Date/time completed**: 2026-05-28 11:07
+**What was shipped**
+- Refactored dashboard analysis UI in `KLogViewerScreen.kt` into focused sections with an always-visible scope banner, collapsible hierarchy (`Summary`, `Frequency Analysis`, `A/B Comparison`), and clearer helper copy.
+- Improved A/B comparison UX with distinct baseline/comparison cards, parseable input placeholders, inline validation, open-ended range guidance, and explicit primary/secondary action hierarchy (`Run comparison` vs `Clear`) while preserving manual-run semantics.
+- Redesigned frequency and delta presentations for scanability (ranked frequency rows, proportion indicator bars, explicit dependency messaging, and direction legend `↑/↓/=` so direction is not color-only).
+- Added deterministic test hooks (`testTag`s/content descriptions) and new UI + ViewModel tests for helper text/empty states/validation/action hierarchy/accessibility and explicit-run/frequency-coupling behavior.
+**Key decisions**
+- Kept analytical semantics unchanged and limited changes to presentation/interaction layer plus verification coverage.
+- Added an always-visible direction legend to satisfy non-color direction communication in a stable, testable way without relying on dynamic delta-row selection in merged semantics.
+**Gotchas**
+- Compose semantics merging in clickable cards made dynamic row-level tag assertions flaky; tests were stabilized with deterministic labels/tags and unambiguous selectors.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/test/DashboardUxHardeningUiTest.kt` (new).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (extended explicit-run and frequency-control coupling assertions).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" --no-daemon` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --no-daemon` (`BUILD SUCCESSFUL`).
+
+## Task: Non-Explicit Levels UI Cleanup
+**Title**: Hide Inferred Log Levels and Remove Dashboard Level Distribution
+**Date/time completed**: 2026-05-28 11:32
+**What was shipped**
+- Updated log-list level rendering to display only explicit `fields["level"]` values and leave the level column blank when that field is absent (e.g., nginx-style logs).
+- Removed the dashboard Summary `Level distribution` heading and section rendering from `KLogViewerScreen.kt`.
+- Added UI tests covering both behaviors: inferred level text is no longer shown for entries without raw level fields, and the dashboard no longer renders level-distribution UI elements.
+**Key decisions**
+- Scoped the change to presentation only, leaving analysis/state contracts intact so existing dashboard data flow remains unchanged for future reintroduction.
+- Kept explicit raw level rendering untouched when present to preserve parser-provided level semantics.
+**Gotchas**
+- Existing entries always carry normalized `LogLevel`; distinguishing “explicit level” vs inferred required using `LogEntry.fields["level"]` presence in the UI.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/test/KLogViewerUiTest.kt` (added inferred-level absence and explicit raw-level presence assertions).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/DashboardUxHardeningUiTest.kt` (added absence assertions for `Level distribution` UI).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` (`BUILD SUCCESSFUL`).

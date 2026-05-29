@@ -91,6 +91,51 @@ class KLogViewerUiTest {
     }
 
     @Test
+    fun givenLogsWithoutRawLevelField_whenLoaded_thenInferredLevelsAreNotShownInLogRows() = runComposeUiTest {
+        setupApp()
+
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
+        every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
+            LogUpdate.Initial(testEntries).right()
+        )
+
+        mainRobot {
+            clickAddFile()
+        }
+
+        logList {
+            assertTextDoesNotExist("[INFO]")
+            assertTextDoesNotExist("[ERROR]")
+            assertTextDoesNotExist("[DEBUG]")
+        }
+    }
+
+    @Test
+    fun givenLogsWithRawLevelField_whenLoaded_thenRawLevelValueIsShownInLogRows() = runComposeUiTest {
+        setupApp()
+
+        val entryWithRawLevel = LogEntry(
+            timestamp = LogTimestamp("2023-01-01 10:00:03"),
+            level = LogLevel.WARN,
+            content = LogContent("Fourth log message"),
+            fields = mapOf("level" to "APP_WARN")
+        )
+
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
+        every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
+            LogUpdate.Initial(listOf(entryWithRawLevel)).right()
+        )
+
+        mainRobot {
+            clickAddFile()
+        }
+
+        logList {
+            assertTextExists("APP_WARN")
+        }
+    }
+
+    @Test
     fun givenLogsLoaded_whenLevelFiltered_thenListIsUpdated() = runComposeUiTest {
         setupApp()
         

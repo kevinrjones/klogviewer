@@ -97,3 +97,22 @@ K- [x] 14.2.1. Benchmark Compose-capable chart libraries on Desktop with represe
 - [ ] 14.10.2. Update user docs with graphing, analysis, and date-time control usage flows
 - [ ] 14.10.3. Add release-note draft entries for analysis and visualization capabilities
 - [ ] 14.10.4. Record sprint completion outcomes in `docs/project_memory.md`
+
+### 14.11. Dashboard UX Hardening: Frequency Analysis + A/B Comparison
+- [x] 14.11.1. Add an always-visible analysis scope banner in the dashboard sidebar clarifying that all metrics use the current filtered logs
+- [x] 14.11.2. Refactor dashboard analysis sidebar into focused composables (`AnalysisScopeBanner`, `FrequencyAnalysisSection`, `AbComparisonSection`) while preserving current intent/state wiring
+- [x] 14.11.3. Add concise helper text and labels for Frequency Analysis controls (`Analyze field`, `Top N`, `Threshold`, `Cardinality limit`) and A/B range semantics (`Baseline window (reference)`, `Comparison window (new period)`)
+- [x] 14.11.4. Implement complete empty-state and guidance copy for both features (no field selected, no values, threshold-filtered empty, cardinality-limited output, no ranges, invalid ranges, no matching logs, no meaningful deltas)
+- [x] 14.11.5. Improve A/B range input affordances with parseable placeholder examples and open-ended range helper text; render validation directly under the affected input/range
+- [x] 14.11.6. Make `Run comparison` the primary action and `Clear` secondary; keep manual-run semantics (no automatic recomputation on range edits)
+- [x] 14.11.7. Redesign level-delta rows to be scannable and accessible: show level, baseline count, comparison count, delta, and explicit direction indicators (`↑`, `↓`, `=`) not relying on color alone
+- [x] 14.11.8. Redesign field-delta rows for investigation flow: show value, baseline count, comparison count, delta; visually emphasize larger changes and de-emphasize `(missing)` without hiding it
+- [x] 14.11.9. Add clear dependency messaging that A/B field deltas use selected frequency field + threshold + top-N + cardinality settings
+- [x] 14.11.10. Improve frequency result readability with explicit ranking, count, and optional compact proportion indicators while preserving current computation/order semantics
+- [x] 14.11.11. Ensure section hierarchy and spacing support scan order: Summary -> Frequency Analysis -> A/B Comparison, with collapsible headers that retain key state visibility
+- [x] 14.11.12. Keep analytical behavior unchanged from documented semantics (`docs/DASHBOARD-AB-COMPARISON.md`, `docs/DASHBOARD-FREQUENCY-ANALYSIS.md`) unless a separate approved enhancement task is created
+
+### 14.12. Verification for Dashboard UX Hardening
+- [x] 14.12.1. Add/extend UI tests covering new helper text, empty states, validation placement, and primary/secondary compare actions
+- [x] 14.12.2. Add/extend ViewModel tests ensuring A/B compare still runs only on explicit run action and frequency-control coupling for field deltas remains intact
+- [x] 14.12.3. Add accessibility-focused checks for non-color delta direction communication and meaningful control labels in analysis sections

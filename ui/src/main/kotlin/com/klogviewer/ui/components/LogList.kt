@@ -396,14 +396,10 @@ private fun LogEntryCell(
             )
         }
         "Level" -> {
-            val displayLevel = when {
-                entry.fields["level"] != null && entry.fields["level"] != "UNKNOWN" -> {
-                    entry.fields["level"]!!
-                }
-                entry.level != LogLevel.UNKNOWN -> "[${entry.level}]"
-                else -> ""
-            }
-            val color = if (entry.level == LogLevel.UNKNOWN && entry.fields.containsKey("level") && entry.fields["level"] != "UNKNOWN") {
+            val displayLevel = entry.fields["level"]
+                ?.takeIf { it != "UNKNOWN" }
+                ?: ""
+            val color = if (entry.level == LogLevel.UNKNOWN && displayLevel.isNotBlank()) {
                 MaterialTheme.colors.onSurface
             } else {
                 getLevelColor(entry.level, logColors)

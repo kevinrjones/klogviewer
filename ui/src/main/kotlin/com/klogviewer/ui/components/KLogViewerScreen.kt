@@ -32,6 +32,7 @@ import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.mvi.*
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
+import kotlin.math.abs
 
 @Composable
 fun KLogViewerScreen(
@@ -870,6 +871,37 @@ private fun DashboardContent(
     onCompareFrequencyValueSelect: (String) -> Unit,
     onClearSelections: () -> Unit
 ) {
+    var isSummaryExpanded by remember { mutableStateOf(true) }
+    var isFrequencyExpanded by remember { mutableStateOf(true) }
+    var isComparisonExpanded by remember { mutableStateOf(true) }
+
+    val comparisonState = content.comparisonState
+    val activeTimeSelection = remember(
+        content.timeSeries,
+        content.selectedBucketFrom,
+        activeTimeFilterFrom,
+        activeTimeFilterTo
+    ) {
+        resolveDashboardTimeSelection(
+            content = content,
+            activeTimeFilterFrom = activeTimeFilterFrom,
+            activeTimeFilterTo = activeTimeFilterTo
+        )
+    }
+
+    val frequencyHeaderState = content.selectedFrequencyField?.let { "Field: $it" } ?: "No field selected"
+    val comparisonHasInput = remember(comparisonState) {
+        val baseline = comparisonState.baselineRange
+        val comparison = comparisonState.comparisonRange
+        (baseline.from.isNotBlank() || baseline.to.isNotBlank()) &&
+            (comparison.from.isNotBlank() || comparison.to.isNotBlank())
+    }
+    val comparisonHeaderState = when {
+        comparisonState.baselineRange.validationMessage != null || comparisonState.comparisonRange.validationMessage != null -> "Invalid range"
+        comparisonHasInput -> "Configured"
+        else -> "No ranges"
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -901,313 +933,699 @@ private fun DashboardContent(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Total events: ${content.totalEvents}",
-            style = MaterialTheme.typography.subtitle2,
-            modifier = Modifier.padding(horizontal = 8.dp)
+        DashboardAnalysisScopeBanner(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Time-series frequency",
-            style = MaterialTheme.typography.subtitle1,
-            modifier = Modifier.padding(horizontal = 8.dp)
+        DashboardSectionHeader(
+            title = "Summary",
+            stateLabel = "${content.totalEvents} events",
+            expanded = isSummaryExpanded,
+            onToggle = { isSummaryExpanded = !isSummaryExpanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        if (isSummaryExpanded) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Time-series frequency",
+                style = MaterialTheme.typography.subtitle1,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
 
-        val activeTimeSelection = remember(
-            content.timeSeries,
-            content.selectedBucketFrom,
-            activeTimeFilterFrom,
-            activeTimeFilterTo
-        ) {
-            resolveDashboardTimeSelection(
+            KoalaPlotTimeSeriesChart(
+                buckets = content.timeSeries,
+                bucketSize = content.bucketSize,
+                selectedBucketFrom = content.selectedBucketFrom,
+                selectedRangeFrom = activeTimeFilterFrom,
+                selectedRangeTo = activeTimeFilterTo,
+                onBucketSelect = onBucketSelect,
+                onBucketRangeSelect = onBucketRangeSelect
+            )
+
+            DashboardActiveFilters(
+                activeTimeSelection = activeTimeSelection,
+                selectedLevel = content.selectedLevel,
+                selectedFrequencyValue = content.selectedFrequencyValue,
+                onClearTimeSelection = onClearSelections,
+                onClearLevel = {
+                    content.selectedLevel?.let { level ->
+                        onLevelSelect(
+                            content.levelDistribution.firstOrNull { it.level == level }
+                                ?: DashboardLevelSlice(level = level, count = 0, ratio = 0f)
+                        )
+                    }
+                },
+                onClearFrequencyValue = {
+                    content.selectedFrequencyValue?.let(onFrequencyValueSelect)
+                }
+            )
+
+            DashboardBucketKeyboardFallback(
+                buckets = content.timeSeries,
+                selectedBucketFrom = content.selectedBucketFrom,
+                onBucketSelect = onBucketSelect
+            )
+
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+        DashboardSectionHeader(
+            title = "Frequency Analysis",
+            stateLabel = frequencyHeaderState,
+            expanded = isFrequencyExpanded,
+            onToggle = { isFrequencyExpanded = !isFrequencyExpanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
+        )
+
+        if (isFrequencyExpanded) {
+            Spacer(modifier = Modifier.height(8.dp))
+            FrequencyAnalysisSection(
                 content = content,
-                activeTimeFilterFrom = activeTimeFilterFrom,
-                activeTimeFilterTo = activeTimeFilterTo
+                onFrequencyFieldChange = onFrequencyFieldChange,
+                onFrequencyTopNChange = onFrequencyTopNChange,
+                onFrequencyThresholdChange = onFrequencyThresholdChange,
+                onFrequencyCardinalityLimitChange = onFrequencyCardinalityLimitChange,
+                onFrequencyValueSelect = onFrequencyValueSelect,
+                modifier = Modifier.padding(horizontal = 8.dp)
             )
         }
 
-        KoalaPlotTimeSeriesChart(
-            buckets = content.timeSeries,
-            bucketSize = content.bucketSize,
-            selectedBucketFrom = content.selectedBucketFrom,
-            selectedRangeFrom = activeTimeFilterFrom,
-            selectedRangeTo = activeTimeFilterTo,
-            onBucketSelect = onBucketSelect,
-            onBucketRangeSelect = onBucketRangeSelect
-        )
-
-        DashboardActiveFilters(
-            activeTimeSelection = activeTimeSelection,
-            selectedLevel = content.selectedLevel,
-            selectedFrequencyValue = content.selectedFrequencyValue,
-            onClearTimeSelection = onClearSelections,
-            onClearLevel = {
-                content.selectedLevel?.let { level ->
-                    onLevelSelect(
-                        content.levelDistribution.firstOrNull { it.level == level }
-                            ?: DashboardLevelSlice(level = level, count = 0, ratio = 0f)
-                    )
-                }
-            },
-            onClearFrequencyValue = {
-                content.selectedFrequencyValue?.let(onFrequencyValueSelect)
-            }
-        )
-
-        DashboardBucketKeyboardFallback(
-            buckets = content.timeSeries,
-            selectedBucketFrom = content.selectedBucketFrom,
-            onBucketSelect = onBucketSelect
-        )
-
         Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Level distribution",
-            style = MaterialTheme.typography.subtitle1,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        DashboardLevelDistributionSection(
-            slices = content.levelDistribution,
-            selectedLevel = content.selectedLevel,
-            onLevelSelect = onLevelSelect,
-            modifier = Modifier.padding(horizontal = 8.dp)
+        DashboardSectionHeader(
+            title = "A/B Comparison",
+            stateLabel = comparisonHeaderState,
+            expanded = isComparisonExpanded,
+            onToggle = { isComparisonExpanded = !isComparisonExpanded },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp)
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(
-            text = "Frequency analysis",
-            style = MaterialTheme.typography.subtitle1,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        if (content.availableFrequencyFields.isEmpty()) {
-            Text(
-                text = "No structured fields available for frequency analysis.",
-                style = MaterialTheme.typography.caption,
+        if (isComparisonExpanded) {
+            Spacer(modifier = Modifier.height(8.dp))
+            AbComparisonSection(
+                comparisonState = comparisonState,
+                selectedFrequencyField = content.selectedFrequencyField,
+                frequencyThreshold = content.frequencyThreshold,
+                frequencyTopN = content.frequencyTopN,
+                frequencyCardinalityLimit = content.frequencyCardinalityLimit,
+                onCompareBaselineFromChange = onCompareBaselineFromChange,
+                onCompareBaselineToChange = onCompareBaselineToChange,
+                onCompareComparisonFromChange = onCompareComparisonFromChange,
+                onCompareComparisonToChange = onCompareComparisonToChange,
+                onRunComparison = onRunComparison,
+                onClearComparison = onClearComparison,
+                onCompareLevelSelect = onCompareLevelSelect,
+                onCompareFrequencyValueSelect = onCompareFrequencyValueSelect,
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
-        } else {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+        }
+    }
+}
+
+@Composable
+private fun DashboardAnalysisScopeBanner(modifier: Modifier = Modifier) {
+    Card(
+        modifier = modifier,
+        backgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.08f)
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp)) {
+            Text(
+                text = "Analysis scope: current filtered logs",
+                style = MaterialTheme.typography.caption,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "All dashboard metrics below use logs matching your active filters.",
+                style = MaterialTheme.typography.caption
+            )
+        }
+    }
+}
+
+@Composable
+private fun DashboardSectionHeader(
+    title: String,
+    stateLabel: String,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onToggle)
+            .padding(vertical = 2.dp),
+        color = Color.Transparent
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 2.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = title, style = MaterialTheme.typography.subtitle1)
                 Text(
-                    text = "Field:",
+                    text = stateLabel,
                     style = MaterialTheme.typography.caption,
-                    modifier = Modifier.align(Alignment.CenterVertically)
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.74f)
                 )
-                content.availableFrequencyFields.forEach { field ->
-                    TextButton(onClick = { onFrequencyFieldChange(field) }) {
-                        Text(
-                            text = field,
-                            fontWeight = if (content.selectedFrequencyField == field) FontWeight.Bold else FontWeight.Normal
-                        )
-                    }
+            }
+            Text(
+                text = if (expanded) "▾" else "▸",
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .semantics { contentDescription = if (expanded) "Collapse $title" else "Expand $title" }
+            )
+        }
+    }
+}
+
+@Composable
+private fun FrequencyAnalysisSection(
+    content: DashboardDataState.Content,
+    onFrequencyFieldChange: (String) -> Unit,
+    onFrequencyTopNChange: (Int) -> Unit,
+    onFrequencyThresholdChange: (Int) -> Unit,
+    onFrequencyCardinalityLimitChange: (Int) -> Unit,
+    onFrequencyValueSelect: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = "Find common values for one structured field.",
+            style = MaterialTheme.typography.caption
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = "Analyze field",
+            style = MaterialTheme.typography.caption,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            text = "Choose one field to rank values by frequency.",
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+        )
+
+        if (content.availableFrequencyFields.isEmpty()) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "No structured fields available for frequency analysis.",
+                style = MaterialTheme.typography.caption
+            )
+            return
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            content.availableFrequencyFields.forEach { field ->
+                val isSelected = content.selectedFrequencyField == field
+                OutlinedButton(
+                    onClick = { onFrequencyFieldChange(field) },
+                    modifier = Modifier.testTag("frequency_field_$field")
+                ) {
+                    Text(
+                        text = field,
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                    )
                 }
             }
+        }
 
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                DashboardNumberControl(
-                    label = "Top N",
-                    value = content.frequencyTopN,
-                    step = 1,
-                    onChange = onFrequencyTopNChange
-                )
-                DashboardNumberControl(
-                    label = "Threshold",
-                    value = content.frequencyThreshold,
-                    step = 1,
-                    onChange = onFrequencyThresholdChange
-                )
-                DashboardNumberControl(
-                    label = "Cardinality",
-                    value = content.frequencyCardinalityLimit,
-                    step = 10,
-                    onChange = onFrequencyCardinalityLimitChange
-                )
-            }
+        Spacer(modifier = Modifier.height(8.dp))
+        DashboardNumberControl(
+            label = "Top N",
+            helper = "Maximum number of rows to show after filtering.",
+            value = content.frequencyTopN,
+            step = 1,
+            onChange = onFrequencyTopNChange
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        DashboardNumberControl(
+            label = "Threshold",
+            helper = "Hide values with counts below this minimum.",
+            value = content.frequencyThreshold,
+            step = 1,
+            onChange = onFrequencyThresholdChange
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        DashboardNumberControl(
+            label = "Cardinality limit",
+            helper = "Limit unique values considered before Top N is applied.",
+            value = content.frequencyCardinalityLimit,
+            step = 10,
+            onChange = onFrequencyCardinalityLimitChange
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = "Ranked values",
+            style = MaterialTheme.typography.caption,
+            fontWeight = FontWeight.SemiBold
+        )
 
-            content.frequencyItems.forEach { item ->
+        val maxCount = content.frequencyItems.maxOfOrNull { it.count }?.coerceAtLeast(1) ?: 1
+        if (content.frequencyItems.isEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = when {
+                    content.selectedFrequencyField == null -> "Select a field to see value frequency."
+                    content.frequencyThreshold > 1 -> "No values meet the current threshold. Lower the threshold to see more."
+                    else -> "No values found for this field in the current filtered logs."
+                },
+                style = MaterialTheme.typography.caption
+            )
+        } else {
+            Spacer(modifier = Modifier.height(6.dp))
+            content.frequencyItems.forEachIndexed { index, item ->
                 val isSelected = content.selectedFrequencyValue == item.value
+                val valueLabel = if (item.value == "(missing)") "(missing)" else item.value
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .padding(vertical = 3.dp)
                         .clickable { onFrequencyValueSelect(item.value) },
-                    backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.15f) else MaterialTheme.colors.surface
+                    backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.15f) else MaterialTheme.colors.surface,
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.45f) else MaterialTheme.colors.onSurface.copy(alpha = 0.16f)
+                    )
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "#${index + 1}",
+                                style = MaterialTheme.typography.caption,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+                            )
+                            Text(
+                                text = "${item.count}",
+                                style = MaterialTheme.typography.caption,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = item.value,
+                            text = valueLabel,
                             style = MaterialTheme.typography.body2,
-                            modifier = Modifier.weight(1f)
+                            color = if (item.value == "(missing)") {
+                                MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                            } else {
+                                MaterialTheme.colors.onSurface
+                            },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
-                        Text(
-                            text = item.count.toString(),
-                            style = MaterialTheme.typography.caption,
-                            fontWeight = FontWeight.SemiBold
+                        Spacer(modifier = Modifier.height(6.dp))
+                        LinearProgressIndicator(
+                            progress = item.count.toFloat() / maxCount.toFloat(),
+                            modifier = Modifier.fillMaxWidth()
                         )
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(12.dp))
+            if (content.frequencyItems.size >= minOf(content.frequencyTopN, content.frequencyCardinalityLimit)) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Showing top values from the first ${content.frequencyCardinalityLimit} unique values considered.",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Select a value to add or remove a field filter.",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun AbComparisonSection(
+    comparisonState: DashboardComparisonState,
+    selectedFrequencyField: String?,
+    frequencyThreshold: Int,
+    frequencyTopN: Int,
+    frequencyCardinalityLimit: Int,
+    onCompareBaselineFromChange: (String) -> Unit,
+    onCompareBaselineToChange: (String) -> Unit,
+    onCompareComparisonFromChange: (String) -> Unit,
+    onCompareComparisonToChange: (String) -> Unit,
+    onRunComparison: () -> Unit,
+    onClearComparison: () -> Unit,
+    onCompareLevelSelect: (LogLevel) -> Unit,
+    onCompareFrequencyValueSelect: (String) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val baselineRange = comparisonState.baselineRange
+    val comparisonRange = comparisonState.comparisonRange
+    val hasBaselineInput = baselineRange.from.isNotBlank() || baselineRange.to.isNotBlank()
+    val hasComparisonInput = comparisonRange.from.isNotBlank() || comparisonRange.to.isNotBlank()
+    val hasValidationError = baselineRange.validationMessage != null || comparisonRange.validationMessage != null
+    val canRunComparison = hasBaselineInput && hasComparisonInput && !hasValidationError
+    val hasNoWindowMatches = comparisonState.levelDeltas.isNotEmpty() &&
+        comparisonState.levelDeltas.all { it.baselineCount == 0 && it.comparisonCount == 0 }
+    val hasNoMeaningfulDeltas = comparisonState.levelDeltas.isNotEmpty() &&
+        comparisonState.levelDeltas.all { it.delta == 0 } &&
+        comparisonState.fieldDeltas.all { (it.delta ?: 0) == 0 }
+
+    Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "A/B comparison",
-            style = MaterialTheme.typography.subtitle1,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            text = "Compare log behavior between two time windows.",
+            style = MaterialTheme.typography.caption
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        val comparisonState = content.comparisonState
-
-        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)) {
-            Text(text = "Baseline", style = MaterialTheme.typography.caption, fontWeight = FontWeight.SemiBold)
-            OutlinedTextField(
-                value = comparisonState.baselineRange.from,
-                onValueChange = onCompareBaselineFromChange,
-                label = { Text("From") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = comparisonState.baselineRange.to,
-                onValueChange = onCompareBaselineToChange,
-                label = { Text("To") },
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-            )
-            comparisonState.baselineRange.validationMessage?.let { message ->
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colors.primary.copy(alpha = 0.06f),
+            border = BorderStroke(1.dp, MaterialTheme.colors.primary.copy(alpha = 0.3f))
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
                 Text(
-                    text = message,
-                    color = MaterialTheme.colors.error,
+                    text = "Baseline window (reference)",
                     style = MaterialTheme.typography.caption,
-                    modifier = Modifier.padding(top = 4.dp)
+                    fontWeight = FontWeight.SemiBold
                 )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Comparison", style = MaterialTheme.typography.caption, fontWeight = FontWeight.SemiBold)
-            OutlinedTextField(
-                value = comparisonState.comparisonRange.from,
-                onValueChange = onCompareComparisonFromChange,
-                label = { Text("From") },
-                modifier = Modifier.fillMaxWidth()
-            )
-            OutlinedTextField(
-                value = comparisonState.comparisonRange.to,
-                onValueChange = onCompareComparisonToChange,
-                label = { Text("To") },
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-            )
-            comparisonState.comparisonRange.validationMessage?.let { message ->
-                Text(
-                    text = message,
-                    color = MaterialTheme.colors.error,
-                    style = MaterialTheme.typography.caption,
-                    modifier = Modifier.padding(top = 4.dp)
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = baselineRange.from,
+                    onValueChange = onCompareBaselineFromChange,
+                    label = { Text("From (optional)") },
+                    placeholder = { Text("2026-05-28T10:30:00Z") },
+                    isError = baselineRange.validationMessage != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("compare_baseline_from_input")
                 )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onRunComparison) {
-                    Text("Run compare")
-                }
-                OutlinedButton(onClick = onClearComparison) {
-                    Text("Clear compare")
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = baselineRange.to,
+                    onValueChange = onCompareBaselineToChange,
+                    label = { Text("To (optional)") },
+                    placeholder = { Text("2026-05-28 10:30:00 or 1716892200") },
+                    isError = baselineRange.validationMessage != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("compare_baseline_to_input")
+                )
+                baselineRange.validationMessage?.let { message ->
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colors.error,
+                        style = MaterialTheme.typography.caption,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            backgroundColor = MaterialTheme.colors.surface,
+            border = BorderStroke(1.dp, MaterialTheme.colors.onSurface.copy(alpha = 0.18f))
+        ) {
+            Column(modifier = Modifier.padding(10.dp)) {
+                Text(
+                    text = "Comparison window (new period)",
+                    style = MaterialTheme.typography.caption,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = comparisonRange.from,
+                    onValueChange = onCompareComparisonFromChange,
+                    label = { Text("From (optional)") },
+                    placeholder = { Text("2026-05-28T10:30:00Z") },
+                    isError = comparisonRange.validationMessage != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("compare_comparison_from_input")
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                OutlinedTextField(
+                    value = comparisonRange.to,
+                    onValueChange = onCompareComparisonToChange,
+                    label = { Text("To (optional)") },
+                    placeholder = { Text("2026-05-28 10:30:00 or 1716892200") },
+                    isError = comparisonRange.validationMessage != null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("compare_comparison_to_input")
+                )
+                comparisonRange.validationMessage?.let { message ->
+                    Text(
+                        text = message,
+                        color = MaterialTheme.colors.error,
+                        style = MaterialTheme.typography.caption,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = "Leave From or To empty for an open-ended range.",
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+        )
+
+        if (!hasBaselineInput || !hasComparisonInput) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Enter at least one bound for both Baseline and Comparison windows.",
+                style = MaterialTheme.typography.caption
+            )
+        } else if (hasValidationError) {
+            Spacer(modifier = Modifier.height(6.dp))
+            Text(
+                text = "Fix the highlighted date/time input to run comparison.",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.error
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                onClick = onRunComparison,
+                enabled = canRunComparison,
+                modifier = Modifier.testTag("run_comparison_button")
+            ) {
+                Text("Run comparison")
+            }
+            OutlinedButton(
+                onClick = onClearComparison,
+                modifier = Modifier.testTag("clear_comparison_button")
+            ) {
+                Text("Clear")
+            }
+        }
+
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
             text = "Level deltas",
             style = MaterialTheme.typography.caption,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            fontWeight = FontWeight.SemiBold
         )
-        if (comparisonState.levelDeltas.isEmpty()) {
-            Text(
-                text = "Enter both ranges and run compare to view deltas.",
-                style = MaterialTheme.typography.caption,
-                modifier = Modifier.padding(horizontal = 8.dp)
-            )
-        } else {
-            comparisonState.levelDeltas.forEach { delta ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .clickable { onCompareLevelSelect(delta.level) }
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+        Text(
+            text = "Direction legend: ↑ increase, ↓ decrease, = unchanged",
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+        )
+
+        when {
+            !hasBaselineInput || !hasComparisonInput -> {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Enter ranges and run comparison to view deltas.",
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+            hasValidationError -> {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Invalid range. Fix the highlighted input values.",
+                    style = MaterialTheme.typography.caption,
+                    color = MaterialTheme.colors.error
+                )
+            }
+
+            hasNoWindowMatches -> {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "No matching log entries in Baseline and/or Comparison for the current filtered logs.",
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+            else -> {
+                Spacer(modifier = Modifier.height(6.dp))
+                comparisonState.levelDeltas.forEach { delta ->
+                    val isImportantIncrease =
+                        (delta.level == LogLevel.ERROR || delta.level == LogLevel.WARN || delta.level == LogLevel.FATAL) &&
+                            delta.direction == DashboardDeltaDirection.INCREASE
+                    val directionIndicator = dashboardDirectionIndicator(delta.direction, delta.delta)
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 3.dp)
+                            .clickable { onCompareLevelSelect(delta.level) },
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = if (isImportantIncrease) {
+                                MaterialTheme.colors.error.copy(alpha = 0.45f)
+                            } else {
+                                MaterialTheme.colors.onSurface.copy(alpha = 0.16f)
+                            }
+                        )
                     ) {
-                        Text(text = delta.level.name, style = MaterialTheme.typography.body2)
-                        Text(
-                            text = "${delta.baselineCount} -> ${delta.comparisonCount} (${delta.delta})",
-                            style = MaterialTheme.typography.caption
-                        )
-                        Text(
-                            text = dashboardDirectionLabel(delta.direction),
-                            color = dashboardDirectionColor(delta.direction),
-                            style = MaterialTheme.typography.caption,
-                            fontWeight = FontWeight.SemiBold
-                        )
+                        Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = if (isImportantIncrease) "${delta.level.name} (important increase)" else delta.level.name,
+                                    style = MaterialTheme.typography.body2,
+                                    fontWeight = if (isImportantIncrease) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isImportantIncrease) MaterialTheme.colors.error else MaterialTheme.colors.onSurface
+                                )
+                                Text(
+                                    text = "Baseline ${delta.baselineCount} · Comparison ${delta.comparisonCount}",
+                                    style = MaterialTheme.typography.caption
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "$directionIndicator (${dashboardDirectionLabel(delta.direction)})",
+                                color = dashboardDirectionColor(delta.direction),
+                                style = MaterialTheme.typography.caption,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.testTag("level_delta_direction_${delta.level.name}")
+                            )
+                        }
                     }
+                }
+
+                if (hasNoMeaningfulDeltas) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "No significant changes found with current field and limits.",
+                        style = MaterialTheme.typography.caption,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(10.dp))
         Text(
-            text = "Top value deltas",
+            text = "Field deltas",
             style = MaterialTheme.typography.caption,
-            modifier = Modifier.padding(horizontal = 8.dp)
+            fontWeight = FontWeight.SemiBold
         )
-        comparisonState.fieldDeltas.forEach { delta ->
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .clickable { onCompareFrequencyValueSelect(delta.value) }
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+
+        Spacer(modifier = Modifier.height(4.dp))
+        if (selectedFrequencyField == null) {
+            Text(
+                text = "Select a Frequency Analysis field to enable A/B field deltas.",
+                style = MaterialTheme.typography.caption
+            )
+        } else {
+            Text(
+                text = "Field deltas use Frequency Analysis field, threshold, Top N, and cardinality settings.",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+            )
+            Text(
+                text = "Current controls: field=$selectedFrequencyField, threshold=$frequencyThreshold, topN=$frequencyTopN, cardinality=$frequencyCardinalityLimit",
+                style = MaterialTheme.typography.caption,
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.62f)
+            )
+
+            if (comparisonState.fieldDeltas.isEmpty() && canRunComparison && !hasNoWindowMatches) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "No significant changes found with current field and limits.",
+                    style = MaterialTheme.typography.caption
+                )
+            }
+
+            val maxAbsoluteDelta = comparisonState.fieldDeltas.maxOfOrNull { abs(it.delta ?: 0) } ?: 0
+            comparisonState.fieldDeltas.forEach { delta ->
+                val baselineCount = delta.count - (delta.delta ?: 0)
+                val absoluteDelta = abs(delta.delta ?: 0)
+                val emphasize = maxAbsoluteDelta > 0 && absoluteDelta >= maxOf(2, maxAbsoluteDelta)
+                val label = if (delta.value == "(missing)") "(missing)" else delta.value
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 6.dp)
+                        .clickable { onCompareFrequencyValueSelect(delta.value) },
+                    border = BorderStroke(
+                        width = 1.dp,
+                        color = if (emphasize) {
+                            MaterialTheme.colors.primary.copy(alpha = 0.4f)
+                        } else {
+                            MaterialTheme.colors.onSurface.copy(alpha = 0.16f)
+                        }
+                    )
                 ) {
-                    Text(
-                        text = delta.value,
-                        style = MaterialTheme.typography.body2,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Text(
-                        text = "${delta.count} (${delta.delta ?: 0})",
-                        style = MaterialTheme.typography.caption
-                    )
-                    Text(
-                        text = dashboardDirectionLabel(delta.direction),
-                        color = dashboardDirectionColor(delta.direction),
-                        style = MaterialTheme.typography.caption,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Column(modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)) {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.body2,
+                            fontWeight = if (emphasize) FontWeight.Bold else FontWeight.Normal,
+                            color = if (delta.value == "(missing)") {
+                                MaterialTheme.colors.onSurface.copy(alpha = 0.58f)
+                            } else {
+                                MaterialTheme.colors.onSurface
+                            },
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Baseline $baselineCount · Comparison ${delta.count} · ${dashboardDirectionIndicator(delta.direction, delta.delta ?: 0)}",
+                            style = MaterialTheme.typography.caption,
+                            color = dashboardDirectionColor(delta.direction)
+                        )
+                    }
                 }
             }
         }
@@ -1532,14 +1950,50 @@ private fun formatDashboardBucketLabel(bucket: DashboardTimeBucket): String {
 @Composable
 private fun DashboardNumberControl(
     label: String,
+    helper: String,
     value: Int,
     step: Int,
     onChange: (Int) -> Unit
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = "$label: $value", style = MaterialTheme.typography.caption)
-        TextButton(onClick = { onChange((value - step).coerceAtLeast(1)) }) { Text("-") }
-        TextButton(onClick = { onChange(value + step) }) { Text("+") }
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "$label: $value", style = MaterialTheme.typography.caption)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                TextButton(
+                    onClick = { onChange((value - step).coerceAtLeast(1)) },
+                    modifier = Modifier.semantics {
+                        contentDescription = "Decrease $label"
+                    }
+                ) {
+                    Text("-")
+                }
+                TextButton(
+                    onClick = { onChange(value + step) },
+                    modifier = Modifier.semantics {
+                        contentDescription = "Increase $label"
+                    }
+                ) {
+                    Text("+")
+                }
+            }
+        }
+        Text(
+            text = helper,
+            style = MaterialTheme.typography.caption,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f)
+        )
+    }
+}
+
+private fun dashboardDirectionIndicator(direction: DashboardDeltaDirection, delta: Int): String {
+    return when (direction) {
+        DashboardDeltaDirection.INCREASE -> "↑ +${kotlin.math.abs(delta)}"
+        DashboardDeltaDirection.DECREASE -> "↓ -${kotlin.math.abs(delta)}"
+        DashboardDeltaDirection.UNCHANGED -> "= 0"
     }
 }
 

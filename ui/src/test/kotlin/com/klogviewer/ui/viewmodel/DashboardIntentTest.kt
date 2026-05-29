@@ -357,6 +357,106 @@ class DashboardIntentTest {
     }
 
     @Test
+    fun `given comparison already computed when editing ranges then deltas are cleared until explicit rerun`() {
+        reconfigureLogSource(
+            listOf(
+                logEntry(
+                    "2026-01-01T00:00:00Z",
+                    "first",
+                    level = LogLevel.INFO,
+                    fields = mapOf("service" to "auth")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:01Z",
+                    "second",
+                    level = LogLevel.ERROR,
+                    fields = mapOf("service" to "billing")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:02Z",
+                    "third",
+                    level = LogLevel.ERROR,
+                    fields = mapOf("service" to "billing")
+                )
+            )
+        )
+
+        val testFile = File(tempDir, "dashboard-compare-manual-run.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineFrom("2026-01-01T00:00:00Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo("2026-01-01T00:00:00Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonFrom("2026-01-01T00:00:01Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonTo("2026-01-01T00:00:02Z"))
+        viewModel.handleIntent(KLogViewerIntent.RunDashboardComparison)
+
+        waitUntil {
+            activeDashboardContent().comparisonState.levelDeltas.any { it.delta != 0 }
+        }
+
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo("2026-01-01T00:00:01Z"))
+
+        val comparisonState = activeDashboardContent().comparisonState
+        expectThat(comparisonState.levelDeltas).isEqualTo(emptyList())
+        expectThat(comparisonState.fieldDeltas).isEqualTo(emptyList())
+    }
+
+    @Test
+    fun `given comparison field deltas when frequency threshold changes then rerun uses updated controls`() {
+        reconfigureLogSource(
+            listOf(
+                logEntry(
+                    "2026-01-01T00:00:00Z",
+                    "first",
+                    level = LogLevel.INFO,
+                    fields = mapOf("service" to "auth")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:01Z",
+                    "second",
+                    level = LogLevel.ERROR,
+                    fields = mapOf("service" to "billing")
+                ),
+                logEntry(
+                    "2026-01-01T00:00:02Z",
+                    "third",
+                    level = LogLevel.ERROR,
+                    fields = mapOf("service" to "billing")
+                )
+            )
+        )
+
+        val testFile = File(tempDir, "dashboard-compare-coupled-controls.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("service"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(1))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineFrom("2026-01-01T00:00:00Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareBaselineTo("2026-01-01T00:00:00Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonFrom("2026-01-01T00:00:01Z"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardCompareComparisonTo("2026-01-01T00:00:02Z"))
+        viewModel.handleIntent(KLogViewerIntent.RunDashboardComparison)
+
+        waitUntil {
+            activeDashboardContent().comparisonState.fieldDeltas.map { it.value }.containsAll(listOf("auth", "billing"))
+        }
+
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(2))
+        viewModel.handleIntent(KLogViewerIntent.RunDashboardComparison)
+
+        waitUntil {
+            activeDashboardContent().comparisonState.fieldDeltas.map { it.value } == listOf("billing")
+        }
+    }
+
+    @Test
     fun `given invalid compare range when running comparison then deltas remain empty`() {
         val testFile = File(tempDir, "dashboard-compare-invalid.log").apply { writeText("line1\n") }
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
