@@ -18,14 +18,16 @@ import com.klogviewer.ui.mvi.WorkspaceMode
 import com.klogviewer.ui.mvi.DashboardDeltaDirection
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.withTimeout
@@ -51,10 +53,13 @@ class DashboardIntentTest {
     private lateinit var viewModel: KLogViewerViewModel
     private lateinit var logSource: LogSource
     private lateinit var prefsRepository: JsonPreferencesRepository
+    private lateinit var testDispatcher: TestDispatcher
+    private lateinit var testScope: TestScope
 
     @BeforeEach
     fun setup() {
-        val testDispatcher = UnconfinedTestDispatcher()
+        testDispatcher = UnconfinedTestDispatcher()
+        testScope = TestScope(testDispatcher)
         Dispatchers.setMain(testDispatcher)
         prefsRepository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
         logSource = mockk()
@@ -71,7 +76,7 @@ class DashboardIntentTest {
             logSource = logSource,
             prefsRepository = prefsRepository,
             heuristicProbe = HeuristicProbe(ParserRegistry()),
-            scope = CoroutineScope(testDispatcher),
+            scope = testScope,
             dashboardRecomputeDebounceMs = 0L,
             dashboardSamplingThreshold = 6,
             dashboardSamplingTargetSize = 3
@@ -80,8 +85,11 @@ class DashboardIntentTest {
 
     @AfterEach
     fun tearDown() {
+        if (::viewModel.isInitialized) {
+            viewModel.clear()
+            testScope.advanceUntilIdle()
+        }
         Dispatchers.resetMain()
-        viewModel.clear()
     }
 
     @Test
@@ -286,13 +294,20 @@ class DashboardIntentTest {
                 content?.selectedFrequencyValue == selectedValue
         }
 
+        waitUntil {
+            viewModel.state.value.activeTab?.activeWindow?.filteredLogs?.size == 2
+        }
+
         viewModel.handleIntent(KLogViewerIntent.SelectDashboardFrequencyValue(selectedValue))
+
+        val clearedSelectionWindow = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
+        expectThat(clearedSelectionWindow.filterQueries.none { it.startsWith("@field:") }).isTrue()
+        expectThat((clearedSelectionWindow.dashboardDataState as? DashboardDataState.Content)?.selectedFrequencyValue).isNull()
 
         waitUntil {
             val activeWindow = viewModel.state.value.activeTab?.activeWindow
             val content = activeWindow?.dashboardDataState as? DashboardDataState.Content
-            activeWindow?.filterQueries?.none { it.startsWith("@field:") } == true &&
-                content?.selectedFrequencyValue == null
+            activeWindow?.filteredLogs?.size == 3 && content?.selectedFrequencyValue == null
         }
     }
 
@@ -876,11 +891,15 @@ class DashboardIntentTest {
         expectThat(content.samplingInfo.sampledCount).isEqualTo(3)
     }
 
-    private fun waitUntil(timeoutMillis: Long = 5_000, pollIntervalMillis: Long = 10, predicate: () -> Boolean) {
+    private fun waitUntil(timeoutMillis: Long = 10_000, pollIntervalMillis: Long = 10, predicate: () -> Boolean) {
         try {
             runBlocking {
                 withTimeout(timeoutMillis.milliseconds) {
-                    while (!predicate()) {
+                    while (true) {
+                        testScope.advanceUntilIdle()
+                        if (predicate()) {
+                            break
+                        }
                         delay(pollIntervalMillis.milliseconds)
                     }
                 }

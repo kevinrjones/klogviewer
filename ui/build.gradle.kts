@@ -27,6 +27,7 @@ dependencies {
     testImplementation(libs.strikt.core)
     testImplementation(libs.jetbrains.compose.ui.test.junit4)
     testImplementation(libs.junit4)
+    testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.mockk)
 }
 

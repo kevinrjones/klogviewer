@@ -2847,3 +2847,24 @@ For each sprint/task
 - `./gradlew :app:test --tests "com.klogviewer.integration.TabManagementTest"` (`BUILD SUCCESSFUL`).
 - `for i in {1..40}; do ./gradlew :app:test --tests "com.klogviewer.integration.TabManagementTest.should maintain independent filter queries and logs per tab" ...; done` (`PASS 40/40`).
 - `./gradlew :app:test --tests "com.klogviewer.integration.*"` (`BUILD SUCCESSFUL`).
+
+## Task: Broader CI Flakiness Hardening for Dashboard + Plaintext Secret Prompt
+**Title**: Stabilize ViewModel Async Tests for Full-Suite CI Determinism
+**Date/time completed**: 2026-05-29 13:13
+**What was shipped**
+- Hardened `PlaintextSecretFallbackPromptTest` with a deterministic coroutine test harness (`TestScope` + injected ViewModel scope), explicit scheduler draining (`advanceUntilIdle()`), guarded teardown, and explicit verification that decline does not retry plaintext fallback.
+- Hardened `DashboardIntentTest` around the flaky frequency-toggle path by synchronizing on first-toggle filtered convergence, asserting synchronous deselection semantics immediately, and waiting for post-clear filtered convergence.
+- Increased shared dashboard wait timeout from `5_000ms` to `10_000ms` to provide CI headroom while keeping strict state predicates.
+**Key decisions**
+- Kept production code unchanged after validating plaintext prompt behavior is correct: pending prompt is set synchronously on `RequiresPlaintextSecretConfirmation`, decline clears pending state without retry, and confirm retries through `PreferencesSaveOptions(allowPlaintextSecretFallback = true)`.
+- Treated failures as test nondeterminism caused by async recomputation and scheduler timing under broader suite execution, and fixed them at the test seam.
+- Added `ui` test dependency on `kotlinx-coroutines-test` to make coroutine test utilities explicit and stable for ViewModel tests.
+**Gotchas**
+- The dashboard toggle test passed in isolation and pairwise runs but could fail in broad wildcard suite runs (`:ui:test --tests "com.klogviewer.ui.viewmodel.*"`), indicating order/timing sensitivity that required stronger per-transition convergence checks.
+- `viewModel.clear()` triggers preference save; tests with strict save verifications must isolate call windows and drain scheduled jobs to avoid hidden teardown effects.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/PlaintextSecretFallbackPromptTest.kt` (scope/dispatcher control and save-option assertions).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (frequency-toggle convergence hardening and timeout tuning).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.PlaintextSecretFallbackPromptTest"` (`BUILD SUCCESSFUL`).
+- `for i in {1..40}; do ./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.PlaintextSecretFallbackPromptTest" ...; done` (`PASS 40/40`).
+- `for i in {1..20}; do ./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.*" ...; done` (`PASS 20/20`).

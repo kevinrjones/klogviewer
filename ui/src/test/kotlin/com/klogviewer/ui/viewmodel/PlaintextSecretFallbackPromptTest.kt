@@ -9,11 +9,13 @@ import com.klogviewer.domain.repository.PreferencesSaveResult
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.slot
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.TestDispatcher
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.jupiter.api.AfterEach
@@ -30,18 +32,26 @@ class PlaintextSecretFallbackPromptTest {
     private val prefsRepository = mockk<PreferencesRepository>()
     private val heuristicProbe = mockk<HeuristicProbe>(relaxed = true)
 
+    private lateinit var testDispatcher: TestDispatcher
+    private lateinit var testScope: TestScope
     private lateinit var viewModel: KLogViewerViewModel
 
     @BeforeEach
     fun setup() {
-        Dispatchers.setMain(UnconfinedTestDispatcher())
+        testDispatcher = UnconfinedTestDispatcher()
+        testScope = TestScope(testDispatcher)
+        Dispatchers.setMain(testDispatcher)
         every { prefsRepository.load() } returns UserPreferences()
+        every { prefsRepository.save(any(), any()) } returns PreferencesSaveResult.Saved
     }
 
     @AfterEach
     fun tearDown() {
+        if (::viewModel.isInitialized) {
+            viewModel.clear()
+            testScope.advanceUntilIdle()
+        }
         Dispatchers.resetMain()
-        viewModel.clear()
     }
 
     @Test
@@ -53,10 +63,12 @@ class PlaintextSecretFallbackPromptTest {
         viewModel = KLogViewerViewModel(
             logSource = logSource,
             prefsRepository = prefsRepository,
-            heuristicProbe = heuristicProbe
+            heuristicProbe = heuristicProbe,
+            scope = testScope
         )
 
         viewModel.savePreferences()
+        testScope.advanceUntilIdle()
 
         expectThat(viewModel.state.value.pendingPlaintextSecretSave).isNotNull()
     }
@@ -72,11 +84,13 @@ class PlaintextSecretFallbackPromptTest {
         viewModel = KLogViewerViewModel(
             logSource = logSource,
             prefsRepository = prefsRepository,
-            heuristicProbe = heuristicProbe
+            heuristicProbe = heuristicProbe,
+            scope = testScope
         )
 
         viewModel.savePreferences()
         viewModel.handleIntent(KLogViewerIntent.ConfirmPlaintextSecretSave)
+        testScope.advanceUntilIdle()
 
         expectThat(optionsSlot.size).isEqualTo(2)
         expectThat(optionsSlot[0].allowPlaintextSecretFallback).isEqualTo(false)
@@ -93,15 +107,20 @@ class PlaintextSecretFallbackPromptTest {
         viewModel = KLogViewerViewModel(
             logSource = logSource,
             prefsRepository = prefsRepository,
-            heuristicProbe = heuristicProbe
+            heuristicProbe = heuristicProbe,
+            scope = testScope
         )
 
         viewModel.savePreferences()
         viewModel.handleIntent(KLogViewerIntent.DeclinePlaintextSecretSave)
+        testScope.advanceUntilIdle()
 
         expectThat(viewModel.state.value.pendingPlaintextSecretSave).isNull()
         verify(exactly = 1) {
             prefsRepository.save(any(), PreferencesSaveOptions(allowPlaintextSecretFallback = false))
+        }
+        verify(exactly = 0) {
+            prefsRepository.save(any(), PreferencesSaveOptions(allowPlaintextSecretFallback = true))
         }
     }
 }
