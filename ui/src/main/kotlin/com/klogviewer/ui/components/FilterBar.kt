@@ -52,8 +52,6 @@ fun FilterBar(
     timeFilterTo: String,
     timeFilterPreset: TimeRangePreset?,
     timeFilterValidationMessage: String?,
-    onTimeFilterFromChange: (String) -> Unit,
-    onTimeFilterToChange: (String) -> Unit,
     onApplyTimeFilterPreset: (TimeRangePreset) -> Unit,
     onClearTimeFilter: () -> Unit,
     matchesCount: Int,
@@ -196,8 +194,6 @@ fun FilterBar(
                 toValue = timeFilterTo,
                 preset = timeFilterPreset,
                 validationMessage = timeFilterValidationMessage,
-                onFromChange = onTimeFilterFromChange,
-                onToChange = onTimeFilterToChange,
                 onApplyPreset = onApplyTimeFilterPreset,
                 onClear = onClearTimeFilter
             )
@@ -284,8 +280,6 @@ private fun TimeFilterControls(
     toValue: String,
     preset: TimeRangePreset?,
     validationMessage: String?,
-    onFromChange: (String) -> Unit,
-    onToChange: (String) -> Unit,
     onApplyPreset: (TimeRangePreset) -> Unit,
     onClear: () -> Unit
 ) {
@@ -295,28 +289,6 @@ private fun TimeFilterControls(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(horizontal = 4.dp)
     ) {
-        DateTimeFilterInput(
-            value = fromValue,
-            label = "From",
-            testTag = "time_filter_from_input",
-            clearTag = "time_filter_clear_from",
-            clearTooltip = "Clear From",
-            onValueChange = onFromChange
-        )
-
-        Spacer(modifier = Modifier.width(4.dp))
-
-        DateTimeFilterInput(
-            value = toValue,
-            label = "To",
-            testTag = "time_filter_to_input",
-            clearTag = "time_filter_clear_to",
-            clearTooltip = "Clear To",
-            onValueChange = onToChange
-        )
-
-        Spacer(modifier = Modifier.width(4.dp))
-
         Box {
             FilterBarIcon(
                 icon = Icons.Default.Schedule,
@@ -362,8 +334,6 @@ private fun TimeFilterControls(
     }
 }
 
-private const val TIME_FILTER_PLACEHOLDER = "YYYY-MM-DD HH:mm:ss"
-
 private fun TimeRangePreset.displayLabel(): String {
     return when (this) {
         TimeRangePreset.LAST_5_MINUTES -> "Last 5 minutes"
@@ -376,60 +346,6 @@ private fun TimeRangePreset.displayLabel(): String {
         TimeRangePreset.FULL_LOADED_RANGE -> "Full loaded range"
         TimeRangePreset.CUSTOM -> "Custom"
     }
-}
-
-@Composable
-private fun DateTimeFilterInput(
-    value: String,
-    label: String,
-    testTag: String,
-    clearTag: String,
-    clearTooltip: String,
-    onValueChange: (String) -> Unit
-) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        label = { Text(label) },
-        placeholder = {
-            Text(
-                text = TIME_FILTER_PLACEHOLDER,
-                style = MaterialTheme.typography.caption,
-                fontSize = 12.sp
-            )
-        },
-        singleLine = true,
-        textStyle = MaterialTheme.typography.caption.copy(fontSize = 12.sp),
-        leadingIcon = {
-            Icon(
-                imageVector = Icons.Default.CalendarToday,
-                contentDescription = null,
-                modifier = Modifier.size(14.dp)
-            )
-        },
-        trailingIcon = {
-            if (value.isNotBlank()) {
-                TooltipWrapper(tooltip = clearTooltip) {
-                    IconButton(
-                        onClick = { onValueChange("") },
-                        modifier = Modifier.size(24.dp).testTag(clearTag)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Clear,
-                            contentDescription = clearTooltip,
-                            modifier = Modifier.size(14.dp)
-                        )
-                    }
-                }
-            }
-        },
-        modifier = Modifier.width(200.dp).testTag(testTag),
-        colors = TextFieldDefaults.textFieldColors(
-            backgroundColor = MaterialTheme.colors.onSurface.copy(alpha = 0.05f),
-            focusedIndicatorColor = MaterialTheme.colors.primary,
-            unfocusedIndicatorColor = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.disabled)
-        )
-    )
 }
 
 @Composable

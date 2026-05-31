@@ -349,8 +349,6 @@ private fun LogTopBar(
             timeFilterTo = activeWindow?.timeFilterTo ?: "",
             timeFilterPreset = activeWindow?.timeFilterPreset,
             timeFilterValidationMessage = activeWindow?.timeFilterValidationMessage,
-            onTimeFilterFromChange = { viewModel.handleIntent(KLogViewerIntent.SetTimeFilterFrom(it)) },
-            onTimeFilterToChange = { viewModel.handleIntent(KLogViewerIntent.SetTimeFilterTo(it)) },
             onApplyTimeFilterPreset = { preset ->
                 viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(preset))
             },
