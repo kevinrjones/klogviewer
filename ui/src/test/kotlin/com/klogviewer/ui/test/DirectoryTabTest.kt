@@ -1,19 +1,9 @@
 package com.klogviewer.ui.test
 
-import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.test.assertCountEquals
-import androidx.compose.ui.test.assertTextEquals
-import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toPixelMap
-import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.performMouseInput
-import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.klogviewer.core.parser.HeuristicProbe
@@ -279,7 +269,7 @@ class DirectoryTabTest {
         }
 
         // We need to bypass the real DirectoryLogSource and just update the state to verify UI rendering
-        viewModel.handleIntent(com.klogviewer.ui.mvi.KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
         
         // Wait for directory flag to be set
         waitUntil(timeoutMillis = 5000) {
@@ -315,7 +305,7 @@ class DirectoryTabTest {
             KLogViewerScreen(viewModel, dialogProvider)
         }
 
-        viewModel.handleIntent(com.klogviewer.ui.mvi.KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
         
         // Verify tab title shows "[0]"
         waitUntil(timeoutMillis = 5000) {
@@ -351,7 +341,7 @@ class DirectoryTabTest {
             KLogViewerScreen(viewModel, dialogProvider)
         }
 
-        viewModel.handleIntent(com.klogviewer.ui.mvi.KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(tempDir.absolutePath)))
         
         // Wait for directory flag to be set
         waitUntil(timeoutMillis = 5000) {

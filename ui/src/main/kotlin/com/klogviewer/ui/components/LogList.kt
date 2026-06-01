@@ -1,25 +1,22 @@
 package com.klogviewer.ui.components
 
 import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.material.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.input.pointer.pointerHoverIcon
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.*
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
@@ -29,12 +26,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlin.math.roundToInt
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
-import com.klogviewer.ui.theme.LogLevelColors
 import com.klogviewer.ui.theme.KLogViewerTheme
-import com.klogviewer.ui.components.TooltipWrapper
+import com.klogviewer.ui.theme.LogLevelColors
+import kotlin.math.roundToInt
 
 @Composable
 fun LogList(
@@ -82,9 +78,7 @@ fun LogList(
                         columnWidths = columnWidths,
                         contentWidth = contentWidth,
                         gutterWidth = gutterWidth,
-                        sourceIds = sourceIds,
                         onColumnResize = onColumnResize,
-                        windowId = windowId,
                         modifier = Modifier.width(contentWidth)
                     )
                     LazyColumn(
@@ -141,9 +135,7 @@ fun LogListHeader(
     columnWidths: Map<String, Int>,
     contentWidth: Dp,
     gutterWidth: Dp,
-    sourceIds: List<String> = emptyList(),
     onColumnResize: (String, Int) -> Unit,
-    windowId: String? = null,
     modifier: Modifier = Modifier
 ) {
     Surface(
