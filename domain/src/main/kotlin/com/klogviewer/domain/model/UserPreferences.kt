@@ -28,6 +28,7 @@ data class WindowPreference(
     val id: String,
     val filePath: String,
     val sourceIds: List<String> = emptyList(),
+    val hiddenSourceIds: Set<String> = emptySet(),
     val filterQueries: List<String> = emptyList(),
     val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
     val timeFilterFrom: String = "",

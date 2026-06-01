@@ -14,6 +14,7 @@ object LogFilterService {
     suspend fun filter(window: LogWindow): List<LogEntry> = withContext(Dispatchers.Default) {
         val timeRange = TimeRangeFilterSupport.resolveRange(window)
         val filtered = window.logs.filter { entry ->
+            val isHiddenSource = entry.sourceId != null && window.hiddenSourceIds.contains(entry.sourceId)
             val matchesLevel = window.levelFilters.contains(entry.level)
             val matchesFilter = if (window.filterQueries.isEmpty()) {
                 true
@@ -28,7 +29,7 @@ object LogFilterService {
                 val toleratedTo = upperBoundWithTolerance(to)
                 !entryInstant.isBefore(toleratedFrom) && !entryInstant.isAfter(toleratedTo)
             } ?: true
-            matchesLevel && matchesFilter && matchesTimeRange
+            !isHiddenSource && matchesLevel && matchesFilter && matchesTimeRange
         }
 
         if (window.isReversed) filtered.reversed() else filtered

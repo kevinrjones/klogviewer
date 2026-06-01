@@ -20,6 +20,7 @@
 - Sprint 9 UX/accessibility slice (`14.7.1`–`14.7.3`) completed with a rendered dashboard chart strip, active filter chips, tooltip/semantic labeling, and keyboard fallback interactions.
 - Dashboard KoalaPlot time-series now supports drag-to-select bucket ranges using pointer-to-index mapping while preserving existing single-click filtering behavior.
 - Log row level cells now show only explicit parsed level fields (blank when absent), with conditional level analytics UI: the left `Levels` pane and dashboard `Level distribution` section render only when raw `level` fields are present.
+- Sprint 10 `15.1` completed: active-window source dropdown management now supports per-source `[x]` removal with scoped state updates and UI test coverage.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -2990,3 +2991,22 @@ For each sprint/task
 - `core/src/test/kotlin/com/klogviewer/core/source/S3LogSourceTest.kt` (new transient `getObject` failure recovery test).
 - `./gradlew :core:test --tests "com.klogviewer.core.source.S3LogSourceTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :core:test --tests "com.klogviewer.core.source.*"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.1 In-Tab Source Drop-down Management
+**Title**: Add Active-Window Source Dropdown and Per-Source Removal Flow
+**Date/time completed**: 2026-06-01 16:42
+**What was shipped**
+- Added `SourceManagementBar` + `SourceManagementDropdown` in `KLogViewerScreen` to provide an active-window-scoped source dropdown with one entry per loaded source and a checked `[x]` remove control.
+- Added `KLogViewerIntent.RemoveSourceFromActiveWindow` and wired it through `TabWindowIntentHandler`.
+- Implemented source-removal state updates to remove only the selected source while keeping `filePath`, `sourceIds`, `missingSourceIds`, visible rows, and selection metadata consistent.
+- Updated Sprint 10 checklist progress by marking `15.1.1`–`15.1.4` and `15.10.1` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Implemented removal in the existing tab/window intent handler path to preserve workspace persistence and avoid divergent update flows.
+- Used source-path-hash-based test tags for dropdown remove controls to keep UI tests deterministic across repeated source labels.
+- Allowed last-source removal to reset the active window to an empty/logically consistent state instead of silently ignoring the action.
+**Gotchas**
+- Initial UI patch introduced local-function brace issues in `KLogViewerScreen`; fixed by restoring correct composable scope boundaries before rerunning tests.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/test/DirectoryTabTest.kt` (new dropdown visibility + per-source removal tests).
+- `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/TabWindowIntentHandler.kt` (source-removal state consistency updates).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.DirectoryTabTest" --tests "com.klogviewer.ui.viewmodel.ConnectionToggleTest"` (`BUILD SUCCESSFUL`).

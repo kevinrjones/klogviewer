@@ -98,7 +98,8 @@ class KLogViewerViewModel(
     private val tabWindowIntentHandler = TabWindowIntentHandler(
         state = _state,
         logLoadingCoordinator = logLoadingCoordinator,
-        onSavePreferences = { debounce -> savePreferences(debounce = debounce) }
+        onSavePreferences = { debounce -> savePreferences(debounce = debounce) },
+        onFilterLogs = { windowId -> filterLogs(windowId) }
     )
     
     private val entryIntentHandler = EntryIntentHandler(

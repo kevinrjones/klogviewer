@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 
@@ -20,9 +22,12 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun TooltipWrapper(
     tooltip: String,
+    modifier: Modifier = Modifier,
+    tooltipTestTag: String? = null,
     content: @Composable () -> Unit
 ) {
     TooltipArea(
+        modifier = modifier,
         tooltip = {
             Surface(
                 modifier = Modifier.shadow(4.dp),
@@ -31,9 +36,13 @@ fun TooltipWrapper(
             ) {
                 Text(
                     text = tooltip,
-                    modifier = Modifier.padding(8.dp),
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .then(if (tooltipTestTag != null) Modifier.testTag(tooltipTestTag) else Modifier),
                     style = MaterialTheme.typography.caption,
-                    color = Color.Black
+                    color = Color.Black,
+                    maxLines = Int.MAX_VALUE,
+                    overflow = TextOverflow.Clip
                 )
             }
         },

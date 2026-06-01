@@ -9,6 +9,7 @@ import androidx.compose.material.*
 import androidx.compose.material.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,11 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -36,6 +39,32 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlin.math.abs
 
 private val dashboardLogger = KotlinLogging.logger {}
+private val activeWindowSourceDropdownMinWidth = 520.dp
+private const val sourceVisibilityColorDelta = 0.22f
+
+private data class SourceVisibilityTextColors(
+    val shown: Color,
+    val hidden: Color
+)
+
+private fun resolveSourceVisibilityTextColors(baseColor: Color): SourceVisibilityTextColors {
+    val isLightBase = baseColor.luminance() > 0.5f
+    val shownAlpha = if (isLightBase) {
+        baseColor.alpha - sourceVisibilityColorDelta
+    } else {
+        baseColor.alpha + sourceVisibilityColorDelta
+    }
+    val hiddenAlpha = if (isLightBase) {
+        baseColor.alpha + sourceVisibilityColorDelta
+    } else {
+        baseColor.alpha - sourceVisibilityColorDelta
+    }
+
+    return SourceVisibilityTextColors(
+        shown = baseColor.copy(alpha = shownAlpha.coerceIn(0.2f, 0.95f)),
+        hidden = baseColor.copy(alpha = hiddenAlpha.coerceIn(0.2f, 0.95f))
+    )
+}
 
 @Composable
 fun KLogViewerScreen(
@@ -356,7 +385,128 @@ private fun LogTopBar(
             matchesCount = activeWindow?.filteredLogs?.size ?: 0,
             totalCount = activeWindow?.logs?.size ?: 0
         )
+    }
 
+}
+
+@Composable
+private fun SourceManagementDropdown(
+    sourceIds: List<String>,
+    hiddenSourceIds: Set<String>,
+    textStyle: TextStyle,
+    modifier: Modifier = Modifier,
+    onToggleSourceVisibility: (String) -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+    val shownSourceIds = sourceIds.filterNot { hiddenSourceIds.contains(it) }
+    val sourceVisibilityTextColors = remember(textStyle.color) {
+        resolveSourceVisibilityTextColors(textStyle.color)
+    }
+    val shownPathColor = sourceVisibilityTextColors.shown
+    val hiddenPathColor = sourceVisibilityTextColors.hidden
+
+    Box(
+        modifier = modifier
+            .testTag("active_window_source_dropdown")
+            .clickable { menuExpanded = true }
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (sourceIds.isEmpty()) {
+                Text(
+                    text = "No sources",
+                    style = textStyle,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+            } else {
+                Row(
+                    modifier = Modifier
+                        .weight(1f)
+                        .horizontalScroll(rememberScrollState())
+                        .testTag("active_window_source_display_names"),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    sourceIds.forEachIndexed { index, sourcePath ->
+                        val isShown = shownSourceIds.contains(sourcePath)
+                        Text(
+                            text = sourcePath,
+                            style = textStyle.copy(
+                                color = if (isShown) shownPathColor else hiddenPathColor
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                            modifier = Modifier.testTag("active_window_source_display_name_${sourcePath.hashCode()}")
+                        )
+                        if (index < sourceIds.lastIndex) {
+                            Text(
+                                text = " | ",
+                                style = textStyle.copy(color = hiddenPathColor),
+                                maxLines = 1
+                            )
+                        }
+                    }
+                }
+            }
+            Icon(
+                imageVector = Icons.Default.ArrowDropDown,
+                contentDescription = "Show loaded sources",
+                tint = textStyle.color,
+                modifier = Modifier.size(14.dp)
+            )
+        }
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false },
+            modifier = Modifier
+                .widthIn(min = activeWindowSourceDropdownMinWidth)
+                .testTag("active_window_source_menu")
+        ) {
+            sourceIds.forEach { sourcePath ->
+                DropdownMenuItem(
+                    onClick = {}
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("active_window_source_entry_${sourcePath.hashCode()}"),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        TooltipWrapper(
+                            tooltip = sourcePath,
+                            tooltipTestTag = "active_window_source_tooltip_${sourcePath.hashCode()}",
+                            modifier = Modifier
+                                .weight(1f)
+                                .testTag("active_window_source_path_${sourcePath.hashCode()}")
+                        ) {
+                            Text(
+                                text = sourcePath,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.body2
+                            )
+                        }
+                        TextButton(
+                            onClick = {
+                                menuExpanded = false
+                                onToggleSourceVisibility(sourcePath)
+                            },
+                            modifier = Modifier.testTag("active_window_source_toggle_${sourcePath.hashCode()}")
+                        ) {
+                            Text(
+                                text = if (hiddenSourceIds.contains(sourcePath)) "Show" else "Hide",
+                                style = MaterialTheme.typography.caption,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -452,18 +602,31 @@ private fun LogWindowItem(
                     val isPrimaryPathMissing = window.missingSourceIds.contains(window.filePath)
                     val isAnySourceMissing = if (window.isDirectory) isPrimaryPathMissing else window.missingSourceIds.isNotEmpty()
                     val isWindowError = window.error != null
-                    Text(
-                        text = window.filePath,
-                        style = MaterialTheme.typography.caption.copy(
-                            color = if (isPrimaryPathMissing || isWindowError) Color.Red else if (isAnySourceMissing) Color(0xFFFFA500) else MaterialTheme.colors.onSurface.copy(
-                                alpha = 0.5f
-                            ),
-                            textDecoration = if (isPrimaryPathMissing) TextDecoration.LineThrough else TextDecoration.None
+                    val pathTextStyle = MaterialTheme.typography.caption.copy(
+                        color = if (isPrimaryPathMissing || isWindowError) Color.Red else if (isAnySourceMissing) Color(0xFFFFA500) else MaterialTheme.colors.onSurface.copy(
+                            alpha = 0.5f
                         ),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f).padding(end = 8.dp)
+                        textDecoration = if (isPrimaryPathMissing) TextDecoration.LineThrough else TextDecoration.None
                     )
+                    if (isWindowActive && window.sourceIds.isNotEmpty()) {
+                        SourceManagementDropdown(
+                            sourceIds = window.sourceIds,
+                            hiddenSourceIds = window.hiddenSourceIds,
+                            textStyle = pathTextStyle,
+                            modifier = Modifier.weight(1f).padding(end = 8.dp),
+                            onToggleSourceVisibility = { sourcePath ->
+                                viewModel.handleIntent(KLogViewerIntent.ToggleSourceVisibilityInActiveWindow(sourcePath))
+                            }
+                        )
+                    } else {
+                        Text(
+                            text = window.filePath,
+                            style = pathTextStyle,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f).padding(end = 8.dp)
+                        )
+                    }
                 } else {
                     Spacer(modifier = Modifier.weight(1f))
                 }

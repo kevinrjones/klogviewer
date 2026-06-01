@@ -9,11 +9,13 @@ object LogUpdateReducer {
         val logsAfterUpdate = calculateLogsAfterUpdate(window, update, sourceId)
         val newMissingSourceIds = calculateMissingSourceIds(window, update, sourceId)
         val newSourceIds = calculateSourceIdsAfterUpdate(window, update, sourceId, logsAfterUpdate)
+        val newHiddenSourceIds = window.hiddenSourceIds.intersect(newSourceIds.toSet())
 
         return window.copy(
             isLoading = false,
             logs = logsAfterUpdate,
             sourceIds = newSourceIds,
+            hiddenSourceIds = newHiddenSourceIds,
             missingSourceIds = newMissingSourceIds,
             error = if (newMissingSourceIds.contains(window.filePath)) window.error else null
         )

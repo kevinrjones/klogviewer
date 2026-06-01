@@ -437,7 +437,7 @@ private fun LogEntryCell(
     }
 }
 
-internal const val MAX_DEFAULT_COLUMN_WIDTH = 300
+internal const val MAX_DEFAULT_COLUMN_WIDTH = 1400
 
 private fun getLogListContentWidth(
     columns: List<String>,

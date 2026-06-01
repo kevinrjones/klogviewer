@@ -119,6 +119,7 @@ data class LogWindow(
     val isAutoScrollEnabled: Boolean = true,
     val showAnsiColors: Boolean = true,
     val sourceIds: List<String> = emptyList(),
+    val hiddenSourceIds: Set<String> = emptySet(),
     val missingSourceIds: Set<String> = emptySet(),
     val selectedEntry: LogEntry? = null,
     val selectedIndices: Set<Int> = emptySet(),
