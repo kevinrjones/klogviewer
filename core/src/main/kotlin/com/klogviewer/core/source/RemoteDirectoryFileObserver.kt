@@ -1,11 +1,12 @@
 package com.klogviewer.core.source
 
-import com.klogviewer.domain.model.*
+import com.klogviewer.domain.model.LogFilePath
+import com.klogviewer.domain.model.LogUpdate
+import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.domain.parser.LogParser
 import com.klogviewer.domain.repository.LogSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import net.schmizz.sshj.SSHClient
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -27,6 +28,8 @@ class RemoteDirectoryFileObserver(
     }
 
     suspend fun updateFiles(discoveredFiles: List<String>, parser: LogParser?, scope: CoroutineScope) {
+        pruneInactiveSources()
+
         val newFiles = discoveredFiles.filter { !activeSources.containsKey(it) }
         val removedFiles = activeSources.keys.filter { !discoveredFiles.contains(it) }
 
@@ -47,6 +50,18 @@ class RemoteDirectoryFileObserver(
                     observeFile(file, parser)
                 }
             }
+        }
+    }
+
+    private fun pruneInactiveSources() {
+        val completedFiles = activeSources
+            .filterValues { !it.isActive }
+            .keys
+            .toList()
+
+        if (completedFiles.isNotEmpty()) {
+            logger.info { "Pruning ${completedFiles.size} inactive remote file observer(s): $completedFiles" }
+            completedFiles.forEach { activeSources.remove(it) }
         }
     }
 

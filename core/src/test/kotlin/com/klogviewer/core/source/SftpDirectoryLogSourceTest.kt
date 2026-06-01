@@ -11,10 +11,14 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import strikt.api.expectThat
 import strikt.assertions.hasSize
 import strikt.assertions.isA
+import strikt.assertions.isEqualTo
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -51,7 +55,7 @@ class SftpDirectoryLogSourceTest {
                     } else {
                         emit(LogUpdate.Initial(listOf(entry2)).right())
                     }
-                    kotlinx.coroutines.delay(Long.MAX_VALUE)
+                    delay(Long.MAX_VALUE.milliseconds)
                 }
             }
         }
@@ -123,7 +127,7 @@ class SftpDirectoryLogSourceTest {
                     } else {
                         emit(LogFailure.FileError("Access denied", sourceId = path.value).left())
                     }
-                    kotlinx.coroutines.delay(Long.MAX_VALUE)
+                    delay(Long.MAX_VALUE.milliseconds)
                 }
             }
         }
@@ -184,13 +188,13 @@ class SftpDirectoryLogSourceTest {
                 override fun observeLogs(path: LogFilePath, parser: LogParser?) = flow {
                     if (path.value.contains("file1")) {
                         emit(LogUpdate.Initial(listOf(entry1)).right())
-                        delay(50)
+                        delay(50.milliseconds)
                         emit(LogUpdate.Appended(listOf(entry2)).right())
                     } else {
-                        delay(200) // Delay file2 to ensure file1 has time to send Appended
+                        delay(200.milliseconds) // Delay file2 to ensure file1 has time to send Appended
                         emit(LogUpdate.Initial(listOf(entry3)).right())
                     }
-                    kotlinx.coroutines.delay(Long.MAX_VALUE)
+                    delay(Long.MAX_VALUE.milliseconds)
                 }
             }
         }
@@ -221,5 +225,148 @@ class SftpDirectoryLogSourceTest {
         expectThat(initialUpdate.entries).hasSize(3)
         
         job.cancelAndJoin()
+    }
+
+    @Suppress("JUnitMalformedDeclaration")
+    @Test
+    fun `should continue scanning after transient directory listing failure`() = runBlocking {
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log")
+        val remoteFileSystem = mockk<RemoteFileSystem>()
+        val sshClientProvider = mockk<SshClientProvider>()
+        val mockClient = mockk<net.schmizz.sshj.SSHClient>(relaxed = true)
+        coEvery { sshClientProvider.createClient() } returns mockClient
+        io.mockk.every { mockClient.isConnected } returns true
+        io.mockk.every { mockClient.isAuthenticated } returns true
+
+        val remoteFiles = listOf(RemoteFile("good.log", "/var/log/good.log", false))
+        var attempts = 0
+        coEvery { remoteFileSystem.listFiles(config, "/var/log") } answers {
+            attempts += 1
+            if (attempts == 1) {
+                LogFailure.FileError("Connection lost", sourceId = null).left()
+            } else {
+                remoteFiles.right()
+            }
+        }
+
+        val entry = LogEntry(
+            LogTimestamp("2023-01-01 10:00:00"),
+            LogLevel.INFO,
+            LogContent("recovered"),
+            sourceId = "sftp://user@remote:22/var/log/good.log"
+        )
+
+        val logSourceFactory: (SftpConfig, net.schmizz.sshj.SSHClient?) -> LogSource = { _, _ ->
+            object : LogSource {
+                override fun observeLogs(path: LogFilePath, parser: LogParser?) = flow {
+                    emit(LogUpdate.Initial(listOf(entry)).right())
+                    delay(Long.MAX_VALUE.milliseconds)
+                }
+            }
+        }
+
+        val source = SftpDirectoryLogSource(
+            config,
+            remoteFileSystem,
+            rescanIntervalMs = 100,
+            dispatcher = Dispatchers.Default,
+            sshService = SshService(sshClientProvider, Dispatchers.Default),
+            logSourceFactory = logSourceFactory
+        )
+
+        val results = source.observeLogs(LogFilePath("/var/log")).take(2).toList()
+
+        expectThat(results).hasSize(2)
+        expectThat(results[0].isLeft()).isEqualTo(true)
+        expectThat(results[1].getOrNull()).isA<LogUpdate.Initial>()
+    }
+
+    @Suppress("JUnitMalformedDeclaration")
+    @Test
+    fun `should restart file observation when previous observer completed after timeout failure`() = runBlocking {
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log")
+        val remoteFileSystem = mockk<RemoteFileSystem>()
+        val sshClientProvider = mockk<SshClientProvider>()
+        val mockClient = mockk<net.schmizz.sshj.SSHClient>(relaxed = true)
+        coEvery { sshClientProvider.createClient() } returns mockClient
+        io.mockk.every { mockClient.isConnected } returns true
+        io.mockk.every { mockClient.isAuthenticated } returns true
+
+        val remoteFiles = listOf(RemoteFile("good.log", "/var/log/good.log", false))
+        coEvery { remoteFileSystem.listFiles(config, "/var/log") } returns remoteFiles.right()
+
+        val recoveredEntry = LogEntry(
+            LogTimestamp("2023-01-01 10:05:00"),
+            LogLevel.INFO,
+            LogContent("recovered after timeout"),
+            sourceId = "sftp://user@remote:22/var/log/good.log"
+        )
+
+        var observeAttempts = 0
+        val logSourceFactory: (SftpConfig, net.schmizz.sshj.SSHClient?) -> LogSource = { _, _ ->
+            object : LogSource {
+                override fun observeLogs(path: LogFilePath, parser: LogParser?) = flow {
+                    observeAttempts += 1
+                    if (observeAttempts == 1) {
+                        emit(LogFailure.FileError("Connection timed out", sourceId = null).left())
+                        return@flow
+                    }
+
+                    emit(LogUpdate.Initial(listOf(recoveredEntry)).right())
+                    delay(Long.MAX_VALUE.milliseconds)
+                }
+            }
+        }
+
+        val source = SftpDirectoryLogSource(
+            config,
+            remoteFileSystem,
+            rescanIntervalMs = 100,
+            dispatcher = Dispatchers.Default,
+            sshService = SshService(sshClientProvider, Dispatchers.Default),
+            logSourceFactory = logSourceFactory
+        )
+
+        val results = withTimeout(3000.milliseconds) {
+            source.observeLogs(LogFilePath("/var/log")).take(2).toList()
+        }
+
+        expectThat(results).hasSize(2)
+
+        val initial = results[0].getOrNull()
+        expectThat(initial).isA<LogUpdate.Initial>()
+        expectThat((initial as LogUpdate.Initial).entries).hasSize(0)
+
+        val recovery = results[1].getOrNull()
+        expectThat(recovery).isA<LogUpdate.Appended>()
+        expectThat((recovery as LogUpdate.Appended).entries).hasSize(1)
+        expectThat(recovery.entries[0].content).isEqualTo(LogContent("recovered after timeout"))
+    }
+
+    @Test
+    fun `should propagate cancellation exceptions during directory scanning`() {
+        val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log")
+        val remoteFileSystem = mockk<RemoteFileSystem>()
+        val sshClientProvider = mockk<SshClientProvider>()
+        val mockClient = mockk<net.schmizz.sshj.SSHClient>(relaxed = true)
+        coEvery { sshClientProvider.createClient() } returns mockClient
+        io.mockk.every { mockClient.isConnected } returns true
+        io.mockk.every { mockClient.isAuthenticated } returns true
+
+        coEvery { remoteFileSystem.listFiles(config, "/var/log") } throws CancellationException("cancelled")
+
+        val source = SftpDirectoryLogSource(
+            config,
+            remoteFileSystem,
+            rescanIntervalMs = 100,
+            dispatcher = Dispatchers.Default,
+            sshService = SshService(sshClientProvider, Dispatchers.Default)
+        )
+
+        assertThrows<CancellationException> {
+            runBlocking {
+                source.observeLogs(LogFilePath("/var/log")).take(1).toList()
+            }
+        }
     }
 }

@@ -2911,3 +2911,46 @@ For each sprint/task
 - `./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given dashboard content when selecting level then level selection toggles filter" --tests "...tied frequency counts..." --tests "...top n and threshold..." --tests "...selected dashboard time bucket when clearing selections..." --tests "...frequency field selection when selecting value then dashboard filter query toggles"` (`BUILD SUCCESSFUL`).
 - `for i in {1..20}; do ./gradlew :ui:desktopTest --tests "...five dashboard scenarios..." ...; done` (`PASS 20/20`).
 - `./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` and `for i in {1..20}; do ./gradlew :ui:desktopTest --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" ...; done` (`PASS 20/20`).
+
+## Task: Remote Refresh Resilience for SFTP/S3 Transient Failures
+**Title**: Keep Remote Polling Alive After SFTP/S3 Connection Errors
+**Date/time completed**: 2026-06-01 11:32
+**What was shipped**
+- Updated `SftpDirectoryLogSource` to keep scanning after transient list failures instead of terminating the flow, while still emitting `LogFailure` updates.
+- Updated `S3DirectoryLogSource` to use the same continue-after-failure behavior for S3 prefix refresh.
+- Updated `S3LogSource` polling to continue after transient `headObject`/polling errors and log recovery once connectivity resumes.
+- Added regression tests for fail-once-then-recover and cancellation propagation in `SftpDirectoryLogSourceTest` and `S3LogSourceTest`.
+**Key decisions**
+- Kept the fix focused at remote source polling loops (no broad architecture changes) to preserve existing flow contracts and UI integration points.
+- Preserved coroutine cancellation semantics by explicitly rethrowing `CancellationException` in all new exception guards.
+- Emitted domain failures to keep UI error reporting intact while allowing automatic refresh loops to continue retrying.
+**Gotchas**
+- Previous behavior returned from `flow`/`channelFlow` on certain remote failures, which silently stopped auto-refresh after a single transient disconnect.
+- Recovery logging needed to be stateful (`failed attempt` counters) to avoid noisy logs while still making reconnect behavior visible.
+**Test coverage areas**
+- `core/src/test/kotlin/com/klogviewer/core/source/SftpDirectoryLogSourceTest.kt` (transient directory scan failure recovery + cancellation propagation).
+- `core/src/test/kotlin/com/klogviewer/core/source/S3LogSourceTest.kt` (transient `headObject` failure recovery + cancellation propagation).
+- `./gradlew :core:test --tests "com.klogviewer.core.source.S3LogSourceTest" --tests "com.klogviewer.core.source.SftpDirectoryLogSourceTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests "com.klogviewer.core.source.*"` (`BUILD SUCCESSFUL`).
+
+## Task: Remote Observer Recovery After Idle Timeout
+**Title**: Restart SFTP/S3 File Observers After Timeout-Induced Completion
+**Date/time completed**: 2026-06-01 13:54
+**What was shipped**
+- Updated `RemoteDirectoryFileObserver` to prune inactive per-file jobs before each rescan so timed-out/disconnected SFTP file observers can be recreated automatically.
+- Applied the same inactive-job pruning strategy to `S3DirectoryFileObserver` to keep S3 directory auto-refresh resilient after observer completion.
+- Added regression coverage in `SftpDirectoryLogSourceTest` for fail-once-then-restart behavior when a file observer ends after timeout failure.
+- Added `S3DirectoryLogSourceTest` with equivalent fail-once-then-restart coverage for S3 object observers.
+**Key decisions**
+- Fixed the issue at the directory observer lifecycle seam (job bookkeeping) rather than broad reconnect architecture changes.
+- Kept cancellation semantics unchanged and avoided swallowing `CancellationException`.
+- Preserved existing initialization behavior where failed initial file loads can still complete directory initialization.
+**Gotchas**
+- A completed observer job remaining in `activeSources` made rescans treat the file as already observed, causing refresh to appear permanently stalled despite ongoing scans.
+**Test coverage areas**
+- `core/src/main/kotlin/com/klogviewer/core/source/RemoteDirectoryFileObserver.kt` (inactive SFTP observer pruning).
+- `core/src/main/kotlin/com/klogviewer/core/source/S3DirectoryFileObserver.kt` (inactive S3 observer pruning).
+- `core/src/test/kotlin/com/klogviewer/core/source/SftpDirectoryLogSourceTest.kt` (observer restart after timeout failure).
+- `core/src/test/kotlin/com/klogviewer/core/source/S3DirectoryLogSourceTest.kt` (equivalent S3 observer restart coverage).
+- `./gradlew :core:test --tests "com.klogviewer.core.source.SftpDirectoryLogSourceTest" --tests "com.klogviewer.core.source.S3DirectoryLogSourceTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests "com.klogviewer.core.source.*"` (`BUILD SUCCESSFUL`).

@@ -1,11 +1,12 @@
 package com.klogviewer.core.source
 
-import com.klogviewer.domain.model.*
+import com.klogviewer.domain.model.LogFilePath
+import com.klogviewer.domain.model.LogUpdate
+import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.parser.LogParser
 import com.klogviewer.domain.repository.LogSource
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
@@ -25,6 +26,8 @@ class S3DirectoryFileObserver(
     }
 
     suspend fun updateFiles(discoveredFiles: List<String>, parser: LogParser?, scope: CoroutineScope) {
+        pruneInactiveSources()
+
         val newFiles = discoveredFiles.filter { !activeSources.containsKey(it) }
         val removedFiles = activeSources.keys.filter { !discoveredFiles.contains(it) }
 
@@ -45,6 +48,18 @@ class S3DirectoryFileObserver(
                     observeFile(file, parser)
                 }
             }
+        }
+    }
+
+    private fun pruneInactiveSources() {
+        val completedFiles = activeSources
+            .filterValues { !it.isActive }
+            .keys
+            .toList()
+
+        if (completedFiles.isNotEmpty()) {
+            logger.info { "Pruning ${completedFiles.size} inactive S3 object observer(s): $completedFiles" }
+            completedFiles.forEach { activeSources.remove(it) }
         }
     }
 

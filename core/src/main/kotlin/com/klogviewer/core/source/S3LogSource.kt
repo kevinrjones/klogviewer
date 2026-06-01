@@ -3,7 +3,6 @@ package com.klogviewer.core.source
 import arrow.core.Either
 import arrow.core.left
 import arrow.core.right
-import aws.sdk.kotlin.services.s3.S3Client
 import aws.sdk.kotlin.services.s3.model.GetObjectRequest
 import aws.sdk.kotlin.services.s3.model.HeadObjectRequest
 import aws.smithy.kotlin.runtime.content.decodeToString
@@ -51,6 +50,7 @@ class S3LogSource(
             var lastSize = 0L
             var isInitial = true
             val initialEntries = mutableListOf<LogEntry>()
+            var failedPollCount = 0
 
             while (currentCoroutineContext().isActive) {
                 try {
@@ -65,7 +65,16 @@ class S3LogSource(
                         val message = "S3 object not found or inaccessible: $sourceId. Error: ${e.message}"
                         logger.warn { message }
                         emit(LogFailure.FileError(message, sourceId).left())
-                        return@flow
+                        failedPollCount += 1
+                        delay(pollingInterval)
+                        continue
+                    }
+
+                    if (failedPollCount > 0) {
+                        logger.info {
+                            "S3 polling recovered for $sourceId after $failedPollCount failed attempt(s)"
+                        }
+                        failedPollCount = 0
                     }
 
                     val currentSize = headResponse.contentLength ?: 0L
@@ -111,7 +120,7 @@ class S3LogSource(
                         continue 
                     }
 
-                    if (isInitial && headResponse != null) {
+                    if (isInitial) {
                         multilineProcessor?.flush()?.let { e ->
                             initialEntries.add(e.copy(sourceId = sourceId))
                         }
@@ -124,6 +133,7 @@ class S3LogSource(
                     if (e is CancellationException) throw e
                     logger.error(e) { "Error polling S3 object: $sourceId" }
                     emit(LogFailure.FileError("Error polling S3 object: ${e.message}", sourceId).left())
+                    failedPollCount += 1
                 }
 
                 delay(pollingInterval)
