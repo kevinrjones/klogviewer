@@ -286,9 +286,10 @@
 - `docs/sprints/sprint-7-advanced-log-formats.md`: Detailed plan for Sprint 7.
 - `docs/sprints/sprint-8-connectivity.md`: Detailed plan for Sprint 8.
 - `docs/sprints/sprint-9-analysis-and-visualization.md`: Detailed plan for Sprint 9.
-- `docs/sprints/sprint-10-power-user-tools.md`: Detailed plan for Sprint 10.
-- `docs/sprints/sprint-11-extensibility-and-release.md`: Detailed plan for Sprint 11.
-- `docs/sprints/sprint-12-structured-data.md`: Detailed plan for Sprint 12.
+- `docs/sprints/sprint-10-ui-fixes-and-updates.md`: Detailed plan for Sprint 10.
+- `docs/sprints/sprint-11-power-user-tools.md`: Detailed plan for Sprint 11.
+- `docs/sprints/sprint-12-extensibility-and-release.md`: Detailed plan for Sprint 12.
+- `docs/sprints/sprint-13-structured-data.md`: Detailed plan for Sprint 13.
 
 **Key decisions**
 - Structured the roadmap around five core themes: Data, Connectivity, Analysis, Persistence, and Platform.
@@ -1988,33 +1989,33 @@ For each sprint/task
 - `ConnectionToggleTest` (6/6 passing).
 
 ## Task: Sprint Replan for Network Adapters
-**Title**: Move TCP/UDP Adapter Scope to Sprint 13
+**Title**: Move TCP/UDP Adapter Scope to Sprint 14
 **Date/time completed**: 2026-05-25 10:36
 **What was shipped**
-- Added `docs/sprints/sprint-13-network-log-adapters.md` as a dedicated sprint plan for TCP/UDP listener work.
-- Added `docs/tasks/TASKS-SPRINT-13-NETWORK-LOG-ADAPTERS.md` and moved the network adapter task scope into Sprint 13 tracking.
+- Added `docs/sprints/sprint-14-network-log-adapters.md` as a dedicated sprint plan for TCP/UDP listener work.
+- Added `docs/tasks/TASKS-SPRINT-14-NETWORK-LOG-ADAPTERS.md` and moved the network adapter task scope into Sprint 14 tracking.
 - Updated `docs/sprints/sprint-8-connectivity.md` and `docs/tasks/TASKS-SPRINT-8-CONNECTIVITY.md` to defer network appenders out of Sprint 8.
-- Updated `docs/CONNECTIVITY-DESIGN.md` to reference Sprint 13 and the canonical Sprint 13 task file.
-- Updated `README.md` usage documentation to point readers to the new Sprint 13 network adapter plan.
+- Updated `docs/CONNECTIVITY-DESIGN.md` to reference Sprint 14 and the canonical Sprint 14 task file.
+- Updated `README.md` usage documentation to point readers to the new Sprint 14 network adapter plan.
 **Key decisions**
-- Kept legacy task IDs (`13.3.x`, `13.5.4`, `13.5.5`) to avoid breaking existing cross-document references while moving ownership to Sprint 13.
+- Kept legacy task IDs (`13.3.x`, `13.5.4`, `13.5.5`) to avoid breaking existing cross-document references while moving ownership to Sprint 14.
 - Limited Sprint 8 to delivered remote connectivity scope (SFTP/S3/connection management) and made network ingestion a separate planned sprint.
 **Gotchas**
-- Existing task numbering combines sprint labels and legacy IDs, so consistency required adding explicit “moved to Sprint 13” pointers rather than renumbering historical entries.
+- Existing task numbering combines sprint labels and legacy IDs, so consistency required adding explicit “moved to Sprint 14” pointers rather than renumbering historical entries.
 **Test coverage areas**
 - N/A (documentation-only task).
 
-## Task: Sprint 13 Protocol Coverage Expansion
+## Task: Sprint 14 Protocol Coverage Expansion
 **Title**: Add Logging Ecosystem Compatibility Targets
 **Date/time completed**: 2026-05-25 11:05
 **What was shipped**
-- Updated `docs/sprints/sprint-13-network-log-adapters.md` to explicitly include compatibility targets for Java Logback `SocketAppender`, Log4j `SocketAppender`, NLog network targets, Serilog sinks, Python socket handlers, Logstash protocol, and OpenTelemetry logs.
-- Expanded `docs/tasks/TASKS-SPRINT-13-NETWORK-LOG-ADAPTERS.md` with dedicated implementation tasks (`13.3.11`–`13.3.17`) and matching verification tasks (`13.5.6`, `13.5.7`) for framework/protocol compatibility.
-- Updated `docs/CONNECTIVITY-DESIGN.md` with explicit Sprint 13 compatibility targets and acceptance mapping for Logstash/OpenTelemetry plus framework-specific profiles.
+- Updated `docs/sprints/sprint-14-network-log-adapters.md` to explicitly include compatibility targets for Java Logback `SocketAppender`, Log4j `SocketAppender`, NLog network targets, Serilog sinks, Python socket handlers, Logstash protocol, and OpenTelemetry logs.
+- Expanded `docs/tasks/TASKS-SPRINT-14-NETWORK-LOG-ADAPTERS.md` with dedicated implementation tasks (`13.3.11`–`13.3.17`) and matching verification tasks (`13.5.6`, `13.5.7`) for framework/protocol compatibility.
+- Updated `docs/CONNECTIVITY-DESIGN.md` with explicit Sprint 14 compatibility targets and acceptance mapping for Logstash/OpenTelemetry plus framework-specific profiles.
 - Added an explicit later-version protocol candidate list in Sprint and design docs (GELF, Fluentd, Loki, Vector, Splunk HEC, Kafka, Windows Event Forwarding).
 **Key decisions**
 - Kept existing task numbering stable and extended it rather than renumbering, to preserve existing cross-document references.
-- Separated Sprint 13 “must support now” protocols from “later versions” candidates to keep delivery scope clear.
+- Separated Sprint 14 “must support now” protocols from “later versions” candidates to keep delivery scope clear.
 **Gotchas**
 - OpenTelemetry can be implemented through multiple wire formats, so the sprint documentation frames it as an ingestion profile requirement while deferring concrete transport binding details to implementation design.
 **Test coverage areas**
@@ -2953,4 +2954,39 @@ For each sprint/task
 - `core/src/test/kotlin/com/klogviewer/core/source/SftpDirectoryLogSourceTest.kt` (observer restart after timeout failure).
 - `core/src/test/kotlin/com/klogviewer/core/source/S3DirectoryLogSourceTest.kt` (equivalent S3 observer restart coverage).
 - `./gradlew :core:test --tests "com.klogviewer.core.source.SftpDirectoryLogSourceTest" --tests "com.klogviewer.core.source.S3DirectoryLogSourceTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests "com.klogviewer.core.source.*"` (`BUILD SUCCESSFUL`).
+
+## Task: Insert UI Fixes Sprint and Renumber Remaining Sprints
+**Title**: Add Sprint 10 UI Fixes Plan and Shift Existing Sprint Numbering
+**Date/time completed**: 2026-06-01 14:15
+**What was shipped**
+- Added `docs/sprints/sprint-10-ui-fixes-and-updates.md` with the requested UI fixes/updates scope and definition of done.
+- Renumbered sprint plan files so former Sprint 10–13 now map to Sprint 11–14 (`power-user-tools`, `extensibility-and-release`, `structured-data`, `network-log-adapters`).
+- Updated affected headings and cross-document references (including `README.md`, `docs/CONNECTIVITY-DESIGN.md`, `docs/tasks/TASKS-SPRINT-8-CONNECTIVITY.md`, and `docs/tasks/TASKS-SPRINT-14-NETWORK-LOG-ADAPTERS.md`).
+**Key decisions**
+- Preserved legacy task ID numbering (`13.3.x`, `13.5.x`) where it already exists, while aligning sprint filenames/titles to the new sequence.
+- Kept this as a documentation-only change; no application code or test behavior was altered.
+**Gotchas**
+- Historical memory entries contained old sprint filenames and required targeted updates to avoid stale links after renumbering.
+**Test coverage areas**
+- Targeted repository searches confirmed no remaining stale sprint/task filename links after renumbering.
+
+## Task: Improve Remote S3 Polling Observability for Connection Drops
+**Title**: Add Detailed Poll-Cycle Logging and Exception Context in `S3LogSource`
+**Date/time completed**: 2026-06-01 15:08
+**What was shipped**
+- Expanded `S3LogSource` poll-loop logging to include poll start, poll attempt number, current/previous object sizes, and size deltas for every cycle.
+- Added explicit fetch-result logging for byte range reads, including returned byte count, non-blank line count, and parsed entry count.
+- Added richer exception logging context for transient `headObject` and poll-cycle failures, including attempt/failure counters while preserving existing `LogFailure` emissions.
+- Added `S3LogSourceTest` coverage for transient `getObject` failure recovery to ensure polling continues after a temporary read exception.
+**Key decisions**
+- Kept behavior unchanged (no retry policy rewrite): the update is instrumentation-focused to improve production diagnostics for connection-loss reports.
+- Used mixed log levels (`debug` for poll cadence/state, `info` for meaningful data outcomes, `warn/error` for failures) to keep detail high without making normal logs noisy at default levels.
+- Preserved cancellation semantics by continuing to rethrow `CancellationException` in all exception paths.
+**Gotchas**
+- Content fetched from S3 is decoded to text before parsing, so the logged byte count reflects decoded-string bytes and is intended for operational visibility, not protocol-level accounting.
+**Test coverage areas**
+- `core/src/main/kotlin/com/klogviewer/core/source/S3LogSource.kt` (enhanced polling telemetry).
+- `core/src/test/kotlin/com/klogviewer/core/source/S3LogSourceTest.kt` (new transient `getObject` failure recovery test).
+- `./gradlew :core:test --tests "com.klogviewer.core.source.S3LogSourceTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :core:test --tests "com.klogviewer.core.source.*"` (`BUILD SUCCESSFUL`).

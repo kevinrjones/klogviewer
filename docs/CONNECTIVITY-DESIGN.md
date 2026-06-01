@@ -170,7 +170,7 @@ Display identity in source badges and allow filtering by sender.
 - Add `tcps`/TLS mode with server certificate and key.
 - Optional mutual TLS can be a future enhancement.
 
-### Non-goals for Sprint 13
+### Non-goals for Sprint 14
 - Full authentication/authorization layer for listener clients.
 - Reliable-at-least-once delivery protocol (this is transport-level ingestion, not a queueing system).
 
@@ -204,9 +204,9 @@ Display identity in source badges and allow filtering by sender.
 - Kafka ingestion bridge
 - Windows Event Forwarding bridge
 
-## Acceptance Mapping to Sprint 13 Tasks
+## Acceptance Mapping to Sprint 14 Tasks
 
-Canonical task tracking file: `docs/tasks/TASKS-SPRINT-13-NETWORK-LOG-ADAPTERS.md`
+Canonical task tracking file: `docs/tasks/TASKS-SPRINT-14-NETWORK-LOG-ADAPTERS.md`
 
 - `13.3.1` / `13.3.2`: concrete TCP and UDP listener adapters in `:core`
 - `13.3.3`: `plain-line` protocol profile documented and implemented

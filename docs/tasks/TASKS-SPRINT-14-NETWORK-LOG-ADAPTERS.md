@@ -1,6 +1,6 @@
-# TASKS: Sprint 13 - Network Log Adapters
+# TASKS: Sprint 14 - Network Log Adapters
 
-## 13. Sprint 13: Network Log Adapters
+## 14. Sprint 14: Network Log Adapters
 
 > Task IDs from the original connectivity plan are intentionally preserved to keep cross-document references stable.
 

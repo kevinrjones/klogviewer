@@ -1,4 +1,4 @@
-# Sprint 13: Network Log Adapters
+# Sprint 14: Network Log Adapters
 
 ## 1. Goal
 Enable KLogViewer to ingest live logs directly over the network using TCP/UDP listeners, with clear operational controls and secure transport options.
@@ -10,7 +10,7 @@ Enable KLogViewer to ingest live logs directly over the network using TCP/UDP li
 - Define a lightweight ingestion protocol for streaming logs directly to KLogViewer.
 - Support sender identity and multi-stream interleaving.
 
-### 2.2. Compatibility Targets (Sprint 13)
+### 2.2. Compatibility Targets (Sprint 14)
 - Support Java Logback `SocketAppender` senders.
 - Support Log4j `SocketAppender` senders.
 - Support NLog network targets.
@@ -30,7 +30,7 @@ Enable KLogViewer to ingest live logs directly over the network using TCP/UDP li
 
 ## 3. Key Decisions
 - **Protocol Baseline**: Start with newline-framed `plain-line` ingestion for fast delivery and compatibility with simple emitters.
-- **Compatibility Profiles**: Add parser/codec profiles so major logging ecosystems can emit directly to Sprint 13 listeners.
+- **Compatibility Profiles**: Add parser/codec profiles so major logging ecosystems can emit directly to Sprint 14 listeners.
 - **Operational Safety**: Use bounded buffering and explicit overflow policies to preserve UI responsiveness under load.
 
 ## 4. Definition of Done
