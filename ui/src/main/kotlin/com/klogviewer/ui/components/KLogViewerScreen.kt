@@ -376,7 +376,6 @@ private fun LogTopBar(
             onRemoveQuery = { viewModel.handleIntent(KLogViewerIntent.RemoveFilterQuery(it)) },
             onClearQueries = { viewModel.handleIntent(KLogViewerIntent.ClearFilterQueries) },
             onOpenFileClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDialog) },
-            onOpenDirectoryClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) },
             onSftpClick = { viewModel.handleIntent(KLogViewerIntent.ShowSftpDialog) },
             onS3Click = { viewModel.handleIntent(KLogViewerIntent.ShowS3Dialog) },
             onAddFileClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDialog) },
@@ -393,6 +392,7 @@ private fun LogTopBar(
             onToggleAnsiColors = { viewModel.handleIntent(KLogViewerIntent.ToggleAnsiColors) },
             isConnected = activeWindow?.isConnected ?: true,
             onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
+            onRefresh = { viewModel.handleIntent(KLogViewerIntent.RefreshConnection) },
             onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
             timeFilterFrom = activeWindow?.timeFilterFrom ?: "",
             timeFilterTo = activeWindow?.timeFilterTo ?: "",
@@ -401,7 +401,7 @@ private fun LogTopBar(
             onApplyTimeFilterPreset = { preset ->
                 viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(preset))
             },
-            onClearTimeFilter = { viewModel.handleIntent(KLogViewerIntent.ClearTimeFilter) },
+            onClearTimeFilter = { viewModel.handleIntent(KLogViewerIntent.ResetTimeFilter) },
             matchesCount = activeWindow?.filteredLogs?.size ?: 0,
             totalCount = activeWindow?.logs?.size ?: 0
         )

@@ -142,7 +142,7 @@ fun main() {
                         onClick = { viewModel.handleIntent(KLogViewerIntent.CopySelected) }
                     )
                     Item("Font...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowFontDialog) })
-                    Item("Clear Logs", onClick = { viewModel.handleIntent(KLogViewerIntent.ClearLogs) })
+                    Item("Clear", onClick = { viewModel.handleIntent(KLogViewerIntent.ClearTimeFilter) })
                 }
                 Menu("View") {
                     Item("Toggle Dark Mode", onClick = { viewModel.handleIntent(KLogViewerIntent.ToggleTheme) })

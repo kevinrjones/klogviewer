@@ -28,6 +28,7 @@ sealed interface KLogViewerIntent {
     data object ToggleAutoScroll : UiToggleIntent
     data object ToggleAnsiColors : UiToggleIntent
     data object ToggleConnection : UiToggleIntent
+    data object RefreshConnection : UiToggleIntent
     
     data class AddFilterQuery(val query: String) : FilterIntent
     data class RemoveFilterQuery(val query: String) : FilterIntent
@@ -38,6 +39,7 @@ sealed interface KLogViewerIntent {
     data class SetTimeFilterTo(val to: String) : FilterIntent
     data class ApplyTimeFilterPreset(val preset: TimeRangePreset) : FilterIntent
     data object ClearTimeFilter : FilterIntent
+    data object ResetTimeFilter : FilterIntent
 
     data object ShowDashboard : DashboardIntent
     data object ShowLogs : DashboardIntent

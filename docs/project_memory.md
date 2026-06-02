@@ -23,6 +23,8 @@
 - Sprint 10 `15.1` completed: active-window source dropdown management now supports per-source `[x]` removal with scoped state updates and UI test coverage.
 - Sprint 10 `15.2` completed: active-window log font configuration now supports monospaced font selection, immediate row font-size application, and persisted restore on restart.
 - Sprint 10 `15.3` completed: line selection/copy flow now enforces visible-order clipboard output, shared copy behavior, and disabled copy action when no rows are selected.
+- Sprint 10 `15.5` completed with split clear/reset semantics: `Edit -> Clear` resets active log visibility to `now`, while time dropdown `Reset` clears time bounds to show all logs under current non-time filters/workspace context.
+- Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -36,6 +38,8 @@
 - Kept dashboard chart interactions mapped to existing selection intents (bucket/level/frequency) to preserve current filter semantics while adding hover/keyboard UX affordances.
 - Reused existing `SelectDashboardTimeRange` intent flow for drag-range selection to avoid chart-model or library changes.
 - Kept copy behavior centralized in the existing `EntryIntentHandler`/ViewModel intent flow and wired menu enablement to active selection state to avoid divergent trigger logic.
+- Split time-filter behavior by trigger: retained `ClearTimeFilter` reset-to-now semantics for `Edit -> Clear` and introduced dropdown `ResetTimeFilter` to clear time bounds, preserving deterministic shared filter handling.
+- Normalized chart x-axis units by smallest bucket duration to preserve proportional temporal gaps while keeping KoalaPlot bar geometry valid (`barWidth` semantics unchanged).
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -3073,3 +3077,83 @@ For each sprint/task
 - `app/src/test/kotlin/com/klogviewer/startup/MainCompositionLifecycleTest.kt` (regression guard for composition lifecycle seam).
 - `./gradlew :app:test --tests "com.klogviewer.startup.MainCompositionLifecycleTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test :app:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.4 Toolbar Refresh Action
+**Title**: Add Toolbar Refresh Action with Shared Connection Toggle Flow
+**Date/time completed**: 2026-06-02 10:30
+**What was shipped**
+- Added a dedicated toolbar refresh action in `FilterBar` (`toolbar_refresh`, tooltip `Refresh Sources`) and wired it from `KLogViewerScreen`.
+- Added `KLogViewerIntent.RefreshConnection` and handled it in `UiToggleIntentHandler` by reusing existing `toggleConnection()` flow for parity.
+- Implemented refresh semantics so disconnected windows reconnect, while connected windows perform a disconnect/reconnect cycle and remain in the same active tab/window context.
+- Added/extended tests for refresh UI/action parity and connection-state behavior (`FilterBarTimeFilterControlsTest`, `ConnectionToggleTest`).
+- Updated Sprint 10 checklist progress by marking `15.4.1`–`15.4.4` and `15.10.4` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Reused the established `UiToggleIntentHandler.toggleConnection()` path for refresh to avoid introducing a divergent connection state machine.
+- Kept refresh scoped to the active window and asserted tab/window identity continuity in tests instead of recreating workspace state.
+**Gotchas**
+- Refresh behavior needed different handling by state (single toggle when disconnected, double-toggle cycle when connected) while preserving final connected state.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/FilterBar.kt` (refresh action surface).
+- `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/UiToggleIntentHandler.kt` (shared refresh/toggle flow).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/FilterBarTimeFilterControlsTest.kt` (refresh button presence/callback).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/ConnectionToggleTest.kt` (connected/disconnected refresh parity + active workspace continuity).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.ConnectionToggleTest" --tests "com.klogviewer.ui.components.FilterBarTimeFilterControlsTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.5 Time Filter Clear Option
+**Title**: Add Time Preset Menu Clear Option with Reset-to-Now Semantics
+**Date/time completed**: 2026-06-02 10:48
+**What was shipped**
+- Added a `Clear` menu option in `FilterBar` time presets dropdown alongside existing preset ranges.
+- Updated `FilterIntentHandler` so `ClearTimeFilter` performs a logical reset by setting `timeFilterFrom` to `Instant.now()`, clearing `to`, and keeping the operation on the shared intent/filter pipeline.
+- Added/updated UI and ViewModel tests to verify clear trigger parity, reset-to-now behavior, and preservation of non-time filters/workspace context.
+- Updated Sprint 10 checklist progress by marking `15.5.1`–`15.5.4` and `15.10.5` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Kept clear routed through existing `ClearTimeFilter` + `LogFilterService` range resolution instead of introducing a separate ad-hoc clear path.
+- Represented clear as `TimeRangePreset.CUSTOM` to keep internal time-window semantics explicit and consistent with manual range handling.
+**Gotchas**
+- Moving clear from a standalone icon into the dropdown required updating Compose test interactions to open the preset menu before asserting/clicking clear.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/FilterBar.kt` (clear option placement in time preset menu).
+- `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/FilterIntentHandler.kt` (`ClearTimeFilter` reset-to-now semantics).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/FilterBarTimeFilterControlsTest.kt` (menu clear option visibility + callback).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (reset-to-now + non-time filter/workspace context preservation).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.FilterBarTimeFilterControlsTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" --tests "com.klogviewer.ui.viewmodel.TimeRangeFilterSupportTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.5 Time Filter Reset Semantics Adjustment
+**Title**: Rename Time Dropdown Clear to Reset and Clear Time Bounds
+**Date/time completed**: 2026-06-02 12:30
+**What was shipped**
+- Renamed the time dropdown action label from `Clear` to `Reset` in `FilterBar` and kept `Full loaded range` hidden from direct preset selection.
+- Added `KLogViewerIntent.ResetTimeFilter` and routed `KLogViewerScreen` time dropdown action through it, while keeping `Edit -> Clear` on existing `ClearTimeFilter` reset-to-now behavior.
+- Updated `FilterIntentHandler` to clear time bounds (`from`/`to` and parsed instants), clear validation, and clear preset when dropdown `Reset` is triggered, preserving non-time filters/workspace context.
+- Updated Sprint 10 checklist wording to reflect `Reset` semantics and split `Clear`/`Reset` behavior in verification notes.
+**Key decisions**
+- Introduced a dedicated reset intent instead of repurposing `ClearTimeFilter` to avoid regressing `Edit -> Clear` behavior.
+- Represented dropdown reset as no explicit time range (`from`/`to` empty, instants/preset null) so all logs remain visible under existing non-time filters.
+**Gotchas**
+- Wait predicates in ViewModel tests require nullable-safe access for `activeWindow` in asynchronous state assertions.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/components/FilterBarTimeFilterControlsTest.kt` (dropdown reset label/menu assertions).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` (new reset-to-all-logs behavior + existing clear-to-now behavior).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.FilterBarTimeFilterControlsTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest" --tests "com.klogviewer.ui.viewmodel.TimeRangeFilterSupportTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Fix Time-Series X-Axis Spacing for Logs and Dashboard
+**Title**: Render Time Buckets with Proportional Temporal Gaps Instead of Even Index Spacing
+**Date/time completed**: 2026-06-02 15:30
+**What was shipped**
+- Updated `KoalaPlotTimeSeriesChart` x-axis mapping to derive x-values from elapsed time relative to the first bucket, rather than ordinal indices.
+- Introduced axis-unit normalization (`timeSeriesAxisUnitSeconds`) so the plot preserves temporal proportions (e.g., minute gaps vs multi-hour gaps) while remaining compatible with KoalaPlot bar-width constraints.
+- Updated x-axis label rendering to map axis values back to real instants (`timeSeriesAxisInstant`) for correct time/date labels across both Logs and Dashboard surfaces.
+- Added a regression test for irregular bucket spacing to lock behavior (`KoalaPlotChartsPointerMappingTest`).
+**Key decisions**
+- Fixed behavior at the shared chart component seam (`ui/components/KoalaPlotCharts.kt`) so both affected pages inherit the correction without duplicated page-specific logic.
+- Kept existing interaction pipelines/intents intact and limited changes to x-axis coordinate derivation + label conversion to minimize regression risk.
+**Gotchas**
+- An initial direct-seconds axis attempt caused KoalaPlot grouped-bar validation failures due to bar-width scale assumptions; resolved by normalizing elapsed-time units by bucket duration.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/KoalaPlotCharts.kt` (time-axis derivation/label conversion).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (new irregular-gap regression assertion).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.KoalaPlotChartsFormattingTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test` (`BUILD SUCCESSFUL`).

@@ -30,7 +30,6 @@ fun FilterBar(
     onRemoveQuery: (String) -> Unit,
     onClearQueries: () -> Unit,
     onOpenFileClick: () -> Unit,
-    onOpenDirectoryClick: () -> Unit,
     onSftpClick: () -> Unit,
     onS3Click: () -> Unit,
     onAddFileClick: () -> Unit,
@@ -47,6 +46,7 @@ fun FilterBar(
     onToggleAnsiColors: () -> Unit,
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
+    onRefresh: () -> Unit,
     onSplitClick: () -> Unit,
     timeFilterFrom: String,
     timeFilterTo: String,
@@ -186,6 +186,12 @@ fun FilterBar(
                 onClick = onToggleConnection,
                 tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray
             )
+            FilterBarIcon(
+                icon = Icons.Default.Refresh,
+                tooltip = "Refresh Sources",
+                onClick = onRefresh,
+                testTag = "toolbar_refresh"
+            )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
@@ -300,7 +306,9 @@ private fun TimeFilterControls(
                 expanded = presetMenuExpanded,
                 onDismissRequest = { presetMenuExpanded = false }
             ) {
-                TimeRangePreset.entries.forEach { presetOption ->
+                TimeRangePreset.entries
+                    .filterNot { it == TimeRangePreset.FULL_LOADED_RANGE }
+                    .forEach { presetOption ->
                     DropdownMenuItem(onClick = {
                         presetMenuExpanded = false
                         onApplyPreset(presetOption)
@@ -308,16 +316,19 @@ private fun TimeFilterControls(
                         Text(presetOption.displayLabel())
                     }
                 }
-            }
-        }
 
-        if (fromValue.isNotBlank() || toValue.isNotBlank() || preset != null) {
-            FilterBarIcon(
-                icon = Icons.Default.Clear,
-                tooltip = "Clear time filter",
-                onClick = onClear,
-                testTag = "time_filter_clear"
-            )
+                Divider()
+
+                DropdownMenuItem(
+                    onClick = {
+                        presetMenuExpanded = false
+                        onClear()
+                    },
+                    modifier = Modifier.testTag("time_filter_clear_menu_item")
+                ) {
+                    Text("Reset")
+                }
+            }
         }
 
         validationMessage?.let {

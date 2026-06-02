@@ -20,10 +20,15 @@ class FilterBarTimeFilterControlsTest {
         onNodeWithText("From").assertDoesNotExist()
         onNodeWithText("To").assertDoesNotExist()
         onNodeWithTag("time_filter_preset").assertIsDisplayed()
+
+        onNodeWithTag("time_filter_preset").performClick()
+        onNodeWithTag("time_filter_clear_menu_item").assertIsDisplayed()
+        onNodeWithText("Reset").assertIsDisplayed()
+        onNodeWithText("Full loaded range").assertDoesNotExist()
     }
 
     @Test
-    fun `time filter clear action clears active range`() = runComposeUiTest {
+    fun `time filter reset action clears active range`() = runComposeUiTest {
         var from by mutableStateOf("2026-05-26 10:00:00")
         var to by mutableStateOf("2026-05-26 10:05:00")
         var clearCalls = 0
@@ -35,7 +40,6 @@ class FilterBarTimeFilterControlsTest {
                 onRemoveQuery = {},
                 onClearQueries = {},
                 onOpenFileClick = {},
-                onOpenDirectoryClick = {},
                 onSftpClick = {},
                 onS3Click = {},
                 onAddFileClick = {},
@@ -52,6 +56,7 @@ class FilterBarTimeFilterControlsTest {
                 onToggleAnsiColors = {},
                 isConnected = true,
                 onToggleConnection = {},
+                onRefresh = {},
                 onSplitClick = {},
                 timeFilterFrom = from,
                 timeFilterTo = to,
@@ -68,12 +73,15 @@ class FilterBarTimeFilterControlsTest {
             )
         }
 
-        onNodeWithTag("time_filter_clear").performClick()
-        onNodeWithTag("time_filter_clear").assertDoesNotExist()
+        onNodeWithTag("time_filter_preset").performClick()
+        onNodeWithTag("time_filter_clear_menu_item").assertIsDisplayed().performClick()
         assertEquals(1, clearCalls)
     }
 
-    private fun ComposeUiTest.setupFilterBar() {
+    @Test
+    fun `refresh action is shown and triggers callback`() = runComposeUiTest {
+        var refreshCalls = 0
+
         setContent {
             FilterBar(
                 filterQueries = emptyList(),
@@ -81,7 +89,6 @@ class FilterBarTimeFilterControlsTest {
                 onRemoveQuery = {},
                 onClearQueries = {},
                 onOpenFileClick = {},
-                onOpenDirectoryClick = {},
                 onSftpClick = {},
                 onS3Click = {},
                 onAddFileClick = {},
@@ -98,6 +105,48 @@ class FilterBarTimeFilterControlsTest {
                 onToggleAnsiColors = {},
                 isConnected = true,
                 onToggleConnection = {},
+                onRefresh = { refreshCalls += 1 },
+                onSplitClick = {},
+                timeFilterFrom = "",
+                timeFilterTo = "",
+                timeFilterPreset = null,
+                timeFilterValidationMessage = null,
+                onApplyTimeFilterPreset = {},
+                onClearTimeFilter = {},
+                matchesCount = 0,
+                totalCount = 0
+            )
+        }
+
+        onNodeWithTag("toolbar_refresh").assertIsDisplayed().performClick()
+        assertEquals(1, refreshCalls)
+    }
+
+    private fun ComposeUiTest.setupFilterBar() {
+        setContent {
+            FilterBar(
+                filterQueries = emptyList(),
+                onAddQuery = {},
+                onRemoveQuery = {},
+                onClearQueries = {},
+                onOpenFileClick = {},
+                onSftpClick = {},
+                onS3Click = {},
+                onAddFileClick = {},
+                onAddDirectoryClick = {},
+                onAddSftpClick = {},
+                onAddS3Click = {},
+                onToggleTheme = {},
+                onToggleSidebar = {},
+                isReversed = false,
+                onToggleSortOrder = {},
+                isAutoScrollEnabled = true,
+                onToggleAutoScroll = {},
+                showAnsiColors = true,
+                onToggleAnsiColors = {},
+                isConnected = true,
+                onToggleConnection = {},
+                onRefresh = {},
                 onSplitClick = {},
                 timeFilterFrom = "",
                 timeFilterTo = "",
