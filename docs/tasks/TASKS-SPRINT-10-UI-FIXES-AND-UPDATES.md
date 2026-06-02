@@ -41,11 +41,11 @@
 - [x] 15.5.4. Route reset through shared filter intent handling so behavior is deterministic.
 
 ### 15.6. Context Menu Support (`2.6`)
-- [ ] 15.6.1. Add right-click context menu support in the log UI.
-- [ ] 15.6.2. Provide `Copy` context action bound to the same selection/clipboard behavior as primary copy flows.
-- [ ] 15.6.3. Provide `Refresh` context action bound to the same behavior as toolbar refresh.
-- [ ] 15.6.4. Provide `Clear` context action bound to the same behavior as time filter clear.
-- [ ] 15.6.5. Reflect enabled/disabled menu states based on current selection and connection/filter context.
+- [x] 15.6.1. Add right-click context menu support in the log UI.
+- [x] 15.6.2. Provide `Copy` context action bound to the same selection/clipboard behavior as primary copy flows.
+- [x] 15.6.3. Provide `Refresh` context action bound to the same behavior as toolbar refresh.
+- [x] 15.6.4. Provide `Clear` context action bound to the same behavior as time filter clear.
+- [x] 15.6.5. Reflect enabled/disabled menu states based on current selection and connection/filter context.
 
 ### 15.7. Drag-and-Drop File Import (`2.7`)
 - [ ] 15.7.1. Accept file drag-and-drop into the current application window.
@@ -69,7 +69,7 @@
 - [x] 15.10.3. Add/extend UI tests for multi-line selection and clipboard copy behavior.
 - [x] 15.10.4. Add/extend ViewModel tests for toolbar/context `Refresh` parity in connected/disconnected states.
 - [x] 15.10.5. Add/extend filter tests for dropdown `Reset` clear-time-bounds behavior and menu `Clear` reset-to-now parity.
-- [ ] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
+- [x] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
 - [ ] 15.10.7. Add/extend interaction tests for drag-drop to current tab vs tab bar new tab creation.
 - [ ] 15.10.8. Add/extend UI tests for source badge filename tooltips and per-source row background differentiation.
 - [ ] 15.10.9. Run regression checks for workspace persistence and live-update consistency with Sprint 10 changes.

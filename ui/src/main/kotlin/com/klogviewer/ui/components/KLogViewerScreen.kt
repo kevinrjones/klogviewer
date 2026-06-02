@@ -776,6 +776,9 @@ private fun LogWorkspace(
     viewModel: KLogViewerViewModel
 ) {
     val dashboardContent = logTimeFrequencyContent(window.dashboardDataState)
+    val isCopyActionEnabled = window.selectedIndices.isNotEmpty()
+    val isRefreshActionEnabled = window.sourceIds.isNotEmpty()
+    val isClearActionEnabled = true
 
     Column(modifier = Modifier.fillMaxSize()) {
         dashboardContent?.let { content ->
@@ -836,6 +839,30 @@ private fun LogWorkspace(
                     viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
                 }
             },
+            onContextCopy = {
+                if (isWindowActive) {
+                    viewModel.handleIntent(KLogViewerIntent.CopySelected)
+                } else {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+            },
+            onContextRefresh = {
+                if (isWindowActive) {
+                    viewModel.handleIntent(KLogViewerIntent.RefreshConnection)
+                } else {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+            },
+            onContextClear = {
+                if (isWindowActive) {
+                    viewModel.handleIntent(KLogViewerIntent.ClearTimeFilter)
+                } else {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+            },
+            isContextCopyEnabled = isCopyActionEnabled,
+            isContextRefreshEnabled = isRefreshActionEnabled,
+            isContextClearEnabled = isClearActionEnabled,
             onColumnResize = { column, width ->
                 viewModel.handleIntent(
                     KLogViewerIntent.UpdateColumnWidth(

@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -15,8 +17,12 @@ import androidx.compose.material.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
@@ -26,6 +32,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.domain.model.LogEntry
@@ -50,12 +57,22 @@ fun LogList(
     selectedIndices: Set<Int> = emptySet(),
     onEntryClick: (LogEntry) -> Unit = {},
     onToggleSelection: (Int, Boolean, Boolean) -> Unit = { _, _, _ -> },
+    onContextCopy: () -> Unit = {},
+    onContextRefresh: () -> Unit = {},
+    onContextClear: () -> Unit = {},
+    isContextCopyEnabled: Boolean = false,
+    isContextRefreshEnabled: Boolean = true,
+    isContextClearEnabled: Boolean = false,
     onColumnResize: (String, Int) -> Unit = { _, _ -> },
     windowId: String? = null,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberLazyListState()
+    var contextMenuRowIndex by remember { mutableStateOf<Int?>(null) }
+    var contextMenuOffset by remember { mutableStateOf(Offset.Zero) }
+    var latestSecondaryClickInContainer by remember { mutableStateOf<Offset?>(null) }
+    var logListCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
     LaunchedEffect(logs.size) {
         if (isAutoScrollEnabled && logs.isNotEmpty()) {
@@ -70,12 +87,28 @@ fun LogList(
     val contentWidth = getLogListContentWidth(displayColumns, columnWidths, gutterWidth)
     val logListTag = if (windowId != null) "log_list_$windowId" else "log_list"
 
-    Box(modifier = modifier.fillMaxSize().testTag(logListTag)) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(logListTag)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                            latestSecondaryClickInContainer = event.changes.firstOrNull()?.position
+                        }
+                    }
+                }
+            }
+            .onGloballyPositioned { logListCoordinates = it }
+    ) {
         Row(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.weight(1f)) {
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .testTag("log_horizontal_scroll_container")
                         .horizontalScroll(horizontalScrollState)
                 ) {
                     LogListHeader(
@@ -110,11 +143,17 @@ fun LogList(
                                     logFontStyle = logFontStyle,
                                     isSelected = selectedIndices.contains(index),
                                     onClick = { isShift, isMeta ->
+                                        contextMenuRowIndex = null
                                         if (isShift || isMeta) {
                                             onToggleSelection(index, isShift, isMeta)
                                         } else {
                                             onEntryClick(entry)
                                         }
+                                    },
+                                    menuContainerCoordinates = logListCoordinates,
+                                    onContextMenuRequested = { clickOffset ->
+                                        contextMenuRowIndex = index
+                                        contextMenuOffset = latestSecondaryClickInContainer ?: clickOffset
                                     },
                                     modifier = Modifier.testTag("log_entry_row_$index")
                                 )
@@ -131,6 +170,50 @@ fun LogList(
                 modifier = Modifier.fillMaxHeight().width(8.dp),
                 adapter = rememberScrollbarAdapter(verticalScrollState)
             )
+        }
+
+        if (contextMenuRowIndex != null) {
+            val menuOffset = with(LocalDensity.current) {
+                DpOffset(contextMenuOffset.x.toDp(), contextMenuOffset.y.toDp())
+            }
+
+            DropdownMenu(
+                expanded = true,
+                onDismissRequest = { contextMenuRowIndex = null },
+                offset = menuOffset,
+                modifier = Modifier.testTag("log_context_menu")
+            ) {
+                DropdownMenuItem(
+                    onClick = {
+                        contextMenuRowIndex = null
+                        onContextCopy()
+                    },
+                    enabled = isContextCopyEnabled,
+                    modifier = Modifier.testTag("log_context_menu_copy")
+                ) {
+                    Text("Copy")
+                }
+                DropdownMenuItem(
+                    onClick = {
+                        contextMenuRowIndex = null
+                        onContextRefresh()
+                    },
+                    enabled = isContextRefreshEnabled,
+                    modifier = Modifier.testTag("log_context_menu_refresh")
+                ) {
+                    Text("Refresh")
+                }
+                DropdownMenuItem(
+                    onClick = {
+                        contextMenuRowIndex = null
+                        onContextClear()
+                    },
+                    enabled = isContextClearEnabled,
+                    modifier = Modifier.testTag("log_context_menu_clear")
+                ) {
+                    Text("Clear")
+                }
+            }
         }
     }
 }
@@ -277,6 +360,8 @@ fun LogEntryRow(
     logFontStyle: TextStyle,
     isSelected: Boolean = false,
     onClick: (Boolean, Boolean) -> Unit = { _, _ -> },
+    menuContainerCoordinates: LayoutCoordinates? = null,
+    onContextMenuRequested: (Offset) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val logColors = KLogViewerTheme.logColors
@@ -286,18 +371,58 @@ fun LogEntryRow(
         getSourceBackgroundColor(entry.sourceId, sourceIds, isDarkMode)
     }
 
+    var rowCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
     Box(
         modifier = modifier
             .width(contentWidth)
             .background(backgroundColor)
             .semantics { selected = isSelected }
+            .onGloballyPositioned { rowCoordinates = it }
             .pointerInput(Unit) {
                 awaitPointerEventScope {
+                    var suppressNextReleaseClick = false
+                    var lastKnownPointerPosition: Offset? = null
                     while (true) {
                         val event = awaitPointerEvent()
-                        if (event.type == PointerEventType.Release) {
-                            val modifiers = event.keyboardModifiers
-                            onClick(modifiers.isShiftPressed, modifiers.isMetaPressed || modifiers.isCtrlPressed)
+                        val eventPosition = event.changes.firstOrNull()?.position
+                        val previousEventPosition = event.changes.firstOrNull()?.previousPosition
+                        if (event.type != PointerEventType.Press && eventPosition != null) {
+                            lastKnownPointerPosition = eventPosition
+                        }
+
+                        when {
+                            event.type == PointerEventType.Press && event.buttons.isSecondaryPressed -> {
+                                suppressNextReleaseClick = true
+                                val clickOffset = eventPosition
+                                    ?: previousEventPosition
+                                    ?: lastKnownPointerPosition
+                                    ?: Offset.Zero
+                                val containerCoordinates = menuContainerCoordinates
+                                val currentRowCoordinates = rowCoordinates
+                                val menuPosition = if (containerCoordinates != null && currentRowCoordinates != null) {
+                                    val rowPositionInRoot = currentRowCoordinates.positionInRoot()
+                                    val containerPositionInRoot = containerCoordinates.positionInRoot()
+                                    Offset(
+                                        x = rowPositionInRoot.x + clickOffset.x - containerPositionInRoot.x,
+                                        y = rowPositionInRoot.y + clickOffset.y - containerPositionInRoot.y
+                                    )
+                                } else {
+                                    clickOffset
+                                }
+                                onContextMenuRequested(menuPosition)
+                                event.changes.forEach { it.consume() }
+                                if (eventPosition != null) {
+                                    lastKnownPointerPosition = eventPosition
+                                }
+                            }
+                            event.type == PointerEventType.Release && suppressNextReleaseClick -> {
+                                suppressNextReleaseClick = false
+                            }
+                            event.type == PointerEventType.Release -> {
+                                val modifiers = event.keyboardModifiers
+                                onClick(modifiers.isShiftPressed, modifiers.isMetaPressed || modifiers.isCtrlPressed)
+                            }
                         }
                     }
                 }

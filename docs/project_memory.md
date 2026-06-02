@@ -24,6 +24,7 @@
 - Sprint 10 `15.2` completed: active-window log font configuration now supports monospaced font selection, immediate row font-size application, and persisted restore on restart.
 - Sprint 10 `15.3` completed: line selection/copy flow now enforces visible-order clipboard output, shared copy behavior, and disabled copy action when no rows are selected.
 - Sprint 10 `15.5` completed with split clear/reset semantics: `Edit -> Clear` resets active log visibility to `now`, while time dropdown `Reset` clears time bounds to show all logs under current non-time filters/workspace context.
+- Sprint 10 `15.6` completed: log rows now expose a right-click context menu with shared `Copy`, `Refresh`, and `Clear` action flows plus state-driven menu enablement.
 - Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
 
 **Key decisions**
@@ -3156,4 +3157,27 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` (new irregular-gap regression assertion).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.KoalaPlotChartsFormattingTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.6 Context Menu Support
+**Title**: Add Log Row Right-Click Context Menu with Shared Copy/Refresh/Clear Actions
+**Date/time completed**: 2026-06-02 15:50
+**What was shipped**
+- Added right-click context-menu support in `LogList` row rendering with `Copy`, `Refresh`, and `Clear` actions.
+- Wired context-menu actions from `KLogViewerScreen` to the existing shared intents: `KLogViewerIntent.CopySelected`, `KLogViewerIntent.RefreshConnection`, and `KLogViewerIntent.ClearTimeFilter`.
+- Added state-driven context action enablement derived from active-window selection/source/time-filter context.
+- Added UI test helpers in `LogListRobot` for right-click/context-menu interactions and assertions.
+- Added `LogListContextMenuTest` coverage for action invocation and disabled-state behavior.
+- Updated Sprint 10 checklist progress by marking `15.6.1`–`15.6.5` and `15.10.6` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Reused existing ViewModel intent flows for all context actions to guarantee parity with toolbar/menu/keyboard behavior and avoid divergent logic.
+- Kept context-menu state local to the log row interaction model (`contextMenuRowIndex`) to preserve existing row selection behavior while supporting secondary-click handling.
+**Gotchas**
+- Initial UI test timeouts were caused by robot scoping expecting a `window_*` ancestor when testing `LogList` directly; fixed by using unscoped `logList` robot access in component-level context-menu tests.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/LogList.kt` (secondary-click handling, context-menu actions, enablement wiring).
+- `ui/src/main/kotlin/com/klogviewer/ui/components/KLogViewerScreen.kt` (intent parity wiring for context actions).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/LogListContextMenuTest.kt` (context action invocation + disabled states).
+- `ui/src/test/kotlin/com/klogviewer/ui/robot/LogListRobot.kt` (right-click/context-menu robot operations).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.LogListContextMenuTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test` (`BUILD SUCCESSFUL`).
