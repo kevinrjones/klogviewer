@@ -80,7 +80,7 @@ fun KLogViewerScreen(
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
-                is com.klogviewer.ui.mvi.KLogViewerEvent.ShowError -> {
+                is KLogViewerEvent.ShowError -> {
                     dialogProvider.showMessageDialog("Error", event.message)
                 }
             }
@@ -704,7 +704,7 @@ private fun LogWindowItem(
                 .weight(1f)
                 .padding(horizontal = 16.dp)
                 .clickable(
-                    interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                    interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 ) {
                     viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
@@ -2191,8 +2191,8 @@ private fun DashboardNumberControl(
 
 private fun dashboardDirectionIndicator(direction: DashboardDeltaDirection, delta: Int): String {
     return when (direction) {
-        DashboardDeltaDirection.INCREASE -> "↑ +${kotlin.math.abs(delta)}"
-        DashboardDeltaDirection.DECREASE -> "↓ -${kotlin.math.abs(delta)}"
+        DashboardDeltaDirection.INCREASE -> "↑ +${abs(delta)}"
+        DashboardDeltaDirection.DECREASE -> "↓ -${abs(delta)}"
         DashboardDeltaDirection.UNCHANGED -> "= 0"
     }
 }
@@ -2216,7 +2216,7 @@ private fun dashboardDirectionColor(direction: DashboardDeltaDirection): Color {
 
 @Composable
 private fun LogTabRow(
-    tabs: List<com.klogviewer.ui.mvi.TabState>,
+    tabs: List<TabState>,
     activeTabId: String?,
     onTabClick: (String) -> Unit,
     onCloseClick: (String) -> Unit,
