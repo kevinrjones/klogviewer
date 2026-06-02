@@ -429,7 +429,8 @@ private fun LogEntryCell(
     }
 }
 
-internal const val MAX_DEFAULT_COLUMN_WIDTH = 1400
+internal const val MAX_DEFAULT_COLUMN_WIDTH = 300
+internal const val DEFAULT_MESSAGE_COLUMN_WIDTH = 1200
 
 private fun getLogListContentWidth(
     columns: List<String>,
@@ -447,11 +448,14 @@ internal fun getColumnWidth(column: String, columnWidths: Map<String, Int>, sour
         "Line #", "#" -> if (sourceIds.size > 1) 60.dp else 50.dp
         "Timestamp" -> 180.dp
         "Level" -> 80.dp
-        "Message", "Content" -> 600.dp
+        "Message", "Content" -> DEFAULT_MESSAGE_COLUMN_WIDTH.dp
         else -> 120.dp
     }
 
-    return defaultWidth.coerceAtMost(MAX_DEFAULT_COLUMN_WIDTH.dp)
+    return when (column) {
+        "Message", "Content" -> defaultWidth.coerceAtLeast(MAX_DEFAULT_COLUMN_WIDTH.dp)
+        else -> defaultWidth.coerceAtMost(MAX_DEFAULT_COLUMN_WIDTH.dp)
+    }
 }
 
 private fun getLevelColor(level: LogLevel, colors: LogLevelColors): Color = when (level) {
