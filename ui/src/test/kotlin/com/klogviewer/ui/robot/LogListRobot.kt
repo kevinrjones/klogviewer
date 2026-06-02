@@ -117,20 +117,20 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
 
     fun contextMenuTopLeft(): Offset {
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodes(matcher("log_context_menu_copy"), useUnmergedTree = true)
+            composeTestRule.onAllNodes(matcher("log_context_menu"), useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        val menuBounds = composeTestRule.onNode(matcher("log_context_menu_copy"), useUnmergedTree = true)
+        val menuBounds = composeTestRule.onNode(matcher("log_context_menu"), useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
         return Offset(menuBounds.left, menuBounds.top)
     }
 
     fun contextMenuBounds(): Rect {
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodes(matcher("log_context_menu_copy"), useUnmergedTree = true)
+            composeTestRule.onAllNodes(matcher("log_context_menu"), useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        return composeTestRule.onNode(matcher("log_context_menu_copy"), useUnmergedTree = true)
+        return composeTestRule.onNode(matcher("log_context_menu"), useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
     }
 

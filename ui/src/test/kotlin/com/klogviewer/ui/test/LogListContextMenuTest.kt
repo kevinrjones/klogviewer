@@ -12,6 +12,7 @@ import com.klogviewer.ui.robot.logList
 import org.junit.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isLessThanOrEqualTo
 import kotlin.math.abs
 
@@ -103,7 +104,7 @@ class LogListContextMenuTest {
     }
 
     @Test
-    fun `given row right click when context menu opens then menu aligns to click point`() = runComposeUiTest {
+    fun `given row right click when context menu opens then menu aligns to click point and appears below click`() = runComposeUiTest {
         var clickPosition = Offset.Zero
         var menuPosition = Offset.Zero
 
@@ -127,10 +128,12 @@ class LogListContextMenuTest {
         }
 
         expectThat(abs(menuPosition.x - clickPosition.x)).isLessThanOrEqualTo(3f)
+        expectThat(menuPosition.y).isGreaterThanOrEqualTo(clickPosition.y - 1f)
+        expectThat(abs(menuPosition.y - clickPosition.y)).isLessThanOrEqualTo(48f)
     }
 
     @Test
-    fun `given vertically and horizontally scrolled log list when row right clicked then menu keeps x alignment with click`() = runComposeUiTest {
+    fun `given vertically and horizontally scrolled log list when row right clicked then menu keeps alignment and appears below click`() = runComposeUiTest {
         val scrolledEntries = createEntries(200)
         var clickPosition = Offset.Zero
         var menuPosition = Offset.Zero
@@ -163,6 +166,8 @@ class LogListContextMenuTest {
         }
 
         expectThat(abs(menuPosition.x - clickPosition.x)).isLessThanOrEqualTo(3f)
+        expectThat(menuPosition.y).isGreaterThanOrEqualTo(clickPosition.y - 1f)
+        expectThat(abs(menuPosition.y - clickPosition.y)).isLessThanOrEqualTo(48f)
     }
 
 }

@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.domain.model.LogEntry
@@ -173,45 +174,52 @@ fun LogList(
         }
 
         if (contextMenuRowIndex != null) {
-            val menuOffset = with(LocalDensity.current) {
-                DpOffset(contextMenuOffset.x.toDp(), contextMenuOffset.y.toDp())
-            }
-
-            DropdownMenu(
-                expanded = true,
-                onDismissRequest = { contextMenuRowIndex = null },
-                offset = menuOffset,
-                modifier = Modifier.testTag("log_context_menu")
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            x = contextMenuOffset.x.roundToInt(),
+                            y = contextMenuOffset.y.roundToInt()
+                        )
+                    }
+                    .size(1.dp)
             ) {
-                DropdownMenuItem(
-                    onClick = {
-                        contextMenuRowIndex = null
-                        onContextCopy()
-                    },
-                    enabled = isContextCopyEnabled,
-                    modifier = Modifier.testTag("log_context_menu_copy")
+                DropdownMenu(
+                    expanded = true,
+                    onDismissRequest = { contextMenuRowIndex = null },
+                    offset = DpOffset(0.dp, 0.dp),
+                    modifier = Modifier.testTag("log_context_menu")
                 ) {
-                    Text("Copy")
-                }
-                DropdownMenuItem(
-                    onClick = {
-                        contextMenuRowIndex = null
-                        onContextRefresh()
-                    },
-                    enabled = isContextRefreshEnabled,
-                    modifier = Modifier.testTag("log_context_menu_refresh")
-                ) {
-                    Text("Refresh")
-                }
-                DropdownMenuItem(
-                    onClick = {
-                        contextMenuRowIndex = null
-                        onContextClear()
-                    },
-                    enabled = isContextClearEnabled,
-                    modifier = Modifier.testTag("log_context_menu_clear")
-                ) {
-                    Text("Clear")
+                    DropdownMenuItem(
+                        onClick = {
+                            contextMenuRowIndex = null
+                            onContextCopy()
+                        },
+                        enabled = isContextCopyEnabled,
+                        modifier = Modifier.testTag("log_context_menu_copy")
+                    ) {
+                        Text("Copy")
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            contextMenuRowIndex = null
+                            onContextRefresh()
+                        },
+                        enabled = isContextRefreshEnabled,
+                        modifier = Modifier.testTag("log_context_menu_refresh")
+                    ) {
+                        Text("Refresh")
+                    }
+                    DropdownMenuItem(
+                        onClick = {
+                            contextMenuRowIndex = null
+                            onContextClear()
+                        },
+                        enabled = isContextClearEnabled,
+                        modifier = Modifier.testTag("log_context_menu_clear")
+                    ) {
+                        Text("Clear")
+                    }
                 }
             }
         }
