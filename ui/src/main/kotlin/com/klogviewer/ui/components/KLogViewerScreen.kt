@@ -170,6 +170,26 @@ private fun DialogHandler(
                 }
             }
         }
+
+        if (pendingDialog == KLogViewerState.DialogType.FONT) {
+            val activeWindow = state.activeTab?.activeWindow
+            val selection = dialogProvider.showMonospacedFontDialog(
+                title = "Select Log Font",
+                initialFamily = activeWindow?.logFontFamily ?: DEFAULT_LOG_FONT_FAMILY,
+                initialSizeSp = activeWindow?.logFontSizeSp ?: DEFAULT_LOG_FONT_SIZE_SP
+            )
+
+            viewModel.handleIntent(KLogViewerIntent.DismissDialog)
+
+            if (selection != null) {
+                viewModel.handleIntent(
+                    KLogViewerIntent.ApplyLogFont(
+                        family = selection.family,
+                        sizeSp = selection.sizeSp
+                    )
+                )
+            }
+        }
     }
 
     if (pendingDialog == KLogViewerState.DialogType.RECENT_ITEMS) {
@@ -793,6 +813,8 @@ private fun LogWorkspace(
             columnWidths = window.columnWidths,
             isAutoScrollEnabled = window.isAutoScrollEnabled,
             showAnsiColors = window.showAnsiColors,
+            logFontFamily = window.logFontFamily,
+            logFontSizeSp = window.logFontSizeSp,
             selectedIndices = window.selectedIndices,
             onEntryClick = {
                 if (isWindowActive) {

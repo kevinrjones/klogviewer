@@ -107,7 +107,10 @@ class KLogViewerViewModel(
         onCopySelectedToClipboard = { copySelectedToClipboard() }
     )
     
-    private val dialogIntentHandler = DialogIntentHandler(_state)
+    private val dialogIntentHandler = DialogIntentHandler(
+        state = _state,
+        onSavePreferences = { savePreferences() }
+    )
     
     private val recentItemsIntentHandler = RecentItemsIntentHandler(
         state = _state,

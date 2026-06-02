@@ -132,6 +132,7 @@ fun main() {
                 }
                 Menu("Edit") {
                     Item("Copy", shortcut = KeyShortcut(Key.C, meta = true), onClick = { viewModel.handleIntent(KLogViewerIntent.CopySelected) })
+                    Item("Font...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowFontDialog) })
                     Item("Clear Logs", onClick = { viewModel.handleIntent(KLogViewerIntent.ClearLogs) })
                 }
                 Menu("View") {

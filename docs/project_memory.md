@@ -21,6 +21,7 @@
 - Dashboard KoalaPlot time-series now supports drag-to-select bucket ranges using pointer-to-index mapping while preserving existing single-click filtering behavior.
 - Log row level cells now show only explicit parsed level fields (blank when absent), with conditional level analytics UI: the left `Levels` pane and dashboard `Level distribution` section render only when raw `level` fields are present.
 - Sprint 10 `15.1` completed: active-window source dropdown management now supports per-source `[x]` removal with scoped state updates and UI test coverage.
+- Sprint 10 `15.2` completed: active-window log font configuration now supports monospaced font selection, immediate row font-size application, and persisted restore on restart.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -3010,3 +3011,25 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/test/DirectoryTabTest.kt` (new dropdown visibility + per-source removal tests).
 - `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/TabWindowIntentHandler.kt` (source-removal state consistency updates).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.DirectoryTabTest" --tests "com.klogviewer.ui.viewmodel.ConnectionToggleTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.2 Font Selection for Log View
+**Title**: Add Monospaced Font Selection, Application, and Persistence for Active Log Windows
+**Date/time completed**: 2026-06-02 08:22
+**What was shipped**
+- Added `Font...` action in desktop `Edit` menu (`Main.kt`) wired to new dialog intents (`ShowFontDialog`, `ApplyLogFont`) and dialog state (`DialogType.FONT`).
+- Added monospaced-only font selection dialog support in `DialogProvider`/`AwtDialogProvider` using system-installed fonts with a graceful chooser fallback.
+- Added per-window font settings (`logFontFamily`, `logFontSizeSp`) to UI state and persisted preferences (`WindowPreference`) with full mapper round-trip restore on startup.
+- Applied selected font configuration to log-row rendering in `LogList` (gutter, timestamp, level, message/content, and additional columns).
+- Updated Sprint 10 checklist progress by marking `15.2.1`–`15.2.5` and `15.10.2` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Reused existing shared dialog-intent flow (`DialogIntentHandler`) to keep menu-triggered behavior aligned with current state/persistence pipelines.
+- Enforced monospaced-only rendering fallback (`FontFamily.Monospace`) so unsupported or non-fixed-width family names cannot degrade log readability.
+- Persisted font changes immediately via existing preference-save infrastructure to avoid restart/reload drift.
+**Gotchas**
+- Existing `LogListColumnWidthTest` exposed an inconsistent default message-width branch; corrected default capping logic while preserving explicit user-resized widths.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/FontSelectionPersistenceTest.kt` (font apply state update + preferences persistence).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/LogListFontStyleTest.kt` (monospaced restriction + size clamping behavior).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/LogListColumnWidthTest.kt` (regression remains passing after `LogList` updates).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.FontSelectionPersistenceTest" --tests "com.klogviewer.ui.components.LogListFontStyleTest" --tests "com.klogviewer.ui.components.LogListColumnWidthTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test` (`BUILD SUCCESSFUL`).
