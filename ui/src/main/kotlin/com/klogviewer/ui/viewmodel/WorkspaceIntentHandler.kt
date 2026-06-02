@@ -49,7 +49,12 @@ class WorkspaceIntentHandler(
         logLoadingCoordinator.cancelWindowJob(activeWindow.id)
         state.update { currentState ->
             currentState.updateActiveWindow { window ->
-                window.copy(logs = emptyList(), filePath = "", sourceIds = emptyList())
+                window.copy(
+                    logs = emptyList(),
+                    filePath = "",
+                    sourceIds = emptyList(),
+                    hiddenSourceIds = emptySet()
+                )
             }
         }
         onFilterLogs(activeWindow.id)

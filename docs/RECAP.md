@@ -1182,3 +1182,28 @@ Recap from the previous entry (`2026-05-28 06:07`) up to now:
 #### Verification:
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` → passed (`BUILD SUCCESSFUL`).
 
+
+# 2026-06-02
+
+## 06:39
+
+### Sprint 10 UI Checklist + Active-Window Source Visibility Iteration Recap
+
+Recap from the previous entry (`2026-05-29 06:57`) up to now:
+
+#### Changes:
+- **Commit `daebc99` (2026-05-29 08:33)**: Added conditional level UI rendering based on raw `level` field presence.
+- **Commit `3de3a2e` (2026-05-29 09:10)**: Added debounced background aggregation, deterministic sampling, and latency instrumentation for dashboard flows.
+- **Commit `4f2117b` + merge `97a5fb4` (2026-05-29 09:44)**: Completed Sprint 9 verification/rollout tasks and integrated `feat/analysis` into the mainline.
+- **Commits `6637cca`, `48956a5`, `5899e8b`, `76af880`, `42385e4`, `74f6b84`, `a2b2cb0`, `fe45cb3`, `5a5bbcb`, `a7f18d0` (2026-05-29)**: Stabilized UI/ViewModel test suites with deterministic waits/dispatchers and added frequency-analysis + overlapping-update regressions.
+- **Commits `3376f45`, `01aa8e7`, `dd45a07`, merge `6f5c9c8` (2026-05-29)**: Updated documentation assets (`README` screenshots/cleanup, `ALL_RELEASES.md`) and synced with `origin/main`.
+- **Commit `408fa49` (2026-05-31 21:22)**: Removed unused time-filter inputs/handlers in the UI layer.
+- **Commits `ed6f9a5`, `804d8bf` (2026-06-01)**: Hardened S3/SFTP log-source resilience for transient failures/timeouts and improved polling/logging behavior.
+- **Commits `f0b7916`, `cb7db96` (2026-06-01)**: Reworked sprint planning/task docs and added Sprint 10 UI fixes checklist structure.
+- **Session-delivered Sprint 10 follow-up work during this period**: Implemented and iterated Sprint 10 `15.1` active-window source management in the UI flow by moving source control into the header file-path area, showing fully-qualified paths, widening dropdown rendering, adding per-entry hover tooltips, switching behavior from remove to `Hide`/`Show`, and increasing shown-vs-hidden filename contrast in header display text.
+- **Sprint/task tracking updates during this period**: Updated `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md` progress for `15.1`/`15.10.1`, advanced and completed plan steps in `.junie/plans/sprint-10-ui-fixes-checklist-plan.md` through Step `16`, and kept `docs/project_memory.md` aligned with completed task milestones.
+- **Repository state at recap time**: No additional uncommitted changes (`git status --short` clean).
+
+#### Verification:
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.DirectoryTabTest" --tests "com.klogviewer.ui.viewmodel.ConnectionToggleTest"` → passed (`BUILD SUCCESSFUL`) across repeated re-verification runs during Sprint 10 `15.1` UI iterations.
+

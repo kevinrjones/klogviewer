@@ -133,6 +133,7 @@ sealed interface KLogViewerIntent {
     data object SplitHorizontal : TabWindowIntent
     data class CloseWindow(val id: String) : TabWindowIntent
     data class SwitchWindow(val id: String) : TabWindowIntent
+    data class ToggleSourceVisibilityInActiveWindow(val sourcePath: String) : TabWindowIntent
     data class UpdateColumnWidth(val windowId: String, val column: String, val width: Int) : TabWindowIntent
     data class ChangeParser(val windowId: String, val parserName: String) : TabWindowIntent
 }

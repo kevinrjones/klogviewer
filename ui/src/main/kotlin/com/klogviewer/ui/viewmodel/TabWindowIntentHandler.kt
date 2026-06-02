@@ -8,7 +8,8 @@ import kotlinx.coroutines.flow.update
 class TabWindowIntentHandler(
     private val state: MutableStateFlow<KLogViewerState>,
     private val logLoadingCoordinator: LogLoadingCoordinator,
-    private val onSavePreferences: (debounce: Boolean) -> Unit
+    private val onSavePreferences: (debounce: Boolean) -> Unit,
+    private val onFilterLogs: (windowId: String) -> Unit
 ) {
     fun handle(intent: KLogViewerIntent.TabWindowIntent) {
         when (intent) {
@@ -38,6 +39,34 @@ class TabWindowIntentHandler(
             }
             is KLogViewerIntent.SwitchWindow -> {
                 state.update { TabWindowController.switchWindow(it, intent.id) }
+                onSavePreferences(false)
+            }
+            is KLogViewerIntent.ToggleSourceVisibilityInActiveWindow -> {
+                val activeWindowId = state.value.activeTab?.activeWindow?.id
+                state.update { currentState ->
+                    currentState.updateWindow(activeWindowId ?: return@update currentState) { window ->
+                        if (!window.sourceIds.contains(intent.sourcePath)) {
+                            window
+                        } else {
+                            val updatedHiddenSources = if (window.hiddenSourceIds.contains(intent.sourcePath)) {
+                                window.hiddenSourceIds - intent.sourcePath
+                            } else {
+                                window.hiddenSourceIds + intent.sourcePath
+                            }
+                            window.copy(
+                                hiddenSourceIds = updatedHiddenSources,
+                                selectedEntry = window.selectedEntry?.takeIf { selected ->
+                                    selected.sourceId == null || !updatedHiddenSources.contains(selected.sourceId)
+                                },
+                                selectedIndices = emptySet(),
+                                lastSelectedIndex = null
+                            )
+                        }
+                    }
+                }
+                if (activeWindowId != null) {
+                    onFilterLogs(activeWindowId)
+                }
                 onSavePreferences(false)
             }
             is KLogViewerIntent.UpdateColumnWidth -> {
