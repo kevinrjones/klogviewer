@@ -79,12 +79,6 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
             .performClick()
     }
 
-    fun rowBoundsInRoot(index: Int): Rect {
-        scrollToRow(index)
-        return composeTestRule.onNode(rowMatcher(index), useUnmergedTree = true)
-            .fetchSemanticsNode().boundsInRoot
-    }
-
     fun rightClickOnRow(index: Int, xFraction: Float = 0.5f, yFraction: Float = 0.5f): Offset {
         scrollToRow(index)
         val rowBounds = composeTestRule.onNode(rowMatcher(index), useUnmergedTree = true)
@@ -125,12 +119,12 @@ class LogListRobot(composeTestRule: ComposeUiTest, private val windowId: String?
         return Offset(menuBounds.left, menuBounds.top)
     }
 
-    fun contextMenuBounds(): Rect {
+    fun contextMenuItemBounds(tag: String): Rect {
         composeTestRule.waitUntil(timeoutMillis = 5000) {
-            composeTestRule.onAllNodes(matcher("log_context_menu"), useUnmergedTree = true)
+            composeTestRule.onAllNodes(matcher(tag), useUnmergedTree = true)
                 .fetchSemanticsNodes().isNotEmpty()
         }
-        return composeTestRule.onNode(matcher("log_context_menu"), useUnmergedTree = true)
+        return composeTestRule.onNode(matcher(tag), useUnmergedTree = true)
             .fetchSemanticsNode().boundsInRoot
     }
 

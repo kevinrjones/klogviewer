@@ -12,6 +12,7 @@ import com.klogviewer.ui.robot.logList
 import org.junit.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThan
 import strikt.assertions.isGreaterThanOrEqualTo
 import strikt.assertions.isLessThanOrEqualTo
 import kotlin.math.abs
@@ -101,6 +102,42 @@ class LogListContextMenuTest {
             assertContextRefreshEnabled(isEnabled = false)
             assertContextClearEnabled(isEnabled = true)
         }
+    }
+
+    @Test
+    fun `given context menu when opened then item spacing is compact`() = runComposeUiTest {
+        setContent {
+            LogList(
+                logs = testEntries,
+                filterQueries = emptyList(),
+                isDarkMode = true,
+                sourceIds = listOf("source-1"),
+                selectedIndices = setOf(0),
+                isContextCopyEnabled = true,
+                isContextRefreshEnabled = true,
+                isContextClearEnabled = true
+            )
+        }
+
+        var copyBounds = androidx.compose.ui.geometry.Rect.Zero
+        var refreshBounds = androidx.compose.ui.geometry.Rect.Zero
+        var clearBounds = androidx.compose.ui.geometry.Rect.Zero
+
+        logList {
+            rightClickOnRow(0)
+            assertContextMenuVisible()
+            copyBounds = contextMenuItemBounds("log_context_menu_copy")
+            refreshBounds = contextMenuItemBounds("log_context_menu_refresh")
+            clearBounds = contextMenuItemBounds("log_context_menu_clear")
+        }
+
+        val copyToRefreshStep = refreshBounds.top - copyBounds.top
+        val refreshToClearStep = clearBounds.top - refreshBounds.top
+
+        expectThat(copyToRefreshStep).isGreaterThan(0f)
+        expectThat(copyToRefreshStep).isLessThanOrEqualTo(36f)
+        expectThat(refreshToClearStep).isGreaterThan(0f)
+        expectThat(refreshToClearStep).isLessThanOrEqualTo(36f)
     }
 
     @Test

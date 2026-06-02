@@ -11,6 +11,17 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+private val UI_FONT_FAMILY = FontFamily.SansSerif
+private val UI_FONT_SIZE = 13.sp
+
+private fun uiTextStyle(weight: FontWeight = FontWeight.Normal): TextStyle {
+    return TextStyle(
+        fontFamily = UI_FONT_FAMILY,
+        fontWeight = weight,
+        fontSize = UI_FONT_SIZE
+    )
+}
+
 data class LogLevelColors(
     val debug: Color,
     val info: Color,
@@ -101,21 +112,19 @@ fun KLogViewerTheme(
     }
 
     val typography = Typography(
-        body1 = TextStyle(
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Normal,
-            fontSize = 14.sp
-        ),
-        subtitle1 = TextStyle(
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            fontSize = 16.sp
-        ),
-        caption = TextStyle(
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Normal,
-            fontSize = 12.sp
-        )
+        h1 = uiTextStyle(FontWeight.Bold),
+        h2 = uiTextStyle(FontWeight.Bold),
+        h3 = uiTextStyle(FontWeight.Bold),
+        h4 = uiTextStyle(FontWeight.Bold),
+        h5 = uiTextStyle(FontWeight.Bold),
+        h6 = uiTextStyle(FontWeight.Bold),
+        subtitle1 = uiTextStyle(FontWeight.Bold),
+        subtitle2 = uiTextStyle(FontWeight.Bold),
+        body1 = uiTextStyle(),
+        body2 = uiTextStyle(),
+        button = uiTextStyle(FontWeight.Medium),
+        caption = uiTextStyle(),
+        overline = uiTextStyle()
     )
 
     MaterialTheme(

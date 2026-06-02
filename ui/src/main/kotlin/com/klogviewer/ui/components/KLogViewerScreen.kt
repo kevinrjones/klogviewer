@@ -659,7 +659,7 @@ private fun LogWindowItem(
                         Text(
                             text = "Logs",
                             fontWeight = if (window.workspaceMode == WorkspaceMode.LOGS) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                     }
                     TextButton(
@@ -669,7 +669,7 @@ private fun LogWindowItem(
                         Text(
                             text = "Dashboard",
                             fontWeight = if (window.workspaceMode == WorkspaceMode.DASHBOARD) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                     }
 
@@ -937,9 +937,6 @@ private fun LogTimeFrequencyPanel(
             KoalaPlotTimeSeriesChart(
                 buckets = content.timeSeries,
                 bucketSize = content.bucketSize,
-                selectedBucketFrom = content.selectedBucketFrom,
-                selectedRangeFrom = activeTimeFilterFrom,
-                selectedRangeTo = activeTimeFilterTo,
                 onBucketSelect = onBucketSelect,
                 onBucketRangeSelect = onBucketRangeSelect,
                 chartHeight = 120.dp
@@ -1193,9 +1190,6 @@ private fun DashboardContent(
             KoalaPlotTimeSeriesChart(
                 buckets = content.timeSeries,
                 bucketSize = content.bucketSize,
-                selectedBucketFrom = content.selectedBucketFrom,
-                selectedRangeFrom = activeTimeFilterFrom,
-                selectedRangeTo = activeTimeFilterTo,
                 onBucketSelect = onBucketSelect,
                 onBucketRangeSelect = onBucketRangeSelect
             )

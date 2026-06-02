@@ -23,6 +23,30 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.ui.mvi.TimeRangePreset
 
+private val COMPACT_MENU_ITEM_HEIGHT = 28.dp
+private val COMPACT_MENU_ITEM_HORIZONTAL_PADDING = 10.dp
+
+@Composable
+private fun CompactMenuItem(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .widthIn(min = 112.dp)
+            .height(COMPACT_MENU_ITEM_HEIGHT)
+            .clickable(onClick = onClick)
+            .padding(horizontal = COMPACT_MENU_ITEM_HORIZONTAL_PADDING),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.body2
+        )
+    }
+}
+
 @Composable
 fun FilterBar(
     filterQueries: List<String>,
@@ -196,8 +220,6 @@ fun FilterBar(
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
             TimeFilterControls(
-                fromValue = timeFilterFrom,
-                toValue = timeFilterTo,
                 preset = timeFilterPreset,
                 validationMessage = timeFilterValidationMessage,
                 onApplyPreset = onApplyTimeFilterPreset,
@@ -236,7 +258,7 @@ fun FilterBar(
                             }
                         }),
                         textStyle = MaterialTheme.typography.body2.copy(
-                            fontSize = 14.sp,
+                            fontSize = 13.sp,
                             color = MaterialTheme.colors.onSurface
                         ),
                         cursorBrush = SolidColor(MaterialTheme.colors.onSurface),
@@ -246,7 +268,7 @@ fun FilterBar(
                                     Text(
                                         text = "Filter...",
                                         style = MaterialTheme.typography.body2,
-                                        fontSize = 14.sp,
+                                        fontSize = 13.sp,
                                         color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
                                     )
                                 }
@@ -282,8 +304,6 @@ fun FilterBar(
 
 @Composable
 private fun TimeFilterControls(
-    fromValue: String,
-    toValue: String,
     preset: TimeRangePreset?,
     validationMessage: String?,
     onApplyPreset: (TimeRangePreset) -> Unit,
@@ -309,25 +329,26 @@ private fun TimeFilterControls(
                 TimeRangePreset.entries
                     .filterNot { it == TimeRangePreset.FULL_LOADED_RANGE }
                     .forEach { presetOption ->
-                    DropdownMenuItem(onClick = {
-                        presetMenuExpanded = false
-                        onApplyPreset(presetOption)
-                    }) {
-                        Text(presetOption.displayLabel())
+                        CompactMenuItem(
+                            text = presetOption.displayLabel(),
+                            onClick = {
+                                presetMenuExpanded = false
+                                onApplyPreset(presetOption)
+                            },
+                            modifier = Modifier.testTag("time_filter_preset_${presetOption.name.lowercase()}")
+                        )
                     }
-                }
 
                 Divider()
 
-                DropdownMenuItem(
+                CompactMenuItem(
+                    text = "Reset",
                     onClick = {
                         presetMenuExpanded = false
                         onClear()
                     },
                     modifier = Modifier.testTag("time_filter_clear_menu_item")
-                ) {
-                    Text("Reset")
-                }
+                )
             }
         }
 
@@ -389,7 +410,7 @@ private fun FilterChip(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 6.dp)
         ) {
-            Text(text = query, style = MaterialTheme.typography.caption, fontSize = 12.sp)
+            Text(text = query, style = MaterialTheme.typography.caption, fontSize = 13.sp)
             Spacer(modifier = Modifier.width(4.dp))
             TooltipWrapper(tooltip = "Remove filter") {
                 Icon(

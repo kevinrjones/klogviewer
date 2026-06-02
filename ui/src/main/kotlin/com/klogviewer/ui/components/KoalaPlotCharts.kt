@@ -296,9 +296,6 @@ private fun Modifier.drawRangeOverlay(
 fun KoalaPlotTimeSeriesChart(
     buckets: List<DashboardTimeBucket>,
     bucketSize: DashboardBucketSize,
-    selectedBucketFrom: Instant?,
-    selectedRangeFrom: Instant? = null,
-    selectedRangeTo: Instant? = null,
     onBucketSelect: (DashboardTimeBucket) -> Unit,
     onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -> Unit = { fromBucket, _ ->
         onBucketSelect(fromBucket)

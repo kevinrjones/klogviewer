@@ -9,10 +9,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,6 +42,37 @@ import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.theme.LogLevelColors
 import kotlin.math.roundToInt
+
+private val COMPACT_MENU_ITEM_HEIGHT = 30.dp
+private val COMPACT_MENU_ITEM_HORIZONTAL_PADDING = 10.dp
+
+@Composable
+private fun CompactMenuItem(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val contentAlpha = if (enabled) ContentAlpha.high else ContentAlpha.disabled
+
+    Box(
+        modifier = modifier
+            .widthIn(min = 112.dp)
+            .height(COMPACT_MENU_ITEM_HEIGHT)
+            .clickable(
+                enabled = enabled,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(),
+                onClick = onClick
+            )
+            .padding(horizontal = COMPACT_MENU_ITEM_HORIZONTAL_PADDING),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        CompositionLocalProvider(LocalContentAlpha provides contentAlpha) {
+            Text(text = text, style = MaterialTheme.typography.body2)
+        }
+    }
+}
 
 @Composable
 fun LogList(
@@ -190,36 +222,33 @@ fun LogList(
                     offset = DpOffset(0.dp, 0.dp),
                     modifier = Modifier.testTag("log_context_menu")
                 ) {
-                    DropdownMenuItem(
+                    CompactMenuItem(
+                        text = "Copy",
                         onClick = {
                             contextMenuRowIndex = null
                             onContextCopy()
                         },
                         enabled = isContextCopyEnabled,
                         modifier = Modifier.testTag("log_context_menu_copy")
-                    ) {
-                        Text("Copy")
-                    }
-                    DropdownMenuItem(
+                    )
+                    CompactMenuItem(
+                        text = "Refresh",
                         onClick = {
                             contextMenuRowIndex = null
                             onContextRefresh()
                         },
                         enabled = isContextRefreshEnabled,
                         modifier = Modifier.testTag("log_context_menu_refresh")
-                    ) {
-                        Text("Refresh")
-                    }
-                    DropdownMenuItem(
+                    )
+                    CompactMenuItem(
+                        text = "Clear",
                         onClick = {
                             contextMenuRowIndex = null
                             onContextClear()
                         },
                         enabled = isContextClearEnabled,
                         modifier = Modifier.testTag("log_context_menu_clear")
-                    ) {
-                        Text("Clear")
-                    }
+                    )
                 }
             }
         }
