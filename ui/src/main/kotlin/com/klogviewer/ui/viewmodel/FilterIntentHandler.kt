@@ -6,6 +6,7 @@ import com.klogviewer.ui.mvi.KLogViewerState
 import com.klogviewer.ui.mvi.TimeRangePreset
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import java.time.Instant
 
 class FilterIntentHandler(
     private val state: MutableStateFlow<KLogViewerState>,
@@ -132,6 +133,31 @@ class FilterIntentHandler(
                 onSavePreferences()
             }
             KLogViewerIntent.ClearTimeFilter -> {
+                val clearedAt = Instant.now()
+                val fromValue = clearedAt.toString()
+                state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        val validationMessage = TimeRangeFilterSupport.validationMessage(
+                            fromValue,
+                            clearedAt,
+                            "",
+                            null
+                        )
+
+                        window.copy(
+                            timeFilterFrom = fromValue,
+                            timeFilterTo = "",
+                            timeFilterFromInstant = clearedAt,
+                            timeFilterToInstant = null,
+                            timeFilterPreset = TimeRangePreset.CUSTOM,
+                            timeFilterValidationMessage = validationMessage
+                        )
+                    }
+                }
+                onFilterLogs(state.value.activeTab?.activeWindow?.id)
+                onSavePreferences()
+            }
+            KLogViewerIntent.ResetTimeFilter -> {
                 state.update { currentState ->
                     currentState.updateActiveWindow { window ->
                         window.copy(

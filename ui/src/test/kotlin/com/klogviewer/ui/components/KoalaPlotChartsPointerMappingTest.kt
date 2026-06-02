@@ -14,6 +14,31 @@ import kotlin.math.abs
 class KoalaPlotChartsPointerMappingTest {
 
     @Test
+    fun `given irregular time buckets when deriving x-axis values then spacing reflects elapsed time`() {
+        val irregularBuckets = listOf(
+            DashboardTimeBucket(
+                from = Instant.parse("2026-05-27T10:57:00Z"),
+                to = Instant.parse("2026-05-27T10:58:00Z"),
+                count = 2
+            ),
+            DashboardTimeBucket(
+                from = Instant.parse("2026-05-27T10:58:00Z"),
+                to = Instant.parse("2026-05-27T10:59:00Z"),
+                count = 3
+            ),
+            DashboardTimeBucket(
+                from = Instant.parse("2026-05-27T15:27:00Z"),
+                to = Instant.parse("2026-05-27T15:28:00Z"),
+                count = 4
+            )
+        )
+
+        expectThat(timeSeriesAxisUnitSeconds(irregularBuckets)).isEqualTo(60f)
+        expectThat(timeSeriesXAxisValues(irregularBuckets))
+            .containsExactly(0f, 1f, 270f)
+    }
+
+    @Test
     fun `given invalid width or bucket count when mapping pointer x then returns null`() {
         expectThat(pointerXToBucketIndex(pointerX = 12f, plotWidthPx = 0f, bucketCount = 3)).isNull()
         expectThat(pointerXToBucketIndex(pointerX = 12f, plotWidthPx = 100f, bucketCount = 0)).isNull()

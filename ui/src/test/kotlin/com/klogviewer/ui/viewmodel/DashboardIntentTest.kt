@@ -109,6 +109,89 @@ class DashboardIntentTest {
     }
 
     @Test
+    fun `given active window with non-time filters when clearing time filter then from resets to now and context is preserved`() {
+        val testFile = File(tempDir, "time-filter-clear.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+
+        viewModel.handleIntent(KLogViewerIntent.AddFilterQuery("first"))
+        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(LogLevel.ERROR))
+        viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(TimeRangePreset.LAST_5_MINUTES))
+
+        val windowBeforeClear = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
+        val expectedFilterQueries = windowBeforeClear.filterQueries
+        val expectedLevelFilters = windowBeforeClear.levelFilters
+        val expectedWorkspaceMode = windowBeforeClear.workspaceMode
+
+        val beforeClear = Instant.now()
+        viewModel.handleIntent(KLogViewerIntent.ClearTimeFilter)
+        val afterClear = Instant.now()
+
+        waitUntil {
+            val activeWindow = viewModel.state.value.activeTab?.activeWindow
+            activeWindow?.timeFilterPreset == TimeRangePreset.CUSTOM &&
+                activeWindow.timeFilterFromInstant != null &&
+                activeWindow.timeFilterToInstant == null
+        }
+
+        val windowAfterClear = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
+        val clearedAt = requireNotNull(windowAfterClear.timeFilterFromInstant)
+
+        expectThat(windowAfterClear.timeFilterPreset).isEqualTo(TimeRangePreset.CUSTOM)
+        expectThat(windowAfterClear.timeFilterFrom).isEqualTo(clearedAt.toString())
+        expectThat(windowAfterClear.timeFilterTo).isEqualTo("")
+        expectThat(windowAfterClear.timeFilterToInstant).isNull()
+        expectThat(!clearedAt.isBefore(beforeClear)).isTrue()
+        expectThat(!clearedAt.isAfter(afterClear)).isTrue()
+        expectThat(windowAfterClear.filterQueries).isEqualTo(expectedFilterQueries)
+        expectThat(windowAfterClear.levelFilters).isEqualTo(expectedLevelFilters)
+        expectThat(windowAfterClear.workspaceMode).isEqualTo(expectedWorkspaceMode)
+    }
+
+    @Test
+    fun `given active window with non-time filters when resetting time filter then all logs are shown and context is preserved`() {
+        val testFile = File(tempDir, "time-filter-reset.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+
+        viewModel.handleIntent(KLogViewerIntent.AddFilterQuery("first"))
+        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(LogLevel.ERROR))
+        viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(TimeRangePreset.LAST_5_MINUTES))
+
+        val windowBeforeReset = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
+        val expectedFilterQueries = windowBeforeReset.filterQueries
+        val expectedLevelFilters = windowBeforeReset.levelFilters
+        val expectedWorkspaceMode = windowBeforeReset.workspaceMode
+
+        viewModel.handleIntent(KLogViewerIntent.ResetTimeFilter)
+
+        waitUntil {
+            val activeWindow = viewModel.state.value.activeTab?.activeWindow
+            activeWindow?.timeFilterPreset == null &&
+                activeWindow?.timeFilterFrom == "" &&
+                activeWindow?.timeFilterTo == "" &&
+                activeWindow?.timeFilterFromInstant == null &&
+                activeWindow?.timeFilterToInstant == null
+        }
+
+        val windowAfterReset = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
+
+        expectThat(windowAfterReset.timeFilterPreset).isNull()
+        expectThat(windowAfterReset.timeFilterFrom).isEqualTo("")
+        expectThat(windowAfterReset.timeFilterTo).isEqualTo("")
+        expectThat(windowAfterReset.timeFilterFromInstant).isNull()
+        expectThat(windowAfterReset.timeFilterToInstant).isNull()
+        expectThat(windowAfterReset.timeFilterValidationMessage).isNull()
+        expectThat(windowAfterReset.filterQueries).isEqualTo(expectedFilterQueries)
+        expectThat(windowAfterReset.levelFilters).isEqualTo(expectedLevelFilters)
+        expectThat(windowAfterReset.workspaceMode).isEqualTo(expectedWorkspaceMode)
+    }
+
+    @Test
     fun `given active window when applying full loaded range preset then range matches loaded timestamps`() {
         val testFile = File(tempDir, "full-range.log").apply { writeText("line1\n") }
         viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))

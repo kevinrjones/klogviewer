@@ -39,6 +39,7 @@ sealed interface KLogViewerIntent {
     data class SetTimeFilterTo(val to: String) : FilterIntent
     data class ApplyTimeFilterPreset(val preset: TimeRangePreset) : FilterIntent
     data object ClearTimeFilter : FilterIntent
+    data object ResetTimeFilter : FilterIntent
 
     data object ShowDashboard : DashboardIntent
     data object ShowLogs : DashboardIntent

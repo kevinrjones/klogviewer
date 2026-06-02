@@ -20,10 +20,15 @@ class FilterBarTimeFilterControlsTest {
         onNodeWithText("From").assertDoesNotExist()
         onNodeWithText("To").assertDoesNotExist()
         onNodeWithTag("time_filter_preset").assertIsDisplayed()
+
+        onNodeWithTag("time_filter_preset").performClick()
+        onNodeWithTag("time_filter_clear_menu_item").assertIsDisplayed()
+        onNodeWithText("Reset").assertIsDisplayed()
+        onNodeWithText("Full loaded range").assertDoesNotExist()
     }
 
     @Test
-    fun `time filter clear action clears active range`() = runComposeUiTest {
+    fun `time filter reset action clears active range`() = runComposeUiTest {
         var from by mutableStateOf("2026-05-26 10:00:00")
         var to by mutableStateOf("2026-05-26 10:05:00")
         var clearCalls = 0
@@ -35,7 +40,6 @@ class FilterBarTimeFilterControlsTest {
                 onRemoveQuery = {},
                 onClearQueries = {},
                 onOpenFileClick = {},
-                onOpenDirectoryClick = {},
                 onSftpClick = {},
                 onS3Click = {},
                 onAddFileClick = {},
@@ -69,8 +73,8 @@ class FilterBarTimeFilterControlsTest {
             )
         }
 
-        onNodeWithTag("time_filter_clear").performClick()
-        onNodeWithTag("time_filter_clear").assertDoesNotExist()
+        onNodeWithTag("time_filter_preset").performClick()
+        onNodeWithTag("time_filter_clear_menu_item").assertIsDisplayed().performClick()
         assertEquals(1, clearCalls)
     }
 
@@ -85,7 +89,6 @@ class FilterBarTimeFilterControlsTest {
                 onRemoveQuery = {},
                 onClearQueries = {},
                 onOpenFileClick = {},
-                onOpenDirectoryClick = {},
                 onSftpClick = {},
                 onS3Click = {},
                 onAddFileClick = {},
@@ -127,7 +130,6 @@ class FilterBarTimeFilterControlsTest {
                 onRemoveQuery = {},
                 onClearQueries = {},
                 onOpenFileClick = {},
-                onOpenDirectoryClick = {},
                 onSftpClick = {},
                 onS3Click = {},
                 onAddFileClick = {},

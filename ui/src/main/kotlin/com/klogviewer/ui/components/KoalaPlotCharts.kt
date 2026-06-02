@@ -55,8 +55,8 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 internal fun timeAxisLabelFormatter(
     bucketSize: DashboardBucketSize,
@@ -108,6 +108,54 @@ internal fun normalizedPieValues(slices: List<DashboardLevelSlice>): List<Float>
     }
 
     return nonNegativeRatios.map { ratio -> ratio / ratioSum }
+}
+
+internal fun timeSeriesXAxisValues(sortedBuckets: List<DashboardTimeBucket>): List<Float> {
+    if (sortedBuckets.isEmpty()) {
+        return emptyList()
+    }
+
+    val axisUnitSeconds = timeSeriesAxisUnitSeconds(sortedBuckets)
+    val axisOriginMillis = sortedBuckets.first().from.toEpochMilli()
+    return sortedBuckets.map { bucket ->
+        val elapsedMillis = bucket.from.toEpochMilli() - axisOriginMillis
+        val elapsedSeconds = (elapsedMillis / 1000.0).toFloat()
+        elapsedSeconds / axisUnitSeconds
+    }
+}
+
+internal fun timeSeriesAxisUnitSeconds(sortedBuckets: List<DashboardTimeBucket>): Float {
+    if (sortedBuckets.isEmpty()) {
+        return 1f
+    }
+
+    return sortedBuckets
+        .map { bucket ->
+            val durationMillis = (bucket.to.toEpochMilli() - bucket.from.toEpochMilli()).coerceAtLeast(1000L)
+            (durationMillis / 1000.0).toFloat()
+        }
+        .minOrNull()
+        ?.coerceAtLeast(1f)
+        ?: 1f
+}
+
+internal fun timeSeriesXAxisRange(xValues: List<Float>): ClosedFloatingPointRange<Float> {
+    if (xValues.isEmpty()) {
+        return 0f..1f
+    }
+
+    val minX = xValues.minOrNull() ?: 0f
+    val maxX = xValues.maxOrNull() ?: 0f
+    if (minX == maxX) {
+        return minX..(minX + 1f)
+    }
+
+    return minX..maxX
+}
+
+internal fun timeSeriesAxisInstant(axisOrigin: Instant, axisValue: Float, axisUnitSeconds: Float): Instant {
+    val elapsedMillis = (axisValue * axisUnitSeconds * 1000f).roundToLong().coerceAtLeast(0L)
+    return axisOrigin.plusMillis(elapsedMillis)
 }
 
 internal fun pointerXToBucketIndex(pointerX: Float, plotWidthPx: Float, bucketCount: Int): Int? {
@@ -272,21 +320,16 @@ fun KoalaPlotTimeSeriesChart(
         buckets.sortedBy { bucket -> bucket.from }
     }
 
-    val xValues = remember(sortedBuckets) {
-        sortedBuckets.indices.map { index -> index.toFloat() }
-    }
+    val xValues = remember(sortedBuckets) { timeSeriesXAxisValues(sortedBuckets) }
     val yValues = remember(sortedBuckets) { sortedBuckets.map { bucket -> bucket.count.toFloat() } }
     val maxCount = remember(yValues) { yValues.maxOrNull() ?: 0f }
-    val xAxisMax = remember(sortedBuckets) {
-        sortedBuckets.lastIndex
-            .coerceAtLeast(0)
-            .toFloat()
-            .coerceAtLeast(1f)
-    }
+    val xAxisRange = remember(xValues) { timeSeriesXAxisRange(xValues) }
+    val axisOrigin = remember(sortedBuckets) { sortedBuckets.first().from }
+    val axisUnitSeconds = remember(sortedBuckets) { timeSeriesAxisUnitSeconds(sortedBuckets) }
 
-    val xAxisModel = remember(xAxisMax) {
+    val xAxisModel = remember(xAxisRange) {
         FloatLinearAxisModel(
-            range = 0f..xAxisMax,
+            range = xAxisRange,
             minimumMajorTickSpacing = 80.dp
         )
     }
@@ -380,36 +423,36 @@ fun KoalaPlotTimeSeriesChart(
                 Text("Time", style = MaterialTheme.typography.caption)
             },
             labels = { value: Float ->
-                val nearestIndex = value.roundToInt().coerceIn(0, sortedBuckets.lastIndex)
-                val alignedToBucket = abs(value - nearestIndex.toFloat()) < 0.2f || sortedBuckets.size == 1
-                if (alignedToBucket) {
-                    val bucket = sortedBuckets[nearestIndex]
-                    TooltipArea(
-                        tooltip = {
-                            Surface(
-                                modifier = Modifier.shadow(4.dp),
-                                color = MaterialTheme.colors.surface,
-                                shape = RoundedCornerShape(4.dp)
-                            ) {
-                                Text(
-                                    text = dateTooltipFormatter.format(bucket.from),
-                                    style = MaterialTheme.typography.caption,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        },
-                        delayMillis = 500,
-                        tooltipPlacement = TooltipPlacement.CursorPoint(
-                            alignment = Alignment.BottomEnd,
-                            offset = DpOffset(0.dp, 16.dp)
-                        )
-                    ) {
-                        Text(
-                            text = timeFormatter.format(bucket.from),
-                            style = MaterialTheme.typography.caption
-                        )
+                val axisInstant = timeSeriesAxisInstant(
+                    axisOrigin = axisOrigin,
+                    axisValue = value,
+                    axisUnitSeconds = axisUnitSeconds
+                )
+                TooltipArea(
+                    tooltip = {
+                        Surface(
+                            modifier = Modifier.shadow(4.dp),
+                            color = MaterialTheme.colors.surface,
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = dateTooltipFormatter.format(axisInstant),
+                                style = MaterialTheme.typography.caption,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    },
+                    delayMillis = 500,
+                    tooltipPlacement = TooltipPlacement.CursorPoint(
+                        alignment = Alignment.BottomEnd,
+                        offset = DpOffset(0.dp, 16.dp)
+                    )
+                ) {
+                    Text(
+                        text = timeFormatter.format(axisInstant),
+                        style = MaterialTheme.typography.caption
+                    )
                     }
-                }
             }
         ),
         yAxisContent = AxisContent(

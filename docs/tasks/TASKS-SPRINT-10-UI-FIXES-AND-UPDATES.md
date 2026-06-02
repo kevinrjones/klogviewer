@@ -34,11 +34,11 @@
 - [x] 15.4.3. Reuse the same intent/handler flow as existing connect-state toggles to avoid divergent behavior.
 - [x] 15.4.4. Ensure refresh updates active sources without requiring tab/workspace recreation.
 
-### 15.5. Time Filter Clear Option (`2.5`)
-- [ ] 15.5.1. Add `Clear` option to the time filter menu alongside preset ranges.
-- [ ] 15.5.2. Implement clear as logical reset by setting filter time to `now` (show only subsequent lines).
-- [ ] 15.5.3. Keep non-time filters and current workspace context unchanged when clear is applied.
-- [ ] 15.5.4. Route clear through shared filter intent handling so behavior is deterministic.
+### 15.5. Time Filter Reset Option (`2.5`)
+- [x] 15.5.1. Add `Reset` option to the time filter menu alongside preset ranges.
+- [x] 15.5.2. Implement reset as clearing time bounds so all loaded log lines are shown.
+- [x] 15.5.3. Keep non-time filters and current workspace context unchanged when reset is applied.
+- [x] 15.5.4. Route reset through shared filter intent handling so behavior is deterministic.
 
 ### 15.6. Context Menu Support (`2.6`)
 - [ ] 15.6.1. Add right-click context menu support in the log UI.
@@ -68,7 +68,7 @@
 - [x] 15.10.2. Add/extend UI/state tests for fixed-width font selection, application, and persistence.
 - [x] 15.10.3. Add/extend UI tests for multi-line selection and clipboard copy behavior.
 - [x] 15.10.4. Add/extend ViewModel tests for toolbar/context `Refresh` parity in connected/disconnected states.
-- [ ] 15.10.5. Add/extend filter tests for `Clear` reset-to-now behavior and parity across trigger points.
+- [x] 15.10.5. Add/extend filter tests for dropdown `Reset` clear-time-bounds behavior and menu `Clear` reset-to-now parity.
 - [ ] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
 - [ ] 15.10.7. Add/extend interaction tests for drag-drop to current tab vs tab bar new tab creation.
 - [ ] 15.10.8. Add/extend UI tests for source badge filename tooltips and per-source row background differentiation.
