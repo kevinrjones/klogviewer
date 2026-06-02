@@ -72,6 +72,8 @@ sealed interface KLogViewerIntent {
     data object ShowRecentDialog : DialogIntent
     data object ShowSftpDialog : DialogIntent
     data object ShowS3Dialog : DialogIntent
+    data object ShowFontDialog : DialogIntent
+    data class ApplyLogFont(val family: String, val sizeSp: Int) : DialogIntent
     data object ConfirmPlaintextSecretSave : DialogIntent
     data object DeclinePlaintextSecretSave : DialogIntent
     data object DismissDialog : DialogIntent

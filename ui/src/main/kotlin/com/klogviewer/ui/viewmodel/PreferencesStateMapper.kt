@@ -48,7 +48,9 @@ object PreferencesStateMapper {
                             parserName = wp.parserName,
                             columns = wp.columns,
                             columnWidths = wp.columnWidths,
-                            isConnected = wp.isConnected
+                            isConnected = wp.isConnected,
+                            logFontFamily = wp.logFontFamily,
+                            logFontSizeSp = wp.logFontSizeSp
                         )
                     },
                     activeWindowId = tp.activeWindowId
@@ -94,7 +96,9 @@ object PreferencesStateMapper {
                             parserName = window.parserName,
                             columns = window.columns,
                             columnWidths = window.columnWidths,
-                            isConnected = window.isConnected
+                            isConnected = window.isConnected,
+                            logFontFamily = window.logFontFamily,
+                            logFontSizeSp = window.logFontSizeSp
                         )
                     }
                 )

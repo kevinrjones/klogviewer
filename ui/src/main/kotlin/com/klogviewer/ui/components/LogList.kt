@@ -21,6 +21,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
@@ -43,6 +45,8 @@ fun LogList(
     columnWidths: Map<String, Int> = emptyMap(),
     isAutoScrollEnabled: Boolean = true,
     showAnsiColors: Boolean = true,
+    logFontFamily: String = "Monospaced",
+    logFontSizeSp: Int = 12,
     selectedIndices: Set<Int> = emptySet(),
     onEntryClick: (LogEntry) -> Unit = {},
     onToggleSelection: (Int, Boolean, Boolean) -> Unit = { _, _, _ -> },
@@ -60,6 +64,7 @@ fun LogList(
     }
 
     val displayColumns = if (columns.isEmpty()) listOf("Timestamp", "Level", "Message") else columns
+    val logFontStyle = createLogFontStyle(logFontFamily, logFontSizeSp)
 
     val gutterWidth = getColumnWidth("Line #", columnWidths, sourceIds)
     val contentWidth = getLogListContentWidth(displayColumns, columnWidths, gutterWidth)
@@ -102,6 +107,7 @@ fun LogList(
                                     missingSourceIds = missingSourceIds,
                                     columns = displayColumns,
                                     columnWidths = columnWidths,
+                                    logFontStyle = logFontStyle,
                                     isSelected = selectedIndices.contains(index),
                                     onClick = { isShift, isMeta ->
                                         if (isShift || isMeta) {
@@ -268,6 +274,7 @@ fun LogEntryRow(
     missingSourceIds: Set<String> = emptySet(),
     columns: List<String>,
     columnWidths: Map<String, Int>,
+    logFontStyle: TextStyle,
     isSelected: Boolean = false,
     onClick: (Boolean, Boolean) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
@@ -311,7 +318,8 @@ fun LogEntryRow(
                 lineNumber = lineNumber,
                 sourceIds = sourceIds,
                 missingSourceIds = missingSourceIds,
-                gutterWidth = gutterWidth
+                gutterWidth = gutterWidth,
+                logFontStyle = logFontStyle
             )
             
             columns.forEach { column ->
@@ -326,7 +334,8 @@ fun LogEntryRow(
                     isDarkMode = isDarkMode,
                     showAnsiColors = showAnsiColors,
                     missingSourceIds = missingSourceIds,
-                    logColors = logColors
+                    logColors = logColors,
+                    logFontStyle = logFontStyle
                 )
             }
         }
@@ -339,7 +348,8 @@ private fun LogGutter(
     lineNumber: Int,
     sourceIds: List<String>,
     missingSourceIds: Set<String>,
-    gutterWidth: Dp
+    gutterWidth: Dp,
+    logFontStyle: TextStyle
 ) {
     Row(
         modifier = Modifier.width(gutterWidth).padding(horizontal = 4.dp),
@@ -361,7 +371,10 @@ private fun LogGutter(
         Text(
             text = lineNumber.toString().padStart(4, ' '),
             color = MaterialTheme.colors.onSurface.copy(alpha = 0.3f),
-            style = MaterialTheme.typography.caption,
+            style = MaterialTheme.typography.caption.copy(
+                fontFamily = logFontStyle.fontFamily,
+                fontSize = logFontStyle.fontSize
+            ),
             modifier = Modifier.weight(1f)
         )
     }
@@ -376,14 +389,18 @@ private fun LogEntryCell(
     isDarkMode: Boolean,
     showAnsiColors: Boolean,
     missingSourceIds: Set<String>,
-    logColors: LogLevelColors
+    logColors: LogLevelColors,
+    logFontStyle: TextStyle
 ) {
     when (column) {
         "Timestamp" -> {
             Text(
                 text = entry.timestamp.value,
                 color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
-                style = MaterialTheme.typography.caption,
+                style = MaterialTheme.typography.caption.copy(
+                    fontFamily = logFontStyle.fontFamily,
+                    fontSize = logFontStyle.fontSize
+                ),
                 modifier = columnModifier.padding(horizontal = 4.dp)
             )
         }
@@ -399,7 +416,11 @@ private fun LogEntryCell(
             Text(
                 text = displayLevel,
                 color = color,
-                style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.caption.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = logFontStyle.fontFamily,
+                    fontSize = logFontStyle.fontSize
+                ),
                 modifier = columnModifier.padding(horizontal = 4.dp)
             )
         }
@@ -410,9 +431,10 @@ private fun LogEntryCell(
             Text(
                 text = LogHighlighter.highlight(displayMessage, filterQueries, isDarkMode, showAnsiColors),
                 style = MaterialTheme.typography.body1.copy(
+                    fontFamily = logFontStyle.fontFamily,
+                    fontSize = logFontStyle.fontSize,
                     textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
                 ),
-                fontSize = 12.sp,
                 modifier = columnModifier.padding(horizontal = 4.dp)
             )
         }
@@ -422,10 +444,27 @@ private fun LogEntryCell(
             Text(
                 text = value,
                 color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.caption,
+                style = MaterialTheme.typography.caption.copy(
+                    fontFamily = logFontStyle.fontFamily,
+                    fontSize = logFontStyle.fontSize
+                ),
                 modifier = columnModifier.padding(horizontal = 4.dp)
             )
         }
+    }
+}
+
+internal fun createLogFontStyle(fontFamily: String, fontSizeSp: Int): TextStyle {
+    return TextStyle(
+        fontFamily = resolveMonospacedFontFamily(fontFamily),
+        fontSize = fontSizeSp.coerceIn(8, 72).sp
+    )
+}
+
+internal fun resolveMonospacedFontFamily(fontFamily: String): FontFamily {
+    return when (fontFamily.lowercase()) {
+        "monospaced", "monospace", "dialoginput" -> FontFamily.Monospace
+        else -> FontFamily.Monospace
     }
 }
 
@@ -453,7 +492,7 @@ internal fun getColumnWidth(column: String, columnWidths: Map<String, Int>, sour
     }
 
     return when (column) {
-        "Message", "Content" -> defaultWidth.coerceAtLeast(MAX_DEFAULT_COLUMN_WIDTH.dp)
+        "Message", "Content" -> defaultWidth.coerceAtMost(MAX_DEFAULT_COLUMN_WIDTH.dp)
         else -> defaultWidth.coerceAtMost(MAX_DEFAULT_COLUMN_WIDTH.dp)
     }
 }

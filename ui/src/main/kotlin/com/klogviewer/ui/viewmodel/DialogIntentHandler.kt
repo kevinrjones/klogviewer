@@ -6,7 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
 class DialogIntentHandler(
-    private val state: MutableStateFlow<KLogViewerState>
+    private val state: MutableStateFlow<KLogViewerState>,
+    private val onSavePreferences: () -> Unit = {}
 ) {
     fun handle(intent: KLogViewerIntent.DialogIntent) {
         when (intent) {
@@ -19,6 +20,18 @@ class DialogIntentHandler(
             KLogViewerIntent.ShowRecentDialog -> state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }
             KLogViewerIntent.ShowSftpDialog -> state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_CONNECT, isAddMode = false) }
             KLogViewerIntent.ShowS3Dialog -> state.update { it.copy(pendingDialog = KLogViewerState.DialogType.S3_CONNECT, isAddMode = false) }
+            KLogViewerIntent.ShowFontDialog -> state.update { it.copy(pendingDialog = KLogViewerState.DialogType.FONT) }
+            is KLogViewerIntent.ApplyLogFont -> {
+                state.update { currentState ->
+                    currentState.updateActiveWindow { window ->
+                        window.copy(
+                            logFontFamily = intent.family,
+                            logFontSizeSp = intent.sizeSp.coerceIn(8, 72)
+                        )
+                    }.copy(pendingDialog = null)
+                }
+                onSavePreferences()
+            }
             KLogViewerIntent.ConfirmPlaintextSecretSave -> Unit
             KLogViewerIntent.DeclinePlaintextSecretSave -> Unit
             KLogViewerIntent.DismissDialog -> state.update { it.copy(pendingDialog = null) }

@@ -1,4 +1,5 @@
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.key.Key
@@ -25,25 +26,27 @@ fun main() {
     val initialPrefs = prefsRepository.load()
 
     application {
-        val parser = SimpleLogParser()
-        val registry = ParserRegistry()
-        val heuristicProbe = HeuristicProbe(registry)
-        val source = FileLogSource(parser)
-        
-        val factory = DefaultLogSourceFactory()
-        val clipboard = AwtClipboard()
-        val localFileSystem = JavaLocalFileSystem()
-        val remoteFileSystem = UnifiedRemoteFileSystem()
-        
-        val viewModel = KLogViewerViewModel(
-            logSource = source, 
-            prefsRepository = prefsRepository, 
-            heuristicProbe = heuristicProbe,
-            logSourceFactory = factory,
-            clipboard = clipboard,
-            localFileSystem = localFileSystem,
-            remoteFileSystem = remoteFileSystem
-        )
+        val parser = remember { SimpleLogParser() }
+        val registry = remember { ParserRegistry() }
+        val heuristicProbe = remember { HeuristicProbe(registry) }
+        val source = remember { FileLogSource(parser) }
+
+        val factory = remember { DefaultLogSourceFactory() }
+        val clipboard = remember { AwtClipboard() }
+        val localFileSystem = remember { JavaLocalFileSystem() }
+        val remoteFileSystem = remember { UnifiedRemoteFileSystem() }
+
+        val viewModel = remember {
+            KLogViewerViewModel(
+                logSource = source,
+                prefsRepository = prefsRepository,
+                heuristicProbe = heuristicProbe,
+                logSourceFactory = factory,
+                clipboard = clipboard,
+                localFileSystem = localFileSystem,
+                remoteFileSystem = remoteFileSystem
+            )
+        }
 
         val windowState = rememberWindowState(
             width = initialPrefs.windowState.width.dp,
@@ -57,6 +60,7 @@ fun main() {
         )
 
         val state by viewModel.state.collectAsState()
+        val canCopySelection = state.activeTab?.activeWindow?.selectedIndices?.isNotEmpty() == true
 
         fun saveAndExit() {
             val currentPrefs = prefsRepository.load()
@@ -131,7 +135,13 @@ fun main() {
                     Item("Exit", onClick = ::saveAndExit)
                 }
                 Menu("Edit") {
-                    Item("Copy", shortcut = KeyShortcut(Key.C, meta = true), onClick = { viewModel.handleIntent(KLogViewerIntent.CopySelected) })
+                    Item(
+                        "Copy",
+                        enabled = canCopySelection,
+                        shortcut = KeyShortcut(Key.C, meta = true),
+                        onClick = { viewModel.handleIntent(KLogViewerIntent.CopySelected) }
+                    )
+                    Item("Font...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowFontDialog) })
                     Item("Clear Logs", onClick = { viewModel.handleIntent(KLogViewerIntent.ClearLogs) })
                 }
                 Menu("View") {

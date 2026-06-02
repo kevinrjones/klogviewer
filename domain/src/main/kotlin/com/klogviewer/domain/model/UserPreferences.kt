@@ -40,7 +40,9 @@ data class WindowPreference(
     val parserName: String? = null,
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap(),
-    val isConnected: Boolean = true
+    val isConnected: Boolean = true,
+    val logFontFamily: String = "Monospaced",
+    val logFontSizeSp: Int = 12
 )
 
 @Serializable

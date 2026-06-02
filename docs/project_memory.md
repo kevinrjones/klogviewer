@@ -21,6 +21,8 @@
 - Dashboard KoalaPlot time-series now supports drag-to-select bucket ranges using pointer-to-index mapping while preserving existing single-click filtering behavior.
 - Log row level cells now show only explicit parsed level fields (blank when absent), with conditional level analytics UI: the left `Levels` pane and dashboard `Level distribution` section render only when raw `level` fields are present.
 - Sprint 10 `15.1` completed: active-window source dropdown management now supports per-source `[x]` removal with scoped state updates and UI test coverage.
+- Sprint 10 `15.2` completed: active-window log font configuration now supports monospaced font selection, immediate row font-size application, and persisted restore on restart.
+- Sprint 10 `15.3` completed: line selection/copy flow now enforces visible-order clipboard output, shared copy behavior, and disabled copy action when no rows are selected.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -33,6 +35,7 @@
 - Standardized dashboard click-back filtering for structured fields using internal query tokens (`@field:<key>=<value>`) so frequency and compare interactions can round-trip into the active log filter state.
 - Kept dashboard chart interactions mapped to existing selection intents (bucket/level/frequency) to preserve current filter semantics while adding hover/keyboard UX affordances.
 - Reused existing `SelectDashboardTimeRange` intent flow for drag-range selection to avoid chart-model or library changes.
+- Kept copy behavior centralized in the existing `EntryIntentHandler`/ViewModel intent flow and wired menu enablement to active selection state to avoid divergent trigger logic.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -3010,3 +3013,63 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/test/DirectoryTabTest.kt` (new dropdown visibility + per-source removal tests).
 - `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/TabWindowIntentHandler.kt` (source-removal state consistency updates).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.DirectoryTabTest" --tests "com.klogviewer.ui.viewmodel.ConnectionToggleTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.2 Font Selection for Log View
+**Title**: Add Monospaced Font Selection, Application, and Persistence for Active Log Windows
+**Date/time completed**: 2026-06-02 08:22
+**What was shipped**
+- Added `Font...` action in desktop `Edit` menu (`Main.kt`) wired to new dialog intents (`ShowFontDialog`, `ApplyLogFont`) and dialog state (`DialogType.FONT`).
+- Added monospaced-only font selection dialog support in `DialogProvider`/`AwtDialogProvider` using system-installed fonts with a graceful chooser fallback.
+- Added per-window font settings (`logFontFamily`, `logFontSizeSp`) to UI state and persisted preferences (`WindowPreference`) with full mapper round-trip restore on startup.
+- Applied selected font configuration to log-row rendering in `LogList` (gutter, timestamp, level, message/content, and additional columns).
+- Updated Sprint 10 checklist progress by marking `15.2.1`–`15.2.5` and `15.10.2` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Reused existing shared dialog-intent flow (`DialogIntentHandler`) to keep menu-triggered behavior aligned with current state/persistence pipelines.
+- Enforced monospaced-only rendering fallback (`FontFamily.Monospace`) so unsupported or non-fixed-width family names cannot degrade log readability.
+- Persisted font changes immediately via existing preference-save infrastructure to avoid restart/reload drift.
+**Gotchas**
+- Existing `LogListColumnWidthTest` exposed an inconsistent default message-width branch; corrected default capping logic while preserving explicit user-resized widths.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/FontSelectionPersistenceTest.kt` (font apply state update + preferences persistence).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/LogListFontStyleTest.kt` (monospaced restriction + size clamping behavior).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/LogListColumnWidthTest.kt` (regression remains passing after `LogList` updates).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.FontSelectionPersistenceTest" --tests "com.klogviewer.ui.components.LogListFontStyleTest" --tests "com.klogviewer.ui.components.LogListColumnWidthTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.3 Line Selection and Clipboard Copy
+**Title**: Add Shared Multi-Line Selection Copy Flow and Disable Copy Without Selection
+**Date/time completed**: 2026-06-02 09:33
+**What was shipped**
+- Kept single-line and range-extension selection behavior (`Shift` range + meta-toggle) in shared entry intent handling and covered it with dedicated tests.
+- Enforced shared copy guard in `EntryIntentHandler` so `CopySelected` no-ops when there is no active selection.
+- Updated desktop Edit menu copy entry (`Main.kt`) to be disabled when no lines are selected and enabled only when active-window selection exists.
+- Added clipboard-order regression test to validate copied payload respects visible row order (`selectedIndices.sorted()` over `filteredLogs`).
+- Updated Sprint 10 checklist progress by marking `15.3.1`–`15.3.4` and `15.10.3` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Reused existing `KLogViewerIntent.CopySelected` entry path for menu/keyboard parity instead of introducing separate copy handlers.
+- Implemented copy-disable semantics both at UI level (menu enablement) and handler level (selection guard) for deterministic behavior across triggers.
+**Gotchas**
+- A first clipboard integration test setup using async load flow was flaky for payload assertions; switched to deterministic state seeding for stable copy-order validation.
+**Test coverage areas**
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/EntryIntentHandlerTest.kt` (single selection, shift-range extension, meta-toggle, copy guard behavior).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/CopySelectionClipboardTest.kt` (visible-order clipboard payload from selected indices).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.EntryIntentHandlerTest" --tests "com.klogviewer.ui.viewmodel.CopySelectionClipboardTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test :app:test` (`BUILD SUCCESSFUL`).
+
+## Task: Startup Infinite Reinitialization Loop
+**Title**: Stabilize Main Composition Lifecycle to Prevent ViewModel Recreation on Recomposition
+**Date/time completed**: 2026-06-02 10:08
+**What was shipped**
+- Updated `app/src/main/kotlin/Main.kt` to create parser/factory/filesystem dependencies and `KLogViewerViewModel` with `remember`, preventing recreation during Compose recomposition.
+- Preserved existing startup, menu, and preference-save behavior while ensuring a single startup initialization path per app session.
+- Added `app/src/test/kotlin/com/klogviewer/startup/MainCompositionLifecycleTest.kt` to guard the startup seam by asserting ViewModel creation remains `remember`-scoped in `Main.kt`.
+**Key decisions**
+- Fixed the issue at the composition lifecycle seam in `Main.kt` instead of adding retry/reconnect suppression in source loaders.
+- Kept source/log-loading behavior unchanged and addressed the true trigger (repeated ViewModel construction).
+**Gotchas**
+- Recomposition-driven startup loops can look like source retry bugs in logs because each recreated ViewModel reruns full restore-and-connect initialization.
+**Test coverage areas**
+- `app/src/main/kotlin/Main.kt` (`remember`-scoped ViewModel/dependencies).
+- `app/src/test/kotlin/com/klogviewer/startup/MainCompositionLifecycleTest.kt` (regression guard for composition lifecycle seam).
+- `./gradlew :app:test --tests "com.klogviewer.startup.MainCompositionLifecycleTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test :app:test` (`BUILD SUCCESSFUL`).

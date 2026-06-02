@@ -16,17 +16,17 @@
 - [x] 15.1.4. Keep tab/workspace state, visible rows, and source metadata consistent after source removal.
 
 ### 15.2. Font Selection for Log View (`2.2`)
-- [ ] 15.2.1. Add a `Font` action that opens a font configuration dialog for the log view.
-- [ ] 15.2.2. Restrict selectable font families to fixed-width/monospaced fonts.
-- [ ] 15.2.3. Use the operating-system/system font dialog where feasible and fall back gracefully where not available.
-- [ ] 15.2.4. Apply selected font family and size to rendered log rows in the active UI.
-- [ ] 15.2.5. Persist selected font settings so they are restored on restart/workspace reload.
+- [x] 15.2.1. Add a `Font` action that opens a font configuration dialog for the log view.
+- [x] 15.2.2. Restrict selectable font families to fixed-width/monospaced fonts.
+- [x] 15.2.3. Use the operating-system/system font dialog where feasible and fall back gracefully where not available.
+- [x] 15.2.4. Apply selected font family and size to rendered log rows in the active UI.
+- [x] 15.2.5. Persist selected font settings so they are restored on restart/workspace reload.
 
 ### 15.3. Line Selection and Clipboard Copy (`2.3`)
-- [ ] 15.3.1. Support selecting one log line and extending selection to multiple lines in the log view.
-- [ ] 15.3.2. Implement copy action that writes selected lines to system clipboard in visible order.
-- [ ] 15.3.3. Expose copy through keyboard/menu/context entry points with shared behavior.
-- [ ] 15.3.4. Disable copy action when no lines are selected.
+- [x] 15.3.1. Support selecting one log line and extending selection to multiple lines in the log view.
+- [x] 15.3.2. Implement copy action that writes selected lines to system clipboard in visible order.
+- [x] 15.3.3. Expose copy through keyboard/menu/context entry points with shared behavior.
+- [x] 15.3.4. Disable copy action when no lines are selected.
 
 ### 15.4. Toolbar Refresh Action (`2.4`)
 - [ ] 15.4.1. Add `Refresh` button/action to toolbar with discoverable label/tooltip.
@@ -65,8 +65,8 @@
 
 ### 15.10. Verification & Testing
 - [x] 15.10.1. Add/extend UI tests for drop-down source management and per-source removal behavior.
-- [ ] 15.10.2. Add/extend UI/state tests for fixed-width font selection, application, and persistence.
-- [ ] 15.10.3. Add/extend UI tests for multi-line selection and clipboard copy behavior.
+- [x] 15.10.2. Add/extend UI/state tests for fixed-width font selection, application, and persistence.
+- [x] 15.10.3. Add/extend UI tests for multi-line selection and clipboard copy behavior.
 - [ ] 15.10.4. Add/extend ViewModel tests for toolbar/context `Refresh` parity in connected/disconnected states.
 - [ ] 15.10.5. Add/extend filter tests for `Clear` reset-to-now behavior and parity across trigger points.
 - [ ] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.

@@ -49,7 +49,12 @@ class EntryIntentHandler(
                     }
                 }
             }
-            KLogViewerIntent.CopySelected -> onCopySelectedToClipboard()
+            KLogViewerIntent.CopySelected -> {
+                val hasSelection = state.value.activeTab?.activeWindow?.selectedIndices?.isNotEmpty() == true
+                if (hasSelection) {
+                    onCopySelectedToClipboard()
+                }
+            }
         }
     }
 }

@@ -16,6 +16,9 @@ enum class DashboardBucketSize {
     PER_MINUTE
 }
 
+const val DEFAULT_LOG_FONT_FAMILY = "Monospaced"
+const val DEFAULT_LOG_FONT_SIZE_SP = 12
+
 data class DashboardTimeBucket(
     val from: Instant,
     val to: Instant,
@@ -134,7 +137,9 @@ data class LogWindow(
     val timeFilterFromInstant: Instant? = null,
     val timeFilterToInstant: Instant? = null,
     val timeFilterPreset: TimeRangePreset? = null,
-    val timeFilterValidationMessage: String? = null
+    val timeFilterValidationMessage: String? = null,
+    val logFontFamily: String = DEFAULT_LOG_FONT_FAMILY,
+    val logFontSizeSp: Int = DEFAULT_LOG_FONT_SIZE_SP
 ) {
     val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
     val hasRawLevelFieldInLogs: Boolean get() = logs.any { entry -> entry.fields.containsKey("level") }
@@ -191,7 +196,7 @@ data class KLogViewerState(
     val pendingPlaintextSecretSave: PlaintextSecretSavePrompt? = null,
     val isAddMode: Boolean = false
 ) {
-    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, ADD_DIRECTORY, RECENT_ITEMS, SFTP_CONNECT, SFTP_ADD, SFTP_BROWSE, S3_CONNECT, S3_ADD, S3_BROWSE }
+    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, ADD_DIRECTORY, RECENT_ITEMS, SFTP_CONNECT, SFTP_ADD, SFTP_BROWSE, S3_CONNECT, S3_ADD, S3_BROWSE, FONT }
     val activeTab: TabState? get() = tabs.find { it.id == activeTabId }
 
     fun updateActiveTab(block: (TabState) -> TabState): KLogViewerState {
