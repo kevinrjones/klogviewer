@@ -3073,3 +3073,25 @@ For each sprint/task
 - `app/src/test/kotlin/com/klogviewer/startup/MainCompositionLifecycleTest.kt` (regression guard for composition lifecycle seam).
 - `./gradlew :app:test --tests "com.klogviewer.startup.MainCompositionLifecycleTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test :app:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.4 Toolbar Refresh Action
+**Title**: Add Toolbar Refresh Action with Shared Connection Toggle Flow
+**Date/time completed**: 2026-06-02 10:30
+**What was shipped**
+- Added a dedicated toolbar refresh action in `FilterBar` (`toolbar_refresh`, tooltip `Refresh Sources`) and wired it from `KLogViewerScreen`.
+- Added `KLogViewerIntent.RefreshConnection` and handled it in `UiToggleIntentHandler` by reusing existing `toggleConnection()` flow for parity.
+- Implemented refresh semantics so disconnected windows reconnect, while connected windows perform a disconnect/reconnect cycle and remain in the same active tab/window context.
+- Added/extended tests for refresh UI/action parity and connection-state behavior (`FilterBarTimeFilterControlsTest`, `ConnectionToggleTest`).
+- Updated Sprint 10 checklist progress by marking `15.4.1`–`15.4.4` and `15.10.4` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Reused the established `UiToggleIntentHandler.toggleConnection()` path for refresh to avoid introducing a divergent connection state machine.
+- Kept refresh scoped to the active window and asserted tab/window identity continuity in tests instead of recreating workspace state.
+**Gotchas**
+- Refresh behavior needed different handling by state (single toggle when disconnected, double-toggle cycle when connected) while preserving final connected state.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/FilterBar.kt` (refresh action surface).
+- `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/UiToggleIntentHandler.kt` (shared refresh/toggle flow).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/FilterBarTimeFilterControlsTest.kt` (refresh button presence/callback).
+- `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/ConnectionToggleTest.kt` (connected/disconnected refresh parity + active workspace continuity).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.ConnectionToggleTest" --tests "com.klogviewer.ui.components.FilterBarTimeFilterControlsTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).

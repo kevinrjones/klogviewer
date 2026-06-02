@@ -29,10 +29,10 @@
 - [x] 15.3.4. Disable copy action when no lines are selected.
 
 ### 15.4. Toolbar Refresh Action (`2.4`)
-- [ ] 15.4.1. Add `Refresh` button/action to toolbar with discoverable label/tooltip.
-- [ ] 15.4.2. Implement refresh behavior to reconnect/disconnect as needed when current viewer is disconnected.
-- [ ] 15.4.3. Reuse the same intent/handler flow as existing connect-state toggles to avoid divergent behavior.
-- [ ] 15.4.4. Ensure refresh updates active sources without requiring tab/workspace recreation.
+- [x] 15.4.1. Add `Refresh` button/action to toolbar with discoverable label/tooltip.
+- [x] 15.4.2. Implement refresh behavior to reconnect/disconnect as needed when current viewer is disconnected.
+- [x] 15.4.3. Reuse the same intent/handler flow as existing connect-state toggles to avoid divergent behavior.
+- [x] 15.4.4. Ensure refresh updates active sources without requiring tab/workspace recreation.
 
 ### 15.5. Time Filter Clear Option (`2.5`)
 - [ ] 15.5.1. Add `Clear` option to the time filter menu alongside preset ranges.
@@ -67,7 +67,7 @@
 - [x] 15.10.1. Add/extend UI tests for drop-down source management and per-source removal behavior.
 - [x] 15.10.2. Add/extend UI/state tests for fixed-width font selection, application, and persistence.
 - [x] 15.10.3. Add/extend UI tests for multi-line selection and clipboard copy behavior.
-- [ ] 15.10.4. Add/extend ViewModel tests for toolbar/context `Refresh` parity in connected/disconnected states.
+- [x] 15.10.4. Add/extend ViewModel tests for toolbar/context `Refresh` parity in connected/disconnected states.
 - [ ] 15.10.5. Add/extend filter tests for `Clear` reset-to-now behavior and parity across trigger points.
 - [ ] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
 - [ ] 15.10.7. Add/extend interaction tests for drag-drop to current tab vs tab bar new tab creation.

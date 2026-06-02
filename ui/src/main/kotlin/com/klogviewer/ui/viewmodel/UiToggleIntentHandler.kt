@@ -41,7 +41,16 @@ class UiToggleIntentHandler(
                 onSavePreferences()
             }
             KLogViewerIntent.ToggleConnection -> toggleConnection()
+            KLogViewerIntent.RefreshConnection -> refreshConnection()
         }
+    }
+
+    private fun refreshConnection() {
+        val activeWindow = state.value.activeTab?.activeWindow ?: return
+        if (activeWindow.isConnected) {
+            toggleConnection()
+        }
+        toggleConnection()
     }
 
     private fun toggleConnection() {

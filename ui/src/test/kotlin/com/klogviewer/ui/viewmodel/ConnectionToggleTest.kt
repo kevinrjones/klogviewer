@@ -96,4 +96,35 @@ class ConnectionToggleTest {
         val windowPref = savedPrefs.tabs.first().windows.first()
         expectThat(windowPref.isConnected).isFalse()
     }
+
+    @Test
+    fun `should reconnect and preserve active workspace on refresh when connected`() {
+        val testFile = File(tempDir, "test.log").apply { writeText("line1\n") }
+
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        val initialTabId = viewModel.state.value.activeTabId
+        val initialWindowId = viewModel.state.value.activeTab?.activeWindow?.id
+
+        clearMocks(mockLogSource)
+        viewModel.handleIntent(KLogViewerIntent.RefreshConnection)
+
+        expectThat(viewModel.state.value.activeTab?.activeWindow?.isConnected).isEqualTo(true)
+        expectThat(viewModel.state.value.activeTabId).isEqualTo(initialTabId)
+        expectThat(viewModel.state.value.activeTab?.activeWindow?.id).isEqualTo(initialWindowId)
+        verify(exactly = 1) { mockLogSource.observeLogs(any(), any()) }
+    }
+
+    @Test
+    fun `should reconnect on refresh when disconnected`() {
+        val testFile = File(tempDir, "test.log").apply { writeText("line1\n") }
+
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        viewModel.handleIntent(KLogViewerIntent.ToggleConnection)
+        clearMocks(mockLogSource)
+
+        viewModel.handleIntent(KLogViewerIntent.RefreshConnection)
+
+        expectThat(viewModel.state.value.activeTab?.activeWindow?.isConnected).isEqualTo(true)
+        verify(exactly = 1) { mockLogSource.observeLogs(any(), any()) }
+    }
 }

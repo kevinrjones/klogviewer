@@ -47,6 +47,7 @@ fun FilterBar(
     onToggleAnsiColors: () -> Unit,
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
+    onRefresh: () -> Unit,
     onSplitClick: () -> Unit,
     timeFilterFrom: String,
     timeFilterTo: String,
@@ -185,6 +186,12 @@ fun FilterBar(
                 tooltip = if (isConnected) "Connected (Click to Disconnect)" else "Disconnected (Click to Connect)",
                 onClick = onToggleConnection,
                 tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray
+            )
+            FilterBarIcon(
+                icon = Icons.Default.Refresh,
+                tooltip = "Refresh Sources",
+                onClick = onRefresh,
+                testTag = "toolbar_refresh"
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))

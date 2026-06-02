@@ -393,6 +393,7 @@ private fun LogTopBar(
             onToggleAnsiColors = { viewModel.handleIntent(KLogViewerIntent.ToggleAnsiColors) },
             isConnected = activeWindow?.isConnected ?: true,
             onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
+            onRefresh = { viewModel.handleIntent(KLogViewerIntent.RefreshConnection) },
             onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
             timeFilterFrom = activeWindow?.timeFilterFrom ?: "",
             timeFilterTo = activeWindow?.timeFilterTo ?: "",
