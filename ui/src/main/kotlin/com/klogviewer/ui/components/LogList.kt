@@ -26,6 +26,8 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -45,6 +47,25 @@ import kotlin.math.roundToInt
 
 private val COMPACT_MENU_ITEM_HEIGHT = 30.dp
 private val COMPACT_MENU_ITEM_HORIZONTAL_PADDING = 10.dp
+
+internal const val NO_SOURCE_SHADE_INDEX = -1
+internal val SourceShadeIndexSemanticsKey = SemanticsPropertyKey<Int>("sourceShadeIndex")
+internal var SemanticsPropertyReceiver.sourceShadeIndex by SourceShadeIndexSemanticsKey
+
+private val sourceBackgroundLightShades = generateDarkerGrayShades(
+    argb = 0xFFFAFAFA,
+    count = 50,
+    step = 1
+)
+
+private val sourceBackgroundDarkShades = listOf(
+    Color(0xFF1E1E1E),
+    Color(0xFF242424),
+    Color(0xFF2A2A2A),
+    Color(0xFF303030),
+    Color(0xFF363636),
+    Color(0xFF3C3C3C)
+)
 
 @Composable
 private fun CompactMenuItem(
@@ -402,10 +423,11 @@ fun LogEntryRow(
     modifier: Modifier = Modifier
 ) {
     val logColors = KLogViewerTheme.logColors
+    val rowSourceShadeIndex = getSourceShadeIndex(entry.sourceId, sourceIds)
     val backgroundColor = if (isSelected) {
         MaterialTheme.colors.primary.copy(alpha = 0.15f)
     } else {
-        getSourceBackgroundColor(entry.sourceId, sourceIds, isDarkMode)
+        getSourceBackgroundColor(rowSourceShadeIndex, isDarkMode)
     }
 
     var rowCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
@@ -414,7 +436,10 @@ fun LogEntryRow(
         modifier = modifier
             .width(contentWidth)
             .background(backgroundColor)
-            .semantics { selected = isSelected }
+            .semantics {
+                selected = isSelected
+                sourceShadeIndex = rowSourceShadeIndex
+            }
             .onGloballyPositioned { rowCoordinates = it }
             .pointerInput(Unit) {
                 awaitPointerEventScope {
@@ -702,25 +727,44 @@ private fun getSourceBadgeColor(sourceId: String?, sourceIds: List<String>, isMi
     return colors[index % colors.size]
 }
 
-private fun getSourceBackgroundColor(sourceId: String?, sourceIds: List<String>, isDarkMode: Boolean): Color {
-    if (sourceId == null || sourceIds.size <= 1) return Color.Transparent
-    val index = sourceIds.indexOf(sourceId).coerceAtLeast(0)
-    return if (isDarkMode) {
-        val greys = listOf(
-            Color(0xFF1E1E1E),
-            Color(0xFF252525),
-            Color(0xFF2D2D2D),
-            Color(0xFF353535)
-        )
-        greys[index % greys.size]
-    } else {
-        val greys = listOf(
-            Color(0xFFF9F9F9),
-            Color(0xFFF2F2F2),
-            Color(0xFFEBEBEB),
-            Color(0xFFE4E4E4)
-        )
-        greys[index % greys.size]
+internal fun getSourceShadeIndex(sourceId: String?, sourceIds: List<String>): Int {
+    if (sourceId.isNullOrBlank() || sourceIds.size <= 1) {
+        return NO_SOURCE_SHADE_INDEX
     }
+    return stableSourceShadeIndex(sourceId, sourceBackgroundLightShades.size)
+}
+
+internal fun generateDarkerGrayShades(argb: Long, count: Int, step: Int): List<Color> {
+    if (count <= 0) return emptyList()
+
+    val alpha = ((argb ushr 24) and 0xFF).toInt()
+    val red = ((argb ushr 16) and 0xFF).toInt()
+    val green = ((argb ushr 8) and 0xFF).toInt()
+    val blue = (argb and 0xFF).toInt()
+    val baseGray = ((red + green + blue) / 3).coerceIn(0, 255)
+    val safeStep = step.coerceAtLeast(0)
+
+    return (0 until count).map { index ->
+        val darkenedChannel = (baseGray.toLong() - index.toLong() * safeStep.toLong())
+            .coerceIn(0L, 255L)
+            .toInt()
+
+        val shadeArgb = (alpha.toLong() shl 24) or
+            (darkenedChannel.toLong() shl 16) or
+            (darkenedChannel.toLong() shl 8) or
+            darkenedChannel.toLong()
+
+        Color(shadeArgb)
+    }
+}
+
+private fun stableSourceShadeIndex(sourceId: String, paletteSize: Int): Int {
+    return Math.floorMod(sourceId.hashCode(), paletteSize)
+}
+
+private fun getSourceBackgroundColor(sourceShadeIndex: Int, isDarkMode: Boolean): Color {
+    if (sourceShadeIndex == NO_SOURCE_SHADE_INDEX) return Color.Transparent
+    val shades = if (isDarkMode) sourceBackgroundDarkShades else sourceBackgroundLightShades
+    return shades[sourceShadeIndex % shades.size]
 }
 

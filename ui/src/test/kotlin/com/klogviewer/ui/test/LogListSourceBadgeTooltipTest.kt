@@ -10,6 +10,9 @@ import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.LogTimestamp
 import com.klogviewer.ui.components.LogList
+import com.klogviewer.ui.components.SourceShadeIndexSemanticsKey
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
@@ -60,6 +63,10 @@ class LogListSourceBadgeTooltipTest {
             )
         }
 
+        val initialApiShadeIndex = rowShadeIndex(rowIndex = 0)
+        val initialDbShadeIndex = rowShadeIndex(rowIndex = 1)
+        assertNotEquals(initialApiShadeIndex, initialDbShadeIndex)
+
         runOnIdle {
             sourceIds = listOf(sourceB, sourceC)
             logs = listOf(
@@ -75,6 +82,14 @@ class LogListSourceBadgeTooltipTest {
         }
 
         assertBadgeTooltip(rowIndex = 1, expectedTooltip = "cache.log")
+
+        val updatedDbFirstRowShadeIndex = rowShadeIndex(rowIndex = 0)
+        val updatedCacheShadeIndex = rowShadeIndex(rowIndex = 1)
+        val updatedDbSecondRowShadeIndex = rowShadeIndex(rowIndex = 2)
+
+        assertEquals(initialDbShadeIndex, updatedDbFirstRowShadeIndex)
+        assertEquals(initialDbShadeIndex, updatedDbSecondRowShadeIndex)
+        assertNotEquals(updatedDbFirstRowShadeIndex, updatedCacheShadeIndex)
     }
 
     private fun ComposeUiTest.assertBadgeTooltip(rowIndex: Int, expectedTooltip: String) {
@@ -95,6 +110,17 @@ class LogListSourceBadgeTooltipTest {
         onNodeWithTag("log_source_badge_tooltip_$rowIndex", useUnmergedTree = true)
             .assertExists()
             .assertTextEquals(expectedTooltip)
+    }
+
+    private fun ComposeUiTest.rowShadeIndex(rowIndex: Int): Int {
+        waitUntil(timeoutMillis = 5_000) {
+            onAllNodesWithTag("log_entry_row_$rowIndex", useUnmergedTree = true)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        return onNodeWithTag("log_entry_row_$rowIndex", useUnmergedTree = true)
+            .fetchSemanticsNode()
+            .config[SourceShadeIndexSemanticsKey]
     }
 
     private fun createEntry(sourceId: String, message: String): LogEntry = LogEntry(

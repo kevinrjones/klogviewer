@@ -59,9 +59,9 @@
 - [x] 15.8.3. Keep tooltip/source mapping accurate after source add/remove and live updates.
 
 ### 15.9. Per-Source Row Background Differentiation (`2.9`)
-- [ ] 15.9.1. Apply subtle gray background shade variants per source in multi-source tabs.
-- [ ] 15.9.2. Use deterministic source-to-shade mapping so rows remain visually stable across refreshes.
-- [ ] 15.9.3. Preserve readability/contrast with existing severity coloring, selection styling, and theme modes.
+- [x] 15.9.1. Apply subtle gray background shade variants per source in multi-source tabs.
+- [x] 15.9.2. Use deterministic source-to-shade mapping so rows remain visually stable across refreshes.
+- [x] 15.9.3. Preserve readability/contrast with existing severity coloring, selection styling, and theme modes.
 
 ### 15.10. Verification & Testing
 - [x] 15.10.1. Add/extend UI tests for drop-down source management and per-source removal behavior.
@@ -71,5 +71,5 @@
 - [x] 15.10.5. Add/extend filter tests for dropdown `Reset` clear-time-bounds behavior and menu `Clear` reset-to-now parity.
 - [x] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
 - [ ] 15.10.7. Add/extend interaction tests for drag-drop to current tab vs tab bar new tab creation.
-- [ ] 15.10.8. Add/extend UI tests for source badge filename tooltips and per-source row background differentiation.
+- [x] 15.10.8. Add/extend UI tests for source badge filename tooltips and per-source row background differentiation.
 - [ ] 15.10.9. Run regression checks for workspace persistence and live-update consistency with Sprint 10 changes.

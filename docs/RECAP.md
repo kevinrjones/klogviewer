@@ -1207,3 +1207,32 @@ Recap from the previous entry (`2026-05-29 06:57`) up to now:
 #### Verification:
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.DirectoryTabTest" --tests "com.klogviewer.ui.viewmodel.ConnectionToggleTest"` → passed (`BUILD SUCCESSFUL`) across repeated re-verification runs during Sprint 10 `15.1` UI iterations.
 
+
+# 2026-06-03
+
+## 06:46
+
+### Sprint 10 UI Fixes Progress Recap (From Last Recap Entry to Now)
+
+Recap from the previous entry (`2026-06-02 06:39`) up to now:
+
+#### Changes:
+- **Commit `99f9b7b` (2026-06-02 06:45)**: Merged branch `feat/uiupdates` into the mainline.
+- **Commits `0bc4ea4`, `674c1f1` (committed in this period)**: Added/propagated Sprint 10 UI-fixes checklist planning documentation updates.
+- **Commit `d1edce4` (2026-06-02 07:03)**: Refined log-list column defaults and minimum sizing for message/content readability.
+- **Commit `dbe1e43` (2026-06-02 09:33)**: Added monospaced font selection/application/persistence for log rendering.
+- **Commit `3594425` (2026-06-02 10:29)**: Added multi-line log selection and clipboard copy in visible order.
+- **Commit `aa1f62a` (2026-06-02 10:47)**: Added toolbar `Refresh` flow with connection-state-aware handling.
+- **Commit `df58016` (2026-06-02 15:45)**: Improved time-filter reset handling and proportional time-series behavior.
+- **Commits `5f41b7b`, `d772ae0` (2026-06-02 17:20–17:30)**: Added right-click context menu actions (`Copy`/`Refresh`/`Clear`) and improved positioning/alignment test accuracy.
+- **Commit `2700d50` (2026-06-02 21:36)**: Standardized typography usage across UI components and aligned test coverage.
+- **Commit `71c9bfc` (2026-06-03 06:45)**: Completed Sprint 10 `15.8` source-badge tooltip behavior by showing filename-based hover text and preserving stable tooltip/source mapping through source list changes.
+- **Current working session (post-commit docs updates)**:
+    - Marked Sprint 10 task checklist items `15.8.1`–`15.8.3` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+    - Updated `docs/project_memory.md` with shipped outcomes, decisions, and test coverage notes for Sprint 10 `15.8`.
+    - Captured this recap update at the end of `docs/RECAP.md` in chronological order.
+
+#### Verification:
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest" --tests "com.klogviewer.ui.test.LogListContextMenuTest" --tests "com.klogviewer.ui.test.LogColumnResizeTest"` → passed (`BUILD SUCCESSFUL`).
+- Repository state at recap capture time: `git status --short` clean.
+

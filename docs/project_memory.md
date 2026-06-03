@@ -26,6 +26,7 @@
 - Sprint 10 `15.5` completed with split clear/reset semantics: `Edit -> Clear` resets active log visibility to `now`, while time dropdown `Reset` clears time bounds to show all logs under current non-time filters/workspace context.
 - Sprint 10 `15.6` completed: log rows now expose a right-click context menu with shared `Copy`, `Refresh`, and `Clear` action flows plus state-driven menu enablement.
 - Sprint 10 `15.8` completed: multi-source log rows now expose colored source badges with filename hover tooltips and stable source-to-tooltip mapping through source list updates.
+- Sprint 10 `15.9` completed: multi-source log rows now apply subtle per-source gray background differentiation using deterministic source-id-based shade mapping that remains stable across refresh and source-list updates.
 - Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
 
 **Key decisions**
@@ -43,6 +44,7 @@
 - Split time-filter behavior by trigger: retained `ClearTimeFilter` reset-to-now semantics for `Edit -> Clear` and introduced dropdown `ResetTimeFilter` to clear time bounds, preserving deterministic shared filter handling.
 - Normalized chart x-axis units by smallest bucket duration to preserve proportional temporal gaps while keeping KoalaPlot bar geometry valid (`barWidth` semantics unchanged).
 - Kept source badge tooltip text derived from normalized filename extraction (path/URI tail segment) while leaving source-color mapping tied to active `sourceIds` ordering for deterministic multi-source rendering.
+- Kept per-source row background mapping derived from hashed `sourceId` (instead of active-source index) so visual differentiation remains stable when source ordering changes.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -3202,3 +3204,24 @@ For each sprint/task
 - `ui/src/main/kotlin/com/klogviewer/ui/components/LogList.kt` (badge tooltip content + deterministic badge/tooltip tags).
 - `ui/src/test/kotlin/com/klogviewer/ui/test/LogListSourceBadgeTooltipTest.kt` (filename tooltip visibility + add/remove/update mapping regression).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest" --tests "com.klogviewer.ui.test.LogListContextMenuTest" --tests "com.klogviewer.ui.test.LogColumnResizeTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.9 Per-Source Row Background Differentiation
+**Title**: Add Deterministic Per-Source Gray Row Shading for Multi-Source Tabs
+**Date/time completed**: 2026-06-03 06:49
+**What was shipped**
+- Updated `LogList` row rendering to apply subtle gray background variants per source for multi-source tabs, while preserving existing selection-highlight precedence.
+- Replaced index-order-based row shading with deterministic `sourceId` hash mapping so a source keeps the same shade across refreshes and source-list reorder/add/remove operations.
+- Exposed row shade index via semantics (`sourceShadeIndex`) and retained existing source badge tooltip behavior.
+- Extended `LogListSourceBadgeTooltipTest` to verify tooltip mapping and stable per-source row shade behavior after live source updates.
+- Added focused unit coverage in `LogListSourceShadeIndexTest` for single-source no-shade behavior and deterministic source-shade stability.
+- Updated Sprint 10 checklist progress by marking `15.9.1`–`15.9.3` and `15.10.8` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Introduced a hash-based shade index helper (`getSourceShadeIndex`) to decouple row color identity from mutable `sourceIds` list ordering.
+- Kept palette-driven gray shades theme-specific (light/dark) and subtle to avoid reducing severity text readability.
+**Gotchas**
+- Compose semantics property naming initially conflicted with a local variable name in `LogEntryRow`; resolved by renaming the local shade-index variable.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/LogList.kt` (deterministic row shade mapping + semantics metadata).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/LogListSourceShadeIndexTest.kt` (source-shade mapping unit coverage).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/LogListSourceBadgeTooltipTest.kt` (tooltip + row-shade stability through live updates).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.LogList*" --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest"` (`BUILD SUCCESSFUL`).
