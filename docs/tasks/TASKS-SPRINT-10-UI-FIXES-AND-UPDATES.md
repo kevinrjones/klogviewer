@@ -48,10 +48,10 @@
 - [x] 15.6.5. Reflect enabled/disabled menu states based on current selection and connection/filter context.
 
 ### 15.7. Drag-and-Drop File Import (`2.7`)
-- [ ] 15.7.1. Accept file drag-and-drop into the current application window.
-- [ ] 15.7.2. Dropping files on the log view adds sources into the current tab.
-- [ ] 15.7.3. Dropping files on the tab bar creates a new tab and loads dropped files there.
-- [ ] 15.7.4. Support multi-file drops and handle invalid/unsupported drops with non-blocking feedback.
+- [x] 15.7.1. Accept file drag-and-drop into the current application window.
+- [x] 15.7.2. Dropping files on the log view adds sources into the current tab.
+- [x] 15.7.3. Dropping files on the tab bar creates a new tab and loads dropped files there.
+- [x] 15.7.4. Support multi-file drops and handle invalid/unsupported drops with non-blocking feedback.
 
 ### 15.8. Source Badge Hover Tooltip (`2.8`)
 - [x] 15.8.1. For multi-source tabs, render a colored source badge/button per log line.
@@ -70,6 +70,6 @@
 - [x] 15.10.4. Add/extend ViewModel tests for toolbar/context `Refresh` parity in connected/disconnected states.
 - [x] 15.10.5. Add/extend filter tests for dropdown `Reset` clear-time-bounds behavior and menu `Clear` reset-to-now parity.
 - [x] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
-- [ ] 15.10.7. Add/extend interaction tests for drag-drop to current tab vs tab bar new tab creation.
+- [x] 15.10.7. Add/extend interaction tests for drag-drop to current tab vs tab bar new tab creation.
 - [x] 15.10.8. Add/extend UI tests for source badge filename tooltips and per-source row background differentiation.
 - [ ] 15.10.9. Run regression checks for workspace persistence and live-update consistency with Sprint 10 changes.

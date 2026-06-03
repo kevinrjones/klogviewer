@@ -19,6 +19,8 @@ sealed interface KLogViewerIntent {
 
     data class LoadFiles(val paths: List<String>) : WorkspaceIntent
     data class AddToWorkspace(val paths: List<String>) : WorkspaceIntent
+    data class DropFilesOnLogView(val paths: List<String>) : WorkspaceIntent
+    data class DropFilesOnTabBar(val paths: List<String>) : WorkspaceIntent
     data class SelectPath(val path: String) : WorkspaceIntent
     data object ClearLogs : WorkspaceIntent
     
