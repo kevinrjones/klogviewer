@@ -65,6 +65,27 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y xvfb libegl1 libgles2 libgl1
 
+    - name: Run Detekt
+      id: detekt
+      continue-on-error: true
+      run: ./gradlew detekt
+
+    - name: Upload Detekt Reports
+      if: always() && steps.detekt.outcome == 'failure'
+      uses: actions/upload-artifact@v7
+      with:
+        name: detekt-reports-${{ matrix.artifact-suffix }}
+        path: |
+          **/build/reports/detekt/*
+          detekt-baseline.xml
+
+    - name: Enforce Detekt Quality Gate
+      if: steps.detekt.outcome == 'failure'
+      shell: bash
+      run: |
+        echo "Detekt violations detected. See uploaded detekt-reports artifact."
+        exit 1
+
     - name: Run Tests
       run: |
         if [[ "${{ matrix.os }}" == ubuntu* ]]; then
