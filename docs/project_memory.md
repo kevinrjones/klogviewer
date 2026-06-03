@@ -3289,3 +3289,38 @@ For each sprint/task
 - Historical references inside prior `docs/project_memory.md` entries intentionally retain then-current sprint/file names and were not rewritten.
 **Test coverage areas**
 - Documentation-only change set; validated by targeted reference checks across sprint/task/readme/design docs.
+
+## Task: Cross-Platform Menu Accelerators
+**Title**: Align Desktop Menu Shortcuts and Labels for macOS vs Windows/Linux
+**Date/time completed**: 2026-06-03 10:20
+**What was shipped**
+- Added platform-aware shortcut mapping via `menuShortcutSetForOs` in `ui/src/main/kotlin/com/klogviewer/ui/menu/MenuShortcutSet.kt`.
+- Updated `app/src/main/kotlin/Main.kt` menu accelerators to use mapped shortcuts for `New Tab`, `Close Tab`, and `Copy`.
+- Kept macOS behavior unchanged (`Cmd+N`, `Cmd+W`, `Cmd+C`) while enabling Windows/Linux shortcuts (`Ctrl+N`, `Ctrl+F4`, `Ctrl+C`).
+- Added `MainMenuShortcutPlatformWiringTest` to verify `Main.kt` uses platform-aware shortcut wiring.
+- Added `MenuShortcutSetTest` to validate shortcut mapping outputs for macOS, Windows, and Linux.
+**Key decisions**
+- Centralized accelerator mapping in a dedicated UI module helper to keep platform logic consistent and reusable.
+- Used Compose `Item(..., shortcut = ...)` accelerator metadata so menu text remains platform-reflective through the configured modifier/key combination.
+**Gotchas**
+- `KeyShortcut` modifier/key properties are internal in this Compose version, so tests assert full `KeyShortcut` equality rather than inspecting fields directly.
+**Test coverage areas**
+- Reproducer before fix: `./gradlew :app:test --tests com.klogviewer.startup.MainMenuShortcutPlatformWiringTest` (failed pre-fix).
+- Post-fix targeted validation: `./gradlew :app:test --tests com.klogviewer.startup.MainMenuShortcutPlatformWiringTest :ui:test --tests com.klogviewer.ui.menu.MenuShortcutSetTest` (`BUILD SUCCESSFUL`).
+- Regression module validation: `./gradlew :ui:test :app:test` (`BUILD SUCCESSFUL`).
+
+## Task: Desktop Application Icon Assets
+**Title**: Create Production Icon Set for KLogViewer Packaging
+**Date/time completed**: 2026-06-03 11:09
+**What was shipped**
+- Added a new master icon source artwork file `app/src/main/resources/icons/klogviewer-master.svg` and rendered `app/src/main/resources/icons/klogviewer-1024.png` at exact `1024x1024`.
+- Added repeatable icon generation script `scripts/generate-icons.sh` to produce Linux (`klogviewer.png`), Windows (`klogviewer.ico`), and macOS (`klogviewer.icns`) assets from the master PNG.
+- Generated and stored all required distributable icon files under `app/src/main/resources/icons/`.
+**Key decisions**
+- Standardized generation on deterministic local tooling (`sips`, `iconutil`, `ImageMagick`) so icon outputs are reproducible across reruns.
+- Kept Linux launcher icon at `1024x1024` by copying the validated master PNG directly for maximum fidelity.
+**Gotchas**
+- Multiple external unauthenticated image-generation endpoints returned rate-limit or credit errors; final asset pipeline was completed with local deterministic design/conversion tooling.
+**Test coverage areas**
+- `scripts/generate-icons.sh` (source checks, tool checks, deterministic output generation).
+- Validation commands: `sips -g pixelWidth -g pixelHeight app/src/main/resources/icons/klogviewer-1024.png app/src/main/resources/icons/klogviewer.png`, `magick identify app/src/main/resources/icons/klogviewer.ico`, and `iconutil -c iconset app/src/main/resources/icons/klogviewer.icns -o /tmp/klogviewer-final-verify.iconset`.
