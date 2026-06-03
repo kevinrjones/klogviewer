@@ -1,6 +1,7 @@
 package com.klogviewer.ui.components
 
 import androidx.compose.foundation.*
+import androidx.compose.foundation.draganddrop.dragAndDropTarget
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.*
@@ -13,8 +14,12 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draganddrop.DragAndDropEvent
+import androidx.compose.ui.draganddrop.DragAndDropTarget
+import androidx.compose.ui.draganddrop.awtTransferable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
@@ -36,6 +41,9 @@ import com.klogviewer.ui.mvi.*
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
+import java.awt.datatransfer.DataFlavor
+import java.io.File
+import java.net.URI
 import kotlin.math.abs
 
 private val dashboardLogger = KotlinLogging.logger {}
@@ -66,6 +74,60 @@ private fun resolveSourceVisibilityTextColors(baseColor: Color): SourceVisibilit
     )
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
+private fun Modifier.fileDropTarget(onFilesDropped: (List<String>) -> Unit): Modifier {
+    val target = object : DragAndDropTarget {
+        override fun onDrop(event: DragAndDropEvent): Boolean {
+            onFilesDropped(extractDroppedPaths(event))
+            return true
+        }
+    }
+
+    return dragAndDropTarget(
+        shouldStartDragAndDrop = { true },
+        target = target
+    )
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+private fun extractDroppedPaths(event: DragAndDropEvent): List<String> {
+    val transferable = event.awtTransferable
+    val filePaths = runCatching {
+        transferable.getTransferData(DataFlavor.javaFileListFlavor)
+    }.getOrNull()
+        ?.let { data ->
+            @Suppress("UNCHECKED_CAST")
+            data as? List<File>
+        }
+        ?.map { file -> file.absolutePath }
+        .orEmpty()
+
+    if (filePaths.isNotEmpty()) {
+        return filePaths.distinct()
+    }
+
+    return runCatching {
+        transferable.getTransferData(DataFlavor.stringFlavor)
+    }.getOrNull()
+        ?.toString()
+        ?.lineSequence()
+        ?.map { value -> value.trim() }
+        ?.filter { value -> value.isNotBlank() }
+        ?.mapNotNull(::extractPathFromDropString)
+        ?.distinct()
+        ?.toList()
+        .orEmpty()
+}
+
+private fun extractPathFromDropString(rawValue: String): String? {
+    if (!rawValue.startsWith("file://")) {
+        return rawValue
+    }
+
+    return runCatching { File(URI(rawValue)).absolutePath }
+        .getOrNull()
+}
+
 @Composable
 fun KLogViewerScreen(
     viewModel: KLogViewerViewModel,
@@ -83,6 +145,9 @@ fun KLogViewerScreen(
                 is KLogViewerEvent.ShowError -> {
                     dialogProvider.showMessageDialog("Error", event.message)
                 }
+                is KLogViewerEvent.ShowInfo -> {
+                    scaffoldState.snackbarHostState.showSnackbar(event.message)
+                }
             }
         }
     }
@@ -93,7 +158,14 @@ fun KLogViewerScreen(
         Scaffold(
             scaffoldState = scaffoldState,
             topBar = {
-                LogTopBar(state, activeWindow, viewModel)
+                LogTopBar(
+                    state = state,
+                    activeWindow = activeWindow,
+                    viewModel = viewModel,
+                    onDropFilesOnTabBar = { droppedPaths ->
+                        viewModel.handleIntent(KLogViewerIntent.DropFilesOnTabBar(droppedPaths))
+                    }
+                )
             },
             bottomBar = {
                 LogBottomBar(activeWindow, viewModel)
@@ -117,6 +189,9 @@ fun KLogViewerScreen(
                     activeTab = activeTab,
                     state = state,
                     viewModel = viewModel,
+                    onDropFilesOnLogView = { droppedPaths ->
+                        viewModel.handleIntent(KLogViewerIntent.DropFilesOnLogView(droppedPaths))
+                    },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -360,7 +435,8 @@ private fun DialogHandler(
 private fun LogTopBar(
     state: KLogViewerState,
     activeWindow: LogWindow?,
-    viewModel: KLogViewerViewModel
+    viewModel: KLogViewerViewModel,
+    onDropFilesOnTabBar: (List<String>) -> Unit
 ) {
     Column {
         LogTabRow(
@@ -368,7 +444,8 @@ private fun LogTopBar(
             activeTabId = state.activeTabId,
             onTabClick = { viewModel.handleIntent(KLogViewerIntent.SwitchTab(it)) },
             onCloseClick = { viewModel.handleIntent(KLogViewerIntent.CloseTab(it)) },
-            onAddClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) }
+            onAddClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) },
+            modifier = Modifier.fileDropTarget(onDropFilesOnTabBar)
         )
         FilterBar(
             filterQueries = activeWindow?.filterQueries ?: emptyList(),
@@ -558,6 +635,7 @@ private fun LogWindowList(
     activeTab: TabState?,
     state: KLogViewerState,
     viewModel: KLogViewerViewModel,
+    onDropFilesOnLogView: (List<String>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
@@ -575,6 +653,7 @@ private fun LogWindowList(
                 showSplitIndicator = activeTab.windows.size > 1,
                 state = state,
                 viewModel = viewModel,
+                onDropFilesOnLogView = onDropFilesOnLogView,
                 modifier = Modifier.weight(1f)
             )
         }
@@ -588,6 +667,7 @@ private fun LogWindowItem(
     showSplitIndicator: Boolean,
     state: KLogViewerState,
     viewModel: KLogViewerViewModel,
+    onDropFilesOnLogView: (List<String>) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val activeBorderColor = MaterialTheme.colors.primary.copy(alpha = 0.5f)
@@ -738,7 +818,8 @@ private fun LogWindowItem(
                     onOpenDirectory = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) },
                     onConnectSftp = { viewModel.handleIntent(KLogViewerIntent.ShowSftpDialog) },
                     onConnectS3 = { viewModel.handleIntent(KLogViewerIntent.ShowS3Dialog) },
-                    onShowRecent = { viewModel.handleIntent(KLogViewerIntent.ShowRecentDialog) }
+                    onShowRecent = { viewModel.handleIntent(KLogViewerIntent.ShowRecentDialog) },
+                    modifier = Modifier.fileDropTarget(onDropFilesOnLogView)
                 )
             } else if (window.workspaceMode == WorkspaceMode.DASHBOARD) {
                 DashboardWorkspace(window = window, viewModel = viewModel)
@@ -747,7 +828,8 @@ private fun LogWindowItem(
                     window = window,
                     isWindowActive = isWindowActive,
                     isDarkMode = state.isDarkMode,
-                    viewModel = viewModel
+                    viewModel = viewModel,
+                    onDropFilesOnLogView = onDropFilesOnLogView
                 )
             }
         }
@@ -773,14 +855,15 @@ private fun LogWorkspace(
     window: LogWindow,
     isWindowActive: Boolean,
     isDarkMode: Boolean,
-    viewModel: KLogViewerViewModel
+    viewModel: KLogViewerViewModel,
+    onDropFilesOnLogView: (List<String>) -> Unit
 ) {
     val dashboardContent = logTimeFrequencyContent(window.dashboardDataState)
     val isCopyActionEnabled = window.selectedIndices.isNotEmpty()
     val isRefreshActionEnabled = window.sourceIds.isNotEmpty()
     val isClearActionEnabled = true
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Column(modifier = Modifier.fillMaxSize().fileDropTarget(onDropFilesOnLogView)) {
         dashboardContent?.let { content ->
             LogTimeFrequencyPanel(
                 content = content,
@@ -2263,10 +2346,11 @@ private fun LogTabRow(
     activeTabId: String?,
     onTabClick: (String) -> Unit,
     onCloseClick: (String) -> Unit,
-    onAddClick: () -> Unit
+    onAddClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val tabBackground = KLogViewerTheme.customColors.tabBackground
-    Surface(elevation = 4.dp, color = tabBackground, modifier = Modifier.testTag("tab_row")) {
+    Surface(elevation = 4.dp, color = tabBackground, modifier = modifier.testTag("tab_row")) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (tabs.isNotEmpty()) {
                 val selectedTabIndex = tabs.indexOfFirst { it.id == activeTabId }.coerceIn(0, tabs.size - 1)

@@ -1236,3 +1236,24 @@ Recap from the previous entry (`2026-06-02 06:39`) up to now:
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest" --tests "com.klogviewer.ui.test.LogListContextMenuTest" --tests "com.klogviewer.ui.test.LogColumnResizeTest"` → passed (`BUILD SUCCESSFUL`).
 - Repository state at recap capture time: `git status --short` clean.
 
+
+## 09:50
+
+### Sprint 10 Drag-and-Drop Completion and Sprint Closeout Recap
+
+Recap from the previous entry (`2026-06-03 06:46`) up to now:
+
+#### Changes:
+- **Commit `1182b6e` (2026-06-03 08:32)**: Added deterministic source-based row shading for multi-source logs, with associated UI tests and Sprint 10 tracking/doc updates.
+- **Commit `8c36df3` (2026-06-03 09:40)**: Implemented drag-and-drop file import for log view vs tab bar destinations, including intent/event/viewmodel wiring, integration tests, and Sprint 10 task/progress documentation updates.
+- **Current working session (uncommitted)**:
+    - Extended drag-and-drop behavior so dropping files while a tab is showing the welcome page loads files into that same tab/window; added integration coverage for this scenario in `DragDropImportIntegrationTest`.
+    - Closed out Sprint 10 verification by marking `15.10.9` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md` and recording closeout details in `docs/project_memory.md`.
+    - Updated `RELEASE_NOTES.md` and `ALL_RELEASES.md` with the `1.7.0` Sprint 10 release summary.
+
+#### Verification:
+- `./gradlew :ui:compileKotlin :app:test --tests "com.klogviewer.integration.DragDropImportIntegrationTest"` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test :app:test` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :app:test --tests "com.klogviewer.integration.SessionRestorationTest" --tests "com.klogviewer.integration.InterleavingIntegrationTest" --tests "com.klogviewer.integration.SftpReloadTest"` → passed (`BUILD SUCCESSFUL`).
+- Repository state at recap capture time: `git status --short` shows uncommitted docs updates in `RELEASE_NOTES.md`, `ALL_RELEASES.md`, `docs/project_memory.md`, and `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+

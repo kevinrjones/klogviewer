@@ -50,7 +50,7 @@ class KLogViewerViewModel(
     private val _state = MutableStateFlow(KLogViewerState())
     val state: StateFlow<KLogViewerState> = _state.asStateFlow()
 
-    private val _events = MutableSharedFlow<KLogViewerEvent>()
+    private val _events = MutableSharedFlow<KLogViewerEvent>(extraBufferCapacity = 64)
     val events: SharedFlow<KLogViewerEvent> = _events.asSharedFlow()
 
     private val logLoadingCoordinator = LogLoadingCoordinator(
@@ -79,7 +79,8 @@ class KLogViewerViewModel(
         logLoadingCoordinator = logLoadingCoordinator,
         recentItemsManager = recentItemsManager,
         onSavePreferences = { savePreferences() },
-        onFilterLogs = { windowId -> filterLogs(windowId) }
+        onFilterLogs = { windowId -> filterLogs(windowId) },
+        onShowInfo = { message -> _events.tryEmit(KLogViewerEvent.ShowInfo(message)) }
     )
     
     private val uiToggleIntentHandler = UiToggleIntentHandler(

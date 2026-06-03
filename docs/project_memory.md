@@ -27,6 +27,7 @@
 - Sprint 10 `15.6` completed: log rows now expose a right-click context menu with shared `Copy`, `Refresh`, and `Clear` action flows plus state-driven menu enablement.
 - Sprint 10 `15.8` completed: multi-source log rows now expose colored source badges with filename hover tooltips and stable source-to-tooltip mapping through source list updates.
 - Sprint 10 `15.9` completed: multi-source log rows now apply subtle per-source gray background differentiation using deterministic source-id-based shade mapping that remains stable across refresh and source-list updates.
+- Sprint 10 `15.7` completed: desktop drag-and-drop now supports multi-file import to either the active log view tab or a newly created tab via tab-bar drops, with non-blocking unsupported-drop feedback and integration-test coverage.
 - Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
 
 **Key decisions**
@@ -3225,3 +3226,50 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/components/LogListSourceShadeIndexTest.kt` (source-shade mapping unit coverage).
 - `ui/src/test/kotlin/com/klogviewer/ui/test/LogListSourceBadgeTooltipTest.kt` (tooltip + row-shade stability through live updates).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.components.LogList*" --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.7 Drag-and-Drop File Import
+**Title**: Add Target-Aware Desktop Drag-and-Drop Import for Log View and Tab Bar
+**Date/time completed**: 2026-06-03 08:35
+**What was shipped**
+- Added drag-and-drop file import handling in `KLogViewerScreen` with distinct drop targets for `LogWorkspace` (append to active tab) and `LogTabRow` (create new tab and load dropped files).
+- Extended drag-and-drop handling to `WelcomeScreen` so dropping files while a tab is in welcome state loads those files into the same tab/window.
+- Added new intents `DropFilesOnLogView` and `DropFilesOnTabBar` and routed them through `WorkspaceIntentHandler` to reuse existing `AddToWorkspace` / `LoadFiles` flows and tab/workspace state model.
+- Added dropped-path validation (multi-file support, dedupe, local existence check, remote URI pass-through) with non-blocking feedback via `KLogViewerEvent.ShowInfo` surfaced as snackbar messages.
+- Added integration coverage in `DragDropImportIntegrationTest` for current-tab drops, tab-bar new-tab drops, invalid-only drops, and mixed valid/invalid drops.
+- Updated Sprint 10 checklist progress by marking `15.7.1`–`15.7.4` and `15.10.7` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Reused existing workspace import intents/handlers (`AddToWorkspace`, `LoadFiles`, `TabWindowController.addTab`) to avoid introducing divergent drag-specific state logic.
+- Implemented non-blocking invalid-drop feedback through the existing event channel + scaffold snackbar path instead of modal dialogs.
+- Kept drop handling at composable boundaries (`LogTabRow` vs `LogWorkspace`) to deterministically distinguish drop destination behavior.
+**Gotchas**
+- Compose desktop drag-drop API for this version exposes `dragAndDropTarget` via `androidx.compose.foundation.draganddrop` (not `androidx.compose.ui.draganddrop`), which initially caused compile errors.
+- SharedFlow event assertions in integration tests were initially flaky; fixed by starting event collectors with `CoroutineStart.UNDISPATCHED` before dispatching drop intents.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/KLogViewerScreen.kt` (drop-target wiring, payload extraction, snackbar info feedback handling).
+- `ui/src/main/kotlin/com/klogviewer/ui/mvi/KLogViewerIntent.kt` (new drop intents).
+- `ui/src/main/kotlin/com/klogviewer/ui/mvi/KLogViewerEvent.kt` (non-blocking info feedback event type).
+- `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/WorkspaceIntentHandler.kt` (drop validation/routing to existing load flows).
+- `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/KLogViewerViewModel.kt` (workspace info-feedback event wiring and event-flow buffering).
+- `app/src/test/kotlin/com/klogviewer/integration/DragDropImportIntegrationTest.kt` (interaction/regression coverage for 15.10.7 scenarios).
+- `app/src/test/kotlin/com/klogviewer/integration/DragDropImportIntegrationTest.kt` (welcome-tab drop regression: drop while welcome state is visible loads into current tab).
+- `./gradlew :app:test --tests "com.klogviewer.integration.DragDropImportIntegrationTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test :app:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 Closeout and Release Notes
+**Title**: Finalize Sprint 10 Verification and Publish 1.7.0 Release Notes
+**Date/time completed**: 2026-06-03 09:47
+**What was shipped**
+- Completed Sprint 10 verification closure by running regression checks for workspace persistence and live-update consistency and marking `15.10.9` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+- Published new `1.7.0` release notes in `RELEASE_NOTES.md` covering all Sprint 10 UI fixes and workflow updates.
+- Updated `ALL_RELEASES.md` with a new top release-history entry for `1.7.0` while preserving prior `1.6.0` and `1.5.0` history.
+**Key decisions**
+- Framed `1.7.0` scope explicitly around Sprint 10 UI and interaction improvements to keep release messaging aligned with shipped work.
+- Kept release-note structure consistent with prior versions (`Highlights`, `New Features`, `Improvements`, `Fixes and Reliability`, `Upgrade Notes`, `Known Issues`) for continuity.
+- Used existing integration suites (`SessionRestorationTest`, `InterleavingIntegrationTest`, `SftpReloadTest`) as closure evidence for the persistence/live-update regression requirement.
+**Gotchas**
+- Sprint closure was blocked by a documentation state gap (`15.10.9` unchecked) rather than a code/test failure; closeout required synchronized test evidence + task/release-doc updates.
+**Test coverage areas**
+- `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md` (`15.10.9` closure evidence recorded).
+- `RELEASE_NOTES.md` (`1.7.0` sprint-closeout release content).
+- `ALL_RELEASES.md` (new historical entry for `1.7.0`).
+- `./gradlew :app:test --tests "com.klogviewer.integration.SessionRestorationTest" --tests "com.klogviewer.integration.InterleavingIntegrationTest" --tests "com.klogviewer.integration.SftpReloadTest"` (`BUILD SUCCESSFUL`).
