@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.v2.runComposeUiTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.Test
 
 @OptIn(ExperimentalTestApi::class)
@@ -120,6 +121,29 @@ class FilterBarTimeFilterControlsTest {
 
         onNodeWithTag("toolbar_refresh").assertIsDisplayed().performClick()
         assertEquals(1, refreshCalls)
+    }
+
+    @Test
+    fun `time filter preset menu items use compact spacing`() = runComposeUiTest {
+        setupFilterBar()
+
+        onNodeWithTag("time_filter_preset").performClick()
+
+        val fiveMinuteBounds = onNodeWithText("Last 5 minutes", useUnmergedTree = true)
+            .assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot
+        val fifteenMinuteBounds = onNodeWithText("Last 15 minutes", useUnmergedTree = true)
+            .assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot
+        val thirtyMinuteBounds = onNodeWithText("Last 30 minutes", useUnmergedTree = true)
+            .assertIsDisplayed()
+            .fetchSemanticsNode().boundsInRoot
+
+        val firstStep = fifteenMinuteBounds.top - fiveMinuteBounds.top
+        val secondStep = thirtyMinuteBounds.top - fifteenMinuteBounds.top
+
+        assertTrue(firstStep in 1f..36f, "Expected compact spacing between first and second preset items, was $firstStep")
+        assertTrue(secondStep in 1f..36f, "Expected compact spacing between second and third preset items, was $secondStep")
     }
 
     private fun ComposeUiTest.setupFilterBar() {

@@ -8,17 +8,26 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.DropdownMenu
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.*
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.SemanticsPropertyKey
+import androidx.compose.ui.semantics.SemanticsPropertyReceiver
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -26,6 +35,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.domain.model.LogEntry
@@ -33,6 +44,56 @@ import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.theme.LogLevelColors
 import kotlin.math.roundToInt
+
+private val COMPACT_MENU_ITEM_HEIGHT = 30.dp
+private val COMPACT_MENU_ITEM_HORIZONTAL_PADDING = 10.dp
+
+internal const val NO_SOURCE_SHADE_INDEX = -1
+internal val SourceShadeIndexSemanticsKey = SemanticsPropertyKey<Int>("sourceShadeIndex")
+internal var SemanticsPropertyReceiver.sourceShadeIndex by SourceShadeIndexSemanticsKey
+
+private val sourceBackgroundLightShades = generateDarkerGrayShades(
+    argb = 0xFFFAFAFA,
+    count = 50,
+    step = 1
+)
+
+private val sourceBackgroundDarkShades = listOf(
+    Color(0xFF1E1E1E),
+    Color(0xFF242424),
+    Color(0xFF2A2A2A),
+    Color(0xFF303030),
+    Color(0xFF363636),
+    Color(0xFF3C3C3C)
+)
+
+@Composable
+private fun CompactMenuItem(
+    text: String,
+    onClick: () -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val contentAlpha = if (enabled) ContentAlpha.high else ContentAlpha.disabled
+
+    Box(
+        modifier = modifier
+            .widthIn(min = 112.dp)
+            .height(COMPACT_MENU_ITEM_HEIGHT)
+            .clickable(
+                enabled = enabled,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = ripple(),
+                onClick = onClick
+            )
+            .padding(horizontal = COMPACT_MENU_ITEM_HORIZONTAL_PADDING),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        CompositionLocalProvider(LocalContentAlpha provides contentAlpha) {
+            Text(text = text, style = MaterialTheme.typography.body2)
+        }
+    }
+}
 
 @Composable
 fun LogList(
@@ -50,12 +111,22 @@ fun LogList(
     selectedIndices: Set<Int> = emptySet(),
     onEntryClick: (LogEntry) -> Unit = {},
     onToggleSelection: (Int, Boolean, Boolean) -> Unit = { _, _, _ -> },
+    onContextCopy: () -> Unit = {},
+    onContextRefresh: () -> Unit = {},
+    onContextClear: () -> Unit = {},
+    isContextCopyEnabled: Boolean = false,
+    isContextRefreshEnabled: Boolean = true,
+    isContextClearEnabled: Boolean = false,
     onColumnResize: (String, Int) -> Unit = { _, _ -> },
     windowId: String? = null,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
     val verticalScrollState = rememberLazyListState()
+    var contextMenuRowIndex by remember { mutableStateOf<Int?>(null) }
+    var contextMenuOffset by remember { mutableStateOf(Offset.Zero) }
+    var latestSecondaryClickInContainer by remember { mutableStateOf<Offset?>(null) }
+    var logListCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
     LaunchedEffect(logs.size) {
         if (isAutoScrollEnabled && logs.isNotEmpty()) {
@@ -70,12 +141,28 @@ fun LogList(
     val contentWidth = getLogListContentWidth(displayColumns, columnWidths, gutterWidth)
     val logListTag = if (windowId != null) "log_list_$windowId" else "log_list"
 
-    Box(modifier = modifier.fillMaxSize().testTag(logListTag)) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .testTag(logListTag)
+            .pointerInput(Unit) {
+                awaitPointerEventScope {
+                    while (true) {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        if (event.type == PointerEventType.Press && event.buttons.isSecondaryPressed) {
+                            latestSecondaryClickInContainer = event.changes.firstOrNull()?.position
+                        }
+                    }
+                }
+            }
+            .onGloballyPositioned { logListCoordinates = it }
+    ) {
         Row(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.weight(1f)) {
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .testTag("log_horizontal_scroll_container")
                         .horizontalScroll(horizontalScrollState)
                 ) {
                     LogListHeader(
@@ -110,11 +197,17 @@ fun LogList(
                                     logFontStyle = logFontStyle,
                                     isSelected = selectedIndices.contains(index),
                                     onClick = { isShift, isMeta ->
+                                        contextMenuRowIndex = null
                                         if (isShift || isMeta) {
                                             onToggleSelection(index, isShift, isMeta)
                                         } else {
                                             onEntryClick(entry)
                                         }
+                                    },
+                                    menuContainerCoordinates = logListCoordinates,
+                                    onContextMenuRequested = { clickOffset ->
+                                        contextMenuRowIndex = index
+                                        contextMenuOffset = latestSecondaryClickInContainer ?: clickOffset
                                     },
                                     modifier = Modifier.testTag("log_entry_row_$index")
                                 )
@@ -131,6 +224,54 @@ fun LogList(
                 modifier = Modifier.fillMaxHeight().width(8.dp),
                 adapter = rememberScrollbarAdapter(verticalScrollState)
             )
+        }
+
+        if (contextMenuRowIndex != null) {
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            x = contextMenuOffset.x.roundToInt(),
+                            y = contextMenuOffset.y.roundToInt()
+                        )
+                    }
+                    .size(1.dp)
+            ) {
+                DropdownMenu(
+                    expanded = true,
+                    onDismissRequest = { contextMenuRowIndex = null },
+                    offset = DpOffset(0.dp, 0.dp),
+                    modifier = Modifier.testTag("log_context_menu")
+                ) {
+                    CompactMenuItem(
+                        text = "Copy",
+                        onClick = {
+                            contextMenuRowIndex = null
+                            onContextCopy()
+                        },
+                        enabled = isContextCopyEnabled,
+                        modifier = Modifier.testTag("log_context_menu_copy")
+                    )
+                    CompactMenuItem(
+                        text = "Refresh",
+                        onClick = {
+                            contextMenuRowIndex = null
+                            onContextRefresh()
+                        },
+                        enabled = isContextRefreshEnabled,
+                        modifier = Modifier.testTag("log_context_menu_refresh")
+                    )
+                    CompactMenuItem(
+                        text = "Clear",
+                        onClick = {
+                            contextMenuRowIndex = null
+                            onContextClear()
+                        },
+                        enabled = isContextClearEnabled,
+                        modifier = Modifier.testTag("log_context_menu_clear")
+                    )
+                }
+            }
         }
     }
 }
@@ -277,27 +418,73 @@ fun LogEntryRow(
     logFontStyle: TextStyle,
     isSelected: Boolean = false,
     onClick: (Boolean, Boolean) -> Unit = { _, _ -> },
+    menuContainerCoordinates: LayoutCoordinates? = null,
+    onContextMenuRequested: (Offset) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     val logColors = KLogViewerTheme.logColors
+    val rowSourceShadeIndex = getSourceShadeIndex(entry.sourceId, sourceIds)
     val backgroundColor = if (isSelected) {
         MaterialTheme.colors.primary.copy(alpha = 0.15f)
     } else {
-        getSourceBackgroundColor(entry.sourceId, sourceIds, isDarkMode)
+        getSourceBackgroundColor(rowSourceShadeIndex, isDarkMode)
     }
+
+    var rowCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
     Box(
         modifier = modifier
             .width(contentWidth)
             .background(backgroundColor)
-            .semantics { selected = isSelected }
+            .semantics {
+                selected = isSelected
+                sourceShadeIndex = rowSourceShadeIndex
+            }
+            .onGloballyPositioned { rowCoordinates = it }
             .pointerInput(Unit) {
                 awaitPointerEventScope {
+                    var suppressNextReleaseClick = false
+                    var lastKnownPointerPosition: Offset? = null
                     while (true) {
                         val event = awaitPointerEvent()
-                        if (event.type == PointerEventType.Release) {
-                            val modifiers = event.keyboardModifiers
-                            onClick(modifiers.isShiftPressed, modifiers.isMetaPressed || modifiers.isCtrlPressed)
+                        val eventPosition = event.changes.firstOrNull()?.position
+                        val previousEventPosition = event.changes.firstOrNull()?.previousPosition
+                        if (event.type != PointerEventType.Press && eventPosition != null) {
+                            lastKnownPointerPosition = eventPosition
+                        }
+
+                        when {
+                            event.type == PointerEventType.Press && event.buttons.isSecondaryPressed -> {
+                                suppressNextReleaseClick = true
+                                val clickOffset = eventPosition
+                                    ?: previousEventPosition
+                                    ?: lastKnownPointerPosition
+                                    ?: Offset.Zero
+                                val containerCoordinates = menuContainerCoordinates
+                                val currentRowCoordinates = rowCoordinates
+                                val menuPosition = if (containerCoordinates != null && currentRowCoordinates != null) {
+                                    val rowPositionInRoot = currentRowCoordinates.positionInRoot()
+                                    val containerPositionInRoot = containerCoordinates.positionInRoot()
+                                    Offset(
+                                        x = rowPositionInRoot.x + clickOffset.x - containerPositionInRoot.x,
+                                        y = rowPositionInRoot.y + clickOffset.y - containerPositionInRoot.y
+                                    )
+                                } else {
+                                    clickOffset
+                                }
+                                onContextMenuRequested(menuPosition)
+                                event.changes.forEach { it.consume() }
+                                if (eventPosition != null) {
+                                    lastKnownPointerPosition = eventPosition
+                                }
+                            }
+                            event.type == PointerEventType.Release && suppressNextReleaseClick -> {
+                                suppressNextReleaseClick = false
+                            }
+                            event.type == PointerEventType.Release -> {
+                                val modifiers = event.keyboardModifiers
+                                onClick(modifiers.isShiftPressed, modifiers.isMetaPressed || modifiers.isCtrlPressed)
+                            }
                         }
                     }
                 }
@@ -358,11 +545,16 @@ private fun LogGutter(
         if (sourceIds.size > 1) {
             val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
             val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds, isMissing)
-            val tooltip = if (isMissing) "${entry.sourceId} (Missing)" else entry.sourceId ?: "Unknown Source"
-            TooltipWrapper(tooltip = tooltip) {
+            val rowIndex = lineNumber - 1
+            val tooltip = buildSourceBadgeTooltip(entry.sourceId, isMissing)
+            TooltipWrapper(
+                tooltip = tooltip,
+                tooltipTestTag = "log_source_badge_tooltip_$rowIndex"
+            ) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
+                        .testTag("log_source_badge_$rowIndex")
                         .background(badgeColor, CircleShape)
                 )
             }
@@ -506,6 +698,18 @@ private fun getLevelColor(level: LogLevel, colors: LogLevelColors): Color = when
     LogLevel.UNKNOWN -> colors.unknown
 }
 
+private fun buildSourceBadgeTooltip(sourceId: String?, isMissing: Boolean): String {
+    val fileName = sourceId.extractSourceFileName()
+    return if (isMissing) "$fileName (Missing)" else fileName
+}
+
+private fun String?.extractSourceFileName(): String {
+    if (this.isNullOrBlank()) return "Unknown Source"
+    val normalized = this.removeSuffix("/").removeSuffix("\\")
+    val fileName = normalized.substringAfterLast('/').substringAfterLast('\\')
+    return fileName.ifBlank { normalized.ifBlank { "Unknown Source" } }
+}
+
 private fun getSourceBadgeColor(sourceId: String?, sourceIds: List<String>, isMissing: Boolean = false): Color {
     if (sourceId == null || sourceIds.size <= 1) return Color.Transparent
     if (isMissing) return Color.Red
@@ -523,25 +727,44 @@ private fun getSourceBadgeColor(sourceId: String?, sourceIds: List<String>, isMi
     return colors[index % colors.size]
 }
 
-private fun getSourceBackgroundColor(sourceId: String?, sourceIds: List<String>, isDarkMode: Boolean): Color {
-    if (sourceId == null || sourceIds.size <= 1) return Color.Transparent
-    val index = sourceIds.indexOf(sourceId).coerceAtLeast(0)
-    return if (isDarkMode) {
-        val greys = listOf(
-            Color(0xFF1E1E1E),
-            Color(0xFF252525),
-            Color(0xFF2D2D2D),
-            Color(0xFF353535)
-        )
-        greys[index % greys.size]
-    } else {
-        val greys = listOf(
-            Color(0xFFF9F9F9),
-            Color(0xFFF2F2F2),
-            Color(0xFFEBEBEB),
-            Color(0xFFE4E4E4)
-        )
-        greys[index % greys.size]
+internal fun getSourceShadeIndex(sourceId: String?, sourceIds: List<String>): Int {
+    if (sourceId.isNullOrBlank() || sourceIds.size <= 1) {
+        return NO_SOURCE_SHADE_INDEX
     }
+    return stableSourceShadeIndex(sourceId, sourceBackgroundLightShades.size)
+}
+
+internal fun generateDarkerGrayShades(argb: Long, count: Int, step: Int): List<Color> {
+    if (count <= 0) return emptyList()
+
+    val alpha = ((argb ushr 24) and 0xFF).toInt()
+    val red = ((argb ushr 16) and 0xFF).toInt()
+    val green = ((argb ushr 8) and 0xFF).toInt()
+    val blue = (argb and 0xFF).toInt()
+    val baseGray = ((red + green + blue) / 3).coerceIn(0, 255)
+    val safeStep = step.coerceAtLeast(0)
+
+    return (0 until count).map { index ->
+        val darkenedChannel = (baseGray.toLong() - index.toLong() * safeStep.toLong())
+            .coerceIn(0L, 255L)
+            .toInt()
+
+        val shadeArgb = (alpha.toLong() shl 24) or
+            (darkenedChannel.toLong() shl 16) or
+            (darkenedChannel.toLong() shl 8) or
+            darkenedChannel.toLong()
+
+        Color(shadeArgb)
+    }
+}
+
+private fun stableSourceShadeIndex(sourceId: String, paletteSize: Int): Int {
+    return Math.floorMod(sourceId.hashCode(), paletteSize)
+}
+
+private fun getSourceBackgroundColor(sourceShadeIndex: Int, isDarkMode: Boolean): Color {
+    if (sourceShadeIndex == NO_SOURCE_SHADE_INDEX) return Color.Transparent
+    val shades = if (isDarkMode) sourceBackgroundDarkShades else sourceBackgroundLightShades
+    return shades[sourceShadeIndex % shades.size]
 }
 

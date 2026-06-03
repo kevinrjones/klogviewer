@@ -173,9 +173,9 @@ class DashboardIntentTest {
             val activeWindow = viewModel.state.value.activeTab?.activeWindow
             activeWindow?.timeFilterPreset == null &&
                 activeWindow?.timeFilterFrom == "" &&
-                activeWindow?.timeFilterTo == "" &&
-                activeWindow?.timeFilterFromInstant == null &&
-                activeWindow?.timeFilterToInstant == null
+                activeWindow.timeFilterTo == "" &&
+                activeWindow.timeFilterFromInstant == null &&
+                activeWindow.timeFilterToInstant == null
         }
 
         val windowAfterReset = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
@@ -493,7 +493,7 @@ class DashboardIntentTest {
         )
         every { logSource.observeLogs(any(), any()) } returns flow {
             emit(LogUpdate.Initial(entries = initialEntries).right())
-            delay(5)
+            delay(5.milliseconds)
             emit(LogUpdate.Appended(entries = appendedEntries).right())
         }
 

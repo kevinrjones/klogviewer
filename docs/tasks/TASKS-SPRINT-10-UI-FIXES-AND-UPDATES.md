@@ -41,11 +41,11 @@
 - [x] 15.5.4. Route reset through shared filter intent handling so behavior is deterministic.
 
 ### 15.6. Context Menu Support (`2.6`)
-- [ ] 15.6.1. Add right-click context menu support in the log UI.
-- [ ] 15.6.2. Provide `Copy` context action bound to the same selection/clipboard behavior as primary copy flows.
-- [ ] 15.6.3. Provide `Refresh` context action bound to the same behavior as toolbar refresh.
-- [ ] 15.6.4. Provide `Clear` context action bound to the same behavior as time filter clear.
-- [ ] 15.6.5. Reflect enabled/disabled menu states based on current selection and connection/filter context.
+- [x] 15.6.1. Add right-click context menu support in the log UI.
+- [x] 15.6.2. Provide `Copy` context action bound to the same selection/clipboard behavior as primary copy flows.
+- [x] 15.6.3. Provide `Refresh` context action bound to the same behavior as toolbar refresh.
+- [x] 15.6.4. Provide `Clear` context action bound to the same behavior as time filter clear.
+- [x] 15.6.5. Reflect enabled/disabled menu states based on current selection and connection/filter context.
 
 ### 15.7. Drag-and-Drop File Import (`2.7`)
 - [ ] 15.7.1. Accept file drag-and-drop into the current application window.
@@ -54,14 +54,14 @@
 - [ ] 15.7.4. Support multi-file drops and handle invalid/unsupported drops with non-blocking feedback.
 
 ### 15.8. Source Badge Hover Tooltip (`2.8`)
-- [ ] 15.8.1. For multi-source tabs, render a colored source badge/button per log line.
-- [ ] 15.8.2. Show source filename tooltip on hover for each source badge.
-- [ ] 15.8.3. Keep tooltip/source mapping accurate after source add/remove and live updates.
+- [x] 15.8.1. For multi-source tabs, render a colored source badge/button per log line.
+- [x] 15.8.2. Show source filename tooltip on hover for each source badge.
+- [x] 15.8.3. Keep tooltip/source mapping accurate after source add/remove and live updates.
 
 ### 15.9. Per-Source Row Background Differentiation (`2.9`)
-- [ ] 15.9.1. Apply subtle gray background shade variants per source in multi-source tabs.
-- [ ] 15.9.2. Use deterministic source-to-shade mapping so rows remain visually stable across refreshes.
-- [ ] 15.9.3. Preserve readability/contrast with existing severity coloring, selection styling, and theme modes.
+- [x] 15.9.1. Apply subtle gray background shade variants per source in multi-source tabs.
+- [x] 15.9.2. Use deterministic source-to-shade mapping so rows remain visually stable across refreshes.
+- [x] 15.9.3. Preserve readability/contrast with existing severity coloring, selection styling, and theme modes.
 
 ### 15.10. Verification & Testing
 - [x] 15.10.1. Add/extend UI tests for drop-down source management and per-source removal behavior.
@@ -69,7 +69,7 @@
 - [x] 15.10.3. Add/extend UI tests for multi-line selection and clipboard copy behavior.
 - [x] 15.10.4. Add/extend ViewModel tests for toolbar/context `Refresh` parity in connected/disconnected states.
 - [x] 15.10.5. Add/extend filter tests for dropdown `Reset` clear-time-bounds behavior and menu `Clear` reset-to-now parity.
-- [ ] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
+- [x] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
 - [ ] 15.10.7. Add/extend interaction tests for drag-drop to current tab vs tab bar new tab creation.
-- [ ] 15.10.8. Add/extend UI tests for source badge filename tooltips and per-source row background differentiation.
+- [x] 15.10.8. Add/extend UI tests for source badge filename tooltips and per-source row background differentiation.
 - [ ] 15.10.9. Run regression checks for workspace persistence and live-update consistency with Sprint 10 changes.

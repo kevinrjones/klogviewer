@@ -24,6 +24,9 @@
 - Sprint 10 `15.2` completed: active-window log font configuration now supports monospaced font selection, immediate row font-size application, and persisted restore on restart.
 - Sprint 10 `15.3` completed: line selection/copy flow now enforces visible-order clipboard output, shared copy behavior, and disabled copy action when no rows are selected.
 - Sprint 10 `15.5` completed with split clear/reset semantics: `Edit -> Clear` resets active log visibility to `now`, while time dropdown `Reset` clears time bounds to show all logs under current non-time filters/workspace context.
+- Sprint 10 `15.6` completed: log rows now expose a right-click context menu with shared `Copy`, `Refresh`, and `Clear` action flows plus state-driven menu enablement.
+- Sprint 10 `15.8` completed: multi-source log rows now expose colored source badges with filename hover tooltips and stable source-to-tooltip mapping through source list updates.
+- Sprint 10 `15.9` completed: multi-source log rows now apply subtle per-source gray background differentiation using deterministic source-id-based shade mapping that remains stable across refresh and source-list updates.
 - Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
 
 **Key decisions**
@@ -40,6 +43,8 @@
 - Kept copy behavior centralized in the existing `EntryIntentHandler`/ViewModel intent flow and wired menu enablement to active selection state to avoid divergent trigger logic.
 - Split time-filter behavior by trigger: retained `ClearTimeFilter` reset-to-now semantics for `Edit -> Clear` and introduced dropdown `ResetTimeFilter` to clear time bounds, preserving deterministic shared filter handling.
 - Normalized chart x-axis units by smallest bucket duration to preserve proportional temporal gaps while keeping KoalaPlot bar geometry valid (`barWidth` semantics unchanged).
+- Kept source badge tooltip text derived from normalized filename extraction (path/URI tail segment) while leaving source-color mapping tied to active `sourceIds` ordering for deterministic multi-source rendering.
+- Kept per-source row background mapping derived from hashed `sourceId` (instead of active-source index) so visual differentiation remains stable when source ordering changes.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -3157,3 +3162,66 @@ For each sprint/task
 - `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.KoalaPlotChartsFormattingTest" --tests "com.klogviewer.ui.test.DashboardUxHardeningUiTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.6 Context Menu Support
+**Title**: Add Log Row Right-Click Context Menu with Shared Copy/Refresh/Clear Actions
+**Date/time completed**: 2026-06-02 15:50
+**What was shipped**
+- Added right-click context-menu support in `LogList` row rendering with `Copy`, `Refresh`, and `Clear` actions.
+- Wired context-menu actions from `KLogViewerScreen` to the existing shared intents: `KLogViewerIntent.CopySelected`, `KLogViewerIntent.RefreshConnection`, and `KLogViewerIntent.ClearTimeFilter`.
+- Added state-driven context action enablement derived from active-window selection/source/time-filter context.
+- Added UI test helpers in `LogListRobot` for right-click/context-menu interactions and assertions.
+- Added `LogListContextMenuTest` coverage for action invocation and disabled-state behavior.
+- Updated Sprint 10 checklist progress by marking `15.6.1`–`15.6.5` and `15.10.6` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Reused existing ViewModel intent flows for all context actions to guarantee parity with toolbar/menu/keyboard behavior and avoid divergent logic.
+- Kept context-menu state local to the log row interaction model (`contextMenuRowIndex`) to preserve existing row selection behavior while supporting secondary-click handling.
+**Gotchas**
+- Initial UI test timeouts were caused by robot scoping expecting a `window_*` ancestor when testing `LogList` directly; fixed by using unscoped `logList` robot access in component-level context-menu tests.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/LogList.kt` (secondary-click handling, context-menu actions, enablement wiring).
+- `ui/src/main/kotlin/com/klogviewer/ui/components/KLogViewerScreen.kt` (intent parity wiring for context actions).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/LogListContextMenuTest.kt` (context action invocation + disabled states).
+- `ui/src/test/kotlin/com/klogviewer/ui/robot/LogListRobot.kt` (right-click/context-menu robot operations).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.LogListContextMenuTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.8 Source Badge Hover Tooltip
+**Title**: Add Filename-Based Hover Tooltips for Multi-Source Log Badges
+**Date/time completed**: 2026-06-02 21:44
+**What was shipped**
+- Updated `LogList` source badge rendering to attach deterministic badge/tooltip test tags per visible row in multi-source mode.
+- Changed source badge tooltip content to show source filenames derived from source paths/URIs, including explicit missing-source suffix handling.
+- Preserved source-badge color behavior tied to active `sourceIds` so tooltip/badge mapping remains accurate after source add/remove and live updates.
+- Added `LogListSourceBadgeTooltipTest` coverage for filename tooltip visibility and post-update mapping behavior.
+- Updated Sprint 10 checklist progress by marking `15.8.1`–`15.8.3` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Implemented tooltip changes at the shared `LogGutter` rendering seam to avoid divergent per-screen behavior.
+- Used row-index-based test tags scoped to rendered list order for stable UI interaction assertions.
+**Gotchas**
+- Hover-driven desktop tooltip tests were sensitive to repeated pointer transitions; test assertions were narrowed to deterministic post-update checks to reduce flakiness.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/LogList.kt` (badge tooltip content + deterministic badge/tooltip tags).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/LogListSourceBadgeTooltipTest.kt` (filename tooltip visibility + add/remove/update mapping regression).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest" --tests "com.klogviewer.ui.test.LogListContextMenuTest" --tests "com.klogviewer.ui.test.LogColumnResizeTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.9 Per-Source Row Background Differentiation
+**Title**: Add Deterministic Per-Source Gray Row Shading for Multi-Source Tabs
+**Date/time completed**: 2026-06-03 06:49
+**What was shipped**
+- Updated `LogList` row rendering to apply subtle gray background variants per source for multi-source tabs, while preserving existing selection-highlight precedence.
+- Replaced index-order-based row shading with deterministic `sourceId` hash mapping so a source keeps the same shade across refreshes and source-list reorder/add/remove operations.
+- Exposed row shade index via semantics (`sourceShadeIndex`) and retained existing source badge tooltip behavior.
+- Extended `LogListSourceBadgeTooltipTest` to verify tooltip mapping and stable per-source row shade behavior after live source updates.
+- Added focused unit coverage in `LogListSourceShadeIndexTest` for single-source no-shade behavior and deterministic source-shade stability.
+- Updated Sprint 10 checklist progress by marking `15.9.1`–`15.9.3` and `15.10.8` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Introduced a hash-based shade index helper (`getSourceShadeIndex`) to decouple row color identity from mutable `sourceIds` list ordering.
+- Kept palette-driven gray shades theme-specific (light/dark) and subtle to avoid reducing severity text readability.
+**Gotchas**
+- Compose semantics property naming initially conflicted with a local variable name in `LogEntryRow`; resolved by renaming the local shade-index variable.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/LogList.kt` (deterministic row shade mapping + semantics metadata).
+- `ui/src/test/kotlin/com/klogviewer/ui/components/LogListSourceShadeIndexTest.kt` (source-shade mapping unit coverage).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/LogListSourceBadgeTooltipTest.kt` (tooltip + row-shade stability through live updates).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.LogList*" --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest"` (`BUILD SUCCESSFUL`).

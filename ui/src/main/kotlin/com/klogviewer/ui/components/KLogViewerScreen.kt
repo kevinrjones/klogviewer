@@ -659,7 +659,7 @@ private fun LogWindowItem(
                         Text(
                             text = "Logs",
                             fontWeight = if (window.workspaceMode == WorkspaceMode.LOGS) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                     }
                     TextButton(
@@ -669,7 +669,7 @@ private fun LogWindowItem(
                         Text(
                             text = "Dashboard",
                             fontWeight = if (window.workspaceMode == WorkspaceMode.DASHBOARD) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 12.sp
+                            fontSize = 13.sp
                         )
                     }
 
@@ -776,6 +776,9 @@ private fun LogWorkspace(
     viewModel: KLogViewerViewModel
 ) {
     val dashboardContent = logTimeFrequencyContent(window.dashboardDataState)
+    val isCopyActionEnabled = window.selectedIndices.isNotEmpty()
+    val isRefreshActionEnabled = window.sourceIds.isNotEmpty()
+    val isClearActionEnabled = true
 
     Column(modifier = Modifier.fillMaxSize()) {
         dashboardContent?.let { content ->
@@ -836,6 +839,30 @@ private fun LogWorkspace(
                     viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
                 }
             },
+            onContextCopy = {
+                if (isWindowActive) {
+                    viewModel.handleIntent(KLogViewerIntent.CopySelected)
+                } else {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+            },
+            onContextRefresh = {
+                if (isWindowActive) {
+                    viewModel.handleIntent(KLogViewerIntent.RefreshConnection)
+                } else {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+            },
+            onContextClear = {
+                if (isWindowActive) {
+                    viewModel.handleIntent(KLogViewerIntent.ClearTimeFilter)
+                } else {
+                    viewModel.handleIntent(KLogViewerIntent.SwitchWindow(window.id))
+                }
+            },
+            isContextCopyEnabled = isCopyActionEnabled,
+            isContextRefreshEnabled = isRefreshActionEnabled,
+            isContextClearEnabled = isClearActionEnabled,
             onColumnResize = { column, width ->
                 viewModel.handleIntent(
                     KLogViewerIntent.UpdateColumnWidth(
@@ -910,9 +937,6 @@ private fun LogTimeFrequencyPanel(
             KoalaPlotTimeSeriesChart(
                 buckets = content.timeSeries,
                 bucketSize = content.bucketSize,
-                selectedBucketFrom = content.selectedBucketFrom,
-                selectedRangeFrom = activeTimeFilterFrom,
-                selectedRangeTo = activeTimeFilterTo,
                 onBucketSelect = onBucketSelect,
                 onBucketRangeSelect = onBucketRangeSelect,
                 chartHeight = 120.dp
@@ -1166,9 +1190,6 @@ private fun DashboardContent(
             KoalaPlotTimeSeriesChart(
                 buckets = content.timeSeries,
                 bucketSize = content.bucketSize,
-                selectedBucketFrom = content.selectedBucketFrom,
-                selectedRangeFrom = activeTimeFilterFrom,
-                selectedRangeTo = activeTimeFilterTo,
                 onBucketSelect = onBucketSelect,
                 onBucketRangeSelect = onBucketRangeSelect
             )
