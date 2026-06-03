@@ -34,8 +34,8 @@
 - [x] 13.2.11. Restore S3 log sources and connection state on application startup
 - [x] 13.2.12. Support adding S3 logs to existing workspace via "+" button dropdown
 
-### 13.3. Network Appenders (Moved to Sprint 14)
-- [ ] The full 13.3 scope is now tracked in `docs/tasks/TASKS-SPRINT-14-NETWORK-LOG-ADAPTERS.md`
+### 13.3. Network Appenders (Moved to Sprint 15)
+- [ ] The full 13.3 scope is now tracked in `docs/tasks/TASKS-SPRINT-15-NETWORK-LOG-ADAPTERS.md`
 
 ### 13.4. Connection Manager
 - [x] 13.4.1. Build a UI for managing saved connections and credentials
@@ -58,6 +58,6 @@
 - [x] 13.5.1. Unit tests for `SftpLogSource` using a mock SSH server
 - [x] 13.5.2. Unit tests for `S3LogSource` with S3 mocks
 - [ ] 13.5.3. Integration tests for S3 directory monitoring and deletion detection
-- [ ] 13.5.4. (Moved to Sprint 14) Integration tests for network log reception and multi-stream interleaving
-- [ ] 13.5.5. (Moved to Sprint 14) Performance testing for high-volume network log streams and buffer limits
+- [ ] 13.5.4. (Moved to Sprint 15) Integration tests for network log reception and multi-stream interleaving
+- [ ] 13.5.5. (Moved to Sprint 15) Performance testing for high-volume network log streams and buffer limits
 - [ ] 13.5.6. Security audit of credential storage implementation
