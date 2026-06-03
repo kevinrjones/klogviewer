@@ -25,6 +25,7 @@
 - Sprint 10 `15.3` completed: line selection/copy flow now enforces visible-order clipboard output, shared copy behavior, and disabled copy action when no rows are selected.
 - Sprint 10 `15.5` completed with split clear/reset semantics: `Edit -> Clear` resets active log visibility to `now`, while time dropdown `Reset` clears time bounds to show all logs under current non-time filters/workspace context.
 - Sprint 10 `15.6` completed: log rows now expose a right-click context menu with shared `Copy`, `Refresh`, and `Clear` action flows plus state-driven menu enablement.
+- Sprint 10 `15.8` completed: multi-source log rows now expose colored source badges with filename hover tooltips and stable source-to-tooltip mapping through source list updates.
 - Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
 
 **Key decisions**
@@ -41,6 +42,7 @@
 - Kept copy behavior centralized in the existing `EntryIntentHandler`/ViewModel intent flow and wired menu enablement to active selection state to avoid divergent trigger logic.
 - Split time-filter behavior by trigger: retained `ClearTimeFilter` reset-to-now semantics for `Edit -> Clear` and introduced dropdown `ResetTimeFilter` to clear time bounds, preserving deterministic shared filter handling.
 - Normalized chart x-axis units by smallest bucket duration to preserve proportional temporal gaps while keeping KoalaPlot bar geometry valid (`barWidth` semantics unchanged).
+- Kept source badge tooltip text derived from normalized filename extraction (path/URI tail segment) while leaving source-color mapping tied to active `sourceIds` ordering for deterministic multi-source rendering.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -3181,3 +3183,22 @@ For each sprint/task
 - `ui/src/test/kotlin/com/klogviewer/ui/robot/LogListRobot.kt` (right-click/context-menu robot operations).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.LogListContextMenuTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 15.8 Source Badge Hover Tooltip
+**Title**: Add Filename-Based Hover Tooltips for Multi-Source Log Badges
+**Date/time completed**: 2026-06-02 21:44
+**What was shipped**
+- Updated `LogList` source badge rendering to attach deterministic badge/tooltip test tags per visible row in multi-source mode.
+- Changed source badge tooltip content to show source filenames derived from source paths/URIs, including explicit missing-source suffix handling.
+- Preserved source-badge color behavior tied to active `sourceIds` so tooltip/badge mapping remains accurate after source add/remove and live updates.
+- Added `LogListSourceBadgeTooltipTest` coverage for filename tooltip visibility and post-update mapping behavior.
+- Updated Sprint 10 checklist progress by marking `15.8.1`–`15.8.3` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+**Key decisions**
+- Implemented tooltip changes at the shared `LogGutter` rendering seam to avoid divergent per-screen behavior.
+- Used row-index-based test tags scoped to rendered list order for stable UI interaction assertions.
+**Gotchas**
+- Hover-driven desktop tooltip tests were sensitive to repeated pointer transitions; test assertions were narrowed to deterministic post-update checks to reduce flakiness.
+**Test coverage areas**
+- `ui/src/main/kotlin/com/klogviewer/ui/components/LogList.kt` (badge tooltip content + deterministic badge/tooltip tags).
+- `ui/src/test/kotlin/com/klogviewer/ui/test/LogListSourceBadgeTooltipTest.kt` (filename tooltip visibility + add/remove/update mapping regression).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest" --tests "com.klogviewer.ui.test.LogListContextMenuTest" --tests "com.klogviewer.ui.test.LogColumnResizeTest"` (`BUILD SUCCESSFUL`).

@@ -54,9 +54,9 @@
 - [ ] 15.7.4. Support multi-file drops and handle invalid/unsupported drops with non-blocking feedback.
 
 ### 15.8. Source Badge Hover Tooltip (`2.8`)
-- [ ] 15.8.1. For multi-source tabs, render a colored source badge/button per log line.
-- [ ] 15.8.2. Show source filename tooltip on hover for each source badge.
-- [ ] 15.8.3. Keep tooltip/source mapping accurate after source add/remove and live updates.
+- [x] 15.8.1. For multi-source tabs, render a colored source badge/button per log line.
+- [x] 15.8.2. Show source filename tooltip on hover for each source badge.
+- [x] 15.8.3. Keep tooltip/source mapping accurate after source add/remove and live updates.
 
 ### 15.9. Per-Source Row Background Differentiation (`2.9`)
 - [ ] 15.9.1. Apply subtle gray background shade variants per source in multi-source tabs.

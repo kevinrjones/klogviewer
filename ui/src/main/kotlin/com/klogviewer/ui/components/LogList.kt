@@ -520,11 +520,16 @@ private fun LogGutter(
         if (sourceIds.size > 1) {
             val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
             val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds, isMissing)
-            val tooltip = if (isMissing) "${entry.sourceId} (Missing)" else entry.sourceId ?: "Unknown Source"
-            TooltipWrapper(tooltip = tooltip) {
+            val rowIndex = lineNumber - 1
+            val tooltip = buildSourceBadgeTooltip(entry.sourceId, isMissing)
+            TooltipWrapper(
+                tooltip = tooltip,
+                tooltipTestTag = "log_source_badge_tooltip_$rowIndex"
+            ) {
                 Box(
                     modifier = Modifier
                         .size(8.dp)
+                        .testTag("log_source_badge_$rowIndex")
                         .background(badgeColor, CircleShape)
                 )
             }
@@ -666,6 +671,18 @@ private fun getLevelColor(level: LogLevel, colors: LogLevelColors): Color = when
     LogLevel.ERROR -> colors.error
     LogLevel.FATAL -> colors.fatal
     LogLevel.UNKNOWN -> colors.unknown
+}
+
+private fun buildSourceBadgeTooltip(sourceId: String?, isMissing: Boolean): String {
+    val fileName = sourceId.extractSourceFileName()
+    return if (isMissing) "$fileName (Missing)" else fileName
+}
+
+private fun String?.extractSourceFileName(): String {
+    if (this.isNullOrBlank()) return "Unknown Source"
+    val normalized = this.removeSuffix("/").removeSuffix("\\")
+    val fileName = normalized.substringAfterLast('/').substringAfterLast('\\')
+    return fileName.ifBlank { normalized.ifBlank { "Unknown Source" } }
 }
 
 private fun getSourceBadgeColor(sourceId: String?, sourceIds: List<String>, isMissing: Boolean = false): Color {
