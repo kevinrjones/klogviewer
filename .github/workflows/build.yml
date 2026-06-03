@@ -29,6 +29,11 @@ jobs:
             package-task: packageDeb
             dist-path: app/build/compose/binaries/main/app
             installer-path: app/build/compose/binaries/main/deb/*.deb
+          - os: ubuntu-24.04-arm
+            artifact-suffix: linux-arm64
+            package-task: packageDeb
+            dist-path: app/build/compose/binaries/main/app
+            installer-path: app/build/compose/binaries/main/deb/*.deb
           - os: windows-latest
             artifact-suffix: windows
             package-task: packageMsi
@@ -55,14 +60,14 @@ jobs:
       run: chmod +x gradlew
 
     - name: Setup Xvfb (Linux only)
-      if: matrix.os == 'ubuntu-latest'
+      if: startsWith(matrix.os, 'ubuntu')
       run: |
         sudo apt-get update
         sudo apt-get install -y xvfb libegl1 libgles2 libgl1
 
     - name: Run Tests
       run: |
-        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+        if [[ "${{ matrix.os }}" == ubuntu* ]]; then
           xvfb-run ./gradlew test
         else
           ./gradlew test
@@ -70,7 +75,7 @@ jobs:
 
     - name: Run UI Tests
       run: |
-        if [ "${{ matrix.os }}" == "ubuntu-latest" ]; then
+        if [[ "${{ matrix.os }}" == ubuntu* ]]; then
           xvfb-run ./gradlew :ui:desktopTest
         else
           ./gradlew :ui:desktopTest
