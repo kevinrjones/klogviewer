@@ -3254,3 +3254,22 @@ For each sprint/task
 - `app/src/test/kotlin/com/klogviewer/integration/DragDropImportIntegrationTest.kt` (welcome-tab drop regression: drop while welcome state is visible loads into current tab).
 - `./gradlew :app:test --tests "com.klogviewer.integration.DragDropImportIntegrationTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test :app:test` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 10 Closeout and Release Notes
+**Title**: Finalize Sprint 10 Verification and Publish 1.7.0 Release Notes
+**Date/time completed**: 2026-06-03 09:47
+**What was shipped**
+- Completed Sprint 10 verification closure by running regression checks for workspace persistence and live-update consistency and marking `15.10.9` complete in `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
+- Published new `1.7.0` release notes in `RELEASE_NOTES.md` covering all Sprint 10 UI fixes and workflow updates.
+- Updated `ALL_RELEASES.md` with a new top release-history entry for `1.7.0` while preserving prior `1.6.0` and `1.5.0` history.
+**Key decisions**
+- Framed `1.7.0` scope explicitly around Sprint 10 UI and interaction improvements to keep release messaging aligned with shipped work.
+- Kept release-note structure consistent with prior versions (`Highlights`, `New Features`, `Improvements`, `Fixes and Reliability`, `Upgrade Notes`, `Known Issues`) for continuity.
+- Used existing integration suites (`SessionRestorationTest`, `InterleavingIntegrationTest`, `SftpReloadTest`) as closure evidence for the persistence/live-update regression requirement.
+**Gotchas**
+- Sprint closure was blocked by a documentation state gap (`15.10.9` unchecked) rather than a code/test failure; closeout required synchronized test evidence + task/release-doc updates.
+**Test coverage areas**
+- `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md` (`15.10.9` closure evidence recorded).
+- `RELEASE_NOTES.md` (`1.7.0` sprint-closeout release content).
+- `ALL_RELEASES.md` (new historical entry for `1.7.0`).
+- `./gradlew :app:test --tests "com.klogviewer.integration.SessionRestorationTest" --tests "com.klogviewer.integration.InterleavingIntegrationTest" --tests "com.klogviewer.integration.SftpReloadTest"` (`BUILD SUCCESSFUL`).

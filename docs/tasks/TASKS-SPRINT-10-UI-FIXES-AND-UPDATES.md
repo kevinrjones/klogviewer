@@ -72,4 +72,4 @@
 - [x] 15.10.6. Add/extend UI tests for context menu actions (`Copy`, `Refresh`, `Clear`) and enablement states.
 - [x] 15.10.7. Add/extend interaction tests for drag-drop to current tab vs tab bar new tab creation.
 - [x] 15.10.8. Add/extend UI tests for source badge filename tooltips and per-source row background differentiation.
-- [ ] 15.10.9. Run regression checks for workspace persistence and live-update consistency with Sprint 10 changes.
+- [x] 15.10.9. Run regression checks for workspace persistence and live-update consistency with Sprint 10 changes.
