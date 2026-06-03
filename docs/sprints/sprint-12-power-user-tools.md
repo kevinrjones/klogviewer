@@ -1,4 +1,4 @@
-# Sprint 11: Power User Workflows & Persistence
+# Sprint 12: Power User Workflows & Persistence
 
 ## 1. Goal
 Optimize the developer experience by providing advanced querying capabilities, context-rich workflows, and workspace persistence.

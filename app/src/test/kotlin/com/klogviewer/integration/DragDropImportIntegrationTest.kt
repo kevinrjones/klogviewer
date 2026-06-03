@@ -53,6 +53,7 @@ class DragDropImportIntegrationTest {
         assertEquals(listOf(file1.absolutePath, file2.absolutePath), sourceIds)
     }
 
+    @Suppress("JUnitMalformedDeclaration")
     @Test
     fun `dropping files while tab shows welcome page loads files into the same tab window`() = runBlocking {
         val initialTabId = viewModel.state.value.activeTabId

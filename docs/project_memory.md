@@ -3273,3 +3273,19 @@ For each sprint/task
 - `RELEASE_NOTES.md` (`1.7.0` sprint-closeout release content).
 - `ALL_RELEASES.md` (new historical entry for `1.7.0`).
 - `./gradlew :app:test --tests "com.klogviewer.integration.SessionRestorationTest" --tests "com.klogviewer.integration.InterleavingIntegrationTest" --tests "com.klogviewer.integration.SftpReloadTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 11 Detekt Planning and Sprint Renumbering
+**Title**: Add Sprint 11 Detekt Plan and Shift Downstream Sprint Numbers
+**Date/time completed**: 2026-06-03 10:09
+**What was shipped**
+- Added a new sprint plan document `docs/sprints/sprint-11-detekt-and-code-quality.md` defining Detekt adoption scope, CI/local workflow integration, and quality-gate rollout.
+- Added a new task checklist `docs/tasks/TASKS-SPRINT-11-DETEKT-AND-WORKFLOW-INTEGRATION.md` with actionable setup, rule/baseline, CI, workflow, and governance tasks.
+- Incremented downstream sprint documentation numbering by one (`Sprint 11`→`12`, `12`→`13`, `13`→`14`, `14`→`15`) including filename shifts for sprint plan/task files.
+- Updated active cross-document references (`README.md`, `docs/CONNECTIVITY-DESIGN.md`, and `docs/tasks/TASKS-SPRINT-8-CONNECTIVITY.md`) to point to Sprint 15 network adapter artifacts after renumbering.
+**Key decisions**
+- Chose incremental Detekt rollout with explicit baseline management to avoid blocking delivery on historic findings.
+- Preserved legacy connectivity task IDs (`13.3.x`, `13.5.x`) while updating sprint labels/references to keep historical cross-document mappings stable.
+**Gotchas**
+- Historical references inside prior `docs/project_memory.md` entries intentionally retain then-current sprint/file names and were not rewritten.
+**Test coverage areas**
+- Documentation-only change set; validated by targeted reference checks across sprint/task/readme/design docs.
