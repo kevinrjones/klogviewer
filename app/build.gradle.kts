@@ -14,7 +14,7 @@ dependencies {
     runtimeOnly(libs.logback.classic)
     runtimeOnly(libs.logstash.logback.encoder)
     implementation(compose.desktop.currentOs)
-    
+
     testImplementation(libs.strikt.core)
     testImplementation(libs.mockk)
     testImplementation(libs.cucumber.java)
@@ -30,9 +30,25 @@ compose.desktop {
     application {
         mainClass = "MainKt"
         nativeDistributions {
-            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi, org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
+            targetFormats(
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb
+            )
             packageName = "KLogViewer"
             packageVersion = "1.0.0"
+
+            macOS {
+                iconFile.set(project.file("src/main/resources/icons/klogviewer.icns"))
+            }
+
+            windows {
+                iconFile.set(project.file("src/main/resources/icons/klogviewer.ico"))
+            }
+
+            linux {
+                iconFile.set(project.file("src/main/resources/icons/klogviewer.png"))
+            }
         }
     }
 }

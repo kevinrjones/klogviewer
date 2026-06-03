@@ -14,6 +14,7 @@ import com.klogviewer.core.source.*
 import com.klogviewer.domain.model.WindowStatePreferences
 import com.klogviewer.domain.repository.PreferencesSaveResult
 import com.klogviewer.ui.components.KLogViewerScreen
+import com.klogviewer.ui.menu.menuShortcutSetForOs
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -61,6 +62,7 @@ fun main() {
 
         val state by viewModel.state.collectAsState()
         val canCopySelection = state.activeTab?.activeWindow?.selectedIndices?.isNotEmpty() == true
+        val menuShortcuts = remember { menuShortcutSetForOs() }
 
         fun saveAndExit() {
             val currentPrefs = prefsRepository.load()
@@ -127,8 +129,8 @@ fun main() {
                     }
                     
                     Separator()
-                    Item("New Tab", shortcut = KeyShortcut(Key.N, meta = true), onClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) })
-                    Item("Close Tab", shortcut = KeyShortcut(Key.W, meta = true), onClick = { 
+                    Item("New Tab", shortcut = menuShortcuts.newTab, onClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) })
+                    Item("Close Tab", shortcut = menuShortcuts.closeTab, onClick = {
                         state.activeTabId?.let { viewModel.handleIntent(KLogViewerIntent.CloseTab(it)) }
                     })
                     Separator()
@@ -138,7 +140,7 @@ fun main() {
                     Item(
                         "Copy",
                         enabled = canCopySelection,
-                        shortcut = KeyShortcut(Key.C, meta = true),
+                        shortcut = menuShortcuts.copy,
                         onClick = { viewModel.handleIntent(KLogViewerIntent.CopySelected) }
                     )
                     Item("Font...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowFontDialog) })
