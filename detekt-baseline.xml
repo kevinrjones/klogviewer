@@ -2,708 +2,596 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:HeuristicProbe.kt$HeuristicProbe$"body" in keys &amp;&amp; "message" !in keys &amp;&amp; "msg" !in keys &amp;&amp; "content" !in keys</ID>
-    <ID>ComplexCondition:KLogViewerScreen.kt$pendingDialog == KLogViewerState.DialogType.OPEN || pendingDialog == KLogViewerState.DialogType.OPEN_DIRECTORY || pendingDialog == KLogViewerState.DialogType.ADD || pendingDialog == KLogViewerState.DialogType.ADD_DIRECTORY</ID>
-    <ID>ComplexCondition:WorkspaceLogLoader.kt$WorkspaceLogLoader$!path.startsWith("sftp://") &amp;&amp; !path.startsWith("s3://") &amp;&amp; !dir.startsWith("sftp://") &amp;&amp; !dir.startsWith("s3://")</ID>
-    <ID>ComplexCondition:WorkspaceLogLoader.kt$WorkspaceLogLoader$path.startsWith("sftp://") || path.startsWith("s3://") || (localFileSystem.exists(path) &amp;&amp; localFileSystem.isDirectory(path))</ID>
-    <ID>CyclomaticComplexMethod:DialogIntentHandler.kt$DialogIntentHandler$fun handle(intent: KLogViewerIntent.DialogIntent)</ID>
-    <ID>CyclomaticComplexMethod:FileLogSource.kt$FileLogSource$override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>CyclomaticComplexMethod:FilterBar.kt$@Composable fun FilterBar( filterQueries: List&lt;String&gt;, onAddQuery: (String) -&gt; Unit, onRemoveQuery: (String) -&gt; Unit, onClearQueries: () -&gt; Unit, onOpenFileClick: () -&gt; Unit, onSftpClick: () -&gt; Unit, onS3Click: () -&gt; Unit, onAddFileClick: () -&gt; Unit, onAddDirectoryClick: () -&gt; Unit, onAddSftpClick: () -&gt; Unit, onAddS3Click: () -&gt; Unit, onToggleTheme: () -&gt; Unit, onToggleSidebar: () -&gt; Unit, isReversed: Boolean, onToggleSortOrder: () -&gt; Unit, isAutoScrollEnabled: Boolean, onToggleAutoScroll: () -&gt; Unit, showAnsiColors: Boolean, onToggleAnsiColors: () -&gt; Unit, isConnected: Boolean, onToggleConnection: () -&gt; Unit, onRefresh: () -&gt; Unit, onSplitClick: () -&gt; Unit, timeFilterFrom: String, timeFilterTo: String, timeFilterPreset: TimeRangePreset?, timeFilterValidationMessage: String?, onApplyTimeFilterPreset: (TimeRangePreset) -&gt; Unit, onClearTimeFilter: () -&gt; Unit, matchesCount: Int, totalCount: Int, modifier: Modifier = Modifier )</ID>
-    <ID>CyclomaticComplexMethod:FilterIntentHandler.kt$FilterIntentHandler$fun handle(intent: KLogViewerIntent.FilterIntent)</ID>
-    <ID>CyclomaticComplexMethod:HeuristicProbe.kt$HeuristicProbe$private fun detectJsonMapping(lines: List&lt;String&gt;): JsonMapping</ID>
-    <ID>CyclomaticComplexMethod:KLogViewerScreen.kt$@Composable private fun AbComparisonSection( comparisonState: DashboardComparisonState, selectedFrequencyField: String?, frequencyThreshold: Int, frequencyTopN: Int, frequencyCardinalityLimit: Int, onCompareBaselineFromChange: (String) -&gt; Unit, onCompareBaselineToChange: (String) -&gt; Unit, onCompareComparisonFromChange: (String) -&gt; Unit, onCompareComparisonToChange: (String) -&gt; Unit, onRunComparison: () -&gt; Unit, onClearComparison: () -&gt; Unit, onCompareLevelSelect: (LogLevel) -&gt; Unit, onCompareFrequencyValueSelect: (String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>CyclomaticComplexMethod:KLogViewerScreen.kt$@Composable private fun DashboardContent( content: DashboardDataState.Content, activeTimeFilterFrom: java.time.Instant?, activeTimeFilterTo: java.time.Instant?, onBucketSizeChange: (DashboardBucketSize) -&gt; Unit, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit, onLevelSelect: (DashboardLevelSlice) -&gt; Unit, onFrequencyFieldChange: (String) -&gt; Unit, onFrequencyTopNChange: (Int) -&gt; Unit, onFrequencyThresholdChange: (Int) -&gt; Unit, onFrequencyCardinalityLimitChange: (Int) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, onCompareBaselineFromChange: (String) -&gt; Unit, onCompareBaselineToChange: (String) -&gt; Unit, onCompareComparisonFromChange: (String) -&gt; Unit, onCompareComparisonToChange: (String) -&gt; Unit, onRunComparison: () -&gt; Unit, onClearComparison: () -&gt; Unit, onCompareLevelSelect: (LogLevel) -&gt; Unit, onCompareFrequencyValueSelect: (String) -&gt; Unit, onClearSelections: () -&gt; Unit )</ID>
-    <ID>CyclomaticComplexMethod:KLogViewerScreen.kt$@Composable private fun DialogHandler( state: KLogViewerState, viewModel: KLogViewerViewModel, dialogProvider: DialogProvider )</ID>
-    <ID>CyclomaticComplexMethod:KLogViewerScreen.kt$@Composable private fun LogWindowItem( window: LogWindow, isWindowActive: Boolean, showSplitIndicator: Boolean, state: KLogViewerState, viewModel: KLogViewerViewModel, onDropFilesOnLogView: (List&lt;String&gt;) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>CyclomaticComplexMethod:KLogViewerViewModel.kt$KLogViewerViewModel$private fun handleDashboardIntent(intent: KLogViewerIntent.DashboardIntent)</ID>
-    <ID>CyclomaticComplexMethod:KoalaPlotCharts.kt$@OptIn(ExperimentalKoalaPlotApi::class, ExperimentalFoundationApi::class) @Composable fun KoalaPlotTimeSeriesChart( buckets: List&lt;DashboardTimeBucket&gt;, bucketSize: DashboardBucketSize, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit = { fromBucket, _ -&gt; onBucketSelect(fromBucket) }, modifier: Modifier = Modifier, chartHeight: Dp = 180.dp )</ID>
-    <ID>CyclomaticComplexMethod:LogHighlighter.kt$LogHighlighter$private fun updateStyleFromAnsi(currentStyle: SpanStyle, codes: String, isDarkMode: Boolean): SpanStyle</ID>
-    <ID>CyclomaticComplexMethod:LogList.kt$@Composable fun LogEntryRow( entry: LogEntry, lineNumber: Int, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, contentWidth: Dp, gutterWidth: Dp, showAnsiColors: Boolean = true, sourceIds: List&lt;String&gt; = emptyList(), missingSourceIds: Set&lt;String&gt; = emptySet(), columns: List&lt;String&gt;, columnWidths: Map&lt;String, Int&gt;, logFontStyle: TextStyle, isSelected: Boolean = false, onClick: (Boolean, Boolean) -&gt; Unit = { _, _ -&gt; }, menuContainerCoordinates: LayoutCoordinates? = null, onContextMenuRequested: (Offset) -&gt; Unit = {}, modifier: Modifier = Modifier )</ID>
-    <ID>CyclomaticComplexMethod:Main.kt$fun main()</ID>
-    <ID>CyclomaticComplexMethod:RecentItemsDialog.kt$@Composable fun RecentItemsDialog( recentFiles: List&lt;String&gt;, recentDirectories: List&lt;String&gt;, localFileSystem: LocalFileSystem, onSelect: (String) -&gt; Unit, onRemoveItem: (String) -&gt; Unit, onClearMissing: () -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>CyclomaticComplexMethod:S3ConnectionDialog.kt$@Composable fun S3ConnectionDialog( savedConnections: List&lt;S3Config&gt; = emptyList(), onConnect: (config: S3Config) -&gt; Unit, onSave: (S3Config) -&gt; Unit, onDelete: (String) -&gt; Unit, onBrowse: (config: S3Config) -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>CyclomaticComplexMethod:S3LogSource.kt$S3LogSource$override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>CyclomaticComplexMethod:SftpConnectionDialog.kt$@Composable fun SftpConnectionDialog( savedConnections: List&lt;SftpConfig&gt; = emptyList(), onConnect: (name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, onSave: (SftpConfig) -&gt; Unit, onDelete: (String) -&gt; Unit, onBrowse: (host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, onDismiss: () -&gt; Unit, dialogProvider: DialogProvider = AwtDialogProvider() )</ID>
-    <ID>CyclomaticComplexMethod:SftpLogSource.kt$SftpLogSource$override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>CyclomaticComplexMethod:SimpleLogParser.kt$SimpleLogParser$override fun parse(line: String): Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
-    <ID>CyclomaticComplexMethod:TabWindowIntentHandler.kt$TabWindowIntentHandler$fun handle(intent: KLogViewerIntent.TabWindowIntent)</ID>
-    <ID>CyclomaticComplexMethod:TemplateLogParser.kt$TemplateLogParser$override fun parse(line: String): Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
-    <ID>CyclomaticComplexMethod:WorkspaceLogLoader.kt$WorkspaceLogLoader$fun filterRedundantPaths(paths: List&lt;String&gt;): List&lt;String&gt;</ID>
-    <ID>FunctionNaming:FileSelector.kt$@Composable fun FileSelector( path: String, onLoadClick: (String) -&gt; Unit, onAddToWorkspaceClick: (String) -&gt; Unit, onBrowseClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:FilterBar.kt$@Composable fun FilterBar( filterQueries: List&lt;String&gt;, onAddQuery: (String) -&gt; Unit, onRemoveQuery: (String) -&gt; Unit, onClearQueries: () -&gt; Unit, onOpenFileClick: () -&gt; Unit, onSftpClick: () -&gt; Unit, onS3Click: () -&gt; Unit, onAddFileClick: () -&gt; Unit, onAddDirectoryClick: () -&gt; Unit, onAddSftpClick: () -&gt; Unit, onAddS3Click: () -&gt; Unit, onToggleTheme: () -&gt; Unit, onToggleSidebar: () -&gt; Unit, isReversed: Boolean, onToggleSortOrder: () -&gt; Unit, isAutoScrollEnabled: Boolean, onToggleAutoScroll: () -&gt; Unit, showAnsiColors: Boolean, onToggleAnsiColors: () -&gt; Unit, isConnected: Boolean, onToggleConnection: () -&gt; Unit, onRefresh: () -&gt; Unit, onSplitClick: () -&gt; Unit, timeFilterFrom: String, timeFilterTo: String, timeFilterPreset: TimeRangePreset?, timeFilterValidationMessage: String?, onApplyTimeFilterPreset: (TimeRangePreset) -&gt; Unit, onClearTimeFilter: () -&gt; Unit, matchesCount: Int, totalCount: Int, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:FilterBar.kt$@Composable private fun CompactMenuItem( text: String, onClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:FilterBar.kt$@Composable private fun FilterBarIcon( icon: ImageVector, tooltip: String, onClick: () -&gt; Unit, tint: Color = LocalContentColor.current, testTag: String? = null )</ID>
-    <ID>FunctionNaming:FilterBar.kt$@Composable private fun FilterChip( query: String, onRemove: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:FilterBar.kt$@Composable private fun TimeFilterControls( preset: TimeRangePreset?, validationMessage: String?, onApplyPreset: (TimeRangePreset) -&gt; Unit, onClear: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable fun KLogViewerScreen( viewModel: KLogViewerViewModel, dialogProvider: DialogProvider = AwtDialogProvider() )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun AbComparisonSection( comparisonState: DashboardComparisonState, selectedFrequencyField: String?, frequencyThreshold: Int, frequencyTopN: Int, frequencyCardinalityLimit: Int, onCompareBaselineFromChange: (String) -&gt; Unit, onCompareBaselineToChange: (String) -&gt; Unit, onCompareComparisonFromChange: (String) -&gt; Unit, onCompareComparisonToChange: (String) -&gt; Unit, onRunComparison: () -&gt; Unit, onClearComparison: () -&gt; Unit, onCompareLevelSelect: (LogLevel) -&gt; Unit, onCompareFrequencyValueSelect: (String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardActiveFilters( activeTimeSelection: DashboardTimeSelection?, selectedLevel: LogLevel?, selectedFrequencyValue: String?, onClearTimeSelection: () -&gt; Unit, onClearLevel: () -&gt; Unit, onClearFrequencyValue: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardAnalysisScopeBanner(modifier: Modifier = Modifier)</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardBucketKeyboardFallback( buckets: List&lt;DashboardTimeBucket&gt;, selectedBucketFrom: java.time.Instant?, onBucketSelect: (DashboardTimeBucket) -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardContent( content: DashboardDataState.Content, activeTimeFilterFrom: java.time.Instant?, activeTimeFilterTo: java.time.Instant?, onBucketSizeChange: (DashboardBucketSize) -&gt; Unit, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit, onLevelSelect: (DashboardLevelSlice) -&gt; Unit, onFrequencyFieldChange: (String) -&gt; Unit, onFrequencyTopNChange: (Int) -&gt; Unit, onFrequencyThresholdChange: (Int) -&gt; Unit, onFrequencyCardinalityLimitChange: (Int) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, onCompareBaselineFromChange: (String) -&gt; Unit, onCompareBaselineToChange: (String) -&gt; Unit, onCompareComparisonFromChange: (String) -&gt; Unit, onCompareComparisonToChange: (String) -&gt; Unit, onRunComparison: () -&gt; Unit, onClearComparison: () -&gt; Unit, onCompareLevelSelect: (LogLevel) -&gt; Unit, onCompareFrequencyValueSelect: (String) -&gt; Unit, onClearSelections: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardFilterChip( label: String, onRemove: () -&gt; Unit, removeActionDescription: String = "Remove filter", chipDescription: String = label )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardLevelDistributionRow( slice: DashboardLevelSlice, isSelected: Boolean, onSelect: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardLevelDistributionSection( slices: List&lt;DashboardLevelSlice&gt;, selectedLevel: LogLevel?, onLevelSelect: (DashboardLevelSlice) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardNumberControl( label: String, helper: String, value: Int, step: Int, onChange: (Int) -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardSectionHeader( title: String, stateLabel: String, expanded: Boolean, onToggle: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DashboardWorkspace( window: LogWindow, viewModel: KLogViewerViewModel )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun DialogHandler( state: KLogViewerState, viewModel: KLogViewerViewModel, dialogProvider: DialogProvider )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun FrequencyAnalysisSection( content: DashboardDataState.Content, onFrequencyFieldChange: (String) -&gt; Unit, onFrequencyTopNChange: (Int) -&gt; Unit, onFrequencyThresholdChange: (Int) -&gt; Unit, onFrequencyCardinalityLimitChange: (Int) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun LogBottomBar( activeWindow: LogWindow?, viewModel: KLogViewerViewModel )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun LogTabRow( tabs: List&lt;TabState&gt;, activeTabId: String?, onTabClick: (String) -&gt; Unit, onCloseClick: (String) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun LogTimeFrequencyPanel( content: DashboardDataState.Content, activeTimeFilterFrom: java.time.Instant?, activeTimeFilterTo: java.time.Instant?, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit, onLevelSelect: (LogLevel) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, onClearTimeSelection: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun LogTopBar( state: KLogViewerState, activeWindow: LogWindow?, viewModel: KLogViewerViewModel, onDropFilesOnTabBar: (List&lt;String&gt;) -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun LogWindowItem( window: LogWindow, isWindowActive: Boolean, showSplitIndicator: Boolean, state: KLogViewerState, viewModel: KLogViewerViewModel, onDropFilesOnLogView: (List&lt;String&gt;) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun LogWindowList( activeTab: TabState?, state: KLogViewerState, viewModel: KLogViewerViewModel, onDropFilesOnLogView: (List&lt;String&gt;) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun LogWorkspace( window: LogWindow, isWindowActive: Boolean, isDarkMode: Boolean, viewModel: KLogViewerViewModel, onDropFilesOnLogView: (List&lt;String&gt;) -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerScreen.kt$@Composable private fun SourceManagementDropdown( sourceIds: List&lt;String&gt;, hiddenSourceIds: Set&lt;String&gt;, textStyle: TextStyle, modifier: Modifier = Modifier, onToggleSourceVisibility: (String) -&gt; Unit )</ID>
-    <ID>FunctionNaming:KLogViewerTheme.kt$@Composable fun KLogViewerTheme( darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -&gt; Unit )</ID>
-    <ID>FunctionNaming:KoalaPlotCharts.kt$@OptIn(ExperimentalKoalaPlotApi::class) @Composable fun KoalaPlotLevelDistributionChart( slices: List&lt;DashboardLevelSlice&gt;, selectedLevel: LogLevel?, onLevelSelect: (LogLevel) -&gt; Unit, modifier: Modifier = Modifier, chartSize: Dp = 180.dp )</ID>
-    <ID>FunctionNaming:KoalaPlotCharts.kt$@OptIn(ExperimentalKoalaPlotApi::class, ExperimentalFoundationApi::class) @Composable fun KoalaPlotTimeSeriesChart( buckets: List&lt;DashboardTimeBucket&gt;, bucketSize: DashboardBucketSize, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit = { fromBucket, _ -&gt; onBucketSelect(fromBucket) }, modifier: Modifier = Modifier, chartHeight: Dp = 180.dp )</ID>
-    <ID>FunctionNaming:LogEntryDetails.kt$@Composable fun LogEntryDetails( entry: LogEntry?, onClose: () -&gt; Unit, filterQueries: List&lt;String&gt; = emptyList(), isDarkMode: Boolean = false, showAnsiColors: Boolean = true, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:LogEntryDetails.kt$@Composable private fun DetailItem(label: String, value: String)</ID>
-    <ID>FunctionNaming:LogList.kt$@Composable fun LogEntryRow( entry: LogEntry, lineNumber: Int, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, contentWidth: Dp, gutterWidth: Dp, showAnsiColors: Boolean = true, sourceIds: List&lt;String&gt; = emptyList(), missingSourceIds: Set&lt;String&gt; = emptySet(), columns: List&lt;String&gt;, columnWidths: Map&lt;String, Int&gt;, logFontStyle: TextStyle, isSelected: Boolean = false, onClick: (Boolean, Boolean) -&gt; Unit = { _, _ -&gt; }, menuContainerCoordinates: LayoutCoordinates? = null, onContextMenuRequested: (Offset) -&gt; Unit = {}, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:LogList.kt$@Composable fun LogList( logs: List&lt;LogEntry&gt;, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, sourceIds: List&lt;String&gt; = emptyList(), missingSourceIds: Set&lt;String&gt; = emptySet(), columns: List&lt;String&gt; = emptyList(), columnWidths: Map&lt;String, Int&gt; = emptyMap(), isAutoScrollEnabled: Boolean = true, showAnsiColors: Boolean = true, logFontFamily: String = "Monospaced", logFontSizeSp: Int = 12, selectedIndices: Set&lt;Int&gt; = emptySet(), onEntryClick: (LogEntry) -&gt; Unit = {}, onToggleSelection: (Int, Boolean, Boolean) -&gt; Unit = { _, _, _ -&gt; }, onContextCopy: () -&gt; Unit = {}, onContextRefresh: () -&gt; Unit = {}, onContextClear: () -&gt; Unit = {}, isContextCopyEnabled: Boolean = false, isContextRefreshEnabled: Boolean = true, isContextClearEnabled: Boolean = false, onColumnResize: (String, Int) -&gt; Unit = { _, _ -&gt; }, windowId: String? = null, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:LogList.kt$@Composable fun LogListHeader( columns: List&lt;String&gt;, columnWidths: Map&lt;String, Int&gt;, contentWidth: Dp, gutterWidth: Dp, onColumnResize: (String, Int) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:LogList.kt$@Composable private fun CompactMenuItem( text: String, onClick: () -&gt; Unit, enabled: Boolean, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:LogList.kt$@Composable private fun LogEntryCell( column: String, entry: LogEntry, columnModifier: Modifier, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, showAnsiColors: Boolean, missingSourceIds: Set&lt;String&gt;, logColors: LogLevelColors, logFontStyle: TextStyle )</ID>
-    <ID>FunctionNaming:LogList.kt$@Composable private fun LogGutter( entry: LogEntry, lineNumber: Int, sourceIds: List&lt;String&gt;, missingSourceIds: Set&lt;String&gt;, gutterWidth: Dp, logFontStyle: TextStyle )</ID>
-    <ID>FunctionNaming:LogList.kt$@Composable private fun ResizeHandle( column: String, currentWidth: Dp, onColumnResize: (String, Int) -&gt; Unit, testTag: String? = null )</ID>
-    <ID>FunctionNaming:RecentItemsDialog.kt$@Composable fun RecentItemsDialog( recentFiles: List&lt;String&gt;, recentDirectories: List&lt;String&gt;, localFileSystem: LocalFileSystem, onSelect: (String) -&gt; Unit, onRemoveItem: (String) -&gt; Unit, onClearMissing: () -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:RecentItemsDialog.kt$@Composable private fun RecentItemRow( path: String, onSelect: (String) -&gt; Unit, onRemoveItem: (String) -&gt; Unit, isMissing: Boolean = false, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:RemoteFileBrowserDialog.kt$@Composable fun RemoteFileBrowserDialog( files: List&lt;RemoteFile&gt;, currentPath: String, isLoading: Boolean, onNavigate: (String) -&gt; Unit, onSelectFiles: (List&lt;String&gt;) -&gt; Unit, onSelectDirectory: (String) -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:S3ConnectionDialog.kt$@Composable fun S3ConnectionDialog( savedConnections: List&lt;S3Config&gt; = emptyList(), onConnect: (config: S3Config) -&gt; Unit, onSave: (S3Config) -&gt; Unit, onDelete: (String) -&gt; Unit, onBrowse: (config: S3Config) -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:SftpConnectionDialog.kt$@Composable fun SftpConnectionDialog( savedConnections: List&lt;SftpConfig&gt; = emptyList(), onConnect: (name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, onSave: (SftpConfig) -&gt; Unit, onDelete: (String) -&gt; Unit, onBrowse: (host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, onDismiss: () -&gt; Unit, dialogProvider: DialogProvider = AwtDialogProvider() )</ID>
-    <ID>FunctionNaming:Sidebar.kt$@Composable fun Sidebar( isExpanded: Boolean, showLevels: Boolean, levelFilters: Set&lt;LogLevel&gt;, onToggleLevel: (LogLevel) -&gt; Unit, onToggleAllLevels: () -&gt; Unit, levelCounts: Map&lt;LogLevel, Int&gt; = emptyMap(), modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:Sidebar.kt$@Composable private fun LogLevelToggle( label: String, isEnabled: Boolean, count: Int, onToggle: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:Sidebar.kt$@Composable private fun LogLevelToggle( level: LogLevel, isEnabled: Boolean, count: Int, onToggle: () -&gt; Unit )</ID>
-    <ID>FunctionNaming:StatusBar.kt$@Composable fun StatusBar( filePath: String, lineCount: Int, encoding: String = "UTF-8", parserName: String? = null, availableParsers: List&lt;String&gt; = emptyList(), onParserSelect: (String) -&gt; Unit = {}, isMissing: Boolean = false, isConnected: Boolean = true, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:Tooltip.kt$@OptIn(ExperimentalFoundationApi::class) @Composable fun TooltipWrapper( tooltip: String, modifier: Modifier = Modifier, tooltipTestTag: String? = null, content: @Composable () -&gt; Unit )</ID>
-    <ID>FunctionNaming:WelcomeScreen.kt$@Composable fun WelcomeScreen( onOpenFile: () -&gt; Unit, onOpenDirectory: () -&gt; Unit, onConnectSftp: () -&gt; Unit, onConnectS3: () -&gt; Unit, onShowRecent: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>FunctionNaming:WelcomeScreen.kt$@Composable private fun WelcomeCard( icon: ImageVector, title: String, description: String, onClick: () -&gt; Unit, modifier: Modifier = Modifier.width(200.dp), testTag: String? = null )</ID>
-    <ID>InstanceOfCheckForException:FileLogSource.kt$FileLogSource$e is CancellationException</ID>
-    <ID>InstanceOfCheckForException:RemoteDirectoryFileObserver.kt$RemoteDirectoryFileObserver$e is CancellationException</ID>
-    <ID>InstanceOfCheckForException:RetryUtils.kt$e is CancellationException</ID>
-    <ID>InstanceOfCheckForException:S3DirectoryFileObserver.kt$S3DirectoryFileObserver$e is CancellationException</ID>
-    <ID>InstanceOfCheckForException:S3DirectoryLogSource.kt$S3DirectoryLogSource$e is CancellationException</ID>
-    <ID>InstanceOfCheckForException:S3FileSystem.kt$S3FileSystem$e is kotlinx.coroutines.CancellationException</ID>
-    <ID>InstanceOfCheckForException:S3LogSource.kt$S3LogSource$e is CancellationException</ID>
-    <ID>InstanceOfCheckForException:SftpDirectoryLogSource.kt$SftpDirectoryLogSource$e is CancellationException</ID>
-    <ID>InstanceOfCheckForException:SftpFileSystem.kt$SftpFileSystem$e is kotlinx.coroutines.CancellationException</ID>
-    <ID>InstanceOfCheckForException:SftpLogSource.kt$SftpLogSource$e is CancellationException</ID>
-    <ID>LargeClass:DashboardIntentTest.kt$DashboardIntentTest</ID>
-    <ID>LargeClass:KLogViewerViewModel.kt$KLogViewerViewModel</ID>
-    <ID>LongMethod:DashboardIntentTest.kt$DashboardIntentTest$@Test fun `given compare ranges when running comparison then deltas are correct and sorted by impact`()</ID>
-    <ID>LongMethod:DirectoryTabTest.kt$DirectoryTabTest$@Test fun givenWindowWithMultipleSources_whenDropdownHideClicked_thenSourceIsHiddenFromVisibleLogs()</ID>
-    <ID>LongMethod:FileLogSource.kt$FileLogSource$override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>LongMethod:FilterBar.kt$@Composable fun FilterBar( filterQueries: List&lt;String&gt;, onAddQuery: (String) -&gt; Unit, onRemoveQuery: (String) -&gt; Unit, onClearQueries: () -&gt; Unit, onOpenFileClick: () -&gt; Unit, onSftpClick: () -&gt; Unit, onS3Click: () -&gt; Unit, onAddFileClick: () -&gt; Unit, onAddDirectoryClick: () -&gt; Unit, onAddSftpClick: () -&gt; Unit, onAddS3Click: () -&gt; Unit, onToggleTheme: () -&gt; Unit, onToggleSidebar: () -&gt; Unit, isReversed: Boolean, onToggleSortOrder: () -&gt; Unit, isAutoScrollEnabled: Boolean, onToggleAutoScroll: () -&gt; Unit, showAnsiColors: Boolean, onToggleAnsiColors: () -&gt; Unit, isConnected: Boolean, onToggleConnection: () -&gt; Unit, onRefresh: () -&gt; Unit, onSplitClick: () -&gt; Unit, timeFilterFrom: String, timeFilterTo: String, timeFilterPreset: TimeRangePreset?, timeFilterValidationMessage: String?, onApplyTimeFilterPreset: (TimeRangePreset) -&gt; Unit, onClearTimeFilter: () -&gt; Unit, matchesCount: Int, totalCount: Int, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:FilterIntentHandler.kt$FilterIntentHandler$fun handle(intent: KLogViewerIntent.FilterIntent)</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable fun KLogViewerScreen( viewModel: KLogViewerViewModel, dialogProvider: DialogProvider = AwtDialogProvider() )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun AbComparisonSection( comparisonState: DashboardComparisonState, selectedFrequencyField: String?, frequencyThreshold: Int, frequencyTopN: Int, frequencyCardinalityLimit: Int, onCompareBaselineFromChange: (String) -&gt; Unit, onCompareBaselineToChange: (String) -&gt; Unit, onCompareComparisonFromChange: (String) -&gt; Unit, onCompareComparisonToChange: (String) -&gt; Unit, onRunComparison: () -&gt; Unit, onClearComparison: () -&gt; Unit, onCompareLevelSelect: (LogLevel) -&gt; Unit, onCompareFrequencyValueSelect: (String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun DashboardContent( content: DashboardDataState.Content, activeTimeFilterFrom: java.time.Instant?, activeTimeFilterTo: java.time.Instant?, onBucketSizeChange: (DashboardBucketSize) -&gt; Unit, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit, onLevelSelect: (DashboardLevelSlice) -&gt; Unit, onFrequencyFieldChange: (String) -&gt; Unit, onFrequencyTopNChange: (Int) -&gt; Unit, onFrequencyThresholdChange: (Int) -&gt; Unit, onFrequencyCardinalityLimitChange: (Int) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, onCompareBaselineFromChange: (String) -&gt; Unit, onCompareBaselineToChange: (String) -&gt; Unit, onCompareComparisonFromChange: (String) -&gt; Unit, onCompareComparisonToChange: (String) -&gt; Unit, onRunComparison: () -&gt; Unit, onClearComparison: () -&gt; Unit, onCompareLevelSelect: (LogLevel) -&gt; Unit, onCompareFrequencyValueSelect: (String) -&gt; Unit, onClearSelections: () -&gt; Unit )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun DashboardLevelDistributionRow( slice: DashboardLevelSlice, isSelected: Boolean, onSelect: () -&gt; Unit )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun DashboardWorkspace( window: LogWindow, viewModel: KLogViewerViewModel )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun DialogHandler( state: KLogViewerState, viewModel: KLogViewerViewModel, dialogProvider: DialogProvider )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun FrequencyAnalysisSection( content: DashboardDataState.Content, onFrequencyFieldChange: (String) -&gt; Unit, onFrequencyTopNChange: (Int) -&gt; Unit, onFrequencyThresholdChange: (Int) -&gt; Unit, onFrequencyCardinalityLimitChange: (Int) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun LogTabRow( tabs: List&lt;TabState&gt;, activeTabId: String?, onTabClick: (String) -&gt; Unit, onCloseClick: (String) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun LogTimeFrequencyPanel( content: DashboardDataState.Content, activeTimeFilterFrom: java.time.Instant?, activeTimeFilterTo: java.time.Instant?, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit, onLevelSelect: (LogLevel) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, onClearTimeSelection: () -&gt; Unit )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun LogWindowItem( window: LogWindow, isWindowActive: Boolean, showSplitIndicator: Boolean, state: KLogViewerState, viewModel: KLogViewerViewModel, onDropFilesOnLogView: (List&lt;String&gt;) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun LogWorkspace( window: LogWindow, isWindowActive: Boolean, isDarkMode: Boolean, viewModel: KLogViewerViewModel, onDropFilesOnLogView: (List&lt;String&gt;) -&gt; Unit )</ID>
-    <ID>LongMethod:KLogViewerScreen.kt$@Composable private fun SourceManagementDropdown( sourceIds: List&lt;String&gt;, hiddenSourceIds: Set&lt;String&gt;, textStyle: TextStyle, modifier: Modifier = Modifier, onToggleSourceVisibility: (String) -&gt; Unit )</ID>
-    <ID>LongMethod:KLogViewerTheme.kt$@Composable fun KLogViewerTheme( darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable () -&gt; Unit )</ID>
-    <ID>LongMethod:KLogViewerViewModel.kt$KLogViewerViewModel$private fun computeComparisonState( entries: List&lt;LogEntry&gt;, previousState: DashboardComparisonState, selectedField: String?, threshold: Int, topN: Int, cardinalityLimit: Int ): DashboardComparisonState</ID>
-    <ID>LongMethod:KLogViewerViewModel.kt$KLogViewerViewModel$private fun filterLogs(windowId: String?)</ID>
-    <ID>LongMethod:KLogViewerViewModel.kt$KLogViewerViewModel$private fun handleDashboardIntent(intent: KLogViewerIntent.DashboardIntent)</ID>
-    <ID>LongMethod:KLogViewerViewModel.kt$KLogViewerViewModel$private suspend fun buildDashboardDataState( filteredLogs: List&lt;LogEntry&gt;, bucketSize: DashboardBucketSize, previousState: DashboardDataState ): DashboardDataState</ID>
-    <ID>LongMethod:KoalaPlotCharts.kt$@OptIn(ExperimentalKoalaPlotApi::class) @Composable fun KoalaPlotLevelDistributionChart( slices: List&lt;DashboardLevelSlice&gt;, selectedLevel: LogLevel?, onLevelSelect: (LogLevel) -&gt; Unit, modifier: Modifier = Modifier, chartSize: Dp = 180.dp )</ID>
-    <ID>LongMethod:KoalaPlotCharts.kt$@OptIn(ExperimentalKoalaPlotApi::class, ExperimentalFoundationApi::class) @Composable fun KoalaPlotTimeSeriesChart( buckets: List&lt;DashboardTimeBucket&gt;, bucketSize: DashboardBucketSize, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit = { fromBucket, _ -&gt; onBucketSelect(fromBucket) }, modifier: Modifier = Modifier, chartHeight: Dp = 180.dp )</ID>
-    <ID>LongMethod:LogEntryDetails.kt$@Composable fun LogEntryDetails( entry: LogEntry?, onClose: () -&gt; Unit, filterQueries: List&lt;String&gt; = emptyList(), isDarkMode: Boolean = false, showAnsiColors: Boolean = true, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:LogList.kt$@Composable fun LogEntryRow( entry: LogEntry, lineNumber: Int, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, contentWidth: Dp, gutterWidth: Dp, showAnsiColors: Boolean = true, sourceIds: List&lt;String&gt; = emptyList(), missingSourceIds: Set&lt;String&gt; = emptySet(), columns: List&lt;String&gt;, columnWidths: Map&lt;String, Int&gt;, logFontStyle: TextStyle, isSelected: Boolean = false, onClick: (Boolean, Boolean) -&gt; Unit = { _, _ -&gt; }, menuContainerCoordinates: LayoutCoordinates? = null, onContextMenuRequested: (Offset) -&gt; Unit = {}, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:LogList.kt$@Composable fun LogList( logs: List&lt;LogEntry&gt;, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, sourceIds: List&lt;String&gt; = emptyList(), missingSourceIds: Set&lt;String&gt; = emptySet(), columns: List&lt;String&gt; = emptyList(), columnWidths: Map&lt;String, Int&gt; = emptyMap(), isAutoScrollEnabled: Boolean = true, showAnsiColors: Boolean = true, logFontFamily: String = "Monospaced", logFontSizeSp: Int = 12, selectedIndices: Set&lt;Int&gt; = emptySet(), onEntryClick: (LogEntry) -&gt; Unit = {}, onToggleSelection: (Int, Boolean, Boolean) -&gt; Unit = { _, _, _ -&gt; }, onContextCopy: () -&gt; Unit = {}, onContextRefresh: () -&gt; Unit = {}, onContextClear: () -&gt; Unit = {}, isContextCopyEnabled: Boolean = false, isContextRefreshEnabled: Boolean = true, isContextClearEnabled: Boolean = false, onColumnResize: (String, Int) -&gt; Unit = { _, _ -&gt; }, windowId: String? = null, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:LogList.kt$@Composable fun LogListHeader( columns: List&lt;String&gt;, columnWidths: Map&lt;String, Int&gt;, contentWidth: Dp, gutterWidth: Dp, onColumnResize: (String, Int) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:LogList.kt$@Composable private fun LogEntryCell( column: String, entry: LogEntry, columnModifier: Modifier, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, showAnsiColors: Boolean, missingSourceIds: Set&lt;String&gt;, logColors: LogLevelColors, logFontStyle: TextStyle )</ID>
-    <ID>LongMethod:Main.kt$fun main()</ID>
-    <ID>LongMethod:PreferencesStateMapper.kt$PreferencesStateMapper$fun toState(prefs: UserPreferences): KLogViewerState</ID>
-    <ID>LongMethod:RecentItemsDialog.kt$@Composable fun RecentItemsDialog( recentFiles: List&lt;String&gt;, recentDirectories: List&lt;String&gt;, localFileSystem: LocalFileSystem, onSelect: (String) -&gt; Unit, onRemoveItem: (String) -&gt; Unit, onClearMissing: () -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>LongMethod:RemoteFileBrowserDialog.kt$@Composable fun RemoteFileBrowserDialog( files: List&lt;RemoteFile&gt;, currentPath: String, isLoading: Boolean, onNavigate: (String) -&gt; Unit, onSelectFiles: (List&lt;String&gt;) -&gt; Unit, onSelectDirectory: (String) -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>LongMethod:S3ConnectionDialog.kt$@Composable fun S3ConnectionDialog( savedConnections: List&lt;S3Config&gt; = emptyList(), onConnect: (config: S3Config) -&gt; Unit, onSave: (S3Config) -&gt; Unit, onDelete: (String) -&gt; Unit, onBrowse: (config: S3Config) -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>LongMethod:S3DirectoryLogSource.kt$S3DirectoryLogSource$override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>LongMethod:S3LogSource.kt$S3LogSource$override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>LongMethod:SftpConnectionDialog.kt$@Composable fun SftpConnectionDialog( savedConnections: List&lt;SftpConfig&gt; = emptyList(), onConnect: (name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, onSave: (SftpConfig) -&gt; Unit, onDelete: (String) -&gt; Unit, onBrowse: (host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, onDismiss: () -&gt; Unit, dialogProvider: DialogProvider = AwtDialogProvider() )</ID>
-    <ID>LongMethod:SftpDirectoryLogSource.kt$SftpDirectoryLogSource$override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>LongMethod:SftpLogSource.kt$SftpLogSource$override fun observeLogs(path: LogFilePath, parser: LogParser?): Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>LongMethod:Sidebar.kt$@Composable fun Sidebar( isExpanded: Boolean, showLevels: Boolean, levelFilters: Set&lt;LogLevel&gt;, onToggleLevel: (LogLevel) -&gt; Unit, onToggleAllLevels: () -&gt; Unit, levelCounts: Map&lt;LogLevel, Int&gt; = emptyMap(), modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:SimpleLogParser.kt$SimpleLogParser$override fun parse(line: String): Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
-    <ID>LongMethod:StatusBar.kt$@Composable fun StatusBar( filePath: String, lineCount: Int, encoding: String = "UTF-8", parserName: String? = null, availableParsers: List&lt;String&gt; = emptyList(), onParserSelect: (String) -&gt; Unit = {}, isMissing: Boolean = false, isConnected: Boolean = true, modifier: Modifier = Modifier )</ID>
-    <ID>LongMethod:TabWindowIntentHandler.kt$TabWindowIntentHandler$fun handle(intent: KLogViewerIntent.TabWindowIntent)</ID>
-    <ID>LongMethod:TemplateLogParser.kt$TemplateLogParser$override fun parse(line: String): Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
-    <ID>LongMethod:WelcomeScreen.kt$@Composable fun WelcomeScreen( onOpenFile: () -&gt; Unit, onOpenDirectory: () -&gt; Unit, onConnectSftp: () -&gt; Unit, onConnectS3: () -&gt; Unit, onShowRecent: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:DirectoryLogSource.kt$DirectoryLogSource$( discoveredFiles: List&lt;String&gt;, activeSources: MutableMap&lt;String, Job&gt;, currentEntries: MutableMap&lt;String, List&lt;LogEntry&gt;&gt;, parser: LogParser?, initialized: Boolean, scope: ProducerScope&lt;Either&lt;LogFailure, LogUpdate&gt;&gt; )</ID>
-    <ID>LongParameterList:FilterBar.kt$( filterQueries: List&lt;String&gt;, onAddQuery: (String) -&gt; Unit, onRemoveQuery: (String) -&gt; Unit, onClearQueries: () -&gt; Unit, onOpenFileClick: () -&gt; Unit, onSftpClick: () -&gt; Unit, onS3Click: () -&gt; Unit, onAddFileClick: () -&gt; Unit, onAddDirectoryClick: () -&gt; Unit, onAddSftpClick: () -&gt; Unit, onAddS3Click: () -&gt; Unit, onToggleTheme: () -&gt; Unit, onToggleSidebar: () -&gt; Unit, isReversed: Boolean, onToggleSortOrder: () -&gt; Unit, isAutoScrollEnabled: Boolean, onToggleAutoScroll: () -&gt; Unit, showAnsiColors: Boolean, onToggleAnsiColors: () -&gt; Unit, isConnected: Boolean, onToggleConnection: () -&gt; Unit, onRefresh: () -&gt; Unit, onSplitClick: () -&gt; Unit, timeFilterFrom: String, timeFilterTo: String, timeFilterPreset: TimeRangePreset?, timeFilterValidationMessage: String?, onApplyTimeFilterPreset: (TimeRangePreset) -&gt; Unit, onClearTimeFilter: () -&gt; Unit, matchesCount: Int, totalCount: Int, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:KLogViewerScreen.kt$( activeTimeSelection: DashboardTimeSelection?, selectedLevel: LogLevel?, selectedFrequencyValue: String?, onClearTimeSelection: () -&gt; Unit, onClearLevel: () -&gt; Unit, onClearFrequencyValue: () -&gt; Unit )</ID>
-    <ID>LongParameterList:KLogViewerScreen.kt$( comparisonState: DashboardComparisonState, selectedFrequencyField: String?, frequencyThreshold: Int, frequencyTopN: Int, frequencyCardinalityLimit: Int, onCompareBaselineFromChange: (String) -&gt; Unit, onCompareBaselineToChange: (String) -&gt; Unit, onCompareComparisonFromChange: (String) -&gt; Unit, onCompareComparisonToChange: (String) -&gt; Unit, onRunComparison: () -&gt; Unit, onClearComparison: () -&gt; Unit, onCompareLevelSelect: (LogLevel) -&gt; Unit, onCompareFrequencyValueSelect: (String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:KLogViewerScreen.kt$( content: DashboardDataState.Content, activeTimeFilterFrom: java.time.Instant?, activeTimeFilterTo: java.time.Instant?, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit, onLevelSelect: (LogLevel) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, onClearTimeSelection: () -&gt; Unit )</ID>
-    <ID>LongParameterList:KLogViewerScreen.kt$( content: DashboardDataState.Content, activeTimeFilterFrom: java.time.Instant?, activeTimeFilterTo: java.time.Instant?, onBucketSizeChange: (DashboardBucketSize) -&gt; Unit, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit, onLevelSelect: (DashboardLevelSlice) -&gt; Unit, onFrequencyFieldChange: (String) -&gt; Unit, onFrequencyTopNChange: (Int) -&gt; Unit, onFrequencyThresholdChange: (Int) -&gt; Unit, onFrequencyCardinalityLimitChange: (Int) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, onCompareBaselineFromChange: (String) -&gt; Unit, onCompareBaselineToChange: (String) -&gt; Unit, onCompareComparisonFromChange: (String) -&gt; Unit, onCompareComparisonToChange: (String) -&gt; Unit, onRunComparison: () -&gt; Unit, onClearComparison: () -&gt; Unit, onCompareLevelSelect: (LogLevel) -&gt; Unit, onCompareFrequencyValueSelect: (String) -&gt; Unit, onClearSelections: () -&gt; Unit )</ID>
-    <ID>LongParameterList:KLogViewerScreen.kt$( content: DashboardDataState.Content, onFrequencyFieldChange: (String) -&gt; Unit, onFrequencyTopNChange: (Int) -&gt; Unit, onFrequencyThresholdChange: (Int) -&gt; Unit, onFrequencyCardinalityLimitChange: (Int) -&gt; Unit, onFrequencyValueSelect: (String) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:KLogViewerScreen.kt$( tabs: List&lt;TabState&gt;, activeTabId: String?, onTabClick: (String) -&gt; Unit, onCloseClick: (String) -&gt; Unit, onAddClick: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:KLogViewerScreen.kt$( window: LogWindow, isWindowActive: Boolean, showSplitIndicator: Boolean, state: KLogViewerState, viewModel: KLogViewerViewModel, onDropFilesOnLogView: (List&lt;String&gt;) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:KLogViewerViewModel.kt$KLogViewerViewModel$( entries: List&lt;LogEntry&gt;, previousState: DashboardComparisonState, selectedField: String?, threshold: Int, topN: Int, cardinalityLimit: Int )</ID>
-    <ID>LongParameterList:KLogViewerViewModel.kt$KLogViewerViewModel$( private val logSource: LogSource, private val prefsRepository: PreferencesRepository, val heuristicProbe: HeuristicProbe, private val logSourceFactory: LogSourceFactory = DefaultLogSourceFactory(), private val clipboard: Clipboard = AwtClipboard(), val localFileSystem: LocalFileSystem = JavaLocalFileSystem(), private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()), private val remoteFileSystem: RemoteFileSystem = UnifiedRemoteFileSystem(), private val analysisMetricsRepository: AnalysisMetricsRepository = InMemoryAnalysisMetricsRepository(), private val dashboardRecomputeDebounceMs: Long = DASHBOARD_RECOMPUTE_DEBOUNCE_MS, private val dashboardSamplingThreshold: Int = DASHBOARD_SAMPLING_THRESHOLD, private val dashboardSamplingTargetSize: Int = DASHBOARD_SAMPLING_TARGET_SIZE, private val dashboardComputationDispatcher: CoroutineDispatcher = Dispatchers.Default )</ID>
-    <ID>LongParameterList:KoalaPlotCharts.kt$( buckets: List&lt;DashboardTimeBucket&gt;, bucketSize: DashboardBucketSize, onBucketSelect: (DashboardTimeBucket) -&gt; Unit, onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -&gt; Unit = { fromBucket, _ -&gt; onBucketSelect(fromBucket) }, modifier: Modifier = Modifier, chartHeight: Dp = 180.dp )</ID>
-    <ID>LongParameterList:LogEntryDetails.kt$( entry: LogEntry?, onClose: () -&gt; Unit, filterQueries: List&lt;String&gt; = emptyList(), isDarkMode: Boolean = false, showAnsiColors: Boolean = true, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:LogList.kt$( column: String, entry: LogEntry, columnModifier: Modifier, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, showAnsiColors: Boolean, missingSourceIds: Set&lt;String&gt;, logColors: LogLevelColors, logFontStyle: TextStyle )</ID>
-    <ID>LongParameterList:LogList.kt$( columns: List&lt;String&gt;, columnWidths: Map&lt;String, Int&gt;, contentWidth: Dp, gutterWidth: Dp, onColumnResize: (String, Int) -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:LogList.kt$( entry: LogEntry, lineNumber: Int, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, contentWidth: Dp, gutterWidth: Dp, showAnsiColors: Boolean = true, sourceIds: List&lt;String&gt; = emptyList(), missingSourceIds: Set&lt;String&gt; = emptySet(), columns: List&lt;String&gt;, columnWidths: Map&lt;String, Int&gt;, logFontStyle: TextStyle, isSelected: Boolean = false, onClick: (Boolean, Boolean) -&gt; Unit = { _, _ -&gt; }, menuContainerCoordinates: LayoutCoordinates? = null, onContextMenuRequested: (Offset) -&gt; Unit = {}, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:LogList.kt$( entry: LogEntry, lineNumber: Int, sourceIds: List&lt;String&gt;, missingSourceIds: Set&lt;String&gt;, gutterWidth: Dp, logFontStyle: TextStyle )</ID>
-    <ID>LongParameterList:LogList.kt$( logs: List&lt;LogEntry&gt;, filterQueries: List&lt;String&gt;, isDarkMode: Boolean, sourceIds: List&lt;String&gt; = emptyList(), missingSourceIds: Set&lt;String&gt; = emptySet(), columns: List&lt;String&gt; = emptyList(), columnWidths: Map&lt;String, Int&gt; = emptyMap(), isAutoScrollEnabled: Boolean = true, showAnsiColors: Boolean = true, logFontFamily: String = "Monospaced", logFontSizeSp: Int = 12, selectedIndices: Set&lt;Int&gt; = emptySet(), onEntryClick: (LogEntry) -&gt; Unit = {}, onToggleSelection: (Int, Boolean, Boolean) -&gt; Unit = { _, _, _ -&gt; }, onContextCopy: () -&gt; Unit = {}, onContextRefresh: () -&gt; Unit = {}, onContextClear: () -&gt; Unit = {}, isContextCopyEnabled: Boolean = false, isContextRefreshEnabled: Boolean = true, isContextClearEnabled: Boolean = false, onColumnResize: (String, Int) -&gt; Unit = { _, _ -&gt; }, windowId: String? = null, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:LogLoadingCoordinator.kt$LogLoadingCoordinator$( private val localFileSystem: LocalFileSystem, private val remoteFileSystem: RemoteFileSystem, private val logSource: LogSource, private val heuristicProbe: HeuristicProbe, private val logSourceFactory: LogSourceFactory, private val scope: CoroutineScope, private val state: MutableStateFlow&lt;KLogViewerState&gt;, private val onSavePreferences: () -&gt; Unit, private val onHandleLogUpdate: (String, LogUpdate, String?) -&gt; Unit, private val onShowError: suspend (String) -&gt; Unit )</ID>
-    <ID>LongParameterList:LogLoadingCoordinator.kt$LogLoadingCoordinator$(windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String, parserName: String? = null)</ID>
-    <ID>LongParameterList:RecentItemsDialog.kt$( recentFiles: List&lt;String&gt;, recentDirectories: List&lt;String&gt;, localFileSystem: LocalFileSystem, onSelect: (String) -&gt; Unit, onRemoveItem: (String) -&gt; Unit, onClearMissing: () -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>LongParameterList:RemoteFileBrowserDialog.kt$( files: List&lt;RemoteFile&gt;, currentPath: String, isLoading: Boolean, onNavigate: (String) -&gt; Unit, onSelectFiles: (List&lt;String&gt;) -&gt; Unit, onSelectDirectory: (String) -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>LongParameterList:RetryUtils.kt$( maxRetries: Int = 3, initialDelay: Long = 500, maxDelay: Long = 2000, factor: Double = 2.0, shouldRetry: (Exception) -&gt; Boolean = { true }, block: suspend () -&gt; T )</ID>
-    <ID>LongParameterList:S3ConnectionDialog.kt$( savedConnections: List&lt;S3Config&gt; = emptyList(), onConnect: (config: S3Config) -&gt; Unit, onSave: (S3Config) -&gt; Unit, onDelete: (String) -&gt; Unit, onBrowse: (config: S3Config) -&gt; Unit, onDismiss: () -&gt; Unit )</ID>
-    <ID>LongParameterList:S3IntentHandler.kt$S3IntentHandler$( private val remoteFileSystem: RemoteFileSystem, private val scope: CoroutineScope, private val state: MutableStateFlow&lt;KLogViewerState&gt;, private val recentItemsManager: RecentItemsManager, private val onSavePreferences: () -&gt; Unit, private val onLoadFiles: (String, List&lt;String&gt;) -&gt; Unit, private val onConnectS3: (String, S3Config) -&gt; Unit, private val onConnectMultipleS3: (String, S3Config, List&lt;String&gt;) -&gt; Unit, private val onConnectS3Directory: (String, S3Config, String) -&gt; Unit, private val onHandleBrowse: (S3Config, String) -&gt; Unit )</ID>
-    <ID>LongParameterList:SftpConnectionDialog.kt$( savedConnections: List&lt;SftpConfig&gt; = emptyList(), onConnect: (name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, onSave: (SftpConfig) -&gt; Unit, onDelete: (String) -&gt; Unit, onBrowse: (host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, onDismiss: () -&gt; Unit, dialogProvider: DialogProvider = AwtDialogProvider() )</ID>
-    <ID>LongParameterList:SftpIntentHandler.kt$SftpIntentHandler$( private val remoteFileSystem: RemoteFileSystem, private val scope: CoroutineScope, private val state: MutableStateFlow&lt;KLogViewerState&gt;, private val recentItemsManager: RecentItemsManager, private val onSavePreferences: () -&gt; Unit, private val onLoadFiles: (windowId: String, paths: List&lt;String&gt;) -&gt; Unit, private val onConnectSftp: (windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit, private val onConnectMultipleSftp: (windowId: String, config: SftpConfig, paths: List&lt;String&gt;) -&gt; Unit, private val onConnectSftpDirectory: (windowId: String, config: SftpConfig, path: String) -&gt; Unit, private val onHandleBrowse: (config: SftpConfig, path: String) -&gt; Unit )</ID>
-    <ID>LongParameterList:Sidebar.kt$( isExpanded: Boolean, showLevels: Boolean, levelFilters: Set&lt;LogLevel&gt;, onToggleLevel: (LogLevel) -&gt; Unit, onToggleAllLevels: () -&gt; Unit, levelCounts: Map&lt;LogLevel, Int&gt; = emptyMap(), modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:StatusBar.kt$( filePath: String, lineCount: Int, encoding: String = "UTF-8", parserName: String? = null, availableParsers: List&lt;String&gt; = emptyList(), onParserSelect: (String) -&gt; Unit = {}, isMissing: Boolean = false, isConnected: Boolean = true, modifier: Modifier = Modifier )</ID>
-    <ID>LongParameterList:WelcomeScreen.kt$( icon: ImageVector, title: String, description: String, onClick: () -&gt; Unit, modifier: Modifier = Modifier.width(200.dp), testTag: String? = null )</ID>
-    <ID>LongParameterList:WelcomeScreen.kt$( onOpenFile: () -&gt; Unit, onOpenDirectory: () -&gt; Unit, onConnectSftp: () -&gt; Unit, onConnectS3: () -&gt; Unit, onShowRecent: () -&gt; Unit, modifier: Modifier = Modifier )</ID>
-    <ID>LoopWithTooManyJumpStatements:RemoteLogTailer.kt$RemoteLogTailer$while</ID>
-    <ID>LoopWithTooManyJumpStatements:S3LogSource.kt$S3LogSource$while</ID>
-    <ID>MagicNumber:DialogIntentHandler.kt$DialogIntentHandler$72</ID>
-    <ID>MagicNumber:DialogIntentHandler.kt$DialogIntentHandler$8</ID>
-    <ID>MagicNumber:DialogProvider.kt$AwtDialogProvider$14</ID>
-    <ID>MagicNumber:DialogProvider.kt$AwtDialogProvider$72</ID>
-    <ID>MagicNumber:DialogProvider.kt$AwtDialogProvider$8</ID>
-    <ID>MagicNumber:DirectoryLogSource.kt$DirectoryLogSource$50</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF007ACC</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF00A3E0</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF121212</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF2B2B2B</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF323232</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF3C3F41</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF616161</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF856404</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFF9E9E9E</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFFB71C1C</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFFD32F2F</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFFE0E0E0</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFFF5F5F5</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFFFF1744</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFFFF5252</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFFFFC107</ID>
-    <ID>MagicNumber:KLogViewerColors.kt$KLogViewerColors$0xFFFFFFFF</ID>
-    <ID>MagicNumber:KLogViewerScreen.kt$0.2f</ID>
-    <ID>MagicNumber:KLogViewerScreen.kt$0.5f</ID>
-    <ID>MagicNumber:KLogViewerScreen.kt$0.95f</ID>
-    <ID>MagicNumber:KLogViewerScreen.kt$0xFF2E7D32</ID>
-    <ID>MagicNumber:KLogViewerScreen.kt$0xFFC62828</ID>
-    <ID>MagicNumber:KLogViewerScreen.kt$0xFFFFA500</ID>
-    <ID>MagicNumber:KLogViewerViewModel.kt$KLogViewerViewModel$10</ID>
-    <ID>MagicNumber:KLogViewerViewModel.kt$KLogViewerViewModel$100</ID>
-    <ID>MagicNumber:KLogViewerViewModel.kt$KLogViewerViewModel$1_000_000</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$0.1f</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$0.58f</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$1000.0</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$1000L</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$1000f</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$100f</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$10f</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$3</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$4</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$5</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt$90f</ID>
-    <ID>MagicNumber:LogEntryDetails.kt$10000</ID>
-    <ID>MagicNumber:LogEntryDetails.kt$50000</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF0097A7</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF1565C0</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF26C6DA</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF2E7D32</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF424242</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF42A5F5</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF64B5F6</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF66BB6A</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF7B1FA2</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF81C784</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF82B1FF</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFF84FFFF</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFAB47BC</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFB9F6CA</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFEA80FC</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFEF5350</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFEF6C00</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFF57F17</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFFF8A80</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFFFB74D</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFFFCA28</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFFFE082</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$0xFFFFFF8D</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$30</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$31</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$32</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$33</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$34</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$35</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$36</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$37</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$90</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$91</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$92</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$93</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$94</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$95</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$96</ID>
-    <ID>MagicNumber:LogHighlighter.kt$LogHighlighter$97</ID>
-    <ID>MagicNumber:LogList.kt$0.6f</ID>
-    <ID>MagicNumber:LogList.kt$0xFF</ID>
-    <ID>MagicNumber:LogList.kt$0xFF1E1E1E</ID>
-    <ID>MagicNumber:LogList.kt$0xFF242424</ID>
-    <ID>MagicNumber:LogList.kt$0xFF2A2A2A</ID>
-    <ID>MagicNumber:LogList.kt$0xFF303030</ID>
-    <ID>MagicNumber:LogList.kt$0xFF363636</ID>
-    <ID>MagicNumber:LogList.kt$0xFF3C3C3C</ID>
-    <ID>MagicNumber:LogList.kt$0xFF4DB6AC</ID>
-    <ID>MagicNumber:LogList.kt$0xFF64B5F6</ID>
-    <ID>MagicNumber:LogList.kt$0xFF81C784</ID>
-    <ID>MagicNumber:LogList.kt$0xFFAED581</ID>
-    <ID>MagicNumber:LogList.kt$0xFFBA68C8</ID>
-    <ID>MagicNumber:LogList.kt$0xFFE57373</ID>
-    <ID>MagicNumber:LogList.kt$0xFFF06292</ID>
-    <ID>MagicNumber:LogList.kt$0xFFFFD54F</ID>
-    <ID>MagicNumber:LogList.kt$10000</ID>
-    <ID>MagicNumber:LogList.kt$16</ID>
-    <ID>MagicNumber:LogList.kt$24</ID>
-    <ID>MagicNumber:LogList.kt$255</ID>
-    <ID>MagicNumber:LogList.kt$255L</ID>
-    <ID>MagicNumber:LogList.kt$3</ID>
-    <ID>MagicNumber:LogList.kt$4</ID>
-    <ID>MagicNumber:LogList.kt$72</ID>
-    <ID>MagicNumber:LogList.kt$8</ID>
-    <ID>MagicNumber:LogfmtParser.kt$LogfmtParser$3</ID>
-    <ID>MagicNumber:Main.kt$5</ID>
-    <ID>MagicNumber:RecentItemsManager.kt$RecentItemsManager$50</ID>
-    <ID>MagicNumber:RemoteConnection.kt$SftpConfig$22</ID>
-    <ID>MagicNumber:RemoteConnection.kt$SftpUri.Companion$4</ID>
-    <ID>MagicNumber:RemoteConnection.kt$SftpUri.Companion$5</ID>
-    <ID>MagicNumber:RemoteDirectoryFileObserver.kt$RemoteDirectoryFileObserver$200L</ID>
-    <ID>MagicNumber:RemoteFileBrowserDialog.kt$0xFFFFA000</ID>
-    <ID>MagicNumber:RemoteFileBrowserDialog.kt$1024</ID>
-    <ID>MagicNumber:S3DirectoryFileObserver.kt$S3DirectoryFileObserver$200L</ID>
-    <ID>MagicNumber:S3FileSystem.kt$S3FileSystem$1000</ID>
-    <ID>MagicNumber:S3FileSystem.kt$S3FileSystem$1000000</ID>
-    <ID>MagicNumber:SftpConnectionDialog.kt$22</ID>
-    <ID>MagicNumber:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$10</ID>
-    <ID>MagicNumber:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$13</ID>
-    <ID>MagicNumber:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$15L</ID>
-    <ID>MagicNumber:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$1_440L</ID>
-    <ID>MagicNumber:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$30L</ID>
-    <ID>MagicNumber:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$360L</ID>
-    <ID>MagicNumber:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$5L</ID>
-    <ID>MagicNumber:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$60L</ID>
-    <ID>MagicNumber:TimestampParser.kt$TimestampParser$10</ID>
-    <ID>MagicNumber:Tooltip.kt$210</ID>
-    <ID>MagicNumber:Tooltip.kt$255</ID>
-    <ID>MaxLineLength:AdvancedLoggingTest.kt$AdvancedLoggingTest$val line = """192.168.1.10 - - [15/May/2026:10:23:42 +0000] "GET /index.html HTTP/1.1" 200 1024 "http://referrer.com" "Mozilla/5.0""""</ID>
-    <ID>MaxLineLength:BaseRobot.kt$BaseRobot$protected</ID>
-    <ID>MaxLineLength:ConnectionToggleTest.kt$ConnectionToggleTest$// verify that the job was cancelled - difficult to verify directly on mockk but we can check if it reloads on reconnect</ID>
-    <ID>MaxLineLength:DashboardIntentTest.kt$DashboardIntentTest$"samplingMode=${content.samplingInfo.mode}, sampled=${content.samplingInfo.sampledCount}/${content.samplingInfo.originalCount}"</ID>
-    <ID>MaxLineLength:DashboardIntentTest.kt$DashboardIntentTest$"selectedFrequencyField=${content.selectedFrequencyField}, selectedFrequencyValue=${content.selectedFrequencyValue}, "</ID>
-    <ID>MaxLineLength:DashboardIntentTest.kt$DashboardIntentTest$expectThat((clearedSelectionWindow.dashboardDataState as? DashboardDataState.Content)?.selectedFrequencyValue).isNull()</ID>
-    <ID>MaxLineLength:DashboardIntentTest.kt$DashboardIntentTest$fun</ID>
-    <ID>MaxLineLength:DashboardUxHardeningUiTest.kt$DashboardUxHardeningUiTest$fun</ID>
-    <ID>MaxLineLength:DashboardUxHardeningUiTest.kt$DashboardUxHardeningUiTest$logEntry("2026-01-01T00:00:01Z", "second", LogLevel.UNKNOWN, mapOf("service" to "billing", "level" to "UNKNOWN"))</ID>
-    <ID>MaxLineLength:DefaultLogSourceFactory.kt$DefaultLogSourceFactory$SftpLogSource(cfg, SimpleLogParser(), sshService = sshService, existingClient = client, dispatcher = dispatcher)</ID>
-    <ID>MaxLineLength:DefaultLogSourceFactory.kt$DefaultLogSourceFactory$return S3LogSource(config, parser ?: SimpleLogParser(), s3ClientProvider = s3ClientProvider, dispatcher = dispatcher)</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowAddDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD, isAddMode = true) }</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowAddDirectoryDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD_DIRECTORY, isAddMode = true) }</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowAddS3Dialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.S3_ADD, isAddMode = true) }</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowAddSftpDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_ADD, isAddMode = true) }</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowOpenDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN, isAddMode = false) }</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowOpenDirectoryDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY, isAddMode = false) }</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowRecentDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowS3Dialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.S3_CONNECT, isAddMode = false) }</ID>
-    <ID>MaxLineLength:DialogIntentHandler.kt$DialogIntentHandler$KLogViewerIntent.ShowSftpDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_CONNECT, isAddMode = false) }</ID>
-    <ID>MaxLineLength:DirectoryLogSource.kt$DirectoryLogSource$logger.info { "Initial directory load complete: ${allEntries.size} entries from ${activeSources.size} files" }</ID>
-    <ID>MaxLineLength:DirectoryLogSource.kt$DirectoryLogSource$override</ID>
-    <ID>MaxLineLength:DirectoryLogSource.kt$DirectoryLogSource$private suspend</ID>
-    <ID>MaxLineLength:DirectoryLogSource.kt$DirectoryLogSource$scope.send(LogFailure.FileError("Error scanning directory: ${e.message}", sourceId = path.value, cause = e).left())</ID>
-    <ID>MaxLineLength:DirectoryLogSourceTest.kt$DirectoryLogSourceTest$every { fileLogSource.observeLogs(LogFilePath(log1.absolutePath), any()) } returns flowOf(LogUpdate.Initial(listOf(entry1)).right())</ID>
-    <ID>MaxLineLength:DirectoryLogSourceTest.kt$DirectoryLogSourceTest$every { fileLogSource.observeLogs(LogFilePath(log2.absolutePath), any()) } returns flowOf(LogUpdate.Initial(listOf(entry2)).right())</ID>
-    <ID>MaxLineLength:DirectoryLogSourceTest.kt$DirectoryLogSourceTest$val entry1 = LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("log1"), sourceId = log1.absolutePath)</ID>
-    <ID>MaxLineLength:DirectoryLogSourceTest.kt$DirectoryLogSourceTest$val entry2 = LogEntry(LogTimestamp("2023-01-01 10:01:00"), LogLevel.ERROR, LogContent("log2"), sourceId = log2.absolutePath)</ID>
-    <ID>MaxLineLength:DirectoryLogSourceTest.kt$DirectoryLogSourceTest$val source = DirectoryLogSource(fileLogSource, heuristicProbe, scanner, rescanIntervalMs = 100, dispatcher = testDispatcher)</ID>
-    <ID>MaxLineLength:DirectoryTabTest.kt$DirectoryTabTest$LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("Log 1"), sourceId = File(tempDir, "file1.log").absolutePath)</ID>
-    <ID>MaxLineLength:DirectoryTabTest.kt$DirectoryTabTest$LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("Log 1"), sourceId = file1.absolutePath)</ID>
-    <ID>MaxLineLength:DirectoryTabTest.kt$DirectoryTabTest$LogEntry(LogTimestamp("2023-01-01 10:00:01"), LogLevel.INFO, LogContent("Log 2"), sourceId = File(tempDir, "file2.log").absolutePath)</ID>
-    <ID>MaxLineLength:DirectoryTabTest.kt$DirectoryTabTest$handleLogUpdateMethod.invoke(viewModel, activeWindowId, LogUpdate.SourceMissing(file1.absolutePath), tempDir.absolutePath)</ID>
-    <ID>MaxLineLength:DirectoryTabTest.kt$DirectoryTabTest$val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)</ID>
-    <ID>MaxLineLength:DirectoryTabTest.kt$DirectoryTabTest$val longSourcePath = "/tmp/very-long-directory-segment/very-long-directory-segment/very-long-directory-segment/very-long-directory-segment/app-source.log"</ID>
-    <ID>MaxLineLength:EntryIntentHandler.kt$EntryIntentHandler$selectedEntry = if (newIndices.size == 1) window.filteredLogs.getOrNull(intent.index) else window.selectedEntry</ID>
-    <ID>MaxLineLength:FileDeletionTest.kt$FileDeletionTest$// Wait for initial load (DirectoryLogSource has a 5s rescan delay, so we need to wait at least that long if it missed the first check)</ID>
-    <ID>MaxLineLength:FileLogSource.kt$FileLogSource$logger.info { "Started observing log file: ${path.value} using ${effectiveParser::class.simpleName} (multiline=${multilineProcessor != null})" }</ID>
-    <ID>MaxLineLength:FilterBar.kt$FilterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)</ID>
-    <ID>MaxLineLength:FilterBar.kt$Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.size(18.dp))</ID>
-    <ID>MaxLineLength:FilterBar.kt$Icon(Icons.Default.Close, contentDescription = "Clear all filters", modifier = Modifier.size(14.dp))</ID>
-    <ID>MaxLineLength:FilterBarTimeFilterControlsTest.kt$FilterBarTimeFilterControlsTest$assertTrue(firstStep in 1f..36f, "Expected compact spacing between first and second preset items, was $firstStep")</ID>
-    <ID>MaxLineLength:FilterBarTimeFilterControlsTest.kt$FilterBarTimeFilterControlsTest$assertTrue(secondStep in 1f..36f, "Expected compact spacing between second and third preset items, was $secondStep")</ID>
-    <ID>MaxLineLength:HeuristicProbe.kt$HeuristicProbe$logger.info { "Heuristic: Detected template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }</ID>
-    <ID>MaxLineLength:HeuristicProbe.kt$HeuristicProbe$logger.info { "Heuristic: Falling back to template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }</ID>
-    <ID>MaxLineLength:InMemoryAnalysisMetricsRepository.kt$InMemoryAnalysisMetricsRepository$override suspend</ID>
-    <ID>MaxLineLength:InMemoryAnalysisMetricsRepository.kt$InMemoryAnalysisMetricsRepository$val initialFrequencyItems: Either&lt;AnalysisFailure, List&lt;FieldFrequencyItem&gt;&gt; = emptyList&lt;FieldFrequencyItem&gt;().right()</ID>
-    <ID>MaxLineLength:InMemoryAnalysisMetricsRepositoryTest.kt$InMemoryAnalysisMetricsRepositoryTest$suspend</ID>
-    <ID>MaxLineLength:InterleavingIntegrationTest.kt$InterleavingIntegrationTest$viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false &amp;&amp; (it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false) }</ID>
-    <ID>MaxLineLength:InterleavingIntegrationTest.kt$InterleavingIntegrationTest$viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false &amp;&amp; it.activeTab?.activeWindow?.logs?.size == 4 }</ID>
-    <ID>MaxLineLength:JsonPreferencesRepository.kt$JsonPreferencesRepository$if (xdgConfig != null) File(xdgConfig, appName.lowercase()) else File(userHome, ".config/${appName.lowercase()}")</ID>
-    <ID>MaxLineLength:JsonPreferencesRepository.kt$JsonPreferencesRepository$logger.warn { "Secure credential storage unavailable; plaintext fallback requires explicit user consent" }</ID>
-    <ID>MaxLineLength:KLogViewerComplexUiTest.kt$KLogViewerComplexUiTest$WindowPreference(id = "window1", filePath = "test.log", columns = listOf("Timestamp", "Level", "Message"))</ID>
-    <ID>MaxLineLength:KLogViewerComplexUiTest.kt$KLogViewerComplexUiTest$WindowPreference(id = "window2", filePath = "test.log", columns = listOf("Timestamp", "Level", "Message"))</ID>
-    <ID>MaxLineLength:KLogViewerComplexUiTest.kt$KLogViewerComplexUiTest$val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)</ID>
-    <ID>MaxLineLength:KLogViewerComplexUiTest.kt$KLogViewerComplexUiTest$val interaction = onNode(hasTestTag("column_header_Level") and hasAnyAncestor(hasTestTag("window_$window1Id")), useUnmergedTree = true)</ID>
-    <ID>MaxLineLength:KLogViewerIntent.kt$KLogViewerIntent$ToggleEntrySelection : EntryIntent</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$(delta.level == LogLevel.ERROR || delta.level == LogLevel.WARN || delta.level == LogLevel.FATAL)</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$.</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.15f) else MaterialTheme.colors.surface</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$color</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$color = if (isAnyPrimaryWindowMissing || isAnyWindowError) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$color = if (isImportantIncrease) MaterialTheme.colors.error else MaterialTheme.colors.onSurface</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$color = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.45f) else MaterialTheme.colors.onSurface.copy(alpha = 0.16f)</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$comparisonState.baselineRange.validationMessage != null || comparisonState.comparisonRange.validationMessage != null -&gt; "Invalid range"</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$content.frequencyThreshold &gt; 1 -&gt; "No values meet the current threshold. Lower the threshold to see more."</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$fontWeight = if (content.bucketSize == DashboardBucketSize.PER_MINUTE) FontWeight.Bold else FontWeight.Normal</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$fontWeight = if (content.bucketSize == DashboardBucketSize.PER_SECOND) FontWeight.Bold else FontWeight.Normal</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$fontWeight = if (window.workspaceMode == WorkspaceMode.DASHBOARD) FontWeight.Bold else FontWeight.Normal</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$fontWeight = if (window.workspaceMode == WorkspaceMode.LOGS) FontWeight.Bold else FontWeight.Normal</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$if</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$text = "Baseline $baselineCount · Comparison ${delta.count} · ${dashboardDirectionIndicator(delta.direction, delta.delta ?: 0)}"</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$text = "Current controls: field=$selectedFrequencyField, threshold=$frequencyThreshold, topN=$frequencyTopN, cardinality=$frequencyCardinalityLimit"</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$text = "Showing top values from the first ${content.frequencyCardinalityLimit} unique values considered."</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$text = if (isImportantIncrease) "${delta.level.name} (important increase)" else delta.level.name</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$textDecoration = if (isAnyPrimaryWindowMissing) TextDecoration.LineThrough else TextDecoration.None</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$tint</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$val isAnySourceMissing = if (window.isDirectory) isPrimaryPathMissing else window.missingSourceIds.isNotEmpty()</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$val tooltip = tab.windows.map { it.filePath }.distinct().filter { it.isNotEmpty() }.joinToString("\n").ifEmpty { tab.title }</ID>
-    <ID>MaxLineLength:KLogViewerScreen.kt$viewModel.handleIntent(KLogViewerIntent.ToggleSourceVisibilityInActiveWindow(sourcePath))</ID>
-    <ID>MaxLineLength:KLogViewerState.kt$KLogViewerState$DialogType</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$"Applied deterministic sampling originalCount=${entries.size} sampledCount=${sampled.size} step=${"%.3f".format(step)}"</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$"Skipping stale dashboard aggregation apply for windowId=$windowId generation=$generation"</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$.</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$?.</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$_state.update { it.copy(isRemoteLoading = true, pendingDialog = KLogViewerState.DialogType.S3_BROWSE, currentS3Config = config) }</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$_state.update { it.copy(isRemoteLoading = true, pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE, currentSftpConfig = config) }</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$is KLogViewerIntent.SelectDashboardTimeBucket -&gt; applyDashboardTimeBucketSelection(activeWindowId, intent.bucketFrom)</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$is KLogViewerIntent.SetDashboardFrequencyField -&gt; applyDashboardFrequencyFieldSelection(activeWindowId, intent.fieldKey)</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$is KLogViewerIntent.SetDashboardFrequencyThreshold -&gt; applyDashboardFrequencyThreshold(activeWindowId, intent.threshold)</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$message = "KLogViewer could not access the OS secure credential store. Do you want to save this secret in plaintext in preferences.json?"</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$remoteFiles = result.getOrNull()?.filter { f -&gt; f.name != "." &amp;&amp; f.name != ".." } ?: emptyList()</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$val currentRange = if (isBaseline) currentComparisonState.baselineRange else currentComparisonState.comparisonRange</ID>
-    <ID>MaxLineLength:KLogViewerViewModel.kt$KLogViewerViewModel$val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@withContext</ID>
-    <ID>MaxLineLength:KoalaPlotCharts.kt$return "Time bucket ${formatter.format(bucket.from)} to ${formatter.format(bucket.to)}, ${bucket.count} events, $selectionLabel"</ID>
-    <ID>MaxLineLength:LogColumnResizeTest.kt$LogColumnResizeTest$"Expected long custom-column value row to be taller due to wrapping, but first=$firstRowHeight second=$secondRowHeight"</ID>
-    <ID>MaxLineLength:LogColumnResizeTest.kt$LogColumnResizeTest$"Log list content width should shrink after reducing message column width, but expanded=$expandedWidthPx shrunk=$shrunkWidthPx"</ID>
-    <ID>MaxLineLength:LogColumnResizeTest.kt$LogColumnResizeTest$"Message column width should continue increasing on repeated right resize, but first=$firstWidth second=$secondWidth"</ID>
-    <ID>MaxLineLength:LogColumnResizeTest.kt$LogColumnResizeTest$content = LogContent("This is a long message that should wrap across multiple lines when the message column is narrow. ".repeat(5))</ID>
-    <ID>MaxLineLength:LogColumnResizeTest.kt$LogColumnResizeTest$fields = mapOf("thread" to "long worker thread name that should wrap into multiple lines in a narrow column")</ID>
-    <ID>MaxLineLength:LogEntryDetails.kt$Text("Select a log entry to see details", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f))</ID>
-    <ID>MaxLineLength:LogEntryDetails.kt$fullContent.take(50000) + "\n... (truncated for performance, total length: ${fullContent.length} chars)"</ID>
-    <ID>MaxLineLength:LogEntryDetails.kt$val displayLevel = entry.fields["level"] ?: entry.level.name.lowercase().replaceFirstChar { it.uppercase() }</ID>
-    <ID>MaxLineLength:LogFailure.kt$LogFailure$FileError : LogFailure</ID>
-    <ID>MaxLineLength:LogFailure.kt$LogFailure$ParsingError : LogFailure</ID>
-    <ID>MaxLineLength:LogList.kt$val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value</ID>
-    <ID>MaxLineLength:LogListContextMenuTest.kt$LogListContextMenuTest$fun</ID>
-    <ID>MaxLineLength:LogListFontStyleTest.kt$LogListFontStyleTest$fun</ID>
-    <ID>MaxLineLength:LogListSourceBadgeTooltipTest.kt$LogListSourceBadgeTooltipTest$fun</ID>
-    <ID>MaxLineLength:LogListSourceShadeIndexTest.kt$LogListSourceShadeIndexTest$fun</ID>
-    <ID>MaxLineLength:LogLoadingCoordinator.kt$LogLoadingCoordinator$connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path, overrideParserName)</ID>
-    <ID>MaxLineLength:LogLoadingCoordinator.kt$LogLoadingCoordinator$fun</ID>
-    <ID>MaxLineLength:LogLoadingCoordinator.kt$LogLoadingCoordinator$parserName = if (results.size &gt; 1 &amp;&amp; overrideParserName == null) "Multiple" else (overrideParserName ?: results.firstOrNull()?.parserName ?: "Auto")</ID>
-    <ID>MaxLineLength:LogLoadingCoordinator.kt$LogLoadingCoordinator$private</ID>
-    <ID>MaxLineLength:LogLoadingCoordinator.kt$LogLoadingCoordinator$sourceIds = paths.map { "sftp://${config.username.value}@${config.host.value}:${config.port.value}$it" }</ID>
-    <ID>MaxLineLength:LogLoadingCoordinator.kt$LogLoadingCoordinator$val newTitle = if (tab.windows.any { it.id == windowId } &amp;&amp; tab.windows.size &lt;= 1) fileName else tab.title</ID>
-    <ID>MaxLineLength:LogLoadingIntegrationTest.kt$LogLoadingIntegrationTest$expectThat(window.logs.map { it.sourceId }).contains(first.absolutePath, second.absolutePath, third.absolutePath)</ID>
-    <ID>MaxLineLength:LogSortingTest.kt$LogSortingTest$viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false &amp;&amp; it.activeTab?.activeWindow?.logs?.size == 1 }</ID>
-    <ID>MaxLineLength:LogSortingTest.kt$LogSortingTest$viewModel.state.first { it.activeTab?.activeWindow?.isReversed == false &amp;&amp; it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 1" }</ID>
-    <ID>MaxLineLength:LogSortingTest.kt$LogSortingTest$viewModel.state.first { it.activeTab?.activeWindow?.isReversed == true &amp;&amp; it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 3" }</ID>
-    <ID>MaxLineLength:LogUpdateReducer.kt$LogUpdateReducer$private</ID>
-    <ID>MaxLineLength:LogWorkspaceChartSupportTest.kt$LogWorkspaceChartSupportTest$fun</ID>
-    <ID>MaxLineLength:Main.kt$Item("Add Local Directory...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDirectoryDialog) })</ID>
-    <ID>MaxLineLength:Main.kt$Item("New Tab", shortcut = menuShortcuts.newTab, onClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) })</ID>
-    <ID>MaxLineLength:Main.kt$Item("Open Directory...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) })</ID>
-    <ID>MaxLineLength:Main.kt$logger.warn { "Skipped final preference save because secure credential storage requires interactive plaintext fallback consent" }</ID>
-    <ID>MaxLineLength:Main.kt$placement = if (initialPrefs.windowState.isMaximized) WindowPlacement.Maximized else WindowPlacement.Floating</ID>
-    <ID>MaxLineLength:MergedLogSource.kt$MergedLogSource$// Note: This might break chronological order if appends arrive out of sync across files,</ID>
-    <ID>MaxLineLength:OsKeychainCredentialStoreTest.kt$OsKeychainCredentialStoreTest$assertEquals(listOf("powershell", "-NoProfile", "-NonInteractive", "-Command"), executor.invocations[0].command.take(4))</ID>
-    <ID>MaxLineLength:OsKeychainCredentialStoreTest.kt$OsKeychainCredentialStoreTest$assertEquals(listOf("powershell", "-NoProfile", "-NonInteractive", "-Command"), executor.invocations[1].command.take(4))</ID>
-    <ID>MaxLineLength:OsKeychainCredentialStoreTest.kt$OsKeychainCredentialStoreTest$assertEquals(listOf("powershell", "-NoProfile", "-NonInteractive", "-Command"), executor.invocations[2].command.take(4))</ID>
-    <ID>MaxLineLength:ParserRegistry.kt$ParserRegistry$regex = """^(?&lt;clientIp&gt;\S+)\s+-\s+(?&lt;user&gt;\S+)\s+\[(?&lt;timestamp&gt;\d{2}/[A-Z][a-z]{2}/\d{4}:\d{2}:\d{2}:\d{2}\s+[+-]\d{4})\]\s+"(?&lt;request&gt;.*?)"\s+(?&lt;status&gt;\d+)\s+(?&lt;bytes&gt;\S+)(?:\s+"(?&lt;referrer&gt;.*?)"\s+"(?&lt;agent&gt;.*?)")?.*$"""</ID>
-    <ID>MaxLineLength:ParserRegistry.kt$ParserRegistry$regex = """^(?&lt;timestamp&gt;[A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2})\s+(?&lt;hostname&gt;\S+)\s+(?&lt;process&gt;[^:\[\s]+)(?:\[(?&lt;pid&gt;\d+)\])?:\s+(?&lt;content&gt;.*)$"""</ID>
-    <ID>MaxLineLength:ParserRegistry.kt$ParserRegistry$regex = """^(?&lt;timestamp&gt;\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z?)\s+(?&lt;level&gt;\S+)\s+(?&lt;content&gt;.*)$"""</ID>
-    <ID>MaxLineLength:ParserRegistry.kt$ParserRegistry$regex = """^\s*(?&lt;timestamp&gt;\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?&lt;metadata&gt;.*?)\]\s*)?(?&lt;level&gt;\[.*?\]|\S+)?(?:\s+(?&lt;content&gt;.*))?$"""</ID>
-    <ID>MaxLineLength:PersistenceIntegrationTest.kt$PersistenceIntegrationTest$vm.state.first { it.activeTab?.activeWindow?.isLoading == true || it.activeTab?.activeWindow?.logs?.isNotEmpty() == true }</ID>
-    <ID>MaxLineLength:PersistenceIntegrationTest.kt$PersistenceIntegrationTest$while</ID>
-    <ID>MaxLineLength:RecentItemsDialog.kt$color = if (isMissing) MaterialTheme.colors.onSurface.copy(alpha = 0.4f) else MaterialTheme.colors.onSurface</ID>
-    <ID>MaxLineLength:RecentItemsDialog.kt$focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)</ID>
-    <ID>MaxLineLength:RecentItemsDialog.kt$modifier = if (index == 0 &amp;&amp; recentFiles.isEmpty()) Modifier.focusRequester(focusRequester) else Modifier</ID>
-    <ID>MaxLineLength:RecentItemsDialog.kt$val hasMissing = recentFiles.any { !exists(it, localFileSystem) } || recentDirectories.any { !exists(it, localFileSystem) }</ID>
-    <ID>MaxLineLength:RecentItemsTest.kt$RecentItemsTest$fun</ID>
-    <ID>MaxLineLength:RecentItemsTest.kt$RecentItemsTest$vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))</ID>
-    <ID>MaxLineLength:RemoteFileBrowserDialog.kt$Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = "File", tint = Color.Gray)</ID>
-    <ID>MaxLineLength:RemoteFileSystem.kt$RemoteFileSystem$files.size &gt; 1 || files.isEmpty() || (files.size == 1 &amp;&amp; files[0].path.removeSuffix("/") != path.removeSuffix("/"))</ID>
-    <ID>MaxLineLength:S3ConnectionDialog.kt$focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)</ID>
-    <ID>MaxLineLength:S3DirectoryDetectionTest.kt$S3DirectoryDetectionTest$fun</ID>
-    <ID>MaxLineLength:S3DirectoryLogSource.kt$S3DirectoryLogSource$"S3 prefix scan recovered for $directorySourceId after $failedScanCount failed attempt(s)"</ID>
-    <ID>MaxLineLength:S3DirectoryLogSource.kt$S3DirectoryLogSource$override</ID>
-    <ID>MaxLineLength:S3FileSystem.kt$S3FileSystem$override suspend</ID>
-    <ID>MaxLineLength:S3IntentHandler.kt$S3IntentHandler$val currentPaths = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }?.sourceIds ?: emptyList()</ID>
-    <ID>MaxLineLength:S3IntentHandler.kt$S3IntentHandler$val s3Uri = com.klogviewer.domain.model.S3Uri(intent.config.bucket, intent.config.prefix, isDirectory = false).toString()</ID>
-    <ID>MaxLineLength:S3IntentHandler.kt$S3IntentHandler$val s3Uri = com.klogviewer.domain.model.S3Uri(intent.config.bucket, intent.prefix, isDirectory = true).toString()</ID>
-    <ID>MaxLineLength:S3LogSource.kt$S3LogSource$"Error during S3 poll #$pollAttempt for $sourceId (lastSize=$lastSize, consecutiveFailures=${failedPollCount + 1})"</ID>
-    <ID>MaxLineLength:S3LogSource.kt$S3LogSource$"S3 poll #$pollAttempt detected truncation/replacement for $sourceId (currentSize=$currentSize, lastSize=$lastSize). Resetting lastSize to 0."</ID>
-    <ID>MaxLineLength:S3LogSource.kt$S3LogSource$"S3 poll #$pollAttempt emitting initial batch of ${initialEntries.size} entries for $sourceId"</ID>
-    <ID>MaxLineLength:S3LogSource.kt$S3LogSource$"S3 poll #$pollAttempt fetch result for $sourceId (returnedBytes=$returnedByteCount, nonBlankLines=$nonBlankLineCount, parsedEntries=$parsedEntryCount, initialBatch=$isInitial)"</ID>
-    <ID>MaxLineLength:S3LogSource.kt$S3LogSource$"S3 poll #$pollAttempt found new data for $sourceId (bytesToRead=$bytesToRead, range=$rangeVal)"</ID>
-    <ID>MaxLineLength:S3LogSource.kt$S3LogSource$"S3 poll #$pollAttempt headObject failed for $sourceId (consecutiveFailures=${failedPollCount + 1})"</ID>
-    <ID>MaxLineLength:S3LogSource.kt$S3LogSource$"S3 poll #$pollAttempt metadata for $sourceId (currentSize=$currentSize, lastSize=$lastSize, sizeDelta=$sizeDelta)"</ID>
-    <ID>MaxLineLength:S3LogSource.kt$S3LogSource$override</ID>
-    <ID>MaxLineLength:S3LogSourceTest.kt$S3LogSourceTest$coEvery { mockClient.headObject(any&lt;HeadObjectRequest&gt;()) } returns headResponse andThen headResponse andThen headResponse</ID>
-    <ID>MaxLineLength:S3LogSourceTest.kt$S3LogSourceTest$coEvery { mockClient.headObject(any&lt;HeadObjectRequest&gt;()) } throws Exception("connection reset") andThen headResponse andThen headResponse</ID>
-    <ID>MaxLineLength:SftpConnectionDialog.kt$focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)</ID>
-    <ID>MaxLineLength:SftpConnectionDialog.kt$keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) })</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSource.kt$SftpDirectoryLogSource$"Remote directory scan recovered for $directorySourceId after $failedScanCount failed attempt(s)"</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSource.kt$SftpDirectoryLogSource$SftpLogSource(cfg, com.klogviewer.core.parser.SimpleLogParser(), sshService = sshService, existingClient = client)</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSource.kt$SftpDirectoryLogSource$override</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSource.kt$SftpDirectoryLogSource$send(LogFailure.FileError("Error scanning remote directory: ${e.message}", directorySourceId).left())</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt$SftpDirectoryLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log")</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt$SftpDirectoryLogSourceTest$val entry = LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("good"), sourceId = "sftp://user@remote:22/var/log/good.log")</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt$SftpDirectoryLogSourceTest$val entry1 = LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("initial1"), sourceId = "sftp://user@remote:22/var/log/file1.log")</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt$SftpDirectoryLogSourceTest$val entry1 = LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("line1"), sourceId = "sftp://user@remote:22/var/log/file1.log")</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt$SftpDirectoryLogSourceTest$val entry2 = LogEntry(LogTimestamp("2023-01-01 10:01:00"), LogLevel.INFO, LogContent("appended1"), sourceId = "sftp://user@remote:22/var/log/file1.log")</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt$SftpDirectoryLogSourceTest$val entry2 = LogEntry(LogTimestamp("2023-01-01 10:01:00"), LogLevel.INFO, LogContent("line2"), sourceId = "sftp://user@remote:22/var/log/file2.log")</ID>
-    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt$SftpDirectoryLogSourceTest$val entry3 = LogEntry(LogTimestamp("2023-01-01 10:02:00"), LogLevel.INFO, LogContent("initial2"), sourceId = "sftp://user@remote:22/var/log/file2.log")</ID>
-    <ID>MaxLineLength:SftpFileSystem.kt$SftpFileSystem$override suspend</ID>
-    <ID>MaxLineLength:SftpFileSystemTest.kt$SftpFileSystemTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log")</ID>
-    <ID>MaxLineLength:SftpIntentHandler.kt$SftpIntentHandler$onConnectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)</ID>
-    <ID>MaxLineLength:SftpIntentHandler.kt$SftpIntentHandler$private val onConnectSftp: (windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit</ID>
-    <ID>MaxLineLength:SftpIntentHandler.kt$SftpIntentHandler$state.update { recentItemsManager.updateRecentItems(it.copy(pendingDialog = null), listOf(sftpUri)) }</ID>
-    <ID>MaxLineLength:SftpIntentHandler.kt$SftpIntentHandler$val currentPaths = state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()</ID>
-    <ID>MaxLineLength:SftpIntentHandler.kt$SftpIntentHandler$val exactMatch = files.find { it.path == intent.path || it.path == intent.path.removeSuffix("/") + "/" + it.name }</ID>
-    <ID>MaxLineLength:SftpIntentHandler.kt$SftpIntentHandler$val newUris = intent.paths.map { "sftp://${intent.config.username.value}@${intent.config.host.value}:${intent.config.port.value}$it" }</ID>
-    <ID>MaxLineLength:SftpIntentHandler.kt$SftpIntentHandler$val sftpUri = SftpUri(config.username.value, config.host.value, config.port.value, intent.path).toString()</ID>
-    <ID>MaxLineLength:SftpIntentHandler.kt$SftpIntentHandler$val sftpUri = SftpUri(intent.config.username.value, intent.config.host.value, intent.config.port.value, intent.path, isDirectory = true).toString()</ID>
-    <ID>MaxLineLength:SftpLogSourceTest.kt$SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key"), "/test.log")</ID>
-    <ID>MaxLineLength:SftpLogSourceTest.kt$SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key", " "), "/test.log")</ID>
-    <ID>MaxLineLength:SftpLogSourceTest.kt$SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key", "secret"), "/test.log")</ID>
-    <ID>MaxLineLength:SftpLogSourceTest.kt$SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/blocking.log")</ID>
-    <ID>MaxLineLength:SftpLogSourceTest.kt$SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/empty.log")</ID>
-    <ID>MaxLineLength:SftpLogSourceTest.kt$SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/invalid/path")</ID>
-    <ID>MaxLineLength:SftpLogSourceTest.kt$SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log/test.log")</ID>
-    <ID>MaxLineLength:SftpLogSourceTest.kt$SftpLogSourceTest$val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)</ID>
-    <ID>MaxLineLength:SftpPersistenceTest.kt$SftpPersistenceTest$val initialConfig = SftpConfig(name, Host("old.com"), Port(22), Username("old"), SftpAuth.Password("old"), "/old.log")</ID>
-    <ID>MaxLineLength:SimpleLogParser.kt$SimpleLogParser$finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw</ID>
-    <ID>MaxLineLength:SimpleLogParser.kt$SimpleLogParser$private val regex = """^\s*(?&lt;timestamp&gt;\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?&lt;metadata&gt;.*?)]\s*)?(?&lt;level&gt;\[.*?]|\S+)?(?:\s+(?&lt;content&gt;.*))?$""".toRegex()</ID>
-    <ID>MaxLineLength:TabManagementTest.kt$TabManagementTest$assertEquals(emptySet&lt;com.klogviewer.domain.model.LogLevel&gt;(), viewModel.state.value.activeTab?.activeWindow?.levelFilters)</ID>
-    <ID>MaxLineLength:TemplateLogParser.kt$TemplateLogParser$finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw</ID>
-    <ID>MaxLineLength:TemplateLogParserTest.kt$TemplateLogParserTest$regex = """^(?&lt;timestamp&gt;\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+\[(?&lt;metadata&gt;.*?)\]\s+(?&lt;level&gt;\S+)\s+(?&lt;content&gt;.*)$"""</ID>
-    <ID>MaxLineLength:UiToggleIntentHandler.kt$UiToggleIntentHandler$logLoadingCoordinator.loadFilesIntoWindow(activeWindow.id, activeWindow.sourceIds, activeWindow.parserName)</ID>
-    <ID>MaxLineLength:WorkspaceLogLoader.kt$WorkspaceLogLoader$fun</ID>
-    <ID>MaxLineLength:WorkspaceLogLoader.kt$WorkspaceLogLoader$if</ID>
-    <ID>MaxLineLength:WorkspaceLogLoader.kt$WorkspaceLogLoader$localFileSystem.isDirectory(path) -&gt; DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))</ID>
-    <ID>MaxLineLength:WorkspaceLogLoader.kt$WorkspaceLogLoader$}</ID>
-    <ID>NestedBlockDepth:HeuristicProbe.kt$HeuristicProbe$fun detect(lines: List&lt;String&gt;): ProbeResult</ID>
-    <ID>NestedBlockDepth:LogHighlighter.kt$LogHighlighter$private fun applyOtherHighlights( builder: AnnotatedString.Builder, text: String, filterQueries: List&lt;String&gt;, isDarkMode: Boolean )</ID>
-    <ID>NestedBlockDepth:SimpleLogParser.kt$SimpleLogParser$override fun parse(line: String): Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
-    <ID>NestedBlockDepth:TemplateLogParser.kt$TemplateLogParser$override fun parse(line: String): Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
-    <ID>NewLineAtEndOfFile:DragDropImportIntegrationTest.kt$com.klogviewer.integration.DragDropImportIntegrationTest.kt</ID>
-    <ID>NewLineAtEndOfFile:FilterBarTimeFilterControlsTest.kt$com.klogviewer.ui.components.FilterBarTimeFilterControlsTest.kt</ID>
-    <ID>NewLineAtEndOfFile:LogListSourceBadgeTooltipTest.kt$com.klogviewer.ui.test.LogListSourceBadgeTooltipTest.kt</ID>
-    <ID>NewLineAtEndOfFile:LogListSourceShadeIndexTest.kt$com.klogviewer.ui.components.LogListSourceShadeIndexTest.kt</ID>
-    <ID>NewLineAtEndOfFile:LogLoadingIntegrationTest.kt$com.klogviewer.integration.LogLoadingIntegrationTest.kt</ID>
-    <ID>NewLineAtEndOfFile:PlaintextSecretFallbackPromptTest.kt$com.klogviewer.ui.viewmodel.PlaintextSecretFallbackPromptTest.kt</ID>
-    <ID>NewLineAtEndOfFile:TimeRangeFilterSupport.kt$com.klogviewer.ui.viewmodel.TimeRangeFilterSupport.kt</ID>
-    <ID>ReturnCount:CredentialProtectionService.kt$CredentialProtectionService$fun protectForPersistence( preferences: UserPreferences, allowPlaintextSecretFallback: Boolean ): ProtectionResult</ID>
-    <ID>ReturnCount:CredentialProtectionService.kt$CredentialProtectionService$private fun protectNullableSecret( secret: String?, reference: CredentialReference, allowPlaintextSecretFallback: Boolean ): ProtectedValue&lt;String?&gt;</ID>
-    <ID>ReturnCount:CredentialProtectionService.kt$CredentialProtectionService$private fun protectSecret( secret: String, reference: CredentialReference, allowPlaintextSecretFallback: Boolean ): ProtectedValue&lt;String&gt;</ID>
-    <ID>ReturnCount:CredentialProtectionService.kt$CredentialProtectionService$private fun protectSftpConfig( config: SftpConfig, allowPlaintextSecretFallback: Boolean ): ProtectedValue&lt;SftpConfig&gt;</ID>
-    <ID>ReturnCount:DialogProvider.kt$AwtDialogProvider$override fun showMonospacedFontDialog( title: String, initialFamily: String, initialSizeSp: Int ): FontSelection?</ID>
-    <ID>ReturnCount:DirectoryLogSource.kt$DirectoryLogSource$private suspend fun checkInitialLoad( discoveredFiles: List&lt;String&gt;, activeSources: Map&lt;String, Job&gt;, currentEntries: Map&lt;String, List&lt;LogEntry&gt;&gt;, scope: ProducerScope&lt;Either&lt;LogFailure, LogUpdate&gt;&gt; ): Boolean</ID>
-    <ID>ReturnCount:HeuristicProbe.kt$HeuristicProbe$fun detect(lines: List&lt;String&gt;): ProbeResult</ID>
-    <ID>ReturnCount:InMemoryAnalysisMetricsRepository.kt$InMemoryAnalysisMetricsRepository$override suspend fun timeSeriesMetrics(query: TimeSeriesMetricsQuery): Either&lt;AnalysisFailure, TimeSeriesMetricsResult&gt;</ID>
-    <ID>ReturnCount:JsonPreferencesRepository.kt$JsonPreferencesRepository$override fun save( preferences: UserPreferences, options: PreferencesSaveOptions ): PreferencesSaveResult</ID>
-    <ID>ReturnCount:KLogViewerScreen.kt$internal fun resolveDashboardTimeSelection( content: DashboardDataState.Content, activeTimeFilterFrom: java.time.Instant?, activeTimeFilterTo: java.time.Instant? ): DashboardTimeSelection?</ID>
-    <ID>ReturnCount:KLogViewerViewModel.kt$KLogViewerViewModel$private fun applyDashboardTimeBucketSelection(windowId: String, bucketFrom: Instant)</ID>
-    <ID>ReturnCount:KLogViewerViewModel.kt$KLogViewerViewModel$private fun applyDashboardTimeRangeSelection(windowId: String, from: Instant, to: Instant)</ID>
-    <ID>ReturnCount:KLogViewerViewModel.kt$KLogViewerViewModel$private fun computeComparisonState( entries: List&lt;LogEntry&gt;, previousState: DashboardComparisonState, selectedField: String?, threshold: Int, topN: Int, cardinalityLimit: Int ): DashboardComparisonState</ID>
-    <ID>ReturnCount:KLogViewerViewModel.kt$KLogViewerViewModel$private fun mergeDashboardSelectionsWithLatestState( computedState: DashboardDataState, latestWindow: LogWindow ): DashboardDataState</ID>
-    <ID>ReturnCount:KoalaPlotCharts.kt$internal fun bucketRangeFromDrag( dragStartX: Float, dragEndX: Float, plotWidthPx: Float, bucketCount: Int ): IntRange?</ID>
-    <ID>ReturnCount:KoalaPlotCharts.kt$internal fun pointerXToBucketIndex(pointerX: Float, plotWidthPx: Float, bucketCount: Int): Int?</ID>
-    <ID>ReturnCount:KoalaPlotCharts.kt$internal fun selectedBucketIndexRange( sortedBuckets: List&lt;DashboardTimeBucket&gt;, selectedBucketFrom: Instant?, selectedRangeFrom: Instant?, selectedRangeTo: Instant? ): IntRange?</ID>
-    <ID>ReturnCount:KoalaPlotCharts.kt$internal fun timeSeriesXAxisRange(xValues: List&lt;Float&gt;): ClosedFloatingPointRange&lt;Float&gt;</ID>
-    <ID>ReturnCount:LevelMapper.kt$LevelMapper$fun map(input: String?): LogLevel</ID>
-    <ID>ReturnCount:LogFilterService.kt$LogFilterService$private fun matchesQuery(entry: LogEntry, query: String): Boolean</ID>
-    <ID>ReturnCount:LogList.kt$private fun getSourceBadgeColor(sourceId: String?, sourceIds: List&lt;String&gt;, isMissing: Boolean = false): Color</ID>
-    <ID>ReturnCount:LogLoadingCoordinator.kt$LogLoadingCoordinator$private fun handleSingleRemotePath(windowId: String, paths: List&lt;String&gt;, overrideParserName: String?): Boolean</ID>
-    <ID>ReturnCount:RemoteConnection.kt$S3Uri.Companion$fun parse(uri: String): S3Uri?</ID>
-    <ID>ReturnCount:RemoteConnection.kt$SftpUri.Companion$fun parse(uri: String): SftpUri?</ID>
-    <ID>ReturnCount:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$fun parseInstantOrNull(value: String): Instant?</ID>
-    <ID>ReturnCount:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$fun validationMessage( fromValue: String, fromInstant: Instant?, toValue: String, toInstant: Instant? ): String?</ID>
-    <ID>ReturnCount:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$private fun rangeFromEntries(entries: List&lt;LogEntry&gt;): Pair&lt;Instant, Instant&gt;?</ID>
-    <ID>ReturnCount:TimeRangeFilterSupport.kt$TimeRangeFilterSupport$private fun toInstant(accessor: TemporalAccessor): Instant</ID>
-    <ID>ReturnCount:TimestampParser.kt$TimestampParser$fun parse(input: String): Instant?</ID>
-    <ID>ReturnCount:WorkspaceIntentHandler.kt$WorkspaceIntentHandler$private fun isSupportedDropPath(path: String): Boolean</ID>
-    <ID>SwallowedException:HeuristicProbe.kt$HeuristicProbe$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:DirectoryLogSource.kt$DirectoryLogSource$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:FileLogSource.kt$FileLogSource$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:HeuristicProbe.kt$HeuristicProbe$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:JsonPreferencesRepository.kt$JsonPreferencesRepository$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:KLogViewerViewModel.kt$KLogViewerViewModel$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:RemoteDirectoryFileObserver.kt$RemoteDirectoryFileObserver$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:RetryUtils.kt$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:S3DirectoryFileObserver.kt$S3DirectoryFileObserver$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:S3DirectoryLogSource.kt$S3DirectoryLogSource$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:S3FileSystem.kt$S3FileSystem$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:S3LogSource.kt$S3LogSource$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:SecureCredentialStore.kt$OsKeychainCredentialStore.ProcessCommandExecutor$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:SftpDirectoryLogSource.kt$SftpDirectoryLogSource$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:SftpFileSystem.kt$SftpFileSystem$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:SftpLogSource.kt$SftpLogSource$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:SshService.kt$SshService$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:TimestampParser.kt$TimestampParser$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:WorkspaceLogLoader.kt$WorkspaceLogLoader$e: Exception</ID>
-    <ID>TooGenericExceptionThrown:S3LogSourceTest.kt$S3LogSourceTest$throw Exception("socket timeout")</ID>
-    <ID>TooManyFunctions:CredentialProtectionService.kt$CredentialProtectionService</ID>
-    <ID>TooManyFunctions:KLogViewerScreen.kt$com.klogviewer.ui.components.KLogViewerScreen.kt</ID>
-    <ID>TooManyFunctions:KLogViewerViewModel.kt$KLogViewerViewModel</ID>
-    <ID>TooManyFunctions:KoalaPlotCharts.kt$com.klogviewer.ui.components.KoalaPlotCharts.kt</ID>
-    <ID>TooManyFunctions:LogList.kt$com.klogviewer.ui.components.LogList.kt</ID>
-    <ID>TooManyFunctions:LogLoadingCoordinator.kt$LogLoadingCoordinator</ID>
-    <ID>TooManyFunctions:SecureCredentialStore.kt$OsKeychainCredentialStore : SecureCredentialStore</ID>
-    <ID>TooManyFunctions:TimeRangeFilterSupport.kt$TimeRangeFilterSupport</ID>
-    <ID>TopLevelPropertyNaming:KLogViewerScreen.kt$private const val sourceVisibilityColorDelta = 0.22f</ID>
-    <ID>UnusedParameter:FilterBar.kt$timeFilterFrom: String</ID>
-    <ID>UnusedParameter:FilterBar.kt$timeFilterTo: String</ID>
-    <ID>UnusedParameter:SidebarRobot.kt$SidebarRobot$enabled: Boolean</ID>
-    <ID>UnusedPrivateProperty:DirectoryScannerTest.kt$DirectoryScannerTest$val csv1 = File(tempDir.toFile(), "data.csv").apply { writeText("not a log") }</ID>
-    <ID>UnusedPrivateProperty:S3IntentHandler.kt$S3IntentHandler$private val remoteFileSystem: RemoteFileSystem</ID>
-    <ID>UnusedPrivateProperty:S3IntentHandler.kt$S3IntentHandler$private val scope: CoroutineScope</ID>
-    <ID>WildcardImport:BaseRobot.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:ConnectionToggleTest.kt$import io.mockk.*</ID>
-    <ID>WildcardImport:DashboardUxHardeningUiTest.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:DashboardUxHardeningUiTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:DirectoryLogSource.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:DirectoryLogSource.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:DirectoryLogSource.kt$import kotlinx.coroutines.flow.*</ID>
-    <ID>WildcardImport:DirectoryLogSourceTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:DirectoryTabTest.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:DirectoryTabTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:FileDeletionTest.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:FileDeletionTest.kt$import strikt.assertions.*</ID>
-    <ID>WildcardImport:FileLogSource.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:FileLogTailingTest.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:FileSelector.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:FileSelector.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:FileSelector.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:FilterBar.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:FilterBar.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:FilterBar.kt$import androidx.compose.material.icons.automirrored.filled.*</ID>
-    <ID>WildcardImport:FilterBar.kt$import androidx.compose.material.icons.filled.*</ID>
-    <ID>WildcardImport:FilterBar.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:FilterBarTimeFilterControlsTest.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:HeuristicProbe.kt$import kotlinx.serialization.json.*</ID>
-    <ID>WildcardImport:JsonLogParser.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:JsonLogParser.kt$import kotlinx.serialization.json.*</ID>
-    <ID>WildcardImport:KLogViewerComplexUiTest.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:KLogViewerComplexUiTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:KLogViewerScreen.kt$import androidx.compose.foundation.*</ID>
-    <ID>WildcardImport:KLogViewerScreen.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:KLogViewerScreen.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:KLogViewerScreen.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:KLogViewerScreen.kt$import com.klogviewer.ui.mvi.*</ID>
-    <ID>WildcardImport:KLogViewerSmokeTest.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:KLogViewerTheme.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:KLogViewerUiTest.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:KLogViewerUiTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:KLogViewerViewModel.kt$import com.klogviewer.domain.repository.*</ID>
-    <ID>WildcardImport:KLogViewerViewModel.kt$import com.klogviewer.ui.mvi.*</ID>
-    <ID>WildcardImport:KLogViewerViewModel.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:KLogViewerViewModel.kt$import kotlinx.coroutines.flow.*</ID>
-    <ID>WildcardImport:KoalaPlotCharts.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:LogColumnResizeTest.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:LogEntryDetails.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:LogEntryDetails.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:LogList.kt$import androidx.compose.foundation.*</ID>
-    <ID>WildcardImport:LogList.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:LogList.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:LogList.kt$import androidx.compose.ui.input.pointer.*</ID>
-    <ID>WildcardImport:LogListRobot.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:LogListSourceBadgeTooltipTest.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:LogLoadingCoordinator.kt$import com.klogviewer.core.parser.*</ID>
-    <ID>WildcardImport:LogLoadingCoordinator.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:LogLoadingCoordinator.kt$import kotlinx.coroutines.flow.*</ID>
-    <ID>WildcardImport:LogLoadingSteps.kt$import kotlinx.coroutines.test.*</ID>
-    <ID>WildcardImport:LogfmtParser.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:Main.kt$import androidx.compose.ui.window.*</ID>
-    <ID>WildcardImport:Main.kt$import com.klogviewer.core.repository.*</ID>
-    <ID>WildcardImport:Main.kt$import com.klogviewer.core.source.*</ID>
-    <ID>WildcardImport:MainRobot.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:PersistenceIntegrationTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:PreferencesRepositoryTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:PreferencesStateMapper.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:PreferencesStateMapper.kt$import com.klogviewer.ui.mvi.*</ID>
-    <ID>WildcardImport:RecentItemsDialog.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:RecentItemsDialog.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:RecentItemsDialog.kt$import androidx.compose.ui.input.key.*</ID>
-    <ID>WildcardImport:RecentItemsTest.kt$import strikt.assertions.*</ID>
-    <ID>WildcardImport:RemoteDirectoryFileObserver.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:RemoteFileBrowserDialog.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:RemoteFileBrowserDialog.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:RemoteFileBrowserDialog.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:RemoteLogTailer.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:S3ConnectionDialog.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:S3ConnectionDialog.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:S3ConnectionDialog.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:S3ConnectionDialog.kt$import androidx.compose.ui.input.key.*</ID>
-    <ID>WildcardImport:S3ConnectionDialog.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:S3DirectoryFileObserver.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:S3DirectoryLogSource.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:S3DirectoryLogSourceTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:S3LogSource.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:S3LogSource.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:S3LogSourceTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:S3PersistenceTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpBrowsingTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpBrowsingTest.kt$import io.mockk.*</ID>
-    <ID>WildcardImport:SftpConnectionDialog.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:SftpConnectionDialog.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:SftpConnectionDialog.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:SftpConnectionDialog.kt$import androidx.compose.ui.input.key.*</ID>
-    <ID>WildcardImport:SftpConnectionDialog.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpDirectoryLogSource.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:SftpDirectoryLogSourceTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpDirectoryLogSourceTest.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:SftpFileSystemTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpIntentHandler.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpLogSource.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpLogSource.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:SftpLogSourceTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpLogSourceTest.kt$import kotlinx.coroutines.*</ID>
-    <ID>WildcardImport:SftpPersistenceTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpReloadTest.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:SftpReloadTest.kt$import io.mockk.*</ID>
-    <ID>WildcardImport:Sidebar.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:Sidebar.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:SidebarRobot.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:SimpleLogParser.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:StatusBar.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:StatusBar.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:StatusBar.kt$import androidx.compose.runtime.*</ID>
-    <ID>WildcardImport:TabWindowController.kt$import com.klogviewer.ui.mvi.*</ID>
-    <ID>WildcardImport:TemplateLogParser.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:WelcomeScreen.kt$import androidx.compose.foundation.layout.*</ID>
-    <ID>WildcardImport:WelcomeScreen.kt$import androidx.compose.material.*</ID>
-    <ID>WildcardImport:WelcomeScreen.kt$import androidx.compose.material.icons.filled.*</ID>
-    <ID>WildcardImport:WindowRobot.kt$import androidx.compose.ui.test.*</ID>
-    <ID>WildcardImport:WorkspaceLogLoader.kt$import com.klogviewer.core.parser.*</ID>
-    <ID>WildcardImport:WorkspaceLogLoader.kt$import com.klogviewer.domain.model.*</ID>
-    <ID>WildcardImport:WorkspaceLogLoader.kt$import kotlinx.coroutines.flow.*</ID>
+    <ID>CyclomaticComplexMethod:DialogIntentHandler.kt:DialogIntentHandler$fun handle</ID>
+    <ID>CyclomaticComplexMethod:FileLogSource.kt:FileLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>CyclomaticComplexMethod:FilterBar.kt:@Composable fun FilterBar</ID>
+    <ID>CyclomaticComplexMethod:FilterIntentHandler.kt:FilterIntentHandler$fun handle</ID>
+    <ID>CyclomaticComplexMethod:HeuristicProbe.kt:HeuristicProbe$private fun detectJsonMapping: JsonMapping</ID>
+    <ID>CyclomaticComplexMethod:KLogViewerScreen.kt:@Composable private fun AbComparisonSection</ID>
+    <ID>CyclomaticComplexMethod:KLogViewerScreen.kt:@Composable private fun DashboardContent</ID>
+    <ID>CyclomaticComplexMethod:KLogViewerScreen.kt:@Composable private fun DialogHandler</ID>
+    <ID>CyclomaticComplexMethod:KLogViewerScreen.kt:@Composable private fun LogWindowItem</ID>
+    <ID>CyclomaticComplexMethod:KLogViewerViewModel.kt:KLogViewerViewModel$private fun handleDashboardIntent</ID>
+    <ID>CyclomaticComplexMethod:KoalaPlotCharts.kt:@OptIn(ExperimentalKoalaPlotApi::class, ExperimentalFoundationApi::class) @Composable fun KoalaPlotTimeSeriesChart</ID>
+    <ID>CyclomaticComplexMethod:LogHighlighter.kt:LogHighlighter$private fun updateStyleFromAnsi: SpanStyle</ID>
+    <ID>CyclomaticComplexMethod:LogList.kt:@Composable fun LogEntryRow</ID>
+    <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
+    <ID>CyclomaticComplexMethod:RecentItemsDialog.kt:@Composable fun RecentItemsDialog</ID>
+    <ID>CyclomaticComplexMethod:S3ConnectionDialog.kt:@Composable fun S3ConnectionDialog</ID>
+    <ID>CyclomaticComplexMethod:S3LogSource.kt:S3LogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>CyclomaticComplexMethod:SftpConnectionDialog.kt:@Composable fun SftpConnectionDialog</ID>
+    <ID>CyclomaticComplexMethod:SftpLogSource.kt:SftpLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>CyclomaticComplexMethod:SimpleLogParser.kt:SimpleLogParser$override fun parse: Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
+    <ID>CyclomaticComplexMethod:TabWindowIntentHandler.kt:TabWindowIntentHandler$fun handle</ID>
+    <ID>CyclomaticComplexMethod:TemplateLogParser.kt:TemplateLogParser$override fun parse: Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
+    <ID>CyclomaticComplexMethod:WorkspaceLogLoader.kt:WorkspaceLogLoader$fun filterRedundantPaths: List&lt;String&gt;</ID>
+    <ID>FunctionNaming:FileSelector.kt:@Composable fun FileSelector</ID>
+    <ID>FunctionNaming:FilterBar.kt:@Composable fun FilterBar</ID>
+    <ID>FunctionNaming:FilterBar.kt:@Composable private fun CompactMenuItem</ID>
+    <ID>FunctionNaming:FilterBar.kt:@Composable private fun FilterBarIcon</ID>
+    <ID>FunctionNaming:FilterBar.kt:@Composable private fun FilterChip</ID>
+    <ID>FunctionNaming:FilterBar.kt:@Composable private fun TimeFilterControls</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable fun KLogViewerScreen</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun AbComparisonSection</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardActiveFilters</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardAnalysisScopeBanner</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardBucketKeyboardFallback</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardContent</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardFilterChip</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardLevelDistributionRow</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardLevelDistributionSection</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardNumberControl</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardSectionHeader</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DashboardWorkspace</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun DialogHandler</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun FrequencyAnalysisSection</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun LogBottomBar</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun LogTabRow</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun LogTimeFrequencyPanel</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun LogTopBar</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun LogWindowItem</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun LogWindowList</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun LogWorkspace</ID>
+    <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun SourceManagementDropdown</ID>
+    <ID>FunctionNaming:KLogViewerTheme.kt:@Composable fun KLogViewerTheme</ID>
+    <ID>FunctionNaming:KoalaPlotCharts.kt:@OptIn(ExperimentalKoalaPlotApi::class) @Composable fun KoalaPlotLevelDistributionChart</ID>
+    <ID>FunctionNaming:KoalaPlotCharts.kt:@OptIn(ExperimentalKoalaPlotApi::class, ExperimentalFoundationApi::class) @Composable fun KoalaPlotTimeSeriesChart</ID>
+    <ID>FunctionNaming:LogEntryDetails.kt:@Composable fun LogEntryDetails</ID>
+    <ID>FunctionNaming:LogEntryDetails.kt:@Composable private fun DetailItem</ID>
+    <ID>FunctionNaming:LogList.kt:@Composable fun LogEntryRow</ID>
+    <ID>FunctionNaming:LogList.kt:@Composable fun LogList</ID>
+    <ID>FunctionNaming:LogList.kt:@Composable fun LogListHeader</ID>
+    <ID>FunctionNaming:LogList.kt:@Composable private fun CompactMenuItem</ID>
+    <ID>FunctionNaming:LogList.kt:@Composable private fun LogEntryCell</ID>
+    <ID>FunctionNaming:LogList.kt:@Composable private fun LogGutter</ID>
+    <ID>FunctionNaming:LogList.kt:@Composable private fun ResizeHandle</ID>
+    <ID>FunctionNaming:RecentItemsDialog.kt:@Composable fun RecentItemsDialog</ID>
+    <ID>FunctionNaming:RecentItemsDialog.kt:@Composable private fun RecentItemRow</ID>
+    <ID>FunctionNaming:RemoteFileBrowserDialog.kt:@Composable fun RemoteFileBrowserDialog</ID>
+    <ID>FunctionNaming:S3ConnectionDialog.kt:@Composable fun S3ConnectionDialog</ID>
+    <ID>FunctionNaming:SftpConnectionDialog.kt:@Composable fun SftpConnectionDialog</ID>
+    <ID>FunctionNaming:Sidebar.kt:@Composable fun Sidebar</ID>
+    <ID>FunctionNaming:Sidebar.kt:@Composable private fun LogLevelToggle</ID>
+    <ID>FunctionNaming:StatusBar.kt:@Composable fun StatusBar</ID>
+    <ID>FunctionNaming:Tooltip.kt:@OptIn(ExperimentalFoundationApi::class) @Composable fun TooltipWrapper</ID>
+    <ID>FunctionNaming:WelcomeScreen.kt:@Composable fun WelcomeScreen</ID>
+    <ID>FunctionNaming:WelcomeScreen.kt:@Composable private fun WelcomeCard</ID>
+    <ID>LargeClass:DashboardIntentTest.kt:DashboardIntentTest</ID>
+    <ID>LargeClass:KLogViewerViewModel.kt:KLogViewerViewModel</ID>
+    <ID>LongMethod:DashboardIntentTest.kt:DashboardIntentTest$@Test fun `given compare ranges when running comparison then deltas are correct and sorted by impact`</ID>
+    <ID>LongMethod:FileLogSource.kt:FileLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>LongMethod:FilterBar.kt:@Composable fun FilterBar</ID>
+    <ID>LongMethod:FilterIntentHandler.kt:FilterIntentHandler$fun handle</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable fun KLogViewerScreen</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun AbComparisonSection</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun DashboardContent</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun DashboardLevelDistributionRow</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun DashboardWorkspace</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun DialogHandler</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun FrequencyAnalysisSection</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun LogTabRow</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun LogTimeFrequencyPanel</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun LogWindowItem</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun LogWorkspace</ID>
+    <ID>LongMethod:KLogViewerScreen.kt:@Composable private fun SourceManagementDropdown</ID>
+    <ID>LongMethod:KLogViewerTheme.kt:@Composable fun KLogViewerTheme</ID>
+    <ID>LongMethod:KLogViewerViewModel.kt:KLogViewerViewModel$private fun filterLogs</ID>
+    <ID>LongMethod:KLogViewerViewModel.kt:KLogViewerViewModel$private fun handleDashboardIntent</ID>
+    <ID>LongMethod:KLogViewerViewModel.kt:KLogViewerViewModel$private suspend fun buildDashboardDataState: DashboardDataState</ID>
+    <ID>LongMethod:KoalaPlotCharts.kt:@OptIn(ExperimentalKoalaPlotApi::class) @Composable fun KoalaPlotLevelDistributionChart</ID>
+    <ID>LongMethod:KoalaPlotCharts.kt:@OptIn(ExperimentalKoalaPlotApi::class, ExperimentalFoundationApi::class) @Composable fun KoalaPlotTimeSeriesChart</ID>
+    <ID>LongMethod:LogEntryDetails.kt:@Composable fun LogEntryDetails</ID>
+    <ID>LongMethod:LogList.kt:@Composable fun LogEntryRow</ID>
+    <ID>LongMethod:LogList.kt:@Composable fun LogList</ID>
+    <ID>LongMethod:LogList.kt:@Composable fun LogListHeader</ID>
+    <ID>LongMethod:LogList.kt:@Composable private fun LogEntryCell</ID>
+    <ID>LongMethod:Main.kt:fun main</ID>
+    <ID>LongMethod:RecentItemsDialog.kt:@Composable fun RecentItemsDialog</ID>
+    <ID>LongMethod:RemoteFileBrowserDialog.kt:@Composable fun RemoteFileBrowserDialog</ID>
+    <ID>LongMethod:S3ConnectionDialog.kt:@Composable fun S3ConnectionDialog</ID>
+    <ID>LongMethod:S3DirectoryLogSource.kt:S3DirectoryLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>LongMethod:S3LogSource.kt:S3LogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>LongMethod:SftpConnectionDialog.kt:@Composable fun SftpConnectionDialog</ID>
+    <ID>LongMethod:SftpDirectoryLogSource.kt:SftpDirectoryLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>LongMethod:SftpLogSource.kt:SftpLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>LongMethod:Sidebar.kt:@Composable fun Sidebar</ID>
+    <ID>LongMethod:SimpleLogParser.kt:SimpleLogParser$override fun parse: Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
+    <ID>LongMethod:StatusBar.kt:@Composable fun StatusBar</ID>
+    <ID>LongMethod:TabWindowIntentHandler.kt:TabWindowIntentHandler$fun handle</ID>
+    <ID>LongMethod:TemplateLogParser.kt:TemplateLogParser$override fun parse: Either&lt;LogFailure.ParsingError, LogEntry&gt;</ID>
+    <ID>LongMethod:WelcomeScreen.kt:@Composable fun WelcomeScreen</ID>
+    <ID>LoopWithTooManyJumpStatements:RemoteLogTailer.kt:RemoteLogTailer$while</ID>
+    <ID>LoopWithTooManyJumpStatements:S3LogSource.kt:S3LogSource$while</ID>
+    <ID>MagicNumber:DialogIntentHandler.kt:DialogIntentHandler$72</ID>
+    <ID>MagicNumber:DialogIntentHandler.kt:DialogIntentHandler$8</ID>
+    <ID>MagicNumber:KLogViewerScreen.kt:0.2f</ID>
+    <ID>MagicNumber:KLogViewerScreen.kt:0.95f</ID>
+    <ID>MagicNumber:KLogViewerScreen.kt:0xFF2E7D32</ID>
+    <ID>MagicNumber:KLogViewerScreen.kt:0xFFC62828</ID>
+    <ID>MagicNumber:KLogViewerScreen.kt:0xFFFFA500</ID>
+    <ID>MagicNumber:KLogViewerViewModel.kt:KLogViewerViewModel$1_000_000</ID>
+    <ID>MagicNumber:KoalaPlotCharts.kt:0.1f</ID>
+    <ID>MagicNumber:KoalaPlotCharts.kt:0.58f</ID>
+    <ID>MagicNumber:KoalaPlotCharts.kt:1000.0</ID>
+    <ID>MagicNumber:KoalaPlotCharts.kt:10f</ID>
+    <ID>MagicNumber:KoalaPlotCharts.kt:3</ID>
+    <ID>MagicNumber:KoalaPlotCharts.kt:4</ID>
+    <ID>MagicNumber:KoalaPlotCharts.kt:5</ID>
+    <ID>MagicNumber:KoalaPlotCharts.kt:90f</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF0097A7</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF1565C0</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF26C6DA</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF2E7D32</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF424242</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF42A5F5</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF64B5F6</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF66BB6A</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF7B1FA2</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF81C784</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF82B1FF</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF84FFFF</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFAB47BC</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFB9F6CA</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFEA80FC</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFEF5350</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFEF6C00</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFF57F17</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFFF8A80</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFFFB74D</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFFFCA28</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFFFE082</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFFFFFF8D</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$30</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$31</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$32</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$33</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$34</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$35</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$36</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$37</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$90</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$91</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$92</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$93</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$94</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$95</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$96</ID>
+    <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$97</ID>
+    <ID>MagicNumber:LogList.kt:0.6f</ID>
+    <ID>MagicNumber:LogList.kt:4</ID>
+    <ID>MagicNumber:LogList.kt:72</ID>
+    <ID>MagicNumber:LogList.kt:8</ID>
+    <ID>MagicNumber:Main.kt:5</ID>
+    <ID>MagicNumber:RemoteConnection.kt:SftpConfig$22</ID>
+    <ID>MagicNumber:RemoteDirectoryFileObserver.kt:RemoteDirectoryFileObserver$200L</ID>
+    <ID>MagicNumber:RemoteFileBrowserDialog.kt:0xFFFFA000</ID>
+    <ID>MagicNumber:RemoteFileBrowserDialog.kt:1024</ID>
+    <ID>MagicNumber:S3DirectoryFileObserver.kt:S3DirectoryFileObserver$200L</ID>
+    <ID>MagicNumber:SftpConnectionDialog.kt:22</ID>
+    <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$10</ID>
+    <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$13</ID>
+    <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$15L</ID>
+    <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$1_440L</ID>
+    <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$30L</ID>
+    <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$360L</ID>
+    <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$5L</ID>
+    <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$60L</ID>
+    <ID>MagicNumber:TimestampParser.kt:TimestampParser$10</ID>
+    <ID>MagicNumber:Tooltip.kt:210</ID>
+    <ID>MagicNumber:Tooltip.kt:255</ID>
+    <ID>MaxLineLength:AdvancedLoggingTest.kt:AdvancedLoggingTest$val line = """192.168.1.10 - - [15/May/2026:10:23:42 +0000] "GET /index.html HTTP/1.1" 200 1024 "http://referrer.com" "Mozilla/5.0""""</ID>
+    <ID>MaxLineLength:BaseRobot.kt:BaseRobot$protected</ID>
+    <ID>MaxLineLength:ConnectionToggleTest.kt:ConnectionToggleTest$// verify that the job was cancelled - difficult to verify directly on mockk but we can check if it reloads on reconnect</ID>
+    <ID>MaxLineLength:DashboardIntentTest.kt:DashboardIntentTest$"selectedFrequencyField=${content.selectedFrequencyField}, selectedFrequencyValue=${content.selectedFrequencyValue}, "</ID>
+    <ID>MaxLineLength:DashboardIntentTest.kt:DashboardIntentTest$expectThat((clearedSelectionWindow.dashboardDataState as? DashboardDataState.Content)?.selectedFrequencyValue).isNull()</ID>
+    <ID>MaxLineLength:DashboardIntentTest.kt:DashboardIntentTest$fun</ID>
+    <ID>MaxLineLength:DashboardUxHardeningUiTest.kt:DashboardUxHardeningUiTest$fun</ID>
+    <ID>MaxLineLength:DashboardUxHardeningUiTest.kt:DashboardUxHardeningUiTest$logEntry("2026-01-01T00:00:01Z", "second", LogLevel.UNKNOWN, mapOf("service" to "billing", "level" to "UNKNOWN"))</ID>
+    <ID>MaxLineLength:DefaultLogSourceFactory.kt:DefaultLogSourceFactory$SftpLogSource(cfg, SimpleLogParser(), sshService = sshService, existingClient = client, dispatcher = dispatcher)</ID>
+    <ID>MaxLineLength:DefaultLogSourceFactory.kt:DefaultLogSourceFactory$return S3LogSource(config, parser ?: SimpleLogParser(), s3ClientProvider = s3ClientProvider, dispatcher = dispatcher)</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowAddDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD, isAddMode = true) }</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowAddDirectoryDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.ADD_DIRECTORY, isAddMode = true) }</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowAddS3Dialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.S3_ADD, isAddMode = true) }</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowAddSftpDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_ADD, isAddMode = true) }</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowOpenDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN, isAddMode = false) }</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowOpenDirectoryDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.OPEN_DIRECTORY, isAddMode = false) }</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowRecentDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.RECENT_ITEMS) }</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowS3Dialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.S3_CONNECT, isAddMode = false) }</ID>
+    <ID>MaxLineLength:DialogIntentHandler.kt:DialogIntentHandler$KLogViewerIntent.ShowSftpDialog -&gt; state.update { it.copy(pendingDialog = KLogViewerState.DialogType.SFTP_CONNECT, isAddMode = false) }</ID>
+    <ID>MaxLineLength:DirectoryLogSource.kt:DirectoryLogSource$logger.info { "Initial directory load complete: ${allEntries.size} entries from ${activeSources.size} files" }</ID>
+    <ID>MaxLineLength:DirectoryLogSource.kt:DirectoryLogSource$override</ID>
+    <ID>MaxLineLength:DirectoryLogSource.kt:DirectoryLogSource$private suspend</ID>
+    <ID>MaxLineLength:DirectoryLogSource.kt:DirectoryLogSource$scope.send(LogFailure.FileError("Error scanning directory: ${e.message}", sourceId = path.value, cause = e).left())</ID>
+    <ID>MaxLineLength:DirectoryLogSourceTest.kt:DirectoryLogSourceTest$every { fileLogSource.observeLogs(LogFilePath(log1.absolutePath), any()) } returns flowOf(LogUpdate.Initial(listOf(entry1)).right())</ID>
+    <ID>MaxLineLength:DirectoryLogSourceTest.kt:DirectoryLogSourceTest$every { fileLogSource.observeLogs(LogFilePath(log2.absolutePath), any()) } returns flowOf(LogUpdate.Initial(listOf(entry2)).right())</ID>
+    <ID>MaxLineLength:DirectoryLogSourceTest.kt:DirectoryLogSourceTest$val entry1 = LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("log1"), sourceId = log1.absolutePath)</ID>
+    <ID>MaxLineLength:DirectoryLogSourceTest.kt:DirectoryLogSourceTest$val entry2 = LogEntry(LogTimestamp("2023-01-01 10:01:00"), LogLevel.ERROR, LogContent("log2"), sourceId = log2.absolutePath)</ID>
+    <ID>MaxLineLength:DirectoryLogSourceTest.kt:DirectoryLogSourceTest$val source = DirectoryLogSource(fileLogSource, heuristicProbe, scanner, rescanIntervalMs = 100, dispatcher = testDispatcher)</ID>
+    <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("Log 1"), sourceId = File(tempDir, "file1.log").absolutePath)</ID>
+    <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("Log 1"), sourceId = file1.absolutePath)</ID>
+    <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$LogEntry(LogTimestamp("2023-01-01 10:00:01"), LogLevel.INFO, LogContent("Log 2"), sourceId = File(tempDir, "file2.log").absolutePath)</ID>
+    <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$handleLogUpdateMethod.invoke(viewModel, activeWindowId, LogUpdate.SourceMissing(file1.absolutePath), tempDir.absolutePath)</ID>
+    <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)</ID>
+    <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$val longSourcePath = "/tmp/very-long-directory-segment/very-long-directory-segment/very-long-directory-segment/very-long-directory-segment/app-source.log"</ID>
+    <ID>MaxLineLength:EntryIntentHandler.kt:EntryIntentHandler$selectedEntry = if (newIndices.size == 1) window.filteredLogs.getOrNull(intent.index) else window.selectedEntry</ID>
+    <ID>MaxLineLength:FileDeletionTest.kt:FileDeletionTest$// Wait for initial load (DirectoryLogSource has a 5s rescan delay, so we need to wait at least that long if it missed the first check)</ID>
+    <ID>MaxLineLength:FileLogSource.kt:FileLogSource$logger.info { "Started observing log file: ${path.value} using ${effectiveParser::class.simpleName} (multiline=${multilineProcessor != null})" }</ID>
+    <ID>MaxLineLength:FilterBar.kt:FilterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)</ID>
+    <ID>MaxLineLength:FilterBar.kt:Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.size(18.dp))</ID>
+    <ID>MaxLineLength:FilterBar.kt:Icon(Icons.Default.Close, contentDescription = "Clear all filters", modifier = Modifier.size(14.dp))</ID>
+    <ID>MaxLineLength:FilterBarTimeFilterControlsTest.kt:FilterBarTimeFilterControlsTest$assertTrue(firstStep in 1f..36f, "Expected compact spacing between first and second preset items, was $firstStep")</ID>
+    <ID>MaxLineLength:FilterBarTimeFilterControlsTest.kt:FilterBarTimeFilterControlsTest$assertTrue(secondStep in 1f..36f, "Expected compact spacing between second and third preset items, was $secondStep")</ID>
+    <ID>MaxLineLength:HeuristicProbe.kt:HeuristicProbe$logger.info { "Heuristic: Detected template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }</ID>
+    <ID>MaxLineLength:HeuristicProbe.kt:HeuristicProbe$logger.info { "Heuristic: Falling back to template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }</ID>
+    <ID>MaxLineLength:InMemoryAnalysisMetricsRepository.kt:InMemoryAnalysisMetricsRepository$override suspend</ID>
+    <ID>MaxLineLength:InMemoryAnalysisMetricsRepository.kt:InMemoryAnalysisMetricsRepository$val initialFrequencyItems: Either&lt;AnalysisFailure, List&lt;FieldFrequencyItem&gt;&gt; = emptyList&lt;FieldFrequencyItem&gt;().right()</ID>
+    <ID>MaxLineLength:InMemoryAnalysisMetricsRepositoryTest.kt:InMemoryAnalysisMetricsRepositoryTest$suspend</ID>
+    <ID>MaxLineLength:InterleavingIntegrationTest.kt:InterleavingIntegrationTest$viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false &amp;&amp; (it.activeTab?.activeWindow?.logs?.isNotEmpty() ?: false) }</ID>
+    <ID>MaxLineLength:InterleavingIntegrationTest.kt:InterleavingIntegrationTest$viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false &amp;&amp; it.activeTab?.activeWindow?.logs?.size == 4 }</ID>
+    <ID>MaxLineLength:JsonPreferencesRepository.kt:JsonPreferencesRepository$if (xdgConfig != null) File(xdgConfig, appName.lowercase()) else File(userHome, ".config/${appName.lowercase()}")</ID>
+    <ID>MaxLineLength:JsonPreferencesRepository.kt:JsonPreferencesRepository$logger.warn { "Secure credential storage unavailable; plaintext fallback requires explicit user consent" }</ID>
+    <ID>MaxLineLength:KLogViewerComplexUiTest.kt:KLogViewerComplexUiTest$WindowPreference(id = "window1", filePath = "test.log", columns = listOf("Timestamp", "Level", "Message"))</ID>
+    <ID>MaxLineLength:KLogViewerComplexUiTest.kt:KLogViewerComplexUiTest$WindowPreference(id = "window2", filePath = "test.log", columns = listOf("Timestamp", "Level", "Message"))</ID>
+    <ID>MaxLineLength:KLogViewerComplexUiTest.kt:KLogViewerComplexUiTest$val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)</ID>
+    <ID>MaxLineLength:KLogViewerComplexUiTest.kt:KLogViewerComplexUiTest$val interaction = onNode(hasTestTag("column_header_Level") and hasAnyAncestor(hasTestTag("window_$window1Id")), useUnmergedTree = true)</ID>
+    <ID>MaxLineLength:KLogViewerIntent.kt:KLogViewerIntent$ToggleEntrySelection : EntryIntent</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:(delta.level == LogLevel.ERROR || delta.level == LogLevel.WARN || delta.level == LogLevel.FATAL)</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:.</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.15f) else MaterialTheme.colors.surface</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:color</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:color = if (isAnyPrimaryWindowMissing || isAnyWindowError) Color.Red else if (isAnySecondarySourceMissing) Color(0xFFFFA500) else Color.Unspecified</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:color = if (isImportantIncrease) MaterialTheme.colors.error else MaterialTheme.colors.onSurface</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:color = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.45f) else MaterialTheme.colors.onSurface.copy(alpha = 0.16f)</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:comparisonState.baselineRange.validationMessage != null || comparisonState.comparisonRange.validationMessage != null -&gt; "Invalid range"</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:content.frequencyThreshold &gt; 1 -&gt; "No values meet the current threshold. Lower the threshold to see more."</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:fontWeight = if (content.bucketSize == DashboardBucketSize.PER_MINUTE) FontWeight.Bold else FontWeight.Normal</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:fontWeight = if (content.bucketSize == DashboardBucketSize.PER_SECOND) FontWeight.Bold else FontWeight.Normal</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:fontWeight = if (window.workspaceMode == WorkspaceMode.DASHBOARD) FontWeight.Bold else FontWeight.Normal</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:fontWeight = if (window.workspaceMode == WorkspaceMode.LOGS) FontWeight.Bold else FontWeight.Normal</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:if</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:text = "Baseline $baselineCount · Comparison ${delta.count} · ${dashboardDirectionIndicator(delta.direction, delta.delta ?: 0)}"</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:text = "Current controls: field=$selectedFrequencyField, threshold=$frequencyThreshold, topN=$frequencyTopN, cardinality=$frequencyCardinalityLimit"</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:text = "Showing top values from the first ${content.frequencyCardinalityLimit} unique values considered."</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:text = if (isImportantIncrease) "${delta.level.name} (important increase)" else delta.level.name</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:textDecoration = if (isAnyPrimaryWindowMissing) TextDecoration.LineThrough else TextDecoration.None</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:tint</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:val isAnySourceMissing = if (window.isDirectory) isPrimaryPathMissing else window.missingSourceIds.isNotEmpty()</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:val tooltip = tab.windows.map { it.filePath }.distinct().filter { it.isNotEmpty() }.joinToString("\n").ifEmpty { tab.title }</ID>
+    <ID>MaxLineLength:KLogViewerScreen.kt:viewModel.handleIntent(KLogViewerIntent.ToggleSourceVisibilityInActiveWindow(sourcePath))</ID>
+    <ID>MaxLineLength:KLogViewerState.kt:KLogViewerState$DialogType</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$"Applied deterministic sampling originalCount=${entries.size} sampledCount=${sampled.size} step=${"%.3f".format(step)}"</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$"Skipping stale dashboard aggregation apply for windowId=$windowId generation=$generation"</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$.</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$?.</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$_state.update { it.copy(isRemoteLoading = true, pendingDialog = KLogViewerState.DialogType.S3_BROWSE, currentS3Config = config) }</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$_state.update { it.copy(isRemoteLoading = true, pendingDialog = KLogViewerState.DialogType.SFTP_BROWSE, currentSftpConfig = config) }</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$is KLogViewerIntent.SelectDashboardTimeBucket -&gt; applyDashboardTimeBucketSelection(activeWindowId, intent.bucketFrom)</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$is KLogViewerIntent.SetDashboardFrequencyField -&gt; applyDashboardFrequencyFieldSelection(activeWindowId, intent.fieldKey)</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$is KLogViewerIntent.SetDashboardFrequencyThreshold -&gt; applyDashboardFrequencyThreshold(activeWindowId, intent.threshold)</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$message = "KLogViewer could not access the OS secure credential store. Do you want to save this secret in plaintext in preferences.json?"</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$remoteFiles = result.getOrNull()?.filter { f -&gt; f.name != "." &amp;&amp; f.name != ".." } ?: emptyList()</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$val currentRange = if (isBaseline) currentComparisonState.baselineRange else currentComparisonState.comparisonRange</ID>
+    <ID>MaxLineLength:KLogViewerViewModel.kt:KLogViewerViewModel$val window = _state.value.tabs.flatMap { it.windows }.find { it.id == windowId } ?: return@withContext</ID>
+    <ID>MaxLineLength:KoalaPlotCharts.kt:return "Time bucket ${formatter.format(bucket.from)} to ${formatter.format(bucket.to)}, ${bucket.count} events, $selectionLabel"</ID>
+    <ID>MaxLineLength:LogColumnResizeTest.kt:LogColumnResizeTest$"Expected long custom-column value row to be taller due to wrapping, but first=$firstRowHeight second=$secondRowHeight"</ID>
+    <ID>MaxLineLength:LogColumnResizeTest.kt:LogColumnResizeTest$"Log list content width should shrink after reducing message column width, but expanded=$expandedWidthPx shrunk=$shrunkWidthPx"</ID>
+    <ID>MaxLineLength:LogColumnResizeTest.kt:LogColumnResizeTest$"Message column width should continue increasing on repeated right resize, but first=$firstWidth second=$secondWidth"</ID>
+    <ID>MaxLineLength:LogColumnResizeTest.kt:LogColumnResizeTest$content = LogContent("This is a long message that should wrap across multiple lines when the message column is narrow. ".repeat(5))</ID>
+    <ID>MaxLineLength:LogColumnResizeTest.kt:LogColumnResizeTest$fields = mapOf("thread" to "long worker thread name that should wrap into multiple lines in a narrow column")</ID>
+    <ID>MaxLineLength:LogEntryDetails.kt:Text("Select a log entry to see details", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f))</ID>
+    <ID>MaxLineLength:LogEntryDetails.kt:fullContent.take(50000) + "\n... (truncated for performance, total length: ${fullContent.length} chars)"</ID>
+    <ID>MaxLineLength:LogEntryDetails.kt:val displayLevel = entry.fields["level"] ?: entry.level.name.lowercase().replaceFirstChar { it.uppercase() }</ID>
+    <ID>MaxLineLength:LogFailure.kt:LogFailure$FileError : LogFailure</ID>
+    <ID>MaxLineLength:LogFailure.kt:LogFailure$ParsingError : LogFailure</ID>
+    <ID>MaxLineLength:LogList.kt:val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value</ID>
+    <ID>MaxLineLength:LogListContextMenuTest.kt:LogListContextMenuTest$fun</ID>
+    <ID>MaxLineLength:LogListFontStyleTest.kt:LogListFontStyleTest$fun</ID>
+    <ID>MaxLineLength:LogListSourceBadgeTooltipTest.kt:LogListSourceBadgeTooltipTest$fun</ID>
+    <ID>MaxLineLength:LogListSourceShadeIndexTest.kt:LogListSourceShadeIndexTest$fun</ID>
+    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path, overrideParserName)</ID>
+    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$fun</ID>
+    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$parserName = if (results.size &gt; 1 &amp;&amp; overrideParserName == null) "Multiple" else (overrideParserName ?: results.firstOrNull()?.parserName ?: "Auto")</ID>
+    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$private</ID>
+    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$sourceIds = paths.map { "sftp://${config.username.value}@${config.host.value}:${config.port.value}$it" }</ID>
+    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$val newTitle = if (tab.windows.any { it.id == windowId } &amp;&amp; tab.windows.size &lt;= 1) fileName else tab.title</ID>
+    <ID>MaxLineLength:LogLoadingIntegrationTest.kt:LogLoadingIntegrationTest$expectThat(window.logs.map { it.sourceId }).contains(first.absolutePath, second.absolutePath, third.absolutePath)</ID>
+    <ID>MaxLineLength:LogSortingTest.kt:LogSortingTest$viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false &amp;&amp; it.activeTab?.activeWindow?.logs?.size == 1 }</ID>
+    <ID>MaxLineLength:LogSortingTest.kt:LogSortingTest$viewModel.state.first { it.activeTab?.activeWindow?.isReversed == false &amp;&amp; it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 1" }</ID>
+    <ID>MaxLineLength:LogSortingTest.kt:LogSortingTest$viewModel.state.first { it.activeTab?.activeWindow?.isReversed == true &amp;&amp; it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 3" }</ID>
+    <ID>MaxLineLength:LogUpdateReducer.kt:LogUpdateReducer$private</ID>
+    <ID>MaxLineLength:LogWorkspaceChartSupportTest.kt:LogWorkspaceChartSupportTest$fun</ID>
+    <ID>MaxLineLength:Main.kt:Item("Add Local Directory...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowAddDirectoryDialog) })</ID>
+    <ID>MaxLineLength:Main.kt:Item("New Tab", shortcut = menuShortcuts.newTab, onClick = { viewModel.handleIntent(KLogViewerIntent.AddTab) })</ID>
+    <ID>MaxLineLength:Main.kt:Item("Open Directory...", onClick = { viewModel.handleIntent(KLogViewerIntent.ShowOpenDirectoryDialog) })</ID>
+    <ID>MaxLineLength:Main.kt:logger.warn { "Skipped final preference save because secure credential storage requires interactive plaintext fallback consent" }</ID>
+    <ID>MaxLineLength:Main.kt:placement = if (initialPrefs.windowState.isMaximized) WindowPlacement.Maximized else WindowPlacement.Floating</ID>
+    <ID>MaxLineLength:MergedLogSource.kt:MergedLogSource$// Note: This might break chronological order if appends arrive out of sync across files,</ID>
+    <ID>MaxLineLength:OsKeychainCredentialStoreTest.kt:OsKeychainCredentialStoreTest$assertEquals(listOf("powershell", "-NoProfile", "-NonInteractive", "-Command"), executor.invocations[0].command.take(4))</ID>
+    <ID>MaxLineLength:OsKeychainCredentialStoreTest.kt:OsKeychainCredentialStoreTest$assertEquals(listOf("powershell", "-NoProfile", "-NonInteractive", "-Command"), executor.invocations[1].command.take(4))</ID>
+    <ID>MaxLineLength:OsKeychainCredentialStoreTest.kt:OsKeychainCredentialStoreTest$assertEquals(listOf("powershell", "-NoProfile", "-NonInteractive", "-Command"), executor.invocations[2].command.take(4))</ID>
+    <ID>MaxLineLength:ParserRegistry.kt:ParserRegistry$regex = """^(?&lt;clientIp&gt;\S+)\s+-\s+(?&lt;user&gt;\S+)\s+\[(?&lt;timestamp&gt;\d{2}/[A-Z][a-z]{2}/\d{4}:\d{2}:\d{2}:\d{2}\s+[+-]\d{4})\]\s+"(?&lt;request&gt;.*?)"\s+(?&lt;status&gt;\d+)\s+(?&lt;bytes&gt;\S+)(?:\s+"(?&lt;referrer&gt;.*?)"\s+"(?&lt;agent&gt;.*?)")?.*$"""</ID>
+    <ID>MaxLineLength:ParserRegistry.kt:ParserRegistry$regex = """^(?&lt;timestamp&gt;[A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2})\s+(?&lt;hostname&gt;\S+)\s+(?&lt;process&gt;[^:\[\s]+)(?:\[(?&lt;pid&gt;\d+)\])?:\s+(?&lt;content&gt;.*)$"""</ID>
+    <ID>MaxLineLength:ParserRegistry.kt:ParserRegistry$regex = """^(?&lt;timestamp&gt;\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z?)\s+(?&lt;level&gt;\S+)\s+(?&lt;content&gt;.*)$"""</ID>
+    <ID>MaxLineLength:ParserRegistry.kt:ParserRegistry$regex = """^\s*(?&lt;timestamp&gt;\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?&lt;metadata&gt;.*?)\]\s*)?(?&lt;level&gt;\[.*?\]|\S+)?(?:\s+(?&lt;content&gt;.*))?$"""</ID>
+    <ID>MaxLineLength:PersistenceIntegrationTest.kt:PersistenceIntegrationTest$vm.state.first { it.activeTab?.activeWindow?.isLoading == true || it.activeTab?.activeWindow?.logs?.isNotEmpty() == true }</ID>
+    <ID>MaxLineLength:PersistenceIntegrationTest.kt:PersistenceIntegrationTest$while</ID>
+    <ID>MaxLineLength:RecentItemsDialog.kt:color = if (isMissing) MaterialTheme.colors.onSurface.copy(alpha = 0.4f) else MaterialTheme.colors.onSurface</ID>
+    <ID>MaxLineLength:RecentItemsDialog.kt:focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)</ID>
+    <ID>MaxLineLength:RecentItemsDialog.kt:modifier = if (index == 0 &amp;&amp; recentFiles.isEmpty()) Modifier.focusRequester(focusRequester) else Modifier</ID>
+    <ID>MaxLineLength:RecentItemsDialog.kt:val hasMissing = recentFiles.any { !exists(it, localFileSystem) } || recentDirectories.any { !exists(it, localFileSystem) }</ID>
+    <ID>MaxLineLength:RecentItemsTest.kt:RecentItemsTest$fun</ID>
+    <ID>MaxLineLength:RecentItemsTest.kt:RecentItemsTest$vm.handleIntent(KLogViewerIntent.LoadFiles(listOf(existingFile.absolutePath)))</ID>
+    <ID>MaxLineLength:RemoteFileBrowserDialog.kt:Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = "File", tint = Color.Gray)</ID>
+    <ID>MaxLineLength:RemoteFileSystem.kt:RemoteFileSystem$files.size &gt; 1 || files.isEmpty() || (files.size == 1 &amp;&amp; files[0].path.removeSuffix("/") != path.removeSuffix("/"))</ID>
+    <ID>MaxLineLength:S3ConnectionDialog.kt:focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)</ID>
+    <ID>MaxLineLength:S3DirectoryDetectionTest.kt:S3DirectoryDetectionTest$fun</ID>
+    <ID>MaxLineLength:S3DirectoryLogSource.kt:S3DirectoryLogSource$"S3 prefix scan recovered for $directorySourceId after $failedScanCount failed attempt(s)"</ID>
+    <ID>MaxLineLength:S3DirectoryLogSource.kt:S3DirectoryLogSource$override</ID>
+    <ID>MaxLineLength:S3FileSystem.kt:S3FileSystem$override suspend</ID>
+    <ID>MaxLineLength:S3IntentHandler.kt:S3IntentHandler$val currentPaths = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }?.sourceIds ?: emptyList()</ID>
+    <ID>MaxLineLength:S3IntentHandler.kt:S3IntentHandler$val s3Uri = com.klogviewer.domain.model.S3Uri(intent.config.bucket, intent.config.prefix, isDirectory = false).toString()</ID>
+    <ID>MaxLineLength:S3IntentHandler.kt:S3IntentHandler$val s3Uri = com.klogviewer.domain.model.S3Uri(intent.config.bucket, intent.prefix, isDirectory = true).toString()</ID>
+    <ID>MaxLineLength:S3LogSource.kt:S3LogSource$"Error during S3 poll #$pollAttempt for $sourceId (lastSize=$lastSize, consecutiveFailures=${failedPollCount + 1})"</ID>
+    <ID>MaxLineLength:S3LogSource.kt:S3LogSource$"S3 poll #$pollAttempt detected truncation/replacement for $sourceId (currentSize=$currentSize, lastSize=$lastSize). Resetting lastSize to 0."</ID>
+    <ID>MaxLineLength:S3LogSource.kt:S3LogSource$"S3 poll #$pollAttempt emitting initial batch of ${initialEntries.size} entries for $sourceId"</ID>
+    <ID>MaxLineLength:S3LogSource.kt:S3LogSource$"S3 poll #$pollAttempt fetch result for $sourceId (returnedBytes=$returnedByteCount, nonBlankLines=$nonBlankLineCount, parsedEntries=$parsedEntryCount, initialBatch=$isInitial)"</ID>
+    <ID>MaxLineLength:S3LogSource.kt:S3LogSource$"S3 poll #$pollAttempt found new data for $sourceId (bytesToRead=$bytesToRead, range=$rangeVal)"</ID>
+    <ID>MaxLineLength:S3LogSource.kt:S3LogSource$"S3 poll #$pollAttempt headObject failed for $sourceId (consecutiveFailures=${failedPollCount + 1})"</ID>
+    <ID>MaxLineLength:S3LogSource.kt:S3LogSource$"S3 poll #$pollAttempt metadata for $sourceId (currentSize=$currentSize, lastSize=$lastSize, sizeDelta=$sizeDelta)"</ID>
+    <ID>MaxLineLength:S3LogSource.kt:S3LogSource$override</ID>
+    <ID>MaxLineLength:S3LogSourceTest.kt:S3LogSourceTest$coEvery { mockClient.headObject(any&lt;HeadObjectRequest&gt;()) } returns headResponse andThen headResponse andThen headResponse</ID>
+    <ID>MaxLineLength:S3LogSourceTest.kt:S3LogSourceTest$coEvery { mockClient.headObject(any&lt;HeadObjectRequest&gt;()) } throws Exception("connection reset") andThen headResponse andThen headResponse</ID>
+    <ID>MaxLineLength:SftpConnectionDialog.kt:focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)</ID>
+    <ID>MaxLineLength:SftpConnectionDialog.kt:keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) })</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSource.kt:SftpDirectoryLogSource$"Remote directory scan recovered for $directorySourceId after $failedScanCount failed attempt(s)"</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSource.kt:SftpDirectoryLogSource$SftpLogSource(cfg, com.klogviewer.core.parser.SimpleLogParser(), sshService = sshService, existingClient = client)</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSource.kt:SftpDirectoryLogSource$override</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSource.kt:SftpDirectoryLogSource$send(LogFailure.FileError("Error scanning remote directory: ${e.message}", directorySourceId).left())</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt:SftpDirectoryLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log")</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt:SftpDirectoryLogSourceTest$val entry = LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("good"), sourceId = "sftp://user@remote:22/var/log/good.log")</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt:SftpDirectoryLogSourceTest$val entry1 = LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("initial1"), sourceId = "sftp://user@remote:22/var/log/file1.log")</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt:SftpDirectoryLogSourceTest$val entry1 = LogEntry(LogTimestamp("2023-01-01 10:00:00"), LogLevel.INFO, LogContent("line1"), sourceId = "sftp://user@remote:22/var/log/file1.log")</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt:SftpDirectoryLogSourceTest$val entry2 = LogEntry(LogTimestamp("2023-01-01 10:01:00"), LogLevel.INFO, LogContent("appended1"), sourceId = "sftp://user@remote:22/var/log/file1.log")</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt:SftpDirectoryLogSourceTest$val entry2 = LogEntry(LogTimestamp("2023-01-01 10:01:00"), LogLevel.INFO, LogContent("line2"), sourceId = "sftp://user@remote:22/var/log/file2.log")</ID>
+    <ID>MaxLineLength:SftpDirectoryLogSourceTest.kt:SftpDirectoryLogSourceTest$val entry3 = LogEntry(LogTimestamp("2023-01-01 10:02:00"), LogLevel.INFO, LogContent("initial2"), sourceId = "sftp://user@remote:22/var/log/file2.log")</ID>
+    <ID>MaxLineLength:SftpFileSystem.kt:SftpFileSystem$override suspend</ID>
+    <ID>MaxLineLength:SftpFileSystemTest.kt:SftpFileSystemTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log")</ID>
+    <ID>MaxLineLength:SftpIntentHandler.kt:SftpIntentHandler$onConnectSftp(activeWindowId, intent.name, intent.host, intent.port, intent.user, intent.auth, intent.path)</ID>
+    <ID>MaxLineLength:SftpIntentHandler.kt:SftpIntentHandler$private val onConnectSftp: (windowId: String, name: String, host: String, port: Int, user: String, auth: SftpAuth, path: String) -&gt; Unit</ID>
+    <ID>MaxLineLength:SftpIntentHandler.kt:SftpIntentHandler$state.update { recentItemsManager.updateRecentItems(it.copy(pendingDialog = null), listOf(sftpUri)) }</ID>
+    <ID>MaxLineLength:SftpIntentHandler.kt:SftpIntentHandler$val currentPaths = state.value.tabs.flatMap { it.windows }.find { it.id == activeWindowId }?.sourceIds ?: emptyList()</ID>
+    <ID>MaxLineLength:SftpIntentHandler.kt:SftpIntentHandler$val exactMatch = files.find { it.path == intent.path || it.path == intent.path.removeSuffix("/") + "/" + it.name }</ID>
+    <ID>MaxLineLength:SftpIntentHandler.kt:SftpIntentHandler$val newUris = intent.paths.map { "sftp://${intent.config.username.value}@${intent.config.host.value}:${intent.config.port.value}$it" }</ID>
+    <ID>MaxLineLength:SftpIntentHandler.kt:SftpIntentHandler$val sftpUri = SftpUri(config.username.value, config.host.value, config.port.value, intent.path).toString()</ID>
+    <ID>MaxLineLength:SftpIntentHandler.kt:SftpIntentHandler$val sftpUri = SftpUri(intent.config.username.value, intent.config.host.value, intent.config.port.value, intent.path, isDirectory = true).toString()</ID>
+    <ID>MaxLineLength:SftpLogSourceTest.kt:SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key"), "/test.log")</ID>
+    <ID>MaxLineLength:SftpLogSourceTest.kt:SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key", " "), "/test.log")</ID>
+    <ID>MaxLineLength:SftpLogSourceTest.kt:SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.KeyPair("/path/to/key", "secret"), "/test.log")</ID>
+    <ID>MaxLineLength:SftpLogSourceTest.kt:SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/blocking.log")</ID>
+    <ID>MaxLineLength:SftpLogSourceTest.kt:SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/empty.log")</ID>
+    <ID>MaxLineLength:SftpLogSourceTest.kt:SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/invalid/path")</ID>
+    <ID>MaxLineLength:SftpLogSourceTest.kt:SftpLogSourceTest$val config = SftpConfig("test", Host("remote"), Port(22), Username("user"), SftpAuth.Password("pass"), "/var/log/test.log")</ID>
+    <ID>MaxLineLength:SftpLogSourceTest.kt:SftpLogSourceTest$val source = SftpLogSource(config, SimpleLogParser(), sshService = SshService(provider), dispatcher = Dispatchers.IO)</ID>
+    <ID>MaxLineLength:SftpPersistenceTest.kt:SftpPersistenceTest$val initialConfig = SftpConfig(name, Host("old.com"), Port(22), Username("old"), SftpAuth.Password("old"), "/old.log")</ID>
+    <ID>MaxLineLength:SimpleLogParser.kt:SimpleLogParser$finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw</ID>
+    <ID>MaxLineLength:SimpleLogParser.kt:SimpleLogParser$private val regex = """^\s*(?&lt;timestamp&gt;\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?&lt;metadata&gt;.*?)]\s*)?(?&lt;level&gt;\[.*?]|\S+)?(?:\s+(?&lt;content&gt;.*))?$""".toRegex()</ID>
+    <ID>MaxLineLength:TabManagementTest.kt:TabManagementTest$assertEquals(emptySet&lt;com.klogviewer.domain.model.LogLevel&gt;(), viewModel.state.value.activeTab?.activeWindow?.levelFilters)</ID>
+    <ID>MaxLineLength:TemplateLogParser.kt:TemplateLogParser$finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw</ID>
+    <ID>MaxLineLength:TemplateLogParserTest.kt:TemplateLogParserTest$regex = """^(?&lt;timestamp&gt;\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+\[(?&lt;metadata&gt;.*?)\]\s+(?&lt;level&gt;\S+)\s+(?&lt;content&gt;.*)$"""</ID>
+    <ID>MaxLineLength:UiToggleIntentHandler.kt:UiToggleIntentHandler$logLoadingCoordinator.loadFilesIntoWindow(activeWindow.id, activeWindow.sourceIds, activeWindow.parserName)</ID>
+    <ID>MaxLineLength:WorkspaceLogLoader.kt:WorkspaceLogLoader$fun</ID>
+    <ID>MaxLineLength:WorkspaceLogLoader.kt:WorkspaceLogLoader$if</ID>
+    <ID>MaxLineLength:WorkspaceLogLoader.kt:WorkspaceLogLoader$localFileSystem.isDirectory(path) -&gt; DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))</ID>
+    <ID>MaxLineLength:WorkspaceLogLoader.kt:WorkspaceLogLoader$}</ID>
+    <ID>NestedBlockDepth:LogHighlighter.kt:LogHighlighter$private fun applyOtherHighlights</ID>
+    <ID>NewLineAtEndOfFile:DragDropImportIntegrationTest.kt:com.klogviewer.integration.DragDropImportIntegrationTest.kt</ID>
+    <ID>NewLineAtEndOfFile:FilterBarTimeFilterControlsTest.kt:com.klogviewer.ui.components.FilterBarTimeFilterControlsTest.kt</ID>
+    <ID>NewLineAtEndOfFile:LogListSourceBadgeTooltipTest.kt:com.klogviewer.ui.test.LogListSourceBadgeTooltipTest.kt</ID>
+    <ID>NewLineAtEndOfFile:LogListSourceShadeIndexTest.kt:com.klogviewer.ui.components.LogListSourceShadeIndexTest.kt</ID>
+    <ID>NewLineAtEndOfFile:LogLoadingIntegrationTest.kt:com.klogviewer.integration.LogLoadingIntegrationTest.kt</ID>
+    <ID>NewLineAtEndOfFile:PlaintextSecretFallbackPromptTest.kt:com.klogviewer.ui.viewmodel.PlaintextSecretFallbackPromptTest.kt</ID>
+    <ID>NewLineAtEndOfFile:TimeRangeFilterSupport.kt:com.klogviewer.ui.viewmodel.TimeRangeFilterSupport.kt</ID>
+    <ID>ReturnCount:CredentialProtectionService.kt:CredentialProtectionService$fun protectForPersistence: ProtectionResult</ID>
+    <ID>ReturnCount:CredentialProtectionService.kt:CredentialProtectionService$private fun protectNullableSecret: ProtectedValue&lt;String?&gt;</ID>
+    <ID>ReturnCount:CredentialProtectionService.kt:CredentialProtectionService$private fun protectSecret: ProtectedValue&lt;String&gt;</ID>
+    <ID>ReturnCount:CredentialProtectionService.kt:CredentialProtectionService$private fun protectSftpConfig: ProtectedValue&lt;SftpConfig&gt;</ID>
+    <ID>ReturnCount:DialogProvider.kt:AwtDialogProvider$override fun showMonospacedFontDialog: FontSelection?</ID>
+    <ID>ReturnCount:DirectoryLogSource.kt:DirectoryLogSource$private suspend fun checkInitialLoad: Boolean</ID>
+    <ID>ReturnCount:HeuristicProbe.kt:HeuristicProbe$fun detect: ProbeResult</ID>
+    <ID>ReturnCount:InMemoryAnalysisMetricsRepository.kt:InMemoryAnalysisMetricsRepository$override suspend fun timeSeriesMetrics: Either&lt;AnalysisFailure, TimeSeriesMetricsResult&gt;</ID>
+    <ID>ReturnCount:JsonPreferencesRepository.kt:JsonPreferencesRepository$override fun save: PreferencesSaveResult</ID>
+    <ID>ReturnCount:KLogViewerScreen.kt:internal fun resolveDashboardTimeSelection: DashboardTimeSelection?</ID>
+    <ID>ReturnCount:KLogViewerViewModel.kt:KLogViewerViewModel$private fun applyDashboardTimeBucketSelection</ID>
+    <ID>ReturnCount:KLogViewerViewModel.kt:KLogViewerViewModel$private fun applyDashboardTimeRangeSelection</ID>
+    <ID>ReturnCount:KLogViewerViewModel.kt:KLogViewerViewModel$private fun computeComparisonState: DashboardComparisonState</ID>
+    <ID>ReturnCount:KLogViewerViewModel.kt:KLogViewerViewModel$private fun mergeDashboardSelectionsWithLatestState: DashboardDataState</ID>
+    <ID>ReturnCount:KoalaPlotCharts.kt:internal fun bucketRangeFromDrag: IntRange?</ID>
+    <ID>ReturnCount:KoalaPlotCharts.kt:internal fun pointerXToBucketIndex: Int?</ID>
+    <ID>ReturnCount:KoalaPlotCharts.kt:internal fun selectedBucketIndexRange: IntRange?</ID>
+    <ID>ReturnCount:KoalaPlotCharts.kt:internal fun timeSeriesXAxisRange: ClosedFloatingPointRange&lt;Float&gt;</ID>
+    <ID>ReturnCount:LevelMapper.kt:LevelMapper$fun map: LogLevel</ID>
+    <ID>ReturnCount:LogFilterService.kt:LogFilterService$private fun matchesQuery: Boolean</ID>
+    <ID>ReturnCount:LogList.kt:private fun getSourceBadgeColor: Color</ID>
+    <ID>ReturnCount:LogLoadingCoordinator.kt:LogLoadingCoordinator$private fun handleSingleRemotePath: Boolean</ID>
+    <ID>ReturnCount:RemoteConnection.kt:S3Uri.Companion$fun parse: S3Uri?</ID>
+    <ID>ReturnCount:RemoteConnection.kt:SftpUri.Companion$fun parse: SftpUri?</ID>
+    <ID>ReturnCount:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$fun parseInstantOrNull: Instant?</ID>
+    <ID>ReturnCount:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$fun validationMessage: String?</ID>
+    <ID>ReturnCount:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$private fun rangeFromEntries: Pair&lt;Instant, Instant&gt;?</ID>
+    <ID>ReturnCount:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$private fun toInstant: Instant</ID>
+    <ID>ReturnCount:TimestampParser.kt:TimestampParser$fun parse: Instant?</ID>
+    <ID>ReturnCount:WorkspaceIntentHandler.kt:WorkspaceIntentHandler$private fun isSupportedDropPath: Boolean</ID>
+    <ID>SwallowedException:HeuristicProbe.kt:HeuristicProbe$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:DirectoryLogSource.kt:DirectoryLogSource$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FileLogSource.kt:FileLogSource$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:HeuristicProbe.kt:HeuristicProbe$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:JsonPreferencesRepository.kt:JsonPreferencesRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:KLogViewerViewModel.kt:KLogViewerViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RemoteDirectoryFileObserver.kt:RemoteDirectoryFileObserver$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:RetryUtils.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:S3DirectoryFileObserver.kt:S3DirectoryFileObserver$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:S3DirectoryLogSource.kt:S3DirectoryLogSource$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:S3FileSystem.kt:S3FileSystem$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:S3LogSource.kt:S3LogSource$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SecureCredentialStore.kt:OsKeychainCredentialStore.ProcessCommandExecutor$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SftpDirectoryLogSource.kt:SftpDirectoryLogSource$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SftpFileSystem.kt:SftpFileSystem$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SftpLogSource.kt:SftpLogSource$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SshService.kt:SshService$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:TimestampParser.kt:TimestampParser$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:WorkspaceLogLoader.kt:WorkspaceLogLoader$e: Exception</ID>
+    <ID>TooGenericExceptionThrown:S3LogSourceTest.kt:S3LogSourceTest$throw Exception("socket timeout")</ID>
+    <ID>TooManyFunctions:CredentialProtectionService.kt:CredentialProtectionService</ID>
+    <ID>TooManyFunctions:KLogViewerScreen.kt:com.klogviewer.ui.components.KLogViewerScreen.kt</ID>
+    <ID>TooManyFunctions:KLogViewerViewModel.kt:KLogViewerViewModel</ID>
+    <ID>TooManyFunctions:KoalaPlotCharts.kt:com.klogviewer.ui.components.KoalaPlotCharts.kt</ID>
+    <ID>TooManyFunctions:LogList.kt:com.klogviewer.ui.components.LogList.kt</ID>
+    <ID>TooManyFunctions:LogLoadingCoordinator.kt:LogLoadingCoordinator</ID>
+    <ID>TooManyFunctions:SecureCredentialStore.kt:OsKeychainCredentialStore : SecureCredentialStore</ID>
+    <ID>TooManyFunctions:TimeRangeFilterSupport.kt:TimeRangeFilterSupport</ID>
+    <ID>TopLevelPropertyNaming:KLogViewerScreen.kt:private const val sourceVisibilityColorDelta = 0.22f</ID>
+    <ID>UnusedParameter:FilterBar.kt:timeFilterFrom: String</ID>
+    <ID>UnusedParameter:FilterBar.kt:timeFilterTo: String</ID>
+    <ID>UnusedParameter:SidebarRobot.kt:SidebarRobot$enabled: Boolean</ID>
+    <ID>WildcardImport:BaseRobot.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:ConnectionToggleTest.kt:import io.mockk.*</ID>
+    <ID>WildcardImport:DashboardUxHardeningUiTest.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:DashboardUxHardeningUiTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:DirectoryLogSource.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:DirectoryLogSource.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:DirectoryLogSource.kt:import kotlinx.coroutines.flow.*</ID>
+    <ID>WildcardImport:DirectoryLogSourceTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:DirectoryTabTest.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:DirectoryTabTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:FileDeletionTest.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:FileDeletionTest.kt:import strikt.assertions.*</ID>
+    <ID>WildcardImport:FileLogSource.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:FileLogTailingTest.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:FileSelector.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:FileSelector.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:FileSelector.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:FilterBar.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:FilterBar.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:FilterBar.kt:import androidx.compose.material.icons.automirrored.filled.*</ID>
+    <ID>WildcardImport:FilterBar.kt:import androidx.compose.material.icons.filled.*</ID>
+    <ID>WildcardImport:FilterBar.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:FilterBarTimeFilterControlsTest.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:HeuristicProbe.kt:import kotlinx.serialization.json.*</ID>
+    <ID>WildcardImport:JsonLogParser.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:JsonLogParser.kt:import kotlinx.serialization.json.*</ID>
+    <ID>WildcardImport:KLogViewerComplexUiTest.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:KLogViewerComplexUiTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:KLogViewerScreen.kt:import androidx.compose.foundation.*</ID>
+    <ID>WildcardImport:KLogViewerScreen.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:KLogViewerScreen.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:KLogViewerScreen.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:KLogViewerScreen.kt:import com.klogviewer.ui.mvi.*</ID>
+    <ID>WildcardImport:KLogViewerSmokeTest.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:KLogViewerTheme.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:KLogViewerUiTest.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:KLogViewerUiTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:KLogViewerViewModel.kt:import com.klogviewer.domain.repository.*</ID>
+    <ID>WildcardImport:KLogViewerViewModel.kt:import com.klogviewer.ui.mvi.*</ID>
+    <ID>WildcardImport:KLogViewerViewModel.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:KLogViewerViewModel.kt:import kotlinx.coroutines.flow.*</ID>
+    <ID>WildcardImport:KoalaPlotCharts.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:LogColumnResizeTest.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:LogEntryDetails.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:LogEntryDetails.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:LogList.kt:import androidx.compose.foundation.*</ID>
+    <ID>WildcardImport:LogList.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:LogList.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:LogList.kt:import androidx.compose.ui.input.pointer.*</ID>
+    <ID>WildcardImport:LogListRobot.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:LogListSourceBadgeTooltipTest.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:LogLoadingCoordinator.kt:import com.klogviewer.core.parser.*</ID>
+    <ID>WildcardImport:LogLoadingCoordinator.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:LogLoadingCoordinator.kt:import kotlinx.coroutines.flow.*</ID>
+    <ID>WildcardImport:LogLoadingSteps.kt:import kotlinx.coroutines.test.*</ID>
+    <ID>WildcardImport:LogfmtParser.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:Main.kt:import androidx.compose.ui.window.*</ID>
+    <ID>WildcardImport:Main.kt:import com.klogviewer.core.repository.*</ID>
+    <ID>WildcardImport:Main.kt:import com.klogviewer.core.source.*</ID>
+    <ID>WildcardImport:MainRobot.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:PersistenceIntegrationTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:PreferencesRepositoryTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:PreferencesStateMapper.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:PreferencesStateMapper.kt:import com.klogviewer.ui.mvi.*</ID>
+    <ID>WildcardImport:RecentItemsDialog.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:RecentItemsDialog.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:RecentItemsDialog.kt:import androidx.compose.ui.input.key.*</ID>
+    <ID>WildcardImport:RecentItemsTest.kt:import strikt.assertions.*</ID>
+    <ID>WildcardImport:RemoteDirectoryFileObserver.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:RemoteFileBrowserDialog.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:RemoteFileBrowserDialog.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:RemoteFileBrowserDialog.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:RemoteLogTailer.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:S3ConnectionDialog.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:S3ConnectionDialog.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:S3ConnectionDialog.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:S3ConnectionDialog.kt:import androidx.compose.ui.input.key.*</ID>
+    <ID>WildcardImport:S3ConnectionDialog.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:S3DirectoryFileObserver.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:S3DirectoryLogSource.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:S3DirectoryLogSourceTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:S3LogSource.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:S3LogSource.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:S3LogSourceTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:S3PersistenceTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpBrowsingTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpBrowsingTest.kt:import io.mockk.*</ID>
+    <ID>WildcardImport:SftpConnectionDialog.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:SftpConnectionDialog.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:SftpConnectionDialog.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:SftpConnectionDialog.kt:import androidx.compose.ui.input.key.*</ID>
+    <ID>WildcardImport:SftpConnectionDialog.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpDirectoryLogSource.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:SftpDirectoryLogSourceTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpDirectoryLogSourceTest.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:SftpFileSystemTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpIntentHandler.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpLogSource.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpLogSource.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:SftpLogSourceTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpLogSourceTest.kt:import kotlinx.coroutines.*</ID>
+    <ID>WildcardImport:SftpPersistenceTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpReloadTest.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:SftpReloadTest.kt:import io.mockk.*</ID>
+    <ID>WildcardImport:Sidebar.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:Sidebar.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:SidebarRobot.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:SimpleLogParser.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:StatusBar.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:StatusBar.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:StatusBar.kt:import androidx.compose.runtime.*</ID>
+    <ID>WildcardImport:TabWindowController.kt:import com.klogviewer.ui.mvi.*</ID>
+    <ID>WildcardImport:TemplateLogParser.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:WelcomeScreen.kt:import androidx.compose.foundation.layout.*</ID>
+    <ID>WildcardImport:WelcomeScreen.kt:import androidx.compose.material.*</ID>
+    <ID>WildcardImport:WelcomeScreen.kt:import androidx.compose.material.icons.filled.*</ID>
+    <ID>WildcardImport:WindowRobot.kt:import androidx.compose.ui.test.*</ID>
+    <ID>WildcardImport:WorkspaceLogLoader.kt:import com.klogviewer.core.parser.*</ID>
+    <ID>WildcardImport:WorkspaceLogLoader.kt:import com.klogviewer.domain.model.*</ID>
+    <ID>WildcardImport:WorkspaceLogLoader.kt:import kotlinx.coroutines.flow.*</ID>
   </CurrentIssues>
 </SmellBaseline>

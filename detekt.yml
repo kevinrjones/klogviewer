@@ -1,9 +1,3 @@
-build:
-  maxIssues: 0
-  excludeCorrectable: false
-  # Generated outputs are excluded to keep findings focused on owned source files.
-  excludes: '**/build/**,**/resources/**'
-
 config:
   validation: true
   warningsAsErrors: false
@@ -12,7 +6,4 @@ processors:
   active: true
 
 console-reports:
-  active: true
-
-output-reports:
   active: true

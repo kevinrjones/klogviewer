@@ -1,7 +1,7 @@
 import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
-import io.gitlab.arturbosch.detekt.Detekt
-import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
-import io.gitlab.arturbosch.detekt.extensions.DetektExtension
+import dev.detekt.gradle.Detekt
+import dev.detekt.gradle.DetektCreateBaselineTask
+import dev.detekt.gradle.extensions.DetektExtension
 
 plugins {
     alias(libs.plugins.kotlin.jvm) apply false
@@ -27,22 +27,22 @@ val detektSourceDirectories = listOf(
 )
 
 subprojects {
-    plugins.withId("io.gitlab.arturbosch.detekt") {
+    plugins.withId("dev.detekt") {
         extensions.configure<DetektExtension> {
             buildUponDefaultConfig = true
             allRules = false
             ignoreFailures = false
             config.setFrom(rootProject.file("detekt.yml"))
             baseline = rootProject.file("detekt-baseline.xml")
-            basePath = rootProject.projectDir.absolutePath
+            basePath.set(rootProject.layout.projectDirectory)
         }
 
         tasks.withType<Detekt>().configureEach {
             jvmTarget = "17"
             reports {
                 html.required.set(true)
-                xml.required.set(true)
-                md.required.set(true)
+                checkstyle.required.set(true)
+                markdown.required.set(true)
                 sarif.required.set(true)
             }
         }
@@ -65,7 +65,7 @@ tasks.named<DetektCreateBaselineTask>("detektBaseline") {
     ignoreFailures.set(false)
     config.setFrom(files(rootProject.file("detekt.yml")))
     baseline.set(rootProject.file("detekt-baseline.xml"))
-    basePath = rootProject.projectDir.absolutePath
+    basePath.set(rootProject.projectDir.absolutePath)
     setSource(files(detektSourceDirectories.map(::file)))
     include("**/*.kt", "**/*.kts")
     exclude("**/build/**")

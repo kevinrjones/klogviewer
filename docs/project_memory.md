@@ -3351,3 +3351,25 @@ For each sprint/task
 - `./gradlew detektBaseline` (`BUILD SUCCESSFUL`).
 - `./gradlew detekt` (`BUILD SUCCESSFUL`).
 - `./gradlew test :ui:desktopTest` (`BUILD SUCCESSFUL`).
+
+## Task: Detekt 2.0.0-alpha.3 Upgrade
+**Title**: Migrate Project Detekt Tooling from 1.23.8 to 2.0.0-alpha.3
+**Date/time completed**: 2026-06-03 17:53
+**What was shipped**
+- Upgraded Detekt version catalog to `2.0.0-alpha.3` and migrated plugin id usage to `dev.detekt`.
+- Updated root Gradle Detekt wiring for Detekt 2 APIs (`dev.detekt.gradle.*` imports, report accessors, and typed `basePath` setters).
+- Preserved single shared baseline strategy by keeping module baseline writers disabled and regenerating root `detekt-baseline.xml` via `:detektBaseline`.
+- Migrated `detekt.yml` to the Detekt 2-valid schema by removing invalid legacy top-level keys.
+**Key decisions**
+- Kept root-shared baseline governance rather than moving to per-module baselines to preserve existing CI policy and docs.
+- Used task-level Detekt 2 report configuration (`html`, `checkstyle`, `markdown`, `sarif`) to keep CI artifact compatibility.
+**Gotchas**
+- Detekt 2 namespace and DSL changes were breaking (`dev.detekt` id, task/import package changes, `basePath` type changes, and invalid legacy config keys).
+- Running unscoped `detektBaseline` with module baseline tasks enabled can overwrite the shared baseline path; root-only generation avoids this race.
+**Test coverage areas**
+- `gradle/libs.versions.toml` (Detekt version + plugin id migration).
+- `build.gradle.kts` (Detekt 2 plugin/task/report/baseline compatibility and baseline generation strategy).
+- `detekt.yml` (Detekt 2 config schema compatibility).
+- `./gradlew :detektBaseline` (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` (`BUILD SUCCESSFUL`).
+- `./gradlew test :ui:desktopTest` (`BUILD SUCCESSFUL`).
