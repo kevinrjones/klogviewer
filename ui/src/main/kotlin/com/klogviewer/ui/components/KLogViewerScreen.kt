@@ -206,17 +206,24 @@ private fun DialogHandler(
     dialogProvider: DialogProvider
 ) {
     val pendingDialog = state.pendingDialog
+
+    val fileDialogTypes = setOf(
+        KLogViewerState.DialogType.OPEN,
+        KLogViewerState.DialogType.ADD
+    )
+    val directoryDialogTypes = setOf(
+        KLogViewerState.DialogType.OPEN_DIRECTORY,
+        KLogViewerState.DialogType.ADD_DIRECTORY
+    )
+
     LaunchedEffect(pendingDialog) {
-        if (pendingDialog == KLogViewerState.DialogType.OPEN ||
-            pendingDialog == KLogViewerState.DialogType.OPEN_DIRECTORY ||
-            pendingDialog == KLogViewerState.DialogType.ADD ||
-            pendingDialog == KLogViewerState.DialogType.ADD_DIRECTORY
-        ) {
+        if (pendingDialog in fileDialogTypes || pendingDialog in directoryDialogTypes) {
             val title = when (pendingDialog) {
                 KLogViewerState.DialogType.OPEN -> "Select Log File"
                 KLogViewerState.DialogType.OPEN_DIRECTORY -> "Select Log Directory"
                 KLogViewerState.DialogType.ADD -> "Add Log File"
                 KLogViewerState.DialogType.ADD_DIRECTORY -> "Add Log Directory"
+                else -> return@LaunchedEffect
             }
             val path = if (pendingDialog == KLogViewerState.DialogType.OPEN_DIRECTORY ||
                 pendingDialog == KLogViewerState.DialogType.ADD_DIRECTORY

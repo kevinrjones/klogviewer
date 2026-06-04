@@ -58,7 +58,7 @@ class WorkspaceLogLoader(
                         s3Uri.key.startsWith(dirUri.key) &&
                         s3Uri.key != dirUri.key
                     } else false
-                } else if (!path.startsWith("sftp://") && !path.startsWith("s3://") && !dir.startsWith("sftp://") && !dir.startsWith("s3://")) {
+                } else if (!path.isRemoteUri() && !dir.isRemoteUri()) {
                     path.startsWith(dir) && path != dir
                 } else false
             }
@@ -67,7 +67,7 @@ class WorkspaceLogLoader(
 
     fun performHeuristicDetection(paths: List<String>, overrideParserName: String?): List<ProbeResult?> {
         return paths.map { path ->
-            if (path.startsWith("sftp://") || path.startsWith("s3://") || (localFileSystem.exists(path) && localFileSystem.isDirectory(path))) {
+            if (path.isRemoteUri() || (localFileSystem.exists(path) && localFileSystem.isDirectory(path))) {
                 null
             } else {
                 val sampleLines = readSampleLines(path)
@@ -174,4 +174,9 @@ class WorkspaceLogLoader(
             emptyList()
         }
     }
+
+    private fun String.isRemoteUri(): Boolean =
+        startsWith("sftp://") || startsWith("s3://")
+
+
 }

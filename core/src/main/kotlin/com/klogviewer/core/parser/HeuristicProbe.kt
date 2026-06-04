@@ -40,6 +40,7 @@ class HeuristicProbe(val registry: ParserRegistry) {
                     resultColumns.addAll(keys.sorted().map { it.replaceFirstChar { c -> c.uppercase() } })
                     resultColumns
                 } catch (e: Exception) {
+                    logger.debug(e) { "Failed to parse JSON log line: $firstJson" }
                     listOf("Timestamp", "Level", "Content")
                 }
             } else listOf("Timestamp", "Level", "Content")
@@ -86,25 +87,26 @@ class HeuristicProbe(val registry: ParserRegistry) {
         val firstJson = lines.firstOrNull { isJson(it) } ?: return JsonMapping()
         return try {
             val element = Json.parseToJsonElement(firstJson).jsonObject
-            var timestampKey = "timestamp"
-            var levelKey = "level"
-            var contentKey = "message"
-            
+
             val keys = element.keys
-            if ("time" in keys && "timestamp" !in keys) timestampKey = "time"
-            if ("ts" in keys && "timestamp" !in keys && "time" !in keys) timestampKey = "ts"
-            
-            if ("lvl" in keys && "level" !in keys) levelKey = "lvl"
-            if ("severity" in keys && "level" !in keys && "lvl" !in keys) levelKey = "severity"
-            
-            if ("msg" in keys && "message" !in keys) contentKey = "msg"
-            if ("content" in keys && "message" !in keys && "msg" !in keys) contentKey = "content"
-            if ("body" in keys && "message" !in keys && "msg" !in keys && "content" !in keys) contentKey = "body"
-            
+
+            val timestampKey = keys.firstAvailableKey(TIMESTAMP_KEYS)
+            val levelKey = keys.firstAvailableKey(LEVEL_KEYS)
+            val contentKey = keys.firstAvailableKey(CONTENT_KEYS)
+
             JsonMapping(timestampKey, levelKey, contentKey)
         } catch (e: Exception) {
             JsonMapping()
         }
+    }
+
+    private fun Set<String>.firstAvailableKey(candidates: List<String>): String =
+        candidates.firstOrNull { it in this } ?: candidates.first()
+
+    companion object {
+        private val TIMESTAMP_KEYS = listOf("timestamp", "time", "ts")
+        private val LEVEL_KEYS = listOf("level", "lvl", "severity")
+        private val CONTENT_KEYS = listOf("message", "msg", "content", "body")
     }
 
     private fun isLogfmt(line: String): Boolean {

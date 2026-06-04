@@ -29,6 +29,7 @@
 - Sprint 10 `15.9` completed: multi-source log rows now apply subtle per-source gray background differentiation using deterministic source-id-based shade mapping that remains stable across refresh and source-list updates.
 - Sprint 10 `15.7` completed: desktop drag-and-drop now supports multi-file import to either the active log view tab or a newly created tab via tab-bar drops, with non-blocking unsupported-drop feedback and integration-test coverage.
 - Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
+- Sprint 11 `16` completed: Detekt is now standardized across all Kotlin modules with shared config/baseline, module `check` integration, CI quality gates, and team workflow documentation.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -46,6 +47,7 @@
 - Normalized chart x-axis units by smallest bucket duration to preserve proportional temporal gaps while keeping KoalaPlot bar geometry valid (`barWidth` semantics unchanged).
 - Kept source badge tooltip text derived from normalized filename extraction (path/URI tail segment) while leaving source-color mapping tied to active `sourceIds` ordering for deterministic multi-source rendering.
 - Kept per-source row background mapping derived from hashed `sourceId` (instead of active-source index) so visual differentiation remains stable when source ordering changes.
+- Adopted a single root Detekt baseline/config strategy (`detekt-baseline.xml`, `detekt.yml`) with CI no-new-violations enforcement to enable incremental static-analysis burn-down without blocking active delivery.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -220,6 +222,7 @@
 - `Icons.AutoMirrored` should be used for certain icons like `MenuOpen` to support RTL.
 - `LazyColumn` required `itemsIndexed` to reliably display line numbers.
 - `junit-platform-launcher` is required for Gradle 9.3 test execution in `:ui` module.
+- Shared baseline generation must run only from root (`:detektBaseline`) when all modules point to one baseline file; otherwise module tasks can overwrite each other.
 
 **Test coverage areas**
 - `LogHighlighter`: Unit tests for regex-based highlighting and search term bolding.
@@ -3324,3 +3327,49 @@ For each sprint/task
 **Test coverage areas**
 - `scripts/generate-icons.sh` (source checks, tool checks, deterministic output generation).
 - Validation commands: `sips -g pixelWidth -g pixelHeight app/src/main/resources/icons/klogviewer-1024.png app/src/main/resources/icons/klogviewer.png`, `magick identify app/src/main/resources/icons/klogviewer.ico`, and `iconutil -c iconset app/src/main/resources/icons/klogviewer.icns -o /tmp/klogviewer-final-verify.iconset`.
+
+## Task: Sprint 11 Detekt and Workflow Integration
+**Title**: Standardize Detekt Across Modules and CI Quality Gates
+**Date/time completed**: 2026-06-03 15:27
+**What was shipped**
+- Added Detekt version-catalog entries and plugin alias wiring, then applied Detekt across `:app`, `:ui`, `:core`, and `:domain`.
+- Added shared root `detekt.yml` and generated `detekt-baseline.xml` for controlled incremental rollout.
+- Configured Gradle Detekt reports (`html`, `xml`, `md`, `sarif`) and integrated Detekt into each module `check` lifecycle.
+- Integrated CI Detekt execution in `.github/workflows/build.yml` with explicit fail behavior and conditional report artifact publishing on failures.
+- Added workflow/governance docs in `docs/DETEKT.md`, README instructions, and ADR documentation in `docs/adr/adr-041-detekt-static-analysis-standardization.md`.
+- Marked Sprint 11 Detekt task checklist complete in `docs/tasks/TASKS-SPRINT-11-DETEKT-AND-WORKFLOW-INTEGRATION.md`.
+**Key decisions**
+- Chose a single shared baseline model (root `detekt-baseline.xml`) to enforce consistent no-new-violations policy across modules.
+- Kept baseline generation centralized at root and disabled module baseline writers to prevent file overwrite races.
+- Published Detekt artifacts only when Detekt fails in CI to keep successful run artifacts focused and lightweight.
+**Gotchas**
+- Initial baseline generation included module tasks writing the same baseline path, which caused partial/overwritten baselines until module baseline tasks were disabled.
+**Test coverage areas**
+- `build.gradle.kts` (Detekt plugin/report/check/baseline integration and root baseline generation behavior).
+- `.github/workflows/build.yml` (CI quality-gate steps for Detekt + artifact publication behavior).
+- `docs/DETEKT.md`, `README.md`, `docs/adr/adr-041-detekt-static-analysis-standardization.md` (workflow and governance documentation).
+- `./gradlew detektBaseline` (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` (`BUILD SUCCESSFUL`).
+- `./gradlew test :ui:desktopTest` (`BUILD SUCCESSFUL`).
+
+## Task: Detekt 2.0.0-alpha.3 Upgrade
+**Title**: Migrate Project Detekt Tooling from 1.23.8 to 2.0.0-alpha.3
+**Date/time completed**: 2026-06-03 17:53
+**What was shipped**
+- Upgraded Detekt version catalog to `2.0.0-alpha.3` and migrated plugin id usage to `dev.detekt`.
+- Updated root Gradle Detekt wiring for Detekt 2 APIs (`dev.detekt.gradle.*` imports, report accessors, and typed `basePath` setters).
+- Preserved single shared baseline strategy by keeping module baseline writers disabled and regenerating root `detekt-baseline.xml` via `:detektBaseline`.
+- Migrated `detekt.yml` to the Detekt 2-valid schema by removing invalid legacy top-level keys.
+**Key decisions**
+- Kept root-shared baseline governance rather than moving to per-module baselines to preserve existing CI policy and docs.
+- Used task-level Detekt 2 report configuration (`html`, `checkstyle`, `markdown`, `sarif`) to keep CI artifact compatibility.
+**Gotchas**
+- Detekt 2 namespace and DSL changes were breaking (`dev.detekt` id, task/import package changes, `basePath` type changes, and invalid legacy config keys).
+- Running unscoped `detektBaseline` with module baseline tasks enabled can overwrite the shared baseline path; root-only generation avoids this race.
+**Test coverage areas**
+- `gradle/libs.versions.toml` (Detekt version + plugin id migration).
+- `build.gradle.kts` (Detekt 2 plugin/task/report/baseline compatibility and baseline generation strategy).
+- `detekt.yml` (Detekt 2 config schema compatibility).
+- `./gradlew :detektBaseline` (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` (`BUILD SUCCESSFUL`).
+- `./gradlew test :ui:desktopTest` (`BUILD SUCCESSFUL`).
