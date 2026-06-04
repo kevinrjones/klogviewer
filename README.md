@@ -95,6 +95,20 @@ To create a native distribution for your operating system (DMG, MSI, or DEB):
 ```
 Distributions will be available in `app/build/compose/binaries`.
 
+### Static Analysis (Detekt)
+
+Run static analysis locally:
+
+```bash
+./gradlew detekt
+```
+
+Detekt is wired into module `check` tasks, so `./gradlew check` also executes static analysis.
+
+Detailed policy and governance (suppression hygiene, baseline updates, burn-down ownership):
+
+- `docs/DETEKT.md`
+
 ## Usage
 
 ### Sprint 8 Connectivity Overview
@@ -167,6 +181,7 @@ If secure storage is unavailable on the host, KLogViewer asks for explicit confi
 KLogViewer uses GitHub Actions for automated building and packaging. For every push to the `main` branch, the following are automatically generated:
 - **Installers**: DMG (macOS), MSI (Windows), and DEB (Linux).
 - **Standalone Executables**: Platform-specific zipped bundles for all three major operating systems.
+- **Static Analysis Gate**: Detekt runs before tests and fails the workflow on violations; failed runs publish Detekt artifacts for debugging.
 
 You can find these deployable units in the [GitHub Actions artifacts](https://github.com/kevinrjones/klogviewer/actions).
 

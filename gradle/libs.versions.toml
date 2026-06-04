@@ -1,4 +1,5 @@
 [versions]
+detekt = "2.0.0-alpha.3"
 arrow = "2.2.2.1"
 aws-sdk = "1.6.82"
 catalogUpdateVersion-version = "1.1.0"
@@ -64,6 +65,7 @@ strikt-core = { module = "io.strikt:strikt-core", version.ref = "strikt" }
 catalogUpdate = { id = "nl.littlerobots.version-catalog-update", version.ref = "catalogUpdateVersion-version" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 compose-desktop = { id = "org.jetbrains.compose", version.ref = "compose" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 versionUpdate = { id = "com.github.ben-manes.versions", version.ref = "updateVersion-version" }

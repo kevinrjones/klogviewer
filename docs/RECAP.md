@@ -1257,3 +1257,29 @@ Recap from the previous entry (`2026-06-03 06:46`) up to now:
 - `./gradlew :app:test --tests "com.klogviewer.integration.SessionRestorationTest" --tests "com.klogviewer.integration.InterleavingIntegrationTest" --tests "com.klogviewer.integration.SftpReloadTest"` → passed (`BUILD SUCCESSFUL`).
 - Repository state at recap capture time: `git status --short` shows uncommitted docs updates in `RELEASE_NOTES.md`, `ALL_RELEASES.md`, `docs/project_memory.md`, and `docs/tasks/TASKS-SPRINT-10-UI-FIXES-AND-UPDATES.md`.
 
+
+## 21:35
+
+### Detekt Workflow Integration Follow-Through and Detekt 2 Upgrade Recap
+
+Recap from the previous entry (`2026-06-03 09:50`) up to now:
+
+#### Changes:
+- **Commit `2b830ae` (2026-06-03 10:04)**: Finalized `1.7.0` release notes with Sprint 10 content.
+- **Commit `1da9902` (2026-06-03 10:05)**: Merged `feat/uiupdates` branch updates.
+- **Commit `15bf362` (2026-06-03 10:17)**: Added Detekt static-analysis integration and renumbered downstream sprint/task tracking.
+- **Commit `0bac434` (2026-06-03 10:18)**: Merged latest `main` updates into `feat/uiupdates`.
+- **Commits `79a30c8`, `3b64b7e`, `5d3de0f`, `99c4195` (2026-06-03 14:43–14:54)**: Delivered platform/release packaging updates, including platform-aware menu shortcuts, desktop icon asset generation, Ubuntu/Linux ARM64 support, and `1.7.1` release note alignment.
+- **Commit `d02046e` (2026-06-03 17:30)**: Introduced Detekt static-analysis standardization as a committed sprint delivery.
+- **Current working session (uncommitted)**:
+    - Upgraded Detekt from `1.23.8` to `2.0.0-alpha.3` in `gradle/libs.versions.toml` and migrated plugin ID usage to `dev.detekt`.
+    - Updated Detekt Gradle wiring in `build.gradle.kts` for Detekt 2 APIs (imports, plugin ID hook, report names, and typed `basePath` setters).
+    - Updated `detekt.yml` for Detekt 2 compatibility by removing invalid legacy top-level keys.
+    - Regenerated/updated shared root baseline in `detekt-baseline.xml` and documented the upgrade completion details in `docs/project_memory.md`.
+
+#### Verification:
+- `./gradlew :detektBaseline` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew test :ui:desktopTest` → passed (`BUILD SUCCESSFUL`).
+- Repository state at recap capture time: `git status --short` shows uncommitted updates in `build.gradle.kts`, `detekt-baseline.xml`, `detekt.yml`, `docs/project_memory.md`, and `gradle/libs.versions.toml`.
+

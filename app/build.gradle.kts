@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.compose.desktop)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.detekt)
 }
 
 dependencies {
