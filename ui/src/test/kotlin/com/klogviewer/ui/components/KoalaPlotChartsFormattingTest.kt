@@ -32,6 +32,64 @@ class KoalaPlotChartsFormattingTest {
     }
 
     @Test
+    fun `given second display scale when formatting display axis label then includes seconds`() {
+        val formatter = displayTimeAxisLabelFormatter(
+            displayBucketDurationSeconds = 1L,
+            totalSpanSeconds = 3600L,
+            zoneId = ZoneId.of("UTC")
+        )
+
+        expectThat(formatter.format(Instant.parse("2026-05-27T10:01:05Z")))
+            .isEqualTo("10:01:05")
+    }
+
+    @Test
+    fun `given multi day hour display scale when formatting display axis label then includes month day and time`() {
+        val formatter = displayTimeAxisLabelFormatter(
+            displayBucketDurationSeconds = 6 * 60 * 60L,
+            totalSpanSeconds = 10 * 24 * 60 * 60L,
+            zoneId = ZoneId.of("UTC")
+        )
+
+        expectThat(formatter.format(Instant.parse("2026-05-27T18:00:00Z")))
+            .isEqualTo("05-27 18:00")
+    }
+
+    @Test
+    fun `given day display scale when formatting display axis label then uses date label`() {
+        val formatter = displayTimeAxisLabelFormatter(
+            displayBucketDurationSeconds = 24 * 60 * 60L,
+            totalSpanSeconds = 20 * 24 * 60 * 60L,
+            zoneId = ZoneId.of("UTC")
+        )
+
+        expectThat(formatter.format(Instant.parse("2026-05-27T00:00:00Z")))
+            .isEqualTo("05-27")
+    }
+
+    @Test
+    fun `given minute display scale when formatting bucket range then omits seconds`() {
+        val formatter = timeBucketRangeFormatter(
+            displayBucketDurationSeconds = 60L,
+            zoneId = ZoneId.of("UTC")
+        )
+
+        expectThat(formatter.format(Instant.parse("2026-05-27T10:01:59Z")))
+            .isEqualTo("2026-05-27 10:01")
+    }
+
+    @Test
+    fun `given second display scale when formatting bucket range then includes seconds`() {
+        val formatter = timeBucketRangeFormatter(
+            displayBucketDurationSeconds = 1L,
+            zoneId = ZoneId.of("UTC")
+        )
+
+        expectThat(formatter.format(Instant.parse("2026-05-27T10:01:59Z")))
+            .isEqualTo("2026-05-27 10:01:59")
+    }
+
+    @Test
     fun `given bucket instant when formatting x-axis tooltip date then uses yyyy-mm-dd`() {
         val formatter = timeAxisDateTooltipFormatter(zoneId = ZoneId.of("UTC"))
 

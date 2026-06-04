@@ -14,7 +14,7 @@ import kotlin.math.abs
 class KoalaPlotChartsPointerMappingTest {
 
     @Test
-    fun `given irregular time buckets when deriving x-axis values then spacing reflects elapsed time`() {
+    fun `given irregular time buckets when deriving x-axis values then values map to display bucket indices`() {
         val irregularBuckets = listOf(
             DashboardTimeBucket(
                 from = Instant.parse("2026-05-27T10:57:00Z"),
@@ -33,9 +33,172 @@ class KoalaPlotChartsPointerMappingTest {
             )
         )
 
-        expectThat(timeSeriesAxisUnitSeconds(irregularBuckets)).isEqualTo(60f)
         expectThat(timeSeriesXAxisValues(irregularBuckets))
-            .containsExactly(0f, 1f, 270f)
+            .containsExactly(0f, 1f, 2f)
+    }
+
+    @Test
+    fun `given short span and wide chart when choosing display bucket duration then per second granularity is preserved`() {
+        val start = Instant.parse("2026-05-27T10:00:00Z")
+        val buckets = (0 until 120).map { index ->
+            val bucketStart = start.plusSeconds(index.toLong())
+            DashboardTimeBucket(
+                from = bucketStart,
+                to = bucketStart.plusSeconds(1),
+                count = 1
+            )
+        }
+
+        val durationSeconds = chooseDisplayBucketDurationSeconds(
+            sortedBuckets = buckets,
+            availableWidthPx = 4000f
+        )
+
+        expectThat(durationSeconds).isEqualTo(1L)
+    }
+
+    @Test
+    fun `given ten day span and four thousand pixel chart when choosing display bucket duration then wider buckets are selected`() {
+        val start = Instant.parse("2026-01-01T00:00:00Z")
+        val buckets = listOf(
+            DashboardTimeBucket(
+                from = start,
+                to = start.plusSeconds(60),
+                count = 2
+            ),
+            DashboardTimeBucket(
+                from = start.plusSeconds(10 * 24 * 60 * 60L),
+                to = start.plusSeconds(10 * 24 * 60 * 60L + 60),
+                count = 3
+            )
+        )
+
+        val durationSeconds = chooseDisplayBucketDurationSeconds(
+            sortedBuckets = buckets,
+            availableWidthPx = 4000f
+        )
+
+        expectThat(durationSeconds).isEqualTo(30 * 60L)
+    }
+
+    @Test
+    fun `given narrow chart width when choosing display bucket duration then chooses wider buckets`() {
+        val start = Instant.parse("2026-05-27T00:00:00Z")
+        val buckets = (0 until 3600).map { index ->
+            val bucketStart = start.plusSeconds(index.toLong())
+            DashboardTimeBucket(
+                from = bucketStart,
+                to = bucketStart.plusSeconds(1),
+                count = 1
+            )
+        }
+
+        val durationSeconds = chooseDisplayBucketDurationSeconds(
+            sortedBuckets = buckets,
+            availableWidthPx = 100f
+        )
+
+        expectThat(durationSeconds).isEqualTo(5 * 60L)
+    }
+
+    @Test
+    fun `given empty series when choosing display bucket duration then returns safe default`() {
+        val durationSeconds = chooseDisplayBucketDurationSeconds(
+            sortedBuckets = emptyList(),
+            availableWidthPx = 200f
+        )
+
+        expectThat(durationSeconds).isEqualTo(1L)
+    }
+
+    @Test
+    fun `given sparse long span when rebucketing for display then counts are preserved and zero buckets remain explicit`() {
+        val start = Instant.parse("2026-01-01T00:00:00Z")
+        val sourceBuckets = listOf(
+            DashboardTimeBucket(
+                from = start,
+                to = start.plusSeconds(60),
+                count = 7
+            ),
+            DashboardTimeBucket(
+                from = start.plusSeconds(9 * 24 * 60 * 60L),
+                to = start.plusSeconds(9 * 24 * 60 * 60L + 60),
+                count = 11
+            )
+        )
+
+        val displayBuckets = rebucketTimeSeriesForDisplay(
+            sortedBuckets = sourceBuckets,
+            displayBucketDurationSeconds = 24 * 60 * 60L
+        )
+
+        expectThat(displayBuckets.first().from).isEqualTo(start)
+        expectThat(displayBuckets.last().to).isEqualTo(start.plusSeconds(10 * 24 * 60 * 60L))
+        expectThat(displayBuckets.sumOf { bucket -> bucket.count }).isEqualTo(sourceBuckets.sumOf { bucket -> bucket.count })
+        expectThat(displayBuckets.any { bucket -> bucket.count == 0 }).isEqualTo(true)
+        expectThat(displayBuckets.first().count).isEqualTo(7)
+        expectThat(displayBuckets.last().count).isEqualTo(11)
+    }
+
+    @Test
+    fun `given multiple source buckets in same display interval when rebucketing then counts are summed into one display bucket`() {
+        val start = Instant.parse("2026-05-27T10:00:00Z")
+        val sourceBuckets = listOf(
+            DashboardTimeBucket(
+                from = start,
+                to = start.plusSeconds(60),
+                count = 2
+            ),
+            DashboardTimeBucket(
+                from = start.plusSeconds(60),
+                to = start.plusSeconds(120),
+                count = 3
+            ),
+            DashboardTimeBucket(
+                from = start.plusSeconds(300),
+                to = start.plusSeconds(360),
+                count = 5
+            )
+        )
+
+        val displayBuckets = rebucketTimeSeriesForDisplay(
+            sortedBuckets = sourceBuckets,
+            displayBucketDurationSeconds = 5 * 60L
+        )
+
+        expectThat(displayBuckets.size).isEqualTo(2)
+        expectThat(displayBuckets[0].from).isEqualTo(start)
+        expectThat(displayBuckets[0].to).isEqualTo(start.plusSeconds(5 * 60L))
+        expectThat(displayBuckets[0].count).isEqualTo(5)
+        expectThat(displayBuckets[1].count).isEqualTo(5)
+        expectThat(displayBuckets.sumOf { bucket -> bucket.count }).isEqualTo(10)
+    }
+
+    @Test
+    fun `given many merged buckets when deriving x-axis range then range includes outer bar width`() {
+        val start = Instant.parse("2026-05-27T10:00:00Z")
+        val buckets = (0 until 30).map { index ->
+            val bucketStart = start.plusSeconds(index.toLong() * 60)
+            DashboardTimeBucket(
+                from = bucketStart,
+                to = bucketStart.plusSeconds(60),
+                count = index + 1
+            )
+        }
+
+        val xValues = timeSeriesXAxisValues(buckets)
+        val xRange = timeSeriesXAxisRange(xValues)
+
+        expectThat(abs(xRange.start - (-0.5f)) < 0.0001f).isEqualTo(true)
+        expectThat(abs(xRange.endInclusive - 29.5f) < 0.0001f).isEqualTo(true)
+    }
+
+    @Test
+    fun `given single bucket when deriving x-axis range then range remains centered around bucket`() {
+        val xRange = timeSeriesXAxisRange(listOf(0f))
+
+        expectThat(abs(xRange.start - (-0.5f)) < 0.0001f).isEqualTo(true)
+        expectThat(abs(xRange.endInclusive - 0.5f) < 0.0001f).isEqualTo(true)
     }
 
     @Test

@@ -55,8 +55,28 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.ceil
 import kotlin.math.roundToInt
-import kotlin.math.roundToLong
+
+internal const val MIN_PIXELS_PER_DISPLAY_BUCKET = 8f
+internal const val DEFAULT_TIME_SERIES_CHART_WIDTH_PX = 1200f
+
+internal val NICE_DISPLAY_BUCKET_DURATIONS_SECONDS = listOf(
+    1L,
+    5L,
+    10L,
+    30L,
+    60L,
+    5 * 60L,
+    15 * 60L,
+    30 * 60L,
+    60 * 60L,
+    6 * 60 * 60L,
+    12 * 60 * 60L,
+    24 * 60 * 60L,
+    3 * 24 * 60 * 60L,
+    7 * 24 * 60 * 60L
+)
 
 internal fun timeAxisLabelFormatter(
     bucketSize: DashboardBucketSize,
@@ -65,6 +85,33 @@ internal fun timeAxisLabelFormatter(
     val pattern = when (bucketSize) {
         DashboardBucketSize.PER_SECOND -> "HH:mm:ss"
         DashboardBucketSize.PER_MINUTE -> "HH:mm"
+    }
+    return DateTimeFormatter.ofPattern(pattern).withZone(zoneId)
+}
+
+internal fun displayTimeAxisLabelFormatter(
+    displayBucketDurationSeconds: Long,
+    totalSpanSeconds: Long,
+    zoneId: ZoneId = ZoneId.systemDefault()
+): DateTimeFormatter {
+    val multiDaySpan = totalSpanSeconds >= 2 * 24 * 60 * 60L
+    val pattern = when {
+        displayBucketDurationSeconds < 60L -> "HH:mm:ss"
+        displayBucketDurationSeconds < 24 * 60 * 60L -> if (multiDaySpan) "MM-dd HH:mm" else "HH:mm"
+        totalSpanSeconds >= 365 * 24 * 60 * 60L -> "yyyy-MM-dd"
+        else -> "MM-dd"
+    }
+    return DateTimeFormatter.ofPattern(pattern).withZone(zoneId)
+}
+
+internal fun timeBucketRangeFormatter(
+    displayBucketDurationSeconds: Long,
+    zoneId: ZoneId = ZoneId.systemDefault()
+): DateTimeFormatter {
+    val pattern = if (displayBucketDurationSeconds < 60L) {
+        "yyyy-MM-dd HH:mm:ss"
+    } else {
+        "yyyy-MM-dd HH:mm"
     }
     return DateTimeFormatter.ofPattern(pattern).withZone(zoneId)
 }
@@ -110,33 +157,133 @@ internal fun normalizedPieValues(slices: List<DashboardLevelSlice>): List<Float>
     return nonNegativeRatios.map { ratio -> ratio / ratioSum }
 }
 
-internal fun timeSeriesXAxisValues(sortedBuckets: List<DashboardTimeBucket>): List<Float> {
+internal fun chooseDisplayBucketDurationSeconds(
+    sortedBuckets: List<DashboardTimeBucket>,
+    availableWidthPx: Float,
+    minimumPixelsPerBucket: Float = MIN_PIXELS_PER_DISPLAY_BUCKET,
+    niceDurationsSeconds: List<Long> = NICE_DISPLAY_BUCKET_DURATIONS_SECONDS
+): Long {
+    if (sortedBuckets.isEmpty()) {
+        return 1L
+    }
+
+    val safeWidthPx = availableWidthPx.takeIf { width -> width > 0f } ?: DEFAULT_TIME_SERIES_CHART_WIDTH_PX
+    val safeMinPixels = minimumPixelsPerBucket.coerceAtLeast(1f)
+    val maxVisibleBuckets = (safeWidthPx / safeMinPixels).toInt().coerceAtLeast(1)
+    val totalSpanSeconds = timeSeriesSpanSeconds(sortedBuckets)
+
+    val requiredSecondsByWidth = ceil(totalSpanSeconds.toDouble() / maxVisibleBuckets.toDouble())
+        .toLong()
+        .coerceAtLeast(1L)
+    val maxSourceBucketSeconds = sortedBuckets
+        .maxOfOrNull { bucket -> bucketDurationSeconds(bucket) }
+        ?.coerceAtLeast(1L)
+        ?: 1L
+
+    val requiredBucketSeconds = maxOf(requiredSecondsByWidth, maxSourceBucketSeconds)
+    val sortedNiceDurations = niceDurationsSeconds
+        .filter { duration -> duration > 0L }
+        .distinct()
+        .sorted()
+
+    sortedNiceDurations.firstOrNull { duration -> duration >= requiredBucketSeconds }?.let { duration ->
+        return duration
+    }
+
+    var fallbackDuration = (sortedNiceDurations.lastOrNull() ?: 1L).coerceAtLeast(1L)
+    while (fallbackDuration < requiredBucketSeconds) {
+        fallbackDuration *= 2
+    }
+    return fallbackDuration
+}
+
+internal fun rebucketTimeSeriesForDisplay(
+    sortedBuckets: List<DashboardTimeBucket>,
+    displayBucketDurationSeconds: Long
+): List<DashboardTimeBucket> {
     if (sortedBuckets.isEmpty()) {
         return emptyList()
     }
 
-    val axisUnitSeconds = timeSeriesAxisUnitSeconds(sortedBuckets)
-    val axisOriginMillis = sortedBuckets.first().from.toEpochMilli()
-    return sortedBuckets.map { bucket ->
-        val elapsedMillis = bucket.from.toEpochMilli() - axisOriginMillis
-        val elapsedSeconds = (elapsedMillis / 1000.0).toFloat()
-        elapsedSeconds / axisUnitSeconds
+    val normalizedBuckets = sortedBuckets.sortedBy { bucket -> bucket.from }
+    val bucketDurationSeconds = displayBucketDurationSeconds.coerceAtLeast(1L)
+    val alignedStartEpochSecond = alignEpochSecondFloor(
+        epochSecond = normalizedBuckets.first().from.epochSecond,
+        stepSeconds = bucketDurationSeconds
+    )
+    val alignedEndEpochSecond = alignEpochSecondCeil(
+        epochSecond = normalizedBuckets.last().to.epochSecond,
+        stepSeconds = bucketDurationSeconds
+    ).let { alignedEnd ->
+        if (alignedEnd <= alignedStartEpochSecond) {
+            alignedStartEpochSecond + bucketDurationSeconds
+        } else {
+            alignedEnd
+        }
+    }
+
+    val bucketCount = ((alignedEndEpochSecond - alignedStartEpochSecond) / bucketDurationSeconds)
+        .coerceAtLeast(1L)
+        .toInt()
+    val counts = IntArray(bucketCount)
+
+    normalizedBuckets.forEach { bucket ->
+        val bucketIndex = ((bucket.from.epochSecond - alignedStartEpochSecond) / bucketDurationSeconds)
+            .coerceIn(0L, bucketCount.toLong() - 1L)
+            .toInt()
+        counts[bucketIndex] += bucket.count
+    }
+
+    return counts.indices.map { index ->
+        val bucketStart = Instant.ofEpochSecond(alignedStartEpochSecond + index.toLong() * bucketDurationSeconds)
+        DashboardTimeBucket(
+            from = bucketStart,
+            to = bucketStart.plusSeconds(bucketDurationSeconds),
+            count = counts[index]
+        )
     }
 }
 
-internal fun timeSeriesAxisUnitSeconds(sortedBuckets: List<DashboardTimeBucket>): Float {
+internal fun timeSeriesSpanSeconds(sortedBuckets: List<DashboardTimeBucket>): Long {
     if (sortedBuckets.isEmpty()) {
-        return 1f
+        return 1L
     }
 
-    return sortedBuckets
-        .map { bucket ->
-            val durationMillis = (bucket.to.toEpochMilli() - bucket.from.toEpochMilli()).coerceAtLeast(1000L)
-            (durationMillis / 1000.0).toFloat()
-        }
-        .minOrNull()
-        ?.coerceAtLeast(1f)
-        ?: 1f
+    val minStartMillis = sortedBuckets.minOf { bucket -> bucket.from.toEpochMilli() }
+    val maxEndMillis = sortedBuckets.maxOf { bucket -> bucket.to.toEpochMilli() }
+    val spanMillis = (maxEndMillis - minStartMillis).coerceAtLeast(1000L)
+    return ceil(spanMillis / 1000.0).toLong().coerceAtLeast(1L)
+}
+
+private fun bucketDurationSeconds(bucket: DashboardTimeBucket): Long {
+    val durationMillis = (bucket.to.toEpochMilli() - bucket.from.toEpochMilli()).coerceAtLeast(1000L)
+    return ceil(durationMillis / 1000.0).toLong().coerceAtLeast(1L)
+}
+
+private fun alignEpochSecondFloor(epochSecond: Long, stepSeconds: Long): Long {
+    if (stepSeconds <= 0L) {
+        return epochSecond
+    }
+
+    val remainder = epochSecond % stepSeconds
+    return if (remainder >= 0L) {
+        epochSecond - remainder
+    } else {
+        epochSecond - (remainder + stepSeconds)
+    }
+}
+
+private fun alignEpochSecondCeil(epochSecond: Long, stepSeconds: Long): Long {
+    val alignedFloor = alignEpochSecondFloor(epochSecond, stepSeconds)
+    return if (alignedFloor == epochSecond) {
+        epochSecond
+    } else {
+        alignedFloor + stepSeconds
+    }
+}
+
+internal fun timeSeriesXAxisValues(sortedBuckets: List<DashboardTimeBucket>): List<Float> {
+    return sortedBuckets.indices.map { index -> index.toFloat() }
 }
 
 internal fun timeSeriesXAxisRange(xValues: List<Float>): ClosedFloatingPointRange<Float> {
@@ -146,16 +293,15 @@ internal fun timeSeriesXAxisRange(xValues: List<Float>): ClosedFloatingPointRang
 
     val minX = xValues.minOrNull() ?: 0f
     val maxX = xValues.maxOrNull() ?: 0f
-    if (minX == maxX) {
-        return minX..(minX + 1f)
-    }
+    val sortedDistinctValues = xValues.distinct().sorted()
+    val minStep = sortedDistinctValues
+        .zipWithNext { current, next -> next - current }
+        .filter { step -> step > 0f }
+        .minOrNull()
+        ?: 1f
+    val sidePadding = (minStep / 2f).coerceAtLeast(0.5f)
 
-    return minX..maxX
-}
-
-internal fun timeSeriesAxisInstant(axisOrigin: Instant, axisValue: Float, axisUnitSeconds: Float): Instant {
-    val elapsedMillis = (axisValue * axisUnitSeconds * 1000f).roundToLong().coerceAtLeast(0L)
-    return axisOrigin.plusMillis(elapsedMillis)
+    return (minX - sidePadding)..(maxX + sidePadding)
 }
 
 internal fun pointerXToBucketIndex(pointerX: Float, plotWidthPx: Float, bucketCount: Int): Int? {
@@ -295,7 +441,6 @@ private fun Modifier.drawRangeOverlay(
 @Composable
 fun KoalaPlotTimeSeriesChart(
     buckets: List<DashboardTimeBucket>,
-    bucketSize: DashboardBucketSize,
     onBucketSelect: (DashboardTimeBucket) -> Unit,
     onBucketRangeSelect: (DashboardTimeBucket, DashboardTimeBucket) -> Unit = { fromBucket, _ ->
         onBucketSelect(fromBucket)
@@ -310,19 +455,44 @@ fun KoalaPlotTimeSeriesChart(
         return
     }
 
-    val timeFormatter = remember(bucketSize) { timeAxisLabelFormatter(bucketSize) }
-    val dateTooltipFormatter = remember { timeAxisDateTooltipFormatter() }
-
     val sortedBuckets = remember(buckets) {
         buckets.sortedBy { bucket -> bucket.from }
     }
 
-    val xValues = remember(sortedBuckets) { timeSeriesXAxisValues(sortedBuckets) }
-    val yValues = remember(sortedBuckets) { sortedBuckets.map { bucket -> bucket.count.toFloat() } }
+    var chartWidthPx by remember { mutableStateOf(0f) }
+    var dragStartX by remember { mutableStateOf<Float?>(null) }
+    var dragCurrentX by remember { mutableStateOf<Float?>(null) }
+
+    val displayWidthPx = remember(chartWidthPx) {
+        if (chartWidthPx > 0f) chartWidthPx else DEFAULT_TIME_SERIES_CHART_WIDTH_PX
+    }
+    val displayBucketDurationSeconds = remember(sortedBuckets, displayWidthPx) {
+        chooseDisplayBucketDurationSeconds(
+            sortedBuckets = sortedBuckets,
+            availableWidthPx = displayWidthPx
+        )
+    }
+    val displayedBuckets = remember(sortedBuckets, displayBucketDurationSeconds) {
+        rebucketTimeSeriesForDisplay(
+            sortedBuckets = sortedBuckets,
+            displayBucketDurationSeconds = displayBucketDurationSeconds
+        )
+    }
+    val totalSpanSeconds = remember(displayedBuckets) { timeSeriesSpanSeconds(displayedBuckets) }
+    val timeFormatter = remember(displayBucketDurationSeconds, totalSpanSeconds) {
+        displayTimeAxisLabelFormatter(
+            displayBucketDurationSeconds = displayBucketDurationSeconds,
+            totalSpanSeconds = totalSpanSeconds
+        )
+    }
+    val bucketRangeFormatter = remember(displayBucketDurationSeconds) {
+        timeBucketRangeFormatter(displayBucketDurationSeconds = displayBucketDurationSeconds)
+    }
+
+    val xValues = remember(displayedBuckets) { timeSeriesXAxisValues(displayedBuckets) }
+    val yValues = remember(displayedBuckets) { displayedBuckets.map { bucket -> bucket.count.toFloat() } }
     val maxCount = remember(yValues) { yValues.maxOrNull() ?: 0f }
     val xAxisRange = remember(xValues) { timeSeriesXAxisRange(xValues) }
-    val axisOrigin = remember(sortedBuckets) { sortedBuckets.first().from }
-    val axisUnitSeconds = remember(sortedBuckets) { timeSeriesAxisUnitSeconds(sortedBuckets) }
 
     val xAxisModel = remember(xAxisRange) {
         FloatLinearAxisModel(
@@ -337,21 +507,17 @@ fun KoalaPlotTimeSeriesChart(
         )
     }
 
-    var chartWidthPx by remember { mutableStateOf(0f) }
-    var dragStartX by remember { mutableStateOf<Float?>(null) }
-    var dragCurrentX by remember { mutableStateOf<Float?>(null) }
-
     val activeSelectionRange = remember(
         dragStartX,
         dragCurrentX,
         chartWidthPx,
-        sortedBuckets.size
+        displayedBuckets.size
     ) {
         activeBucketSelectionRange(
             dragStartX = dragStartX,
             dragCurrentX = dragCurrentX,
             plotWidthPx = chartWidthPx,
-            bucketCount = sortedBuckets.size
+            bucketCount = displayedBuckets.size
         )
     }
 
@@ -361,13 +527,13 @@ fun KoalaPlotTimeSeriesChart(
         .padding(8.dp)
         .drawRangeOverlay(
             range = activeSelectionRange,
-            bucketCount = sortedBuckets.size,
+            bucketCount = displayedBuckets.size,
             color = MaterialTheme.colors.primary.copy(alpha = 0.08f)
         )
         .onSizeChanged { size ->
             chartWidthPx = size.width.toFloat()
         }
-        .pointerInput(sortedBuckets, chartWidthPx) {
+        .pointerInput(displayedBuckets, chartWidthPx) {
             detectDragGestures(
                 onDragStart = { offset ->
                     dragStartX = offset.x
@@ -386,12 +552,12 @@ fun KoalaPlotTimeSeriesChart(
                             dragStartX = startX,
                             dragEndX = endX,
                             plotWidthPx = chartWidthPx,
-                            bucketCount = sortedBuckets.size
+                            bucketCount = displayedBuckets.size
                         )
 
                         selectedRange?.let { range ->
-                            val fromBucket = sortedBuckets[range.first]
-                            val toBucket = sortedBuckets[range.last]
+                            val fromBucket = displayedBuckets[range.first]
+                            val toBucket = displayedBuckets[range.last]
                             if (range.first == range.last) {
                                 onBucketSelect(fromBucket)
                             } else {
@@ -420,11 +586,8 @@ fun KoalaPlotTimeSeriesChart(
                 Text("Time", style = MaterialTheme.typography.caption)
             },
             labels = { value: Float ->
-                val axisInstant = timeSeriesAxisInstant(
-                    axisOrigin = axisOrigin,
-                    axisValue = value,
-                    axisUnitSeconds = axisUnitSeconds
-                )
+                val axisIndex = value.roundToInt().coerceIn(0, displayedBuckets.lastIndex)
+                val axisBucket = displayedBuckets[axisIndex]
                 TooltipArea(
                     tooltip = {
                         Surface(
@@ -433,7 +596,7 @@ fun KoalaPlotTimeSeriesChart(
                             shape = RoundedCornerShape(4.dp)
                         ) {
                             Text(
-                                text = dateTooltipFormatter.format(axisInstant),
+                                text = "${bucketRangeFormatter.format(axisBucket.from)} to ${bucketRangeFormatter.format(axisBucket.to)}",
                                 style = MaterialTheme.typography.caption,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
@@ -446,7 +609,7 @@ fun KoalaPlotTimeSeriesChart(
                     )
                 ) {
                     Text(
-                        text = timeFormatter.format(axisInstant),
+                        text = timeFormatter.format(axisBucket.from),
                         style = MaterialTheme.typography.caption
                     )
                     }
@@ -479,7 +642,7 @@ fun KoalaPlotTimeSeriesChart(
             yData = yValues,
             barWidth = 0.9f,
             bar = { index: Int, _: Int, _: VerticalBarPlotEntry<Float, Float> ->
-                val bucket = sortedBuckets[index]
+                val bucket = displayedBuckets[index]
                 val visualState = bucketSelectionVisualState(index, activeSelectionRange)
                 val fillColor = when (visualState) {
                     BucketSelectionVisualState.UNSELECTED -> MaterialTheme.colors.primary.copy(alpha = 0.55f)
@@ -507,11 +670,11 @@ fun KoalaPlotTimeSeriesChart(
                         ) {
                             Column(modifier = Modifier.padding(8.dp)) {
                                 Text(
-                                    text = "Bucket start: ${timeFormatter.format(bucket.from)}",
+                                    text = "Bucket start: ${bucketRangeFormatter.format(bucket.from)}",
                                     style = MaterialTheme.typography.caption
                                 )
                                 Text(
-                                    text = "Bucket end: ${timeFormatter.format(bucket.to)}",
+                                    text = "Bucket end: ${bucketRangeFormatter.format(bucket.to)}",
                                     style = MaterialTheme.typography.caption
                                 )
                                 Text(
@@ -536,7 +699,7 @@ fun KoalaPlotTimeSeriesChart(
                             .semantics {
                                 contentDescription = timeBucketSelectionDescription(
                                     bucket = bucket,
-                                    formatter = timeFormatter,
+                                    formatter = bucketRangeFormatter,
                                     visualState = visualState
                                 )
                             }

@@ -1026,7 +1026,6 @@ private fun LogTimeFrequencyPanel(
 
             KoalaPlotTimeSeriesChart(
                 buckets = content.timeSeries,
-                bucketSize = content.bucketSize,
                 onBucketSelect = onBucketSelect,
                 onBucketRangeSelect = onBucketRangeSelect,
                 chartHeight = 120.dp
@@ -1279,7 +1278,6 @@ private fun DashboardContent(
 
             KoalaPlotTimeSeriesChart(
                 buckets = content.timeSeries,
-                bucketSize = content.bucketSize,
                 onBucketSelect = onBucketSelect,
                 onBucketRangeSelect = onBucketRangeSelect
             )

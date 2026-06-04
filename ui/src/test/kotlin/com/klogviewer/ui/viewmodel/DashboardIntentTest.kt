@@ -818,6 +818,57 @@ class DashboardIntentTest {
     }
 
     @Test
+    fun `given around thirty sources when showing dashboard then time series aggregates all entries across buckets`() {
+        val start = Instant.parse("2026-03-01T00:00:00Z")
+        val sourceEntries = (0 until 30).flatMap { sourceIndex ->
+            val sourceId = "source-$sourceIndex"
+            buildList {
+                add(
+                    logEntry(
+                        timestamp = start.toString(),
+                        content = "first-$sourceIndex",
+                        sourceId = sourceId
+                    )
+                )
+                add(
+                    logEntry(
+                        timestamp = start.plusSeconds(60).toString(),
+                        content = "second-$sourceIndex",
+                        sourceId = sourceId
+                    )
+                )
+                if (sourceIndex % 3 == 0) {
+                    add(
+                        logEntry(
+                            timestamp = start.plusSeconds(120).toString(),
+                            content = "third-$sourceIndex",
+                            sourceId = sourceId
+                        )
+                    )
+                }
+            }
+        }
+
+        reconfigureLogSource(sourceEntries)
+
+        val testFile = File(tempDir, "dashboard-many-sources.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+
+        val content = activeDashboardContent()
+        val bucketFromInstants = content.timeSeries.map { it.from }
+        val totalBucketCount = content.timeSeries.sumOf { it.count }
+
+        expectThat(bucketFromInstants).isEqualTo(bucketFromInstants.sorted())
+        expectThat(content.samplingInfo.originalCount).isEqualTo(sourceEntries.size)
+        expectThat(totalBucketCount).isEqualTo(content.samplingInfo.sampledCount)
+        expectThat(content.timeSeries.size >= 3).isEqualTo(true)
+    }
+
+    @Test
     fun `given dashboard content when selecting time bucket then time filter is applied and selection is synchronized`() {
         val entry1 = logEntry("2026-01-01T00:00:00Z", "early")
         val entry2 = logEntry("2026-01-01T00:01:00Z", "late")
@@ -1116,13 +1167,15 @@ class DashboardIntentTest {
         timestamp: String,
         content: String,
         level: LogLevel = LogLevel.INFO,
-        fields: Map<String, String> = emptyMap()
+        fields: Map<String, String> = emptyMap(),
+        sourceId: String? = null
     ): LogEntry {
         return LogEntry(
             timestamp = LogTimestamp(timestamp),
             level = level,
             content = LogContent(content),
             fields = fields,
+            sourceId = sourceId,
             instant = Instant.parse(timestamp)
         )
     }

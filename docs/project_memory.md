@@ -29,6 +29,7 @@
 - Sprint 10 `15.9` completed: multi-source log rows now apply subtle per-source gray background differentiation using deterministic source-id-based shade mapping that remains stable across refresh and source-list updates.
 - Sprint 10 `15.7` completed: desktop drag-and-drop now supports multi-file import to either the active log view tab or a newly created tab via tab-bar drops, with non-blocking unsupported-drop feedback and integration-test coverage.
 - Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
+- Time frequency chart x-axis range now adds boundary padding so first/last bars are fully visible and correctly scaled for high-volume multi-source sessions (e.g., ~30 loaded files).
 - Sprint 11 `16` completed: Detekt is now standardized across all Kotlin modules with shared config/baseline, module `check` integration, CI quality gates, and team workflow documentation.
 
 **Key decisions**
@@ -45,6 +46,7 @@
 - Kept copy behavior centralized in the existing `EntryIntentHandler`/ViewModel intent flow and wired menu enablement to active selection state to avoid divergent trigger logic.
 - Split time-filter behavior by trigger: retained `ClearTimeFilter` reset-to-now semantics for `Edit -> Clear` and introduced dropdown `ResetTimeFilter` to clear time bounds, preserving deterministic shared filter handling.
 - Normalized chart x-axis units by smallest bucket duration to preserve proportional temporal gaps while keeping KoalaPlot bar geometry valid (`barWidth` semantics unchanged).
+- Kept chart x-axis scaling based on bucket-center values but expanded range by half-step padding to prevent clipping/compression of edge bars under large merged datasets.
 - Kept source badge tooltip text derived from normalized filename extraction (path/URI tail segment) while leaving source-color mapping tied to active `sourceIds` ordering for deterministic multi-source rendering.
 - Kept per-source row background mapping derived from hashed `sourceId` (instead of active-source index) so visual differentiation remains stable when source ordering changes.
 - Adopted a single root Detekt baseline/config strategy (`detekt-baseline.xml`, `detekt.yml`) with CI no-new-violations enforcement to enable incremental static-analysis burn-down without blocking active delivery.
@@ -3373,3 +3375,37 @@ For each sprint/task
 - `./gradlew :detektBaseline` (`BUILD SUCCESSFUL`).
 - `./gradlew detekt` (`BUILD SUCCESSFUL`).
 - `./gradlew test :ui:desktopTest` (`BUILD SUCCESSFUL`).
+
+## Task: Time Frequency Chart Scaling with Many Loaded Sources
+**Title**: Fix Time Frequency Axis Scaling for ~30 Loaded Files
+**Date/time completed**: 2026-06-04 11:05
+**What was shipped**
+- Fixed `timeSeriesXAxisRange` in `ui/src/main/kotlin/com/klogviewer/ui/components/KoalaPlotCharts.kt` to include side padding derived from bucket step size, ensuring first/last bars render fully and scale correctly.
+- Added chart regression tests in `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` for a high-volume (~30 bucket) scenario and single-bucket centering behavior.
+- Added dashboard regression coverage in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` for ~30 distinct sources across multiple buckets, validating chronological bucket ordering and sampled/original count consistency.
+**Key decisions**
+- Diagnosed and fixed the issue at the chart helper seam (x-axis range calculation) because dashboard aggregation already emits sorted bucket windows.
+- Kept dashboard-count assertions aligned with sampling semantics (`samplingInfo.originalCount` and `samplingInfo.sampledCount`) to avoid false negatives in high-volume tests.
+**Gotchas**
+- Dashboard analytics sampling means bucket totals can differ from raw loaded entry counts; tests must assert against sampled totals rather than raw source list size.
+**Test coverage areas**
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest.given around thirty sources when showing dashboard then time series aggregates all entries across buckets"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Dynamic Time Frequency Width-Based Display Scaling
+**Title**: Rebucket Time Frequency Graph by Available Chart Width
+**Date/time completed**: 2026-06-04 11:26
+**What was shipped**
+- Added width-aware display scale logic in `ui/src/main/kotlin/com/klogviewer/ui/components/KoalaPlotCharts.kt` (`chooseDisplayBucketDurationSeconds`) using a nice-duration ladder (seconds/minutes/hours/days) and a minimum pixels-per-bucket target.
+- Added display-only rebucketing (`rebucketTimeSeriesForDisplay`) that aligns windows deterministically to epoch boundaries, preserves total event counts, and materializes sparse long-range gaps as explicit zero-count display buckets.
+- Updated `KoalaPlotTimeSeriesChart` to render/select against displayed buckets, measure available chart width, use scale-aware x-axis labels, and show tooltip/accessibility text with actual displayed bucket ranges.
+- Updated chart helper behavior to use bucket-index x-values for plotting, reducing long-range float precision sensitivity in display mapping.
+- Added/updated regression coverage in `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsPointerMappingTest.kt` and `ui/src/test/kotlin/com/klogviewer/ui/components/KoalaPlotChartsFormattingTest.kt` for duration selection, rebucketing correctness, sparse long spans, and scale-aware formatting.
+**Key decisions**
+- Scoped rebucketing strictly to the chart display layer so loaded logs, filtering, ordering, and dashboard aggregation semantics remain unchanged.
+- Chose epoch-aligned nice bucket durations plus zero-bucket materialization to keep long-range charts interpretable while preserving deterministic range selection behavior.
+**Gotchas**
+- `KoalaPlotTimeSeriesChart` still receives `DashboardBucketSize` from dashboard aggregation, but display scale now adapts independently to measured width; tests were updated to assert display-scale behavior directly.
+**Test coverage areas**
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.KoalaPlotChartsFormattingTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
