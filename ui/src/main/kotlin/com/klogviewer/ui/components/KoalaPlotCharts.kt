@@ -167,34 +167,61 @@ internal fun chooseDisplayBucketDurationSeconds(
         return 1L
     }
 
-    val safeWidthPx = availableWidthPx.takeIf { width -> width > 0f } ?: DEFAULT_TIME_SERIES_CHART_WIDTH_PX
-    val safeMinPixels = minimumPixelsPerBucket.coerceAtLeast(1f)
-    val maxVisibleBuckets = (safeWidthPx / safeMinPixels).toInt().coerceAtLeast(1)
+    val maxVisibleBuckets = maxVisibleBucketCount(
+        availableWidthPx = availableWidthPx,
+        minimumPixelsPerBucket = minimumPixelsPerBucket
+    )
     val totalSpanSeconds = timeSeriesSpanSeconds(sortedBuckets)
-
-    val requiredSecondsByWidth = ceil(totalSpanSeconds.toDouble() / maxVisibleBuckets.toDouble())
+    val requiredDurationByWidthSeconds = ceil(totalSpanSeconds.toDouble() / maxVisibleBuckets.toDouble())
         .toLong()
         .coerceAtLeast(1L)
-    val maxSourceBucketSeconds = sortedBuckets
+    val longestSourceBucketSeconds = sortedBuckets
         .maxOfOrNull { bucket -> bucketDurationSeconds(bucket) }
         ?.coerceAtLeast(1L)
         ?: 1L
 
-    val requiredBucketSeconds = maxOf(requiredSecondsByWidth, maxSourceBucketSeconds)
-    val sortedNiceDurations = niceDurationsSeconds
+    val minimumRequiredDurationSeconds = maxOf(
+        requiredDurationByWidthSeconds,
+        longestSourceBucketSeconds
+    )
+
+    return chooseNiceDurationAtLeast(
+        minimumDurationSeconds = minimumRequiredDurationSeconds,
+        niceDurationsSeconds = niceDurationsSeconds
+    )
+}
+
+private fun maxVisibleBucketCount(
+    availableWidthPx: Float,
+    minimumPixelsPerBucket: Float
+): Int {
+    val safeWidthPx = availableWidthPx.takeIf { width -> width > 0f } ?: DEFAULT_TIME_SERIES_CHART_WIDTH_PX
+    val safeMinimumPixelsPerBucket = minimumPixelsPerBucket.coerceAtLeast(1f)
+
+    return (safeWidthPx / safeMinimumPixelsPerBucket)
+        .toInt()
+        .coerceAtLeast(1)
+}
+
+private fun chooseNiceDurationAtLeast(
+    minimumDurationSeconds: Long,
+    niceDurationsSeconds: List<Long>
+): Long {
+    val sortedNiceDurationsSeconds = niceDurationsSeconds
         .filter { duration -> duration > 0L }
         .distinct()
         .sorted()
 
-    sortedNiceDurations.firstOrNull { duration -> duration >= requiredBucketSeconds }?.let { duration ->
-        return duration
+    sortedNiceDurationsSeconds
+        .firstOrNull { duration -> duration >= minimumDurationSeconds }
+        ?.let { duration -> return duration }
+
+    var fallbackDurationSeconds = (sortedNiceDurationsSeconds.lastOrNull() ?: 1L).coerceAtLeast(1L)
+    while (fallbackDurationSeconds < minimumDurationSeconds) {
+        fallbackDurationSeconds *= 2
     }
 
-    var fallbackDuration = (sortedNiceDurations.lastOrNull() ?: 1L).coerceAtLeast(1L)
-    while (fallbackDuration < requiredBucketSeconds) {
-        fallbackDuration *= 2
-    }
-    return fallbackDuration
+    return fallbackDurationSeconds
 }
 
 internal fun rebucketTimeSeriesForDisplay(
@@ -596,7 +623,11 @@ fun KoalaPlotTimeSeriesChart(
                             shape = RoundedCornerShape(4.dp)
                         ) {
                             Text(
-                                text = "${bucketRangeFormatter.format(axisBucket.from)} to ${bucketRangeFormatter.format(axisBucket.to)}",
+                                text = "${bucketRangeFormatter.format(axisBucket.from)} to ${
+                                    bucketRangeFormatter.format(
+                                        axisBucket.to
+                                    )
+                                }",
                                 style = MaterialTheme.typography.caption,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                             )
@@ -612,7 +643,7 @@ fun KoalaPlotTimeSeriesChart(
                         text = timeFormatter.format(axisBucket.from),
                         style = MaterialTheme.typography.caption
                     )
-                    }
+                }
             }
         ),
         yAxisContent = AxisContent(

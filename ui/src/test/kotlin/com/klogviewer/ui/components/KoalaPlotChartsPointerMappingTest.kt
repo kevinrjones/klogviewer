@@ -38,6 +38,7 @@ class KoalaPlotChartsPointerMappingTest {
     }
 
     @Test
+    @Suppress("MaxLineLength")
     fun `given short span and wide chart when choosing display bucket duration then per second granularity is preserved`() {
         val start = Instant.parse("2026-05-27T10:00:00Z")
         val buckets = (0 until 120).map { index ->
@@ -58,6 +59,7 @@ class KoalaPlotChartsPointerMappingTest {
     }
 
     @Test
+    @Suppress("MaxLineLength")
     fun `given ten day span and four thousand pixel chart when choosing display bucket duration then wider buckets are selected`() {
         val start = Instant.parse("2026-01-01T00:00:00Z")
         val buckets = listOf(
@@ -112,6 +114,7 @@ class KoalaPlotChartsPointerMappingTest {
     }
 
     @Test
+    @Suppress("MaxLineLength")
     fun `given sparse long span when rebucketing for display then counts are preserved and zero buckets remain explicit`() {
         val start = Instant.parse("2026-01-01T00:00:00Z")
         val sourceBuckets = listOf(
@@ -141,6 +144,7 @@ class KoalaPlotChartsPointerMappingTest {
     }
 
     @Test
+    @Suppress("MaxLineLength")
     fun `given multiple source buckets in same display interval when rebucketing then counts are summed into one display bucket`() {
         val start = Instant.parse("2026-05-27T10:00:00Z")
         val sourceBuckets = listOf(
