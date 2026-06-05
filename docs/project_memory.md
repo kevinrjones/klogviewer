@@ -31,6 +31,8 @@
 - Dashboard/log time-series charts now use elapsed-time-scaled x-axis spacing (instead of ordinal bucket indices), so sparse time gaps are rendered proportionally on both Logs and Dashboard views.
 - Time frequency chart x-axis range now adds boundary padding so first/last bars are fully visible and correctly scaled for high-volume multi-source sessions (e.g., ~30 loaded files).
 - Sprint 11 `16` completed: Detekt is now standardized across all Kotlin modules with shared config/baseline, module `check` integration, CI quality gates, and team workflow documentation.
+- Sprint 12 structured-data sprint specification was fully expanded into an implementation-ready, ecosystem-compatible execution plan (`docs/sprints/sprint-12-structured-data.md`) with concrete architecture, compatibility matrices, workstreams, acceptance criteria, and fixture-driven testing scope.
+- Sprint 12 structured-data epic is now split into five incremental implementation task documents (`12A`–`12E`) covering foundation, filtering, inspector UI, ecosystem compatibility, and performance/polish delivery slices.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -50,6 +52,7 @@
 - Kept source badge tooltip text derived from normalized filename extraction (path/URI tail segment) while leaving source-color mapping tied to active `sourceIds` ordering for deterministic multi-source rendering.
 - Kept per-source row background mapping derived from hashed `sourceId` (instead of active-source index) so visual differentiation remains stable when source ordering changes.
 - Adopted a single root Detekt baseline/config strategy (`detekt-baseline.xml`, `detekt.yml`) with CI no-new-violations enforcement to enable incremental static-analysis burn-down without blocking active delivery.
+- Confirmed Sprint 12 structured payload architecture as `typed tree + flattened path index`, with canonical-field normalization preserved alongside raw field namespaces.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
 - UI Refinements: Added scrollbars, further reduced tab bar depth, eliminated line gaps, updated tab bar background to a distinct grey color, and replaced RibbonBar with a unified FilterBar supporting multi-item filtering.
@@ -3409,3 +3412,39 @@ For each sprint/task
 - `KoalaPlotTimeSeriesChart` still receives `DashboardBucketSize` from dashboard aggregation, but display scale now adapts independently to measured width; tests were updated to assert display-scale behavior directly.
 **Test coverage areas**
 - `./gradlew :ui:test --tests "com.klogviewer.ui.components.KoalaPlotChartsPointerMappingTest" --tests "com.klogviewer.ui.components.KoalaPlotChartsFormattingTest" --tests "com.klogviewer.ui.viewmodel.DashboardIntentTest"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 12 Structured Data Sprint Plan Expansion
+**Title**: Rewrite Sprint 12 Structured Data Plan to Implementation-Ready Spec
+**Date/time completed**: 2026-06-05 12:08
+**What was shipped**
+- Fully rewrote `docs/sprints/sprint-12-structured-data.md` into a complete 15-section sprint plan aligned to current code reality.
+- Added code-grounded current-state analysis across parser, detection, filtering, dashboard, detail pane, parser override, and preference persistence flows.
+- Documented the selected architecture decision (`typed tree + flattened path index`) with explicit model rules, parser/fallback strategy, and integration touchpoints.
+- Added structured filtering grammar, UI/UX requirements, performance guardrails, JVM/.NET/container/cloud compatibility matrices, and dedicated .NET normalization rules.
+- Added executable workstreams with checkboxes, concrete acceptance criteria, fixture-driven test matrix, and explicit risks/open questions.
+**Key decisions**
+- Locked Sprint 12 planning architecture to `typed tree + flattened path index` while preserving raw fields plus canonical projections side-by-side.
+- Kept backward compatibility as a first-class constraint (`LogEntry.fields`, parser override flow, and existing query behavior remain supported during rollout).
+**Gotchas**
+- This was a documentation-only implementation task; no parser/UI/runtime code was changed in this session.
+- Existing sprint document had an outdated short outline and required full restructuring to satisfy current requested section scope.
+**Test coverage areas**
+- Documentation validation only: checked section completeness, cross-ecosystem fixture coverage, and consistency against referenced Kotlin implementation files.
+
+## Task: Sprint 12 Structured Data Epic Task Document Slicing
+**Title**: Split Sprint 12 Structured Data Epic into 12A-12E Task Docs
+**Date/time completed**: 2026-06-05 12:44
+**What was shipped**
+- Added `docs/tasks/TASKS-SPRINT-12A-STRUCTURED-DATA-FOUNDATION.md` with scoped work for typed model foundation, JSON hardening, baseline normalization, fallback safety, and fixture/regression coverage.
+- Added `docs/tasks/TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md` with structured filter grammar, path/alias lookup, array semantics, and filter-focused verification gates.
+- Added `docs/tasks/TASKS-SPRINT-12C-STRUCTURED-DATA-INSPECTOR.md` with structured detail-pane UX, raw toggle, copy/filter actions, row indicators, and UI validation tasks.
+- Added `docs/tasks/TASKS-SPRINT-12D-STRUCTURED-DATA-ECOSYSTEM-COMPATIBILITY.md` with JVM/.NET/container/cloud compatibility fixture tracks and normalization/detection test requirements.
+- Added `docs/tasks/TASKS-SPRINT-12E-STRUCTURED-DATA-PERFORMANCE-AND-POLISH.md` with lazy parsing/cache limits, dashboard/column integration, high-cardinality handling, and final release/polish tasks.
+**Key decisions**
+- Kept the slice ordering strictly incremental from foundation to polish so each document is independently completable and dependency-explicit.
+- Standardized every task doc to include scope/out-of-scope, scope-to-workstream mapping, numbered checkbox tasks, verification gates (`detekt`, relevant tests, `check`), and acceptance criteria.
+**Gotchas**
+- This was a documentation-only planning split; no production Kotlin/parser/UI code or runnable tests were changed in this step.
+- Cross-slice boundaries needed explicit out-of-scope statements to avoid mixing parser, filtering, UI, ecosystem, and performance work in a single slice.
+**Test coverage areas**
+- Documentation QA only: verified section completeness, dependency chaining (`12A` → `12B/12C/12D` → `12E`), and consistency with Sprint 12 epic scope and task-doc style conventions.
