@@ -118,10 +118,10 @@ Sprint 8 introduced end-to-end remote connectivity in KLogViewer:
 - **AWS S3 ingestion** for object and prefix-based log sources.
 - **Secure saved connections** with OS-level credential storage.
 
-### Sprint 15 Network Adapter Plan
-TCP/UDP network listeners are tracked as a dedicated Sprint 15 scope. See:
+### Sprint 16 Network Adapter Plan
+TCP/UDP network listeners are tracked as a dedicated Sprint 16 scope. See:
 
-- `docs/sprints/sprint-15-network-log-adapters.md`
+- `docs/sprints/sprint-16-network-log-adapters.md`
 - `docs/tasks/TASKS-SPRINT-15-NETWORK-LOG-ADAPTERS.md`
 - `docs/CONNECTIVITY-DESIGN.md`
 
