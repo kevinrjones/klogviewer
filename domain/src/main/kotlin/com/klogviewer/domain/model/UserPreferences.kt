@@ -30,7 +30,7 @@ data class WindowPreference(
     val sourceIds: List<String> = emptyList(),
     val hiddenSourceIds: Set<String> = emptySet(),
     val filterQueries: List<String> = emptyList(),
-    val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
+    val levelFilters: Set<String> = DEFAULT_LEVEL_FILTER_KEYS,
     val timeFilterFrom: String = "",
     val timeFilterTo: String = "",
     val timeFilterPresetMinutes: Long? = null,
@@ -44,6 +44,8 @@ data class WindowPreference(
     val logFontFamily: String = "Monospaced",
     val logFontSizeSp: Int = 12
 )
+
+val DEFAULT_LEVEL_FILTER_KEYS: Set<String> = LogLevel.entries.map { it.name }.toSet()
 
 @Serializable
 data class WindowStatePreferences(

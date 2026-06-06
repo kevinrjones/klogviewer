@@ -117,7 +117,7 @@ class DashboardIntentTest {
         waitUntilDashboardContentReady()
 
         viewModel.handleIntent(KLogViewerIntent.AddFilterQuery("first"))
-        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(LogLevel.ERROR))
+        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(LogLevel.ERROR.name))
         viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(TimeRangePreset.LAST_5_MINUTES))
 
         val windowBeforeClear = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
@@ -159,7 +159,7 @@ class DashboardIntentTest {
         waitUntilDashboardContentReady()
 
         viewModel.handleIntent(KLogViewerIntent.AddFilterQuery("first"))
-        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(LogLevel.ERROR))
+        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(LogLevel.ERROR.name))
         viewModel.handleIntent(KLogViewerIntent.ApplyTimeFilterPreset(TimeRangePreset.LAST_5_MINUTES))
 
         val windowBeforeReset = requireNotNull(viewModel.state.value.activeTab?.activeWindow)
@@ -252,7 +252,7 @@ class DashboardIntentTest {
         waitUntil {
             val activeWindow = viewModel.state.value.activeTab?.activeWindow
             val content = activeWindow?.dashboardDataState as? DashboardDataState.Content
-            activeWindow?.levelFilters == setOf(LogLevel.INFO) && content?.selectedLevel == LogLevel.INFO
+            activeWindow?.levelFilters == setOf(LogLevel.INFO.name) && content?.selectedLevel == LogLevel.INFO
         }
 
         viewModel.handleIntent(KLogViewerIntent.ClearDashboardSelections)
@@ -260,7 +260,7 @@ class DashboardIntentTest {
         waitUntil {
             val activeWindow = viewModel.state.value.activeTab?.activeWindow
             val content = activeWindow?.dashboardDataState as? DashboardDataState.Content
-            activeWindow?.levelFilters == LogLevel.entries.toSet() && content?.selectedLevel == null
+            activeWindow?.levelFilters == activeWindow?.availableLevels?.toSet() && content?.selectedLevel == null
         }
     }
 

@@ -7,9 +7,15 @@ data class StructuredLogData(
     val canonicalFields: Map<String, StructuredValue> = emptyMap()
 ) {
     fun toCompatibilityFields(): Map<String, String> {
-        return flatPathIndex
+        val flattenedProjection = flatPathIndex
             .toSortedMap()
             .mapValues { (_, values) -> values.toCompatibilityString() }
+
+        val canonicalProjection = canonicalFields
+            .toSortedMap()
+            .mapValues { (_, value) -> value.asDisplayString() }
+
+        return flattenedProjection + canonicalProjection
     }
 }
 

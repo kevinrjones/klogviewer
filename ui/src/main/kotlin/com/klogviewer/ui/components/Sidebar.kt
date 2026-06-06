@@ -16,16 +16,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.klogviewer.domain.model.LogLevel
-
 @Composable
 fun Sidebar(
     isExpanded: Boolean,
     showLevels: Boolean,
-    levelFilters: Set<LogLevel>,
-    onToggleLevel: (LogLevel) -> Unit,
+    levelFilters: Set<String>,
+    availableLevels: List<String>,
+    onToggleLevel: (String) -> Unit,
     onToggleAllLevels: () -> Unit,
-    levelCounts: Map<LogLevel, Int> = emptyMap(),
+    levelCounts: Map<String, Int> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -75,22 +74,25 @@ fun Sidebar(
                             tint = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
                         )
                         Text(
-                            text = "Levels (${LogLevel.entries.size})",
+                            text = "Levels (${availableLevels.size})",
                             style = MaterialTheme.typography.subtitle2.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colors.onSurface.copy(alpha = 0.8f)
                         )
                     }
 
+                    val allLevelsEnabled =
+                        availableLevels.isNotEmpty() && levelFilters.containsAll(availableLevels.toSet())
+
                     LogLevelToggle(
                         label = "All",
-                        isEnabled = levelFilters.size == LogLevel.entries.size,
+                        isEnabled = allLevelsEnabled,
                         count = levelCounts.values.sum(),
                         onToggle = onToggleAllLevels
                     )
 
-                    LogLevel.entries.forEach { level ->
+                    availableLevels.forEach { level ->
                         LogLevelToggle(
-                            level = level,
+                            label = level.lowercase().replaceFirstChar { it.uppercase() },
                             isEnabled = levelFilters.contains(level),
                             count = levelCounts[level] ?: 0,
                             onToggle = { onToggleLevel(level) }
@@ -110,21 +112,6 @@ fun Sidebar(
             }
         }
     }
-}
-
-@Composable
-private fun LogLevelToggle(
-    level: LogLevel,
-    isEnabled: Boolean,
-    count: Int,
-    onToggle: () -> Unit
-) {
-    LogLevelToggle(
-        label = level.name.lowercase().replaceFirstChar { it.uppercase() },
-        isEnabled = isEnabled,
-        count = count,
-        onToggle = onToggle
-    )
 }
 
 @Composable

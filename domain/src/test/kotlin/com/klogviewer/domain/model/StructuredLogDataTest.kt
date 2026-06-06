@@ -103,6 +103,31 @@ class StructuredLogDataTest {
     }
 
     @Test
+    fun `compatibility projection includes canonical fields while preserving raw fields`() {
+        val data = StructuredLogData(
+            root = StructuredValue.ObjectValue(
+                mapOf(
+                    "@m" to StructuredValue.StringValue("rendered message"),
+                    "@mt" to StructuredValue.StringValue("template {Id}"),
+                    "Properties" to StructuredValue.ObjectValue(
+                        mapOf("SourceContext" to StructuredValue.StringValue("OrdersController"))
+                    )
+                )
+            ),
+            canonicalFields = mapOf(
+                "message" to StructuredValue.StringValue("rendered message")
+            )
+        )
+
+        val projected = data.toCompatibilityFields()
+
+        expectThat(projected["message"]).isEqualTo("rendered message")
+        expectThat(projected["@m"]).isEqualTo("rendered message")
+        expectThat(projected["@mt"]).isEqualTo("template {Id}")
+        expectThat(projected["Properties.SourceContext"]).isEqualTo("OrdersController")
+    }
+
+    @Test
     fun `explicit fields win on collision and structured fields fill missing keys`() {
         val data = StructuredLogData(
             root = StructuredValue.ObjectValue(

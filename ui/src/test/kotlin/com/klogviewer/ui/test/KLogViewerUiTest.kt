@@ -57,6 +57,21 @@ class KLogViewerUiTest {
         )
     )
 
+    private val testEntriesWithDynamicRawLevel = listOf(
+        LogEntry(
+            timestamp = LogTimestamp("2023-01-01 10:00:00"),
+            level = LogLevel.DEBUG,
+            content = LogContent("Trace-level message"),
+            fields = mapOf("level" to "TRACE")
+        ),
+        LogEntry(
+            timestamp = LogTimestamp("2023-01-01 10:00:01"),
+            level = LogLevel.DEBUG,
+            content = LogContent("Debug-level message"),
+            fields = mapOf("level" to "DEBUG")
+        )
+    )
+
     private fun ComposeUiTest.setupApp() {
         every { prefsRepository.load() } returns UserPreferences(
             tabs = listOf(
@@ -144,7 +159,7 @@ class KLogViewerUiTest {
             clickAddFile()
         }
 
-        onNodeWithText("Levels (${LogLevel.entries.size})").assertDoesNotExist()
+        onNodeWithText("Levels (0)").assertDoesNotExist()
         onNodeWithTag("level_toggle_All").assertDoesNotExist()
     }
 
@@ -186,7 +201,7 @@ class KLogViewerUiTest {
             clickAddFile()
         }
 
-        onNodeWithText("Levels (${LogLevel.entries.size})").assertExists()
+        onNodeWithText("Levels (${testEntriesWithRawLevel.map { it.fields["level"] }.distinct().size})").assertExists()
         onNodeWithTag("level_toggle_All").assertExists()
     }
 
@@ -220,6 +235,22 @@ class KLogViewerUiTest {
             assertTextExists("Second log message (error)")
             assertTextDoesNotExist("Third log message (debug)")
         }
+    }
+
+    @Test
+    fun givenLogsWithTraceRawLevel_whenLoaded_thenTraceLevelToggleIsShown() = runComposeUiTest {
+        setupApp()
+
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
+        every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
+            LogUpdate.Initial(testEntriesWithDynamicRawLevel).right()
+        )
+
+        mainRobot {
+            clickAddFile()
+        }
+
+        onNodeWithTag("level_toggle_Trace").assertExists()
     }
 
     @Test

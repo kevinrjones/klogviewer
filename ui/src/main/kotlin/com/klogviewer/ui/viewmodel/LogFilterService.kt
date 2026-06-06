@@ -15,7 +15,7 @@ object LogFilterService {
         val timeRange = TimeRangeFilterSupport.resolveRange(window)
         val filtered = window.logs.filter { entry ->
             val isHiddenSource = entry.sourceId != null && window.hiddenSourceIds.contains(entry.sourceId)
-            val matchesLevel = window.levelFilters.contains(entry.level)
+            val matchesLevel = window.levelFilters.contains(entry.resolvedLevelKey())
             val matchesFilter = if (window.filterQueries.isEmpty()) {
                 true
             } else {

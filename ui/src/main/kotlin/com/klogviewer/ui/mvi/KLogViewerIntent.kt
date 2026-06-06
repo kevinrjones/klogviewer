@@ -35,7 +35,7 @@ sealed interface KLogViewerIntent {
     data class AddFilterQuery(val query: String) : FilterIntent
     data class RemoveFilterQuery(val query: String) : FilterIntent
     data object ClearFilterQueries : FilterIntent
-    data class ToggleLevel(val level: LogLevel) : FilterIntent
+    data class ToggleLevel(val level: String) : FilterIntent
     data object ToggleAllLevels : FilterIntent
     data class SetTimeFilterFrom(val from: String) : FilterIntent
     data class SetTimeFilterTo(val to: String) : FilterIntent

@@ -15,4 +15,16 @@ data class LogEntry(
         val projectedFields = structuredData?.toCompatibilityFields().orEmpty()
         return projectedFields + fields
     }
+
+    fun resolvedLevelKey(): String {
+        return fields[RAW_LEVEL_FIELD]
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+            ?.uppercase()
+            ?: level.name
+    }
+
+    companion object {
+        const val RAW_LEVEL_FIELD: String = "level"
+    }
 }

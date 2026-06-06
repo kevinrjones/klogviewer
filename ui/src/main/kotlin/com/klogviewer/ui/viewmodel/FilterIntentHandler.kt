@@ -1,6 +1,5 @@
 package com.klogviewer.ui.viewmodel
 
-import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
 import com.klogviewer.ui.mvi.TimeRangePreset
@@ -176,8 +175,9 @@ class FilterIntentHandler(
             KLogViewerIntent.ToggleAllLevels -> {
                 state.update { currentState ->
                     currentState.updateActiveWindow { window ->
-                        val allLevels = LogLevel.entries.toSet()
-                        val newFilters = if (window.levelFilters.size == allLevels.size) {
+                        val allLevels = window.availableLevels.toSet().ifEmpty { defaultLevelFilters }
+                        val hasAllLevelsEnabled = allLevels.isNotEmpty() && window.levelFilters.containsAll(allLevels)
+                        val newFilters = if (hasAllLevelsEnabled) {
                             emptySet()
                         } else {
                             allLevels
@@ -198,4 +198,7 @@ class FilterIntentHandler(
             null
         }
     }
+
+    private val defaultLevelFilters: Set<String> =
+        com.klogviewer.domain.model.LogLevel.entries.map { it.name }.toSet()
 }

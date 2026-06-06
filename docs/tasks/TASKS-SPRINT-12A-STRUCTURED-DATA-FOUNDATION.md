@@ -42,48 +42,48 @@ Establish the minimum safe structured-data foundation for parsing and normalizat
 - [x] 12A.5.5. Document data contract invariants (null handling, repeated keys, overwrite rules, and canonical-vs-raw precedence).
 
 ### 12A.6. JSON Parser Hardening and Detection Confidence
-- [ ] 12A.6.1. Harden JSON parsing to avoid fatal ingestion failures on invalid lines in mixed files.
-- [ ] 12A.6.2. Emit structured parse confidence signals usable by parser auto-selection.
-- [ ] 12A.6.3. Extend heuristic detection scoring factors (parse success ratio, canonical key hits, malformed ratio).
-- [ ] 12A.6.4. Keep parser override in status bar authoritative over auto-detection.
-- [ ] 12A.6.5. Ensure fallback to `TemplateLogParser`/`SimpleLogParser` remains deterministic when confidence is low.
+- [x] 12A.6.1. Harden JSON parsing to avoid fatal ingestion failures on invalid lines in mixed files.
+- [x] 12A.6.2. Emit structured parse confidence signals usable by parser auto-selection.
+- [x] 12A.6.3. Extend heuristic detection scoring factors (parse success ratio, canonical key hits, malformed ratio).
+- [x] 12A.6.4. Keep parser override in status bar authoritative over auto-detection.
+- [x] 12A.6.5. Ensure fallback to `TemplateLogParser`/`SimpleLogParser` remains deterministic when confidence is low.
 
 ### 12A.7. Baseline Canonical Normalization and Raw Preservation
-- [ ] 12A.7.1. Define baseline alias mapping for canonical fields:
+- [x] 12A.7.1. Define baseline alias mapping for canonical fields:
   - timestamp (`timestamp`, `@timestamp`, `time`, `ts`, `@t`, `Timestamp`)
   - level (`level`, `severity`, `lvl`, `@l`, `LogLevel`, `Level`)
   - message (`message`, `msg`, `body`, `@m`, `@mt`, `Message`)
   - logger (`logger`, `logger_name`, `SourceContext`, `Category`, `CategoryName`)
   - exception (`exception`, `error`, `stackTrace`, `Exception`, `@x`)
   - trace/span (`traceId|TraceId|@tr`, `spanId|SpanId|@sp`)
-- [ ] 12A.7.2. Apply additive canonical projection rules without destructive renaming of source fields.
-- [ ] 12A.7.3. Define rendered-message vs template-message precedence defaults while preserving both when available.
-- [ ] 12A.7.4. Preserve ecosystem namespaces as raw fields (`Properties.*`, `attributes.*`, wrapper metadata) where present.
+- [x] 12A.7.2. Apply additive canonical projection rules without destructive renaming of source fields.
+- [x] 12A.7.3. Define rendered-message vs template-message precedence defaults while preserving both when available.
+- [x] 12A.7.4. Preserve ecosystem namespaces as raw fields (`Properties.*`, `attributes.*`, wrapper metadata) where present.
 
 ### 12A.8. Fixtures, Unit Tests, and Regression Coverage
-- [ ] 12A.8.1. Add parser fixtures for generic JSON object logs (flat + nested + arrays + nulls).
-- [ ] 12A.8.2. Add baseline JVM fixtures (Logstash-style JSON, Log4j2-style JSON field names, Spring JSON variant).
-- [ ] 12A.8.3. Add baseline .NET fixtures (MEL JSON console, Serilog compact keys minimum set).
-- [ ] 12A.8.4. Add tests for malformed JSON fallback behavior and confidence-threshold parser selection.
-- [ ] 12A.8.5. Add/extend regression tests proving plain-text/template parsing behavior is unchanged.
-- [ ] 12A.8.6. Add tests validating raw + canonical coexistence and path-index generation.
+- [x] 12A.8.1. Add parser fixtures for generic JSON object logs (flat + nested + arrays + nulls).
+- [x] 12A.8.2. Add baseline JVM fixtures (Logstash-style JSON, Log4j2-style JSON field names, Spring JSON variant).
+- [x] 12A.8.3. Add baseline .NET fixtures (MEL JSON console, Serilog compact keys minimum set).
+- [x] 12A.8.4. Add tests for malformed JSON fallback behavior and confidence-threshold parser selection.
+- [x] 12A.8.5. Add/extend regression tests proving plain-text/template parsing behavior is unchanged.
+- [x] 12A.8.6. Add tests validating raw + canonical coexistence and path-index generation.
 
 ### 12A.9. Documentation and Decision Tracking
-- [ ] 12A.9.1. Update sprint epic progress markers in `docs/sprints/sprint-12-structured-data.md` for completed foundation items.
-- [ ] 12A.9.2. Add developer notes for structured model contract, path flattening rules, and baseline alias mapping.
-- [ ] 12A.9.3. Document known exclusions deferred to 12B/12C/12D/12E.
+- [x] 12A.9.1. Update sprint epic progress markers in `docs/sprints/sprint-12-structured-data.md` for completed foundation items.
+- [x] 12A.9.2. Add developer notes for structured model contract, path flattening rules, and baseline alias mapping.
+- [x] 12A.9.3. Document known exclusions deferred to 12B/12C/12D/12E.
 
 ### 12A.10. Verification & Quality Gates
-- [ ] 12A.10.1. Run/verify `:core` unit tests covering parser hardening, normalization, and path indexing.
-- [ ] 12A.10.2. Run/verify affected `:ui` and integration regression tests that validate plain-text/template behavior.
-- [ ] 12A.10.3. Run static analysis with `./gradlew detekt`.
-- [ ] 12A.10.4. Run relevant module tests for changed modules.
-- [ ] 12A.10.5. Run broader `./gradlew check` before closing 12A when feasible.
+- [x] 12A.10.1. Run/verify `:core` unit tests covering parser hardening, normalization, and path indexing.
+- [x] 12A.10.2. Run/verify affected `:ui` and integration regression tests that validate plain-text/template behavior.
+- [x] 12A.10.3. Run static analysis with `./gradlew detekt`.
+- [x] 12A.10.4. Run relevant module tests for changed modules.
+- [x] 12A.10.5. Run broader `./gradlew check` before closing 12A when feasible.
 
 ### 12A.11. Acceptance Criteria
-- [ ] Opening a one-line JSON log file can auto-select JSON parsing when confidence is sufficient.
-- [ ] Structured payloads retain raw source fields while exposing canonical fields for baseline concepts.
-- [ ] Nested objects/arrays are represented in a typed structure and flattened path index contract.
-- [ ] Baseline canonical aliasing works for representative JVM/.NET JSON fixtures.
-- [ ] Low-confidence or malformed records degrade gracefully to existing template/simple parsing behavior.
-- [ ] Existing plain-text syslog/template parsing behavior remains unchanged.
+- [x] Opening a one-line JSON log file can auto-select JSON parsing when confidence is sufficient.
+- [x] Structured payloads retain raw source fields while exposing canonical fields for baseline concepts.
+- [x] Nested objects/arrays are represented in a typed structure and flattened path index contract.
+- [x] Baseline canonical aliasing works for representative JVM/.NET JSON fixtures.
+- [x] Low-confidence or malformed records degrade gracefully to existing template/simple parsing behavior.
+- [x] Existing plain-text syslog/template parsing behavior remains unchanged.

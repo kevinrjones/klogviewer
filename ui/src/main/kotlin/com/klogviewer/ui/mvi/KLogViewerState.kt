@@ -117,7 +117,7 @@ data class LogWindow(
     val error: String? = null,
     val filePath: String = "",
     val filterQueries: List<String> = emptyList(),
-    val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
+    val levelFilters: Set<String> = LogLevel.entries.map { it.name }.toSet(),
     val isReversed: Boolean = false,
     val isAutoScrollEnabled: Boolean = true,
     val showAnsiColors: Boolean = true,
@@ -141,8 +141,34 @@ data class LogWindow(
     val logFontFamily: String = DEFAULT_LOG_FONT_FAMILY,
     val logFontSizeSp: Int = DEFAULT_LOG_FONT_SIZE_SP
 ) {
-    val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
+    val levelCounts: Map<String, Int> get() = logs.groupingBy { it.resolvedLevelKey() }.eachCount()
+    val availableLevels: List<String>
+        get() = levelCounts.keys.sortedWith(compareBy({ levelSortRank(it) }, { it }))
     val hasRawLevelFieldInLogs: Boolean get() = logs.any { entry -> entry.fields.containsKey("level") }
+
+    private fun levelSortRank(level: String): Int {
+        return when (level) {
+            "TRACE" -> LEVEL_SORT_TRACE
+            "DEBUG" -> LEVEL_SORT_DEBUG
+            "INFO" -> LEVEL_SORT_INFO
+            "WARN", "WARNING" -> LEVEL_SORT_WARN
+            "ERROR" -> LEVEL_SORT_ERROR
+            "FATAL" -> LEVEL_SORT_FATAL
+            "UNKNOWN" -> LEVEL_SORT_UNKNOWN
+            else -> LEVEL_SORT_OTHER
+        }
+    }
+
+    companion object {
+        private const val LEVEL_SORT_TRACE = 0
+        private const val LEVEL_SORT_DEBUG = 1
+        private const val LEVEL_SORT_INFO = 2
+        private const val LEVEL_SORT_WARN = 3
+        private const val LEVEL_SORT_ERROR = 4
+        private const val LEVEL_SORT_FATAL = 5
+        private const val LEVEL_SORT_UNKNOWN = 6
+        private const val LEVEL_SORT_OTHER = 7
+    }
 }
 
 enum class TimeRangePreset {
