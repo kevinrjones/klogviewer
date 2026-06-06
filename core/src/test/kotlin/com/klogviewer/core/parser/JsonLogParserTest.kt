@@ -1,9 +1,11 @@
 package com.klogviewer.core.parser
 
 import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.StructuredValue
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isEqualTo
+import strikt.assertions.isNotNull
 import strikt.assertions.isTrue
 
 class JsonLogParserTest {
@@ -53,6 +55,53 @@ class JsonLogParserTest {
         expectThat(result.isRight()).isTrue()
         result.map { entry ->
             expectThat(entry.content.value).isEqualTo("""{"id":123,"text":"nested"}""")
+        }
+    }
+
+    @Test
+    fun `should preserve structured payload and expose flattened paths`() {
+        val parser = JsonLogParser()
+        val json =
+            """{"timestamp":"2024-05-14T15:24:08Z","level":"INFO","message":"ok","items":[{"id":"a"},{"id":"b"}],"user":{"id":123}}"""
+
+        val result = parser.parse(json)
+
+        expectThat(result.isRight()).isTrue()
+        result.map { entry ->
+            val structuredData = entry.structuredData
+            expectThat(structuredData).isNotNull()
+            expectThat(structuredData?.rawPayload).isEqualTo(json)
+            expectThat(structuredData?.flatPathIndex?.get("items[0].id")).isEqualTo(
+                listOf(StructuredValue.StringValue("a"))
+            )
+            expectThat(structuredData?.flatPathIndex?.get("items[1].id")).isEqualTo(
+                listOf(StructuredValue.StringValue("b"))
+            )
+            expectThat(structuredData?.flatPathIndex?.get("items[].id")).isEqualTo(
+                listOf(
+                    StructuredValue.StringValue("a"),
+                    StructuredValue.StringValue("b")
+                )
+            )
+            expectThat(structuredData?.flatPathIndex?.get("user.id")).isEqualTo(
+                listOf(StructuredValue.NumberValue("123"))
+            )
+        }
+    }
+
+    @Test
+    fun `should map explicit json null to structured null value`() {
+        val parser = JsonLogParser()
+        val json = """{"timestamp":"2024-05-14","level":"INFO","message":"ok","error":null}"""
+
+        val result = parser.parse(json)
+
+        expectThat(result.isRight()).isTrue()
+        result.map { entry ->
+            expectThat(entry.structuredData).isNotNull()
+            expectThat(entry.structuredData?.flatPathIndex?.get("error")).isEqualTo(
+                listOf(StructuredValue.NullValue)
+            )
         }
     }
 }

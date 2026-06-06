@@ -3448,3 +3448,25 @@ For each sprint/task
 - Cross-slice boundaries needed explicit out-of-scope statements to avoid mixing parser, filtering, UI, ecosystem, and performance work in a single slice.
 **Test coverage areas**
 - Documentation QA only: verified section completeness, dependency chaining (`12A` → `12B/12C/12D` → `12E`), and consistency with Sprint 12 epic scope and task-doc style conventions.
+
+## Task: Sprint 12A.5 Domain Structured Model and Backward Compatibility
+**Title**: Implement Typed Structured Domain Model with Backward-Compatible `LogEntry.fields`
+**Date/time completed**: 2026-06-05 12:55
+**What was shipped**
+- Added typed structured value domain contract in `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredValue.kt` covering `string|number|boolean|null|object|array`.
+- Added structured container `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredLogData.kt` with typed root, deterministic flattened path index, raw payload preservation, and canonical seam.
+- Extended `LogEntry` (`domain/src/main/kotlin/com/klogviewer/domain/model/LogEntry.kt`) with nullable `structuredData` and compatibility merge helper preserving explicit `fields` precedence.
+- Added parser seam in `core/src/main/kotlin/com/klogviewer/core/parser/JsonLogParser.kt` to preserve `rawPayload` and project parsed JSON into typed structured root data without changing existing flat `fields` behavior.
+- Added focused tests in `domain/src/test/kotlin/com/klogviewer/domain/model/StructuredLogDataTest.kt` and extended `core/src/test/kotlin/com/klogviewer/core/parser/JsonLogParserTest.kt` for flattening paths, any-match array paths, null handling, collision precedence, raw payload retention, and backward compatibility.
+- Added contract documentation in `docs/STRUCTURED-DATA-MODEL.md` and marked `12A.5.1`–`12A.5.5` complete in `docs/tasks/TASKS-SPRINT-12A-STRUCTURED-DATA-FOUNDATION.md`.
+**Key decisions**
+- Preserved numeric values as text in `StructuredValue.NumberValue` to avoid precision loss in this foundation slice.
+- Made compatibility projection additive (`structuredProjection + explicitFields`) so existing explicit `LogEntry.fields` values remain authoritative on key collision.
+- Implemented escaped path segments for `.`, `[`, `]`, and `\\`; sorted object keys for deterministic flattening and test stability.
+- Kept canonical normalization behavior deferred to `12A.7`, while introducing `canonicalFields` as a non-breaking seam.
+**Gotchas**
+- `flatPathIndex` intentionally emits only scalar/null leaves; empty objects/arrays do not create leaf entries and are preserved through typed root/raw payload.
+- `items[]` any-match paths aggregate scalar leaves and are generated alongside indexed array paths (`items[0]...`).
+**Test coverage areas**
+- `./gradlew :domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :domain:test :core:test` (`BUILD SUCCESSFUL`).

@@ -35,11 +35,11 @@ Establish the minimum safe structured-data foundation for parsing and normalizat
 - Documentation and sprint traceability (`9`) -> sprint/task docs and developer notes.
 
 ### 12A.5. Domain Structured Model and Backward Compatibility
-- [ ] 12A.5.1. Introduce a typed structured value contract (`string|number|boolean|null|object|array`) suitable for parser output and detail rendering.
-- [ ] 12A.5.2. Define flattened path-index contract (path -> typed value/multi-value) including deterministic array path handling (`items[0].id`) and any-match compatibility.
-- [ ] 12A.5.3. Add compatibility projection so current `LogEntry.fields: Map<String, String>` consumers continue to function during rollout.
-- [ ] 12A.5.4. Preserve raw structured payload representation for inspection/export alongside canonical and flat projections.
-- [ ] 12A.5.5. Document data contract invariants (null handling, repeated keys, overwrite rules, and canonical-vs-raw precedence).
+- [x] 12A.5.1. Introduce a typed structured value contract (`string|number|boolean|null|object|array`) suitable for parser output and detail rendering.
+- [x] 12A.5.2. Define flattened path-index contract (path -> typed value/multi-value) including deterministic array path handling (`items[0].id`) and any-match compatibility.
+- [x] 12A.5.3. Add compatibility projection so current `LogEntry.fields: Map<String, String>` consumers continue to function during rollout.
+- [x] 12A.5.4. Preserve raw structured payload representation for inspection/export alongside canonical and flat projections.
+- [x] 12A.5.5. Document data contract invariants (null handling, repeated keys, overwrite rules, and canonical-vs-raw precedence).
 
 ### 12A.6. JSON Parser Hardening and Detection Confidence
 - [ ] 12A.6.1. Harden JSON parsing to avoid fatal ingestion failures on invalid lines in mixed files.

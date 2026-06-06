@@ -53,7 +53,11 @@ class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParse
                 level = mappedLevel,
                 content = LogContent(content),
                 fields = fields,
-                instant = timestampParser?.parse(timestampRaw)
+                instant = timestampParser?.parse(timestampRaw),
+                structuredData = StructuredLogData(
+                    root = element.toStructuredObjectValue(),
+                    rawPayload = line
+                )
             ).right()
         } catch (_: Exception) {
             logger.debug { "Failed to parse JSON log line: $line" }
@@ -63,5 +67,34 @@ class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParse
 
     private fun JsonElement.toValueString(): String {
         return if (this is JsonPrimitive) this.content else this.toString()
+    }
+
+    private fun JsonObject.toStructuredObjectValue(): StructuredValue.ObjectValue {
+        return StructuredValue.ObjectValue(
+            fields = entries.associate { (key, value) ->
+                key to value.toStructuredValue()
+            }
+        )
+    }
+
+    private fun JsonElement.toStructuredValue(): StructuredValue {
+        return when (this) {
+            is JsonObject -> StructuredValue.ObjectValue(
+                fields = entries.associate { (key, value) ->
+                    key to value.toStructuredValue()
+                }
+            )
+
+            is JsonArray -> StructuredValue.ArrayValue(
+                values = map { element -> element.toStructuredValue() }
+            )
+
+            is JsonPrimitive -> when {
+                this is JsonNull -> StructuredValue.NullValue
+                booleanOrNull != null -> StructuredValue.BooleanValue(value = boolean)
+                isString -> StructuredValue.StringValue(value = content)
+                else -> StructuredValue.NumberValue(value = content)
+            }
+        }
     }
 }
