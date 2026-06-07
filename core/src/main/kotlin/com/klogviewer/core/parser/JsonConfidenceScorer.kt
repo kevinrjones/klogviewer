@@ -25,7 +25,8 @@ class JsonConfidenceScorer(
      * @param sampledCount The total number of JSON records sampled for parsing.
      * @param parsedObjects A list of successfully parsed JSON objects.
      * @param malformedCount The number of JSON records identified as malformed or invalid.
-     * @return A `ParseDetectionConfidence` object representing the confidence score and related evaluation metrics for the parsing operation.
+     * @return A `ParseDetectionConfidence` object representing the confidence score
+     *   and related evaluation metrics for the parsing operation.
      */
     fun score(
         sampledCount: Int,

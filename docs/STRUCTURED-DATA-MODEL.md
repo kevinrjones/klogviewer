@@ -123,3 +123,90 @@ Canonical selection rules:
 - `structuredData == null` -> existing `fields`
 - `structuredData != null` -> `(structured projection incl. canonical) + explicit fields`
 - Explicit `LogEntry.fields` remain authoritative on collisions for backward compatibility.
+
+## Sprint 12B Structured Filter Syntax
+
+Structured filtering is text-first: the parser consumes query text, including text emitted by the minimal structured
+filter UI in `FilterBar`.
+
+### Core examples
+
+- `field:Properties.UserId="u-123"`
+- `field:StatusCode >= 500`
+- `field:TraceId exists`
+- `has:trace.id`
+- `message contains "timeout"`
+
+### Predicate forms and operators
+
+- Exact: `=`
+  - `field:service = "auth"`
+- Contains: `contains`
+  - `field:message contains "timeout"`
+- Regex: `~`
+  - `field:message ~ "timeout|deadline"`
+- Numeric comparisons: `>`, `>=`, `<`, `<=`
+  - `field:durationMs > 250`
+- Boolean values:
+  - `field:isRetry = true`
+- Null checks:
+  - `field:error = null`
+  - `field:error is null`
+- Existence:
+  - `field:TraceId exists`
+  - `has:trace.id`
+- Missing:
+  - `field:TraceId missing`
+
+### Canonical aliases vs explicit field paths
+
+- Canonical forms (for example `trace.id = "abc"`, `level:error`) may fan out through alias mapping.
+- Explicit `field:<path>` predicates are path-precise and do not fan out to alias siblings.
+- Existing compatibility query form `@field:key=value` remains supported.
+- Existing plain-text filtering remains supported and still matches log content/timestamp.
+
+### Escaped path segments
+
+Use backticks for literal segment names that contain path-significant characters such as dots:
+
+- Root literal dotted key:
+  - ``field:`Properties.User.Id`="u-123"``
+- Nested literal dotted key:
+  - ``field:Properties.`User.Id`="u-123"``
+- Backtick in segment name is escaped by doubling:
+  - ``field:`User``Id`="u-123"``
+
+Malformed escaped paths are non-blocking: the query safely falls back to legacy text behavior.
+
+### Array semantics
+
+- Default (non-indexed) path semantics are any-match across array elements.
+  - `field:items.id="a1"` matches when any `items[]` element has `id == "a1"`.
+- `exists` on an array path is true when at least one value exists for that path.
+- `missing` on an array path is true only when no values exist at that path.
+
+### Indexed array paths
+
+Indexed paths are zero-based and target exactly one element:
+
+- `field:items[0].id="a1"`
+- `field:items[1].durationMs > 100`
+- `field:events[2].type exists`
+
+Out-of-range indexed paths behave as missing/non-match:
+
+- `exists` => `false`
+- `missing` => `true`
+- value predicates => `false`
+
+Indexed paths compose with escaped segments:
+
+- ``field:`items.with.dot`[0].id="a1"``
+- ``field:items[0].`id.with.dot`="a1"``
+
+### Deferred limitations and follow-up slices
+
+- `12C`: richer structured inspector interactions (`filter by this field/value` from detail tree).
+- `12D`: broader ecosystem normalization beyond baseline alias pack.
+- `12E`: performance/polish and dashboard redesign work.
+- Sprint `13`: autocomplete, query history, presets, and fuller query-builder UX.

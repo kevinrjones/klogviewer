@@ -142,3 +142,41 @@ Structured and manual query entry paths are both covered by tests and share the 
 - Add/extend Compose tests around `FilterBar` for panel visibility, operator-specific value handling, and apply/cancel behavior.
 - Add/extend UI integration tests in `KLogViewerUiTest.kt` to verify generated query chip/display behavior and unchanged manual text filtering.
 - Cover failure-safe behavior: incomplete inputs do not apply queries, and invalid generated queries do not crash or break free-text filtering.
+
+### ✓ Step 4: Implement 12B.5 query AST and grammar parser with safe fallback behavior
+Add deterministic parsing for canonical short forms and explicit/canonical field predicates while preserving legacy free-text behavior.
+- Introduce a small internal query-expression model (text, field predicate, and boolean expression extension point) in the filtering layer.
+- Implement parsing for `level:error`, `has:path`, `field:path op value`, and canonical `path op value` forms with typed literal parsing.
+- Support escaped quoted strings, numeric/boolean/null literal coercion for unquoted tokens, and safe fallback to legacy text queries for malformed/unsupported structured syntax.
+- Keep parser extensible for AND/OR/parentheses precedence even if chip-level implicit AND remains the active composition mechanism.
+
+### ✓ Step 5: Integrate structured predicate evaluation into LogFilterService without regressing existing filters
+Route each filter chip query through parser + evaluator so structured predicates and legacy text queries share one safe pipeline.
+- Evaluate operators (`=`, `contains`, `~`, `>`, `>=`, `<`, `<=`, `exists`, `missing`, `= null`) against structured paths/compatibility fields.
+- Preserve existing plain-text and `@field:key=value` behavior (directly or via translation) with non-crashing malformed-query handling.
+- Add safe regex handling for invalid patterns and document null-vs-missing limitation if the current model cannot fully distinguish it.
+
+### ✓ Step 6: Add/extend tests and run quality gates for 12B.5 grammar + compatibility
+Verify parser/evaluator behavior and backward compatibility, then run required checks.
+- Add unit tests for syntax parsing, typed literals, escaping, operator behavior, and safe fallbacks.
+- Add backward-compatibility tests for plain text, timestamp matching, multi-chip AND behavior, and `@field:key=value` support.
+- Run targeted UI/domain tests impacted by filtering changes, then run `./gradlew detekt` and broader `./gradlew check` if feasible.
+
+### ✓ Step 7: Complete remaining 12B parser/evaluator behavior (escaping, raw precision, arrays, indexing)
+Implement the remaining unchecked filtering semantics without regressing existing behavior.
+- Add field-path escaping with backtick-quoted literal segments and safe malformed-path fallback.
+- Keep explicit `field:` predicates raw-path precise while preserving canonical alias fan-out for non-explicit canonical forms.
+- Implement array any-match semantics for predicates and deterministic indexed path behavior (`items[0].id` style).
+- Add/extend unit tests for escaping, raw precision, any-match, indexed paths, invalid index/path safety, and regressions.
+
+### ✓ Step 8: Update Sprint 12B documentation and progress markers
+Document user-facing syntax/rollout notes and update task acceptance checkboxes for completed items.
+- Add concrete syntax examples and behavior notes (operators, aliases, escaped paths, arrays, indexed paths, fallback safety).
+- Document deferred limitations for 12C/12D/12E and compatibility with plain-text / `@field:key=value` filtering.
+- Mark completed task entries in `TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md` after verification evidence exists.
+
+### ✓ Step 9: Run final quality gates and close Sprint 12B remaining work
+Run required commands and finalize quality-gate-related checklist items based on actual outcomes.
+- Run targeted tests for touched modules.
+- Run `./gradlew detekt` and, when feasible, `./gradlew check`.
+- Update task checklist statuses for 12B.10.4 and 12B.10.6 strictly according to command results.

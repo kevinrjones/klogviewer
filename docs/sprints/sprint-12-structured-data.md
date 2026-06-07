@@ -629,17 +629,17 @@ Message priority when both template and rendered variants exist:
 
 ### 12.4 Filtering engine enhancements
 
-- [ ] Implement structured filter grammar parser (`exact`, `contains`, `regex`, numeric compare, `exists`, `missing`,
+- [x] Implement structured filter grammar parser (`exact`, `contains`, `regex`, numeric compare, `exists`, `missing`,
   `null`).
-- [ ] Implement canonical alias fan-out behavior (for example `trace.id` -> `TraceId`, `traceId`, `@tr`).
-- [ ] Add array any-match semantics and index-addressed semantics (`items[0].id`).
-- [ ] Preserve backward compatibility for existing free-text and `@field:key=value` queries.
-- [ ] Add a minimal, discoverable structured field-entry UI in 12B (trigger near filter input + compact field/operator/value panel) that emits grammar-compatible text predicates through the existing filter query flow.
-- [ ] Keep text query input canonical in 12B; defer full query-builder/autocomplete/history/persistence UX to Sprint 13 without introducing competing semantics.
+- [x] Implement canonical alias fan-out behavior (for example `trace.id` -> `TraceId`, `traceId`, `@tr`).
+- [x] Add array any-match semantics and index-addressed semantics (`items[0].id`).
+- [x] Preserve backward compatibility for existing free-text and `@field:key=value` queries.
+- [x] Add a minimal, discoverable structured field-entry UI in 12B (trigger near filter input + compact field/operator/value panel) that emits grammar-compatible text predicates through the existing filter query flow.
+- [x] Keep text query input canonical in 12B; defer full query-builder/autocomplete/history/persistence UX to Sprint 13 without introducing competing semantics.
 
 ### 12.5 UI details and log list integration
 
-- [ ] Keep 12B structured entry intentionally minimal (`Apply`/`Cancel`, no autocomplete/discovery), focused on a walking skeleton users can discover.
+- [x] Keep 12B structured entry intentionally minimal (`Apply`/`Cancel`, no autocomplete/discovery), focused on a walking skeleton users can discover.
 - [ ] Add structured detail tree component with expandable object/array nodes.
 - [ ] Add raw/structured toggle and value truncation safeguards.
 - [ ] Add field actions: copy path/value and “filter by this field/value”.

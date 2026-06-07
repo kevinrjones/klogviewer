@@ -37,6 +37,7 @@
 - Thermo-nuclear maintainability decomposition completed for level-filter and JSON detection paths: typed level-filter contract + centralized level policy, shared canonical alias catalog, and extracted JSON confidence scorer with orchestrator-focused probe flow.
 - Sprint 12B/Sprint 13 planning overlap was resolved by keeping Sprint 12B as structured-filtering semantic owner and reframing Sprint 13 as a dependent power-user UX/workflow/persistence layer.
 - Sprint 12B walking-skeleton structured filter UI is now implemented: a discoverable structured-entry dialog in `FilterBar` generates canonical text predicates through the existing filter pipeline with dedicated UI/integration coverage.
+- Sprint 12B structured filtering semantics are now closed out: escaped literal path segments, explicit raw-path precision, array any-match + indexed lookups, and user-facing syntax docs are implemented and verified.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -61,6 +62,7 @@
 - Standardized level-filter behavior ownership in `LevelFilterPolicy` with `LevelFilterKey` as runtime contract and isolated raw-string normalization to persistence/IO boundaries.
 - Kept Sprint 12B and Sprint 13 separate: 12B owns filtering semantics; Sprint 13 consumes 12B semantics for query UX/autocomplete/history/presets/context actions/workspace persistence.
 - Kept structured filter UI in 12B representation-free: the UI emits grammar-compatible text queries only and reuses `onAddQuery`/existing intent-handler/filter-service flow.
+- Kept explicit `field:` predicates path-precise while preserving canonical alias fan-out for non-explicit canonical query forms.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - JSON confidence improvements are intentionally scoped to probing/hardening; broader canonical normalization remains deferred to Sprint `12A.7`.
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
@@ -3578,3 +3580,24 @@ For each sprint/task
 - Structured value tokenization is intentionally lightweight (`number|boolean|null` passthrough; otherwise escaped quoted string) to match walking-skeleton scope.
 **Test coverage areas**
 - `./gradlew :ui:test --tests com.klogviewer.ui.components.FilterBarStructuredFilterTest --tests com.klogviewer.ui.components.FilterBarTimeFilterControlsTest --tests com.klogviewer.ui.test.KLogViewerUiTest` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 12B Structured Filtering Semantics Closeout
+**Title**: Complete escaped paths, explicit raw precision, and array/index filtering semantics
+**Date/time completed**: 2026-06-07 15:20
+**What was shipped**
+- Added `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/StructuredQueryPath.kt` to parse/normalize structured paths with backtick-escaped segments, deterministic index parsing, and lookup candidate expansion for any-match/indexed semantics.
+- Updated `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogQueryParser.kt` to validate and normalize `field:`, `has:`, and canonical short-form paths using structured path parsing with safe fallback to `TextQuery` for malformed escaped/indexed paths.
+- Updated `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogFilterService.kt` to enforce explicit-field path precision, preserve canonical alias fan-out for non-explicit canonical queries, and evaluate array/indexed path candidates deterministically.
+- Extended parser/filter tests in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogQueryParserTest.kt` and `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceStructuredQueryTest.kt` for escaped dotted keys, raw alias precision, any-match array predicates, indexed lookups, and malformed-path safety.
+- Added user-facing syntax documentation in `docs/STRUCTURED-DATA-MODEL.md`, updated sprint progress markers in `docs/sprints/sprint-12-structured-data.md`, and closed remaining Sprint 12B task checklist items in `docs/tasks/TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md`.
+**Key decisions**
+- Reused existing flattened-path storage (`items[]` + `items[n]`) by expanding lookup candidates from parsed path segments instead of introducing a second runtime path model.
+- Scoped canonical alias fan-out strictly to non-explicit canonical query forms so `field:<raw>` remains precise for emitter-specific keys.
+- Preserved malformed-query non-blocking behavior by keeping parser fallback to legacy text matching as the failure mode.
+**Gotchas**
+- `./gradlew detekt` and `./gradlew check` now fail in `:ui` due broad existing detekt debt (complexity/return-count/naming/magic-number/newline findings across historical files, including newly touched parser/filter files); this cleanup is outside the Sprint 12B remaining-scope slice.
+- Markdown examples containing backticks inside path segments require doubled backtick delimiters for correct rendering in docs.
+**Test coverage areas**
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LogQueryParserTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest --tests com.klogviewer.ui.test.KLogViewerUiTest --tests com.klogviewer.ui.components.FilterBarStructuredFilterTest --tests com.klogviewer.ui.components.FilterBarTimeFilterControlsTest` (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` (`BUILD FAILED` due `:ui` detekt findings, including pre-existing complexity/style debt and strict rule violations on parser/filter files).
+- `./gradlew check` (`BUILD FAILED` due the same `:ui` detekt findings).
