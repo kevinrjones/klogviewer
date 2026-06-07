@@ -25,6 +25,7 @@ Make structured logs operationally useful in the log list by adding path-aware, 
 ### 12B.3. Dependencies
 - Depends on `TASKS-SPRINT-12A-STRUCTURED-DATA-FOUNDATION.md`.
 - Optional coupling with 12C for “Filter by this field/value” UX entry points.
+- Downstream Sprint 13 power-user tooling must consume 12B filtering semantics as-is (query-builder UX/autocomplete/history/presets/persistence), without introducing a competing grammar.
 
 ### 12B.4. Scope-to-Workstream Mapping
 - Grammar and parsing (`5`, `6`) -> `ui/viewmodel/LogFilterService.kt`, filter intent handling/parsing helpers.
