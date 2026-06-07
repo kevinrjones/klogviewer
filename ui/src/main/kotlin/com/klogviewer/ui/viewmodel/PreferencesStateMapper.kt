@@ -24,13 +24,20 @@ object PreferencesStateMapper {
                     windows = tp.windows.map { wp ->
                         val fromInstant = TimeRangeFilterSupport.parseInstantOrNull(wp.timeFilterFrom)
                         val toInstant = TimeRangeFilterSupport.parseInstantOrNull(wp.timeFilterTo)
+                        val levelFilters = LevelFilterPolicy.toTypedFilters(wp.levelFilters).let { typed ->
+                            if (typed.isEmpty() && wp.levelFilters.isNotEmpty()) {
+                                LevelFilterPolicy.defaultFilters
+                            } else {
+                                typed
+                            }
+                        }
                         LogWindow(
                             id = wp.id,
                             filePath = wp.filePath,
                             sourceIds = wp.sourceIds,
                             hiddenSourceIds = wp.hiddenSourceIds,
                             filterQueries = wp.filterQueries,
-                            levelFilters = wp.levelFilters,
+                            levelFilters = levelFilters,
                             timeFilterFrom = wp.timeFilterFrom,
                             timeFilterTo = wp.timeFilterTo,
                             timeFilterFromInstant = fromInstant,
@@ -86,7 +93,7 @@ object PreferencesStateMapper {
                             sourceIds = window.sourceIds,
                             hiddenSourceIds = window.hiddenSourceIds,
                             filterQueries = window.filterQueries,
-                            levelFilters = window.levelFilters,
+                            levelFilters = LevelFilterPolicy.toRawFilters(window.levelFilters),
                             timeFilterFrom = window.timeFilterFrom,
                             timeFilterTo = window.timeFilterTo,
                             timeFilterPresetMinutes = TimeRangeFilterSupport.toMinutes(window.timeFilterPreset),

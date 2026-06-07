@@ -180,6 +180,7 @@ fun KLogViewerScreen(
                     isExpanded = state.isSidebarExpanded,
                     showLevels = activeWindow?.hasRawLevelFieldInLogs == true,
                     levelFilters = activeWindow?.levelFilters ?: emptySet(),
+                    availableLevels = activeWindow?.availableLevels ?: emptyList(),
                     onToggleLevel = { level -> viewModel.handleIntent(KLogViewerIntent.ToggleLevel(level)) },
                     onToggleAllLevels = { viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels) },
                     levelCounts = activeWindow?.levelCounts ?: emptyMap()
@@ -2092,6 +2093,7 @@ private fun DashboardLevelDistributionRow(
 private fun dashboardLevelColor(level: LogLevel): Color {
     val colors = KLogViewerTheme.logColors
     return when (level) {
+        LogLevel.TRACE -> colors.trace
         LogLevel.DEBUG -> colors.debug
         LogLevel.INFO -> colors.info
         LogLevel.WARN -> colors.warn

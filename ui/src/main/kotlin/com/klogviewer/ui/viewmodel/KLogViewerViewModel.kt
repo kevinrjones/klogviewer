@@ -10,6 +10,7 @@ import com.klogviewer.domain.model.AnalysisFailure
 import com.klogviewer.domain.model.AnalysisFieldKey
 import com.klogviewer.domain.model.DiffWindow
 import com.klogviewer.domain.model.FieldFrequencyQuery
+import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.LogUpdate
@@ -405,9 +406,13 @@ class KLogViewerViewModel(
                 val currentDashboardData = currentWindow.dashboardDataState as? DashboardDataState.Content
                     ?: return@updateWindow currentWindow
                 val isClearingSelection = currentDashboardData.selectedLevel == level
-                val allLevels = LogLevel.entries.toSet()
+                val allLevels = currentWindow.availableLevels.toSet().ifEmpty { LevelFilterPolicy.defaultFilters }
                 currentWindow.copy(
-                    levelFilters = if (isClearingSelection) allLevels else setOf(level),
+                    levelFilters = if (isClearingSelection) {
+                        allLevels
+                    } else {
+                        setOf(LevelFilterKey.fromLogLevel(level))
+                    },
                     dashboardDataState = currentDashboardData.copy(
                         selectedLevel = if (isClearingSelection) null else level
                     )
@@ -613,7 +618,7 @@ class KLogViewerViewModel(
                 val currentDashboardData = window.dashboardDataState as? DashboardDataState.Content
                 window.copy(
                     filterQueries = removeDashboardFieldFilterQueries(window.filterQueries),
-                    levelFilters = LogLevel.entries.toSet(),
+                    levelFilters = window.availableLevels.toSet().ifEmpty { LevelFilterPolicy.defaultFilters },
                     timeFilterFrom = "",
                     timeFilterTo = "",
                     timeFilterFromInstant = null,
@@ -635,7 +640,14 @@ class KLogViewerViewModel(
     private fun handleLogUpdate(windowId: String, update: LogUpdate, sourceId: String? = null) {
         _state.update { currentState ->
             currentState.updateWindow(windowId) { window ->
-                LogUpdateReducer.reduce(window, update, sourceId)
+                val reducedWindow = LogUpdateReducer.reduce(window, update, sourceId)
+                reducedWindow.copy(
+                    levelFilters = LevelFilterPolicy.reconcile(
+                        previousFilters = window.levelFilters,
+                        previousAvailableLevels = window.availableLevels.toSet(),
+                        updatedAvailableLevels = reducedWindow.availableLevels.toSet()
+                    )
+                )
             }
         }
         filterLogs(windowId)
@@ -734,7 +746,7 @@ class KLogViewerViewModel(
         val selectedBucketFrom = latestContent.selectedBucketFrom
             ?.takeIf { selectedFrom -> computedContent.timeSeries.any { bucket -> bucket.from == selectedFrom } }
         val selectedLevel = latestContent.selectedLevel
-            ?.takeIf { selected -> latestWindow.levelFilters == setOf(selected) }
+            ?.takeIf { selected -> latestWindow.levelFilters == setOf(LevelFilterKey.fromLogLevel(selected)) }
             ?.takeIf { selected -> computedContent.levelDistribution.any { distribution -> distribution.level == selected && distribution.count > 0 } }
         val selectedFrequencyValue = latestContent.selectedFrequencyValue
             ?.takeIf { selectedValue -> computedContent.frequencyItems.any { item -> item.value == selectedValue } }

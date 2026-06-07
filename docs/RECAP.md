@@ -1283,3 +1283,58 @@ Recap from the previous entry (`2026-06-03 09:50`) up to now:
 - `./gradlew test :ui:desktopTest` → passed (`BUILD SUCCESSFUL`).
 - Repository state at recap capture time: `git status --short` shows uncommitted updates in `build.gradle.kts`, `detekt-baseline.xml`, `detekt.yml`, `docs/project_memory.md`, and `gradle/libs.versions.toml`.
 
+
+# 2026-06-05
+
+## 21:50
+
+### Sprint 12A Structured-Data Foundation Progress Recap
+
+Recap from the previous entry (`2026-06-03 21:35`) up to now:
+
+#### Changes:
+- **Commit `b1124d9` (2026-06-04 08:38)**: Refactored key-detection logic and removed redundant conditions.
+- **Commits `d373144`, `9f61d61` (2026-06-04 08:39)**: Merged `feat/detekt` updates into active branches.
+- **Commit `ec85dd2` (2026-06-04 15:50)**: Improved dashboard time-series chart scaling with expanded test coverage.
+- **Commits `3c0548f`, `431aae9`, `5453bcd` (2026-06-04 15:51–15:52)**: Performed repeated merges from `origin/main` while synchronizing branch state.
+- **Commit `3855712` (2026-06-04 16:01)**: Modularized and improved time-series bucket calculation logic.
+- **Commit `c4344e8` (2026-06-05 11:36)**: Updated sprint scope/tasks documentation for OpenTelemetry integration and future development.
+- **Commit `a602774` (2026-06-05 11:49)**: Re-ordered sprint structure.
+- **Commit `2f542b0` (2026-06-05 12:51)**: Added Sprint 12 structured-data subtasks documentation.
+- **Current working session (uncommitted)**:
+    - Implemented Sprint `12A.5` domain structured-data slice by adding typed `StructuredValue` and `StructuredLogData` models, deterministic flattened path indexing (including indexed and `[]` any-match array paths), and backward-compatible `LogEntry.compatibilityFields()` merge behavior.
+    - Updated `JsonLogParser` to attach `structuredData` with typed root mapping and preserved `rawPayload` while keeping existing flat `fields` behavior.
+    - Added/extended focused tests in `StructuredLogDataTest` and `JsonLogParserTest` for value-type coverage, nested/array flattening, null handling, compatibility projection precedence, and raw payload retention.
+    - Added `docs/STRUCTURED-DATA-MODEL.md`, marked `12A.5.1`–`12A.5.5` complete in `docs/tasks/TASKS-SPRINT-12A-STRUCTURED-DATA-FOUNDATION.md`, and updated `docs/project_memory.md`.
+
+#### Verification:
+- `./gradlew :domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :domain:test :core:test` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew check` → passed (`BUILD SUCCESSFUL`).
+- Repository state at recap capture time: `git status --short` shows uncommitted changes in `core/src/main/kotlin/com/klogviewer/core/parser/JsonLogParser.kt`, `core/src/test/kotlin/com/klogviewer/core/parser/JsonLogParserTest.kt`, `domain/src/main/kotlin/com/klogviewer/domain/model/LogEntry.kt`, `docs/tasks/TASKS-SPRINT-12A-STRUCTURED-DATA-FOUNDATION.md`, `docs/project_memory.md`, plus untracked `docs/STRUCTURED-DATA-MODEL.md`, `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredLogData.kt`, `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredValue.kt`, and `domain/src/test/kotlin/com/klogviewer/domain/model/StructuredLogDataTest.kt`.
+
+
+# 2026-06-06
+
+## 20:03
+
+### Structured-Data Maintainability Decomposition Recap
+
+Recap from the previous entry (`2026-06-05 21:50`) up to now:
+
+#### Changes:
+- **Commit `fc711e1` (2026-06-06 10:12)**: Implemented typed structured-data modeling with backward compatibility, including `StructuredValue`/`StructuredLogData` integration, parser alignment, test expansion, and documentation/task-memory updates.
+- **Commit `193bae2` (2026-06-06 17:24)**: Refactored level-filter handling around string keys and enhanced structured parser detection/filter integration across `core`, `domain`, and `ui` modules with broader regression coverage.
+- **Current working session (uncommitted)**:
+    - Implemented the decomposition pass to restore maintainability guardrails by introducing typed level-filter boundaries via `domain/src/main/kotlin/com/klogviewer/domain/model/LevelFilterKey.kt` and centralized filter semantics in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LevelFilterPolicy.kt`.
+    - Integrated `LevelFilterPolicy` and typed level keys through state/intent/viewmodel/filtering/persistence flows (`KLogViewerState`, `KLogViewerIntent`, `FilterIntentHandler`, `KLogViewerViewModel`, `LogFilterService`, `PreferencesStateMapper`, and `Sidebar`) while removing duplicated ad-hoc level policy branches.
+    - Added canonical alias/source-of-truth + confidence-policy decomposition in parser paths (`CanonicalFieldAliases`, `JsonConfidenceScorer`) and aligned `HeuristicProbe`/`JsonLogParser` behavior around shared policy collaborators.
+    - Added/updated focused tests for extracted policy/scorer behavior and regression stability (`LevelFilterPolicyTest`, `JsonConfidenceScorerTest`, `DashboardIntentTest`, plus parser suite updates), and documented the architecture decision in `docs/adr/adr-042-level-filter-policy-and-json-alias-confidence-decomposition.md` with supporting `docs/project_memory.md` updates.
+- **Repository state at recap capture time**: `git status --short` shows ongoing uncommitted decomposition updates across `core/parser`, `ui/viewmodel` + `ui/mvi` + `ui/components`, `domain/model`, and docs (`docs/project_memory.md`), plus untracked additions for `LevelFilterKey`, `LevelFilterPolicy`, parser alias/scorer files, related tests, ADR-042, and the plan artifact under `.junie/plans/`.
+
+#### Verification:
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests com.klogviewer.core.parser.JsonLogParserTest --tests com.klogviewer.core.parser.HeuristicProbeTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests com.klogviewer.core.parser.JsonConfidenceScorerTest --tests com.klogviewer.core.parser.HeuristicProbeTest --tests com.klogviewer.core.parser.JsonLogParserTest :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` → passed (`BUILD SUCCESSFUL`).
+

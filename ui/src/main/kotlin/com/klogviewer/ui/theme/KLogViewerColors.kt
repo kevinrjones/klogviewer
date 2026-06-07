@@ -26,6 +26,7 @@ object KLogViewerColors {
     val DarkWarn = Color(0xFFFFC107)
     val DarkError = Color(0xFFFF5252)
     val DarkDebug = Color(0xFF9E9E9E)
+    val DarkTrace = Color(0xFF9575CD)
     val DarkFatal = Color(0xFFFF1744)
 
     // Log Levels - Light
@@ -33,5 +34,6 @@ object KLogViewerColors {
     val LightWarn = Color(0xFF856404)
     val LightError = Color(0xFFD32F2F)
     val LightDebug = Color(0xFF616161)
+    val LightTrace = Color(0xFF6A1B9A)
     val LightFatal = Color(0xFFB71C1C)
 }

@@ -4,6 +4,10 @@ import org.junit.jupiter.api.Test
 import strikt.api.expectThat
 import strikt.assertions.isA
 import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThan
+import strikt.assertions.isLessThanOrEqualTo
+import strikt.assertions.isNotNull
+import strikt.assertions.isTrue
 
 class HeuristicProbeTest {
 
@@ -20,6 +24,10 @@ class HeuristicProbeTest {
         expectThat(result.parser).isA<JsonLogParser>()
         expectThat(result.parserName).isEqualTo("JSON")
         expectThat(result.columns).isEqualTo(listOf("Timestamp", "Content", "Action", "User"))
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.sampledRecordCount).isEqualTo(2)
+        expectThat(result.confidence?.successfulParseCount).isEqualTo(2)
+        expectThat(result.confidence?.malformedCount).isEqualTo(0)
     }
 
     @Test
@@ -32,6 +40,78 @@ class HeuristicProbeTest {
         expectThat(result.parser).isA<JsonLogParser>()
         expectThat(result.parserName).isEqualTo("JSON")
         expectThat(result.columns).isEqualTo(listOf("Timestamp", "Level", "Content"))
+    }
+
+    @Test
+    fun `should auto select json parser for one line canonical json log`() {
+        val lines = listOf(
+            """{"@timestamp":"2024-05-14T10:00:00Z","level":"INFO","message":"single"}"""
+        )
+
+        val result = probe.detect(lines)
+
+        expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.parserName).isEqualTo("JSON")
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.finalConfidenceScore ?: 0.0).isGreaterThan(0.45)
+    }
+
+    @Test
+    fun `should keep selecting JSON when malformed fraction is small`() {
+        val lines = listOf(
+            """{"timestamp":"2024-05-14T10:00:00Z","level":"INFO","message":"one"}""",
+            """{"timestamp":"2024-05-14T10:00:01Z","level":"WARN","message":"two"}""",
+            """{"timestamp":"2024-05-14T10:00:02Z","level":"ERROR","message":"three"}""",
+            "{ malformed json"
+        )
+
+        val result = probe.detect(lines)
+
+        expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.parserName).isEqualTo("JSON")
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.successfulParseCount).isEqualTo(3)
+        expectThat(result.confidence?.malformedCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `should not select JSON when content is mostly malformed or ambiguous`() {
+        val lines = listOf(
+            "{not valid",
+            "not json at all",
+            "just text",
+            "[1,2,3"
+        )
+
+        val result = probe.detect(lines)
+
+        expectThat(result.parser !is JsonLogParser).isTrue()
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.finalConfidenceScore ?: Double.MAX_VALUE).isLessThanOrEqualTo(0.45)
+    }
+
+    @Test
+    fun `should increase json confidence when canonical keys are present`() {
+        val canonicalLines = listOf(
+            """{"@timestamp":"2024-05-14T10:00:00Z","level":"INFO","message":"canonical"}""",
+            """{"@timestamp":"2024-05-14T10:00:01Z","level":"WARN","message":"canonical 2"}"""
+        )
+        val genericLines = listOf(
+            """{"a":"2024-05-14T10:00:00Z","b":"INFO","c":"generic"}""",
+            """{"a":"2024-05-14T10:00:01Z","b":"WARN","c":"generic 2"}"""
+        )
+
+        val canonicalResult = probe.detect(canonicalLines)
+        val genericResult = probe.detect(genericLines)
+
+        expectThat(canonicalResult.parser).isA<JsonLogParser>()
+        expectThat(genericResult.parser).isA<JsonLogParser>()
+        expectThat(canonicalResult.confidence).isNotNull()
+        expectThat(genericResult.confidence).isNotNull()
+        expectThat(canonicalResult.confidence?.canonicalKeyHitCount ?: 0)
+            .isGreaterThan(genericResult.confidence?.canonicalKeyHitCount ?: 0)
+        expectThat(canonicalResult.confidence?.finalConfidenceScore ?: 0.0)
+            .isGreaterThan(genericResult.confidence?.finalConfidenceScore ?: 0.0)
     }
 
     @Test
@@ -68,5 +148,19 @@ class HeuristicProbeTest {
         val result = probe.detect(lines)
         expectThat(result.parser).isA<SimpleLogParser>()
         expectThat(result.parserName).isEqualTo("Simple")
+    }
+
+    @Test
+    fun `should keep low confidence fallback deterministic`() {
+        val lines = listOf(
+            "mostly noise",
+            "neither template nor valid json"
+        )
+
+        val parserNames = (1..20).map {
+            probe.detect(lines).parserName
+        }.toSet()
+
+        expectThat(parserNames).isEqualTo(setOf("Simple"))
     }
 }

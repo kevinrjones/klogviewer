@@ -83,6 +83,51 @@ run one consistent investigation flow instead of format-specific workarounds.
     - content: `message`, `msg`, `content`, `body`
 - No confidence-score object is exposed today; behavior is majority-threshold heuristic.
 
+#### 2.3.1 12A.6 confidence and fallback contract
+
+- JSON probing now emits a structured confidence payload (`ParseDetectionConfidence`) with:
+    - sampled record count,
+    - successful parse count,
+    - malformed count,
+    - parse success ratio,
+    - malformed ratio,
+    - canonical key hit count/ratio,
+    - final deterministic confidence score and debug factors.
+- Confidence scoring factors:
+    - increase with parse success ratio and canonical key hits,
+    - decrease with malformed ratio,
+    - decrease for very low-sample ambiguous inputs.
+- Malformed JSON-like records are tolerated during probing; they lower confidence but do not cause fatal ingestion.
+- Parser override remains authoritative in the status-bar selection flow (`WorkspaceLogLoader.performHeuristicDetection`).
+- When JSON confidence is below threshold, selection deterministically falls back to existing template/simple rules.
+
+#### 2.3.2 12A.7 baseline normalization and raw-preservation contract
+
+- `core/src/main/kotlin/com/klogviewer/core/parser/JsonLogParser.kt` now emits additive canonical projection into
+  `StructuredLogData.canonicalFields` with baseline keys:
+    - `timestamp`,
+    - `level`,
+    - `message`,
+    - `logger`,
+    - `exception`,
+    - `trace.id`,
+    - `span.id`.
+- Baseline alias precedence is deterministic and canonical-first:
+    - when canonical and aliases coexist, canonical wins,
+    - otherwise first non-null alias by configured order is selected,
+    - null alias values do not overwrite a non-null candidate.
+- Message precedence:
+    - canonical `message` prefers rendered fields (`message`, `msg`, `body`, `@m`, `Message`),
+    - `@mt` is preserved as raw field and used as fallback canonical message only when rendered fields are absent.
+- Raw-field preservation remains intact:
+    - original source fields stay in typed `root` and flattened path index,
+    - namespaces like `Properties.*`, `attributes.*`, and unknown wrapper metadata are preserved without destructive
+      renaming.
+- Compatibility projection behavior (`StructuredLogData.toCompatibilityFields`) now combines flattened raw paths and
+  canonical fields, while `LogEntry.fields` remains authoritative on collisions.
+- Representative fixture coverage includes generic JSON plus JVM/.NET examples; unsupported ecosystem-specific keys (for
+  example Log4j2 `timeMillis`/`loggerName`) remain raw in `12A` and are deferred for broader normalization in `12D`.
+
 ### 2.4 Filtering, dashboard, and field-frequency flow
 
 - `ui/.../LogFilterService.kt` supports:

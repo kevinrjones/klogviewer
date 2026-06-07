@@ -690,6 +690,7 @@ internal fun getColumnWidth(column: String, columnWidths: Map<String, Int>, sour
 }
 
 private fun getLevelColor(level: LogLevel, colors: LogLevelColors): Color = when (level) {
+    LogLevel.TRACE -> colors.trace
     LogLevel.DEBUG -> colors.debug
     LogLevel.INFO -> colors.info
     LogLevel.WARN -> colors.warn

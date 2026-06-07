@@ -1,6 +1,7 @@
 package com.klogviewer.ui.mvi
 
 import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
 import java.time.Instant
@@ -35,7 +36,7 @@ sealed interface KLogViewerIntent {
     data class AddFilterQuery(val query: String) : FilterIntent
     data class RemoveFilterQuery(val query: String) : FilterIntent
     data object ClearFilterQueries : FilterIntent
-    data class ToggleLevel(val level: LogLevel) : FilterIntent
+    data class ToggleLevel(val level: LevelFilterKey) : FilterIntent
     data object ToggleAllLevels : FilterIntent
     data class SetTimeFilterFrom(val from: String) : FilterIntent
     data class SetTimeFilterTo(val to: String) : FilterIntent

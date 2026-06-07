@@ -56,7 +56,7 @@ class PreferencesRepositoryTest {
                             filePath = "file1.log",
                             sourceIds = listOf("file1.log"),
                             filterQueries = listOf("error"),
-                            levelFilters = setOf(LogLevel.ERROR, LogLevel.WARN),
+                            levelFilters = setOf(LogLevel.ERROR.name, LogLevel.WARN.name),
                             isReversed = true
                         )
                     )

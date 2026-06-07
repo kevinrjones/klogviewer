@@ -1,9 +1,11 @@
 package com.klogviewer.ui.mvi
 
 import com.klogviewer.domain.model.LogEntry
+import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
+import com.klogviewer.ui.viewmodel.LevelFilterPolicy
 import java.time.Instant
 
 enum class WorkspaceMode {
@@ -117,7 +119,7 @@ data class LogWindow(
     val error: String? = null,
     val filePath: String = "",
     val filterQueries: List<String> = emptyList(),
-    val levelFilters: Set<LogLevel> = LogLevel.entries.toSet(),
+    val levelFilters: Set<LevelFilterKey> = LevelFilterPolicy.defaultFilters,
     val isReversed: Boolean = false,
     val isAutoScrollEnabled: Boolean = true,
     val showAnsiColors: Boolean = true,
@@ -141,7 +143,10 @@ data class LogWindow(
     val logFontFamily: String = DEFAULT_LOG_FONT_FAMILY,
     val logFontSizeSp: Int = DEFAULT_LOG_FONT_SIZE_SP
 ) {
-    val levelCounts: Map<LogLevel, Int> get() = logs.groupingBy { it.level }.eachCount()
+    val levelCounts: Map<LevelFilterKey, Int>
+        get() = logs.groupingBy { LevelFilterPolicy.resolveLevelKey(it) }.eachCount()
+    val availableLevels: List<LevelFilterKey>
+        get() = LevelFilterPolicy.availableLevels(logs)
     val hasRawLevelFieldInLogs: Boolean get() = logs.any { entry -> entry.fields.containsKey("level") }
 }
 
