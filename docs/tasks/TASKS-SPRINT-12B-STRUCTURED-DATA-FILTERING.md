@@ -12,6 +12,9 @@ Make structured logs operationally useful in the log list by adding path-aware, 
 - Alias-aware canonical filtering (for example `trace.id`, `level`, `message`).
 - Array matching semantics for any-match and index-addressed paths.
 - Escaping and quoting rules for dotted names and quoted values.
+- Walking-skeleton structured filter entry UI in `FilterBar` (discoverable trigger + compact field/operator/value panel).
+- Structured UI `Apply` generates Sprint 12B grammar-compatible text expressions and submits through the existing text-query flow.
+- Lightweight structured UI validation (required field/path and required value checks) while keeping parser feedback non-blocking.
 - Filter query/chip display updates if needed for clarity.
 - Unit + integration tests for structured filter behavior and regressions.
 - User-facing docs for new filter syntax.
@@ -22,6 +25,13 @@ Make structured logs operationally useful in the log list by adding path-aware, 
 - Broad ecosystem normalization expansion beyond 12A baseline aliases (12D).
 - Heavy performance optimization beyond preventing obvious filter regressions (12E).
 
+### 12B.2.1. Deferred UI Work
+- Field/path autocomplete.
+- Schema/field discovery browser.
+- Detail-node “filter by this field/value” actions.
+- Saved filters, presets, and query history.
+- Visual boolean/group query-builder interactions.
+
 ### 12B.3. Dependencies
 - Depends on `TASKS-SPRINT-12A-STRUCTURED-DATA-FOUNDATION.md`.
 - Optional coupling with 12C for “Filter by this field/value” UX entry points.
@@ -30,7 +40,7 @@ Make structured logs operationally useful in the log list by adding path-aware, 
 ### 12B.4. Scope-to-Workstream Mapping
 - Grammar and parsing (`5`, `6`) -> `ui/viewmodel/LogFilterService.kt`, filter intent handling/parsing helpers.
 - Structured lookup + alias resolution (`7`, `8`) -> flattened path index lookup adapters and canonical alias resolver.
-- UI query presentation (`9`) -> filter bar/chip/query rendering state.
+- UI query presentation (`9`) -> filter bar/chip/query rendering state, including minimal structured entry panel that emits canonical text queries.
 - Verification and regressions (`10`) -> filter unit tests + integration flows + plain-text regression checks.
 - Documentation (`11`) -> user docs and sprint progress notes.
 
@@ -59,9 +69,12 @@ Make structured logs operationally useful in the log list by adding path-aware, 
 - [ ] 12B.8.4. Define null-vs-missing behavior explicitly and validate with tests.
 
 ### 12B.9. Filter Bar / Query Display Updates
-- [ ] 12B.9.1. Update filter chip/query rendering so structured predicates are readable and reversible.
-- [ ] 12B.9.2. Ensure parser/validator feedback is non-blocking for malformed user queries.
-- [ ] 12B.9.3. Preserve existing keyboard and workflow behavior for legacy filter input patterns.
+- [ ] 12B.9.0. Add a discoverable structured filter trigger near the existing filter text input.
+- [ ] 12B.9.1. Add compact structured panel/dialog with field/path input, operator selector, conditional value input, and Apply/Cancel actions.
+- [ ] 12B.9.2. Update filter chip/query rendering so structured predicates are readable and reversible.
+- [ ] 12B.9.3. Ensure parser/validator feedback is non-blocking for malformed user queries.
+- [ ] 12B.9.4. Preserve existing keyboard and workflow behavior for legacy filter input patterns.
+- [ ] 12B.9.5. Ensure structured UI-generated predicates are submitted as grammar-compatible text and remain canonical with manual text input.
 
 ### 12B.10. Verification & Quality Gates
 - [ ] 12B.10.1. Add/extend unit tests for grammar parsing, escaping/quoting, typed comparisons, and alias fan-out.
@@ -88,3 +101,7 @@ Make structured logs operationally useful in the log list by adding path-aware, 
 - [ ] Array predicates use documented any-match semantics and support index-addressed lookups.
 - [ ] Invalid structured filter expressions produce safe feedback and do not break list rendering.
 - [ ] Existing plain-text filtering behavior remains unchanged for non-structured logs.
+- [ ] Users can add a basic structured field predicate through a minimal UI without manually typing the full expression.
+- [ ] Structured UI-generated predicates use the same grammar and filtering pipeline as manual text queries.
+- [ ] Text filter input remains fully supported and canonical.
+- [ ] Structured filter UI remains intentionally minimal and does not replace power-user text workflows.

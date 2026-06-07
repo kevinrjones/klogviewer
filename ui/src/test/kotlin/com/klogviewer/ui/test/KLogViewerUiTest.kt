@@ -288,4 +288,38 @@ class KLogViewerUiTest {
             assertLogCount(3)
         }
     }
+
+    @Test
+    fun givenStructuredFilterApplied_whenCleared_thenManualFilterStillWorks() = runComposeUiTest {
+        setupApp()
+
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
+        every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
+            LogUpdate.Initial(testEntries).right()
+        )
+
+        mainRobot {
+            clickAddFile()
+        }
+
+        onNodeWithTag("structured_filter_trigger").assertExists().performClick()
+        onNodeWithTag("structured_filter_field_input").performTextInput("message")
+        onNodeWithTag("structured_filter_operator_trigger").performClick()
+        onNodeWithTag("structured_filter_operator_contains").performClick()
+        onNodeWithTag("structured_filter_value_input").performTextInput("error")
+        onNodeWithTag("structured_filter_apply").performClick()
+
+        onNodeWithText("field:message contains \"error\"").assertExists()
+
+        mainRobot {
+            clearFilter()
+            typeFilter("First")
+        }
+
+        logList {
+            assertLogCount(1)
+            assertTextExists("First log message")
+            assertTextDoesNotExist("Second log message (error)")
+        }
+    }
 }

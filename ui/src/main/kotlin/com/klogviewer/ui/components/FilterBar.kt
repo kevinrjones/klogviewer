@@ -26,6 +26,64 @@ import com.klogviewer.ui.mvi.TimeRangePreset
 private val COMPACT_MENU_ITEM_HEIGHT = 28.dp
 private val COMPACT_MENU_ITEM_HORIZONTAL_PADDING = 10.dp
 
+private data class StructuredFilterOperator(
+    val id: String,
+    val token: String,
+    val label: String,
+    val requiresValue: Boolean = true
+)
+
+private val STRUCTURED_FILTER_OPERATORS = listOf(
+    StructuredFilterOperator(id = "eq", token = "=", label = "Equals"),
+    StructuredFilterOperator(id = "contains", token = "contains", label = "Contains"),
+    StructuredFilterOperator(id = "regex", token = "~", label = "Regex"),
+    StructuredFilterOperator(id = "gt", token = ">", label = "Greater than"),
+    StructuredFilterOperator(id = "gte", token = ">=", label = "Greater than or equal"),
+    StructuredFilterOperator(id = "lt", token = "<", label = "Less than"),
+    StructuredFilterOperator(id = "lte", token = "<=", label = "Less than or equal"),
+    StructuredFilterOperator(id = "exists", token = "exists", label = "Exists", requiresValue = false),
+    StructuredFilterOperator(id = "missing", token = "missing", label = "Missing", requiresValue = false)
+)
+
+private val NUMERIC_VALUE_PATTERN = Regex("^-?\\d+(\\.\\d+)?$")
+
+private fun buildStructuredFilterQuery(
+    path: String,
+    operator: StructuredFilterOperator,
+    rawValue: String
+): String {
+    val normalizedPath = path.trim()
+    if (!operator.requiresValue) {
+        return "field:$normalizedPath ${operator.token}"
+    }
+
+    val valueToken = toStructuredFilterValueToken(rawValue.trim())
+    return if (operator.token == "=") {
+        "field:$normalizedPath=${valueToken}"
+    } else {
+        "field:$normalizedPath ${operator.token} $valueToken"
+    }
+}
+
+private fun toStructuredFilterValueToken(value: String): String {
+    val lowercaseValue = value.lowercase()
+    if (lowercaseValue == "true" || lowercaseValue == "false" || lowercaseValue == "null") {
+        return lowercaseValue
+    }
+
+    if (NUMERIC_VALUE_PATTERN.matches(value)) {
+        return value
+    }
+
+    return "\"${escapeStructuredStringValue(value)}\""
+}
+
+private fun escapeStructuredStringValue(value: String): String {
+    return value
+        .replace("\\", "\\\\")
+        .replace("\"", "\\\"")
+}
+
 @Composable
 private fun CompactMenuItem(
     text: String,
@@ -83,6 +141,26 @@ fun FilterBar(
     modifier: Modifier = Modifier
 ) {
     var textState by remember { mutableStateOf("") }
+    var isStructuredFilterDialogOpen by remember { mutableStateOf(false) }
+    var structuredFilterFieldPath by remember { mutableStateOf("") }
+    var structuredFilterOperatorId by remember {
+        mutableStateOf(STRUCTURED_FILTER_OPERATORS.first().id)
+    }
+    var structuredFilterValue by remember { mutableStateOf("") }
+
+    val selectedStructuredOperator = STRUCTURED_FILTER_OPERATORS.firstOrNull {
+        it.id == structuredFilterOperatorId
+    } ?: STRUCTURED_FILTER_OPERATORS.first()
+
+    val canApplyStructuredFilter = structuredFilterFieldPath.trim().isNotEmpty() &&
+        (!selectedStructuredOperator.requiresValue || structuredFilterValue.trim().isNotEmpty())
+
+    val closeStructuredFilterDialog = {
+        isStructuredFilterDialogOpen = false
+        structuredFilterFieldPath = ""
+        structuredFilterOperatorId = STRUCTURED_FILTER_OPERATORS.first().id
+        structuredFilterValue = ""
+    }
 
     Surface(
         modifier = modifier.fillMaxWidth().testTag("filter_bar"),
@@ -228,6 +306,38 @@ fun FilterBar(
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
+            Box {
+                FilterBarIcon(
+                    icon = Icons.Default.Tune,
+                    tooltip = "Add structured field filter",
+                    onClick = { isStructuredFilterDialogOpen = true },
+                    testTag = "structured_filter_trigger"
+                )
+
+                if (isStructuredFilterDialogOpen) {
+                    StructuredFilterDialog(
+                        fieldPath = structuredFilterFieldPath,
+                        onFieldPathChange = { structuredFilterFieldPath = it },
+                        operators = STRUCTURED_FILTER_OPERATORS,
+                        selectedOperator = selectedStructuredOperator,
+                        onOperatorSelected = { structuredFilterOperatorId = it.id },
+                        value = structuredFilterValue,
+                        onValueChange = { structuredFilterValue = it },
+                        canApply = canApplyStructuredFilter,
+                        onApply = {
+                            val generatedQuery = buildStructuredFilterQuery(
+                                path = structuredFilterFieldPath,
+                                operator = selectedStructuredOperator,
+                                rawValue = structuredFilterValue
+                            )
+                            onAddQuery(generatedQuery)
+                            closeStructuredFilterDialog()
+                        },
+                        onCancel = closeStructuredFilterDialog
+                    )
+                }
+            }
+
             // Search Area
             Box(
                 modifier = Modifier
@@ -300,6 +410,100 @@ fun FilterBar(
             }
         }
     }
+}
+
+@Composable
+private fun StructuredFilterDialog(
+    fieldPath: String,
+    onFieldPathChange: (String) -> Unit,
+    operators: List<StructuredFilterOperator>,
+    selectedOperator: StructuredFilterOperator,
+    onOperatorSelected: (StructuredFilterOperator) -> Unit,
+    value: String,
+    onValueChange: (String) -> Unit,
+    canApply: Boolean,
+    onApply: () -> Unit,
+    onCancel: () -> Unit
+) {
+    var operatorMenuExpanded by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onCancel,
+        title = { Text("Add Structured Filter") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = fieldPath,
+                    onValueChange = onFieldPathChange,
+                    label = { Text("Field / Path") },
+                    placeholder = { Text("Properties.UserId") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("structured_filter_field_input")
+                )
+
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedButton(
+                        onClick = { operatorMenuExpanded = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("structured_filter_operator_trigger")
+                    ) {
+                        Text(selectedOperator.label)
+                    }
+
+                    DropdownMenu(
+                        expanded = operatorMenuExpanded,
+                        onDismissRequest = { operatorMenuExpanded = false },
+                        modifier = Modifier.fillMaxWidth(0.95f)
+                    ) {
+                        operators.forEach { operator ->
+                            DropdownMenuItem(
+                                onClick = {
+                                    operatorMenuExpanded = false
+                                    onOperatorSelected(operator)
+                                },
+                                modifier = Modifier.testTag("structured_filter_operator_${operator.id}")
+                            ) {
+                                Text(operator.label)
+                            }
+                        }
+                    }
+                }
+
+                if (selectedOperator.requiresValue) {
+                    OutlinedTextField(
+                        value = value,
+                        onValueChange = onValueChange,
+                        label = { Text("Value") },
+                        placeholder = { Text("timeout") },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("structured_filter_value_input")
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = onApply,
+                enabled = canApply,
+                modifier = Modifier.testTag("structured_filter_apply")
+            ) {
+                Text("Apply")
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onCancel,
+                modifier = Modifier.testTag("structured_filter_cancel")
+            ) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

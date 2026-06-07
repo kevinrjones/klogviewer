@@ -36,6 +36,7 @@
 - Sprint 12A.6 completed: JSON ingestion hardening now tolerates mixed-validity records, parser auto-detection emits structured JSON confidence metrics, parser override authority is preserved, and low-confidence JSON-like samples fall back deterministically to existing Template/Simple selection rules.
 - Thermo-nuclear maintainability decomposition completed for level-filter and JSON detection paths: typed level-filter contract + centralized level policy, shared canonical alias catalog, and extracted JSON confidence scorer with orchestrator-focused probe flow.
 - Sprint 12B/Sprint 13 planning overlap was resolved by keeping Sprint 12B as structured-filtering semantic owner and reframing Sprint 13 as a dependent power-user UX/workflow/persistence layer.
+- Sprint 12B walking-skeleton structured filter UI is now implemented: a discoverable structured-entry dialog in `FilterBar` generates canonical text predicates through the existing filter pipeline with dedicated UI/integration coverage.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -59,6 +60,7 @@
 - Added deterministic JSON detection-confidence policy (`parse success`, `canonical key hits`, `malformed ratio`, `low-sample penalty`) with explicit structured probe output while preserving parser override precedence and fallback ordering.
 - Standardized level-filter behavior ownership in `LevelFilterPolicy` with `LevelFilterKey` as runtime contract and isolated raw-string normalization to persistence/IO boundaries.
 - Kept Sprint 12B and Sprint 13 separate: 12B owns filtering semantics; Sprint 13 consumes 12B semantics for query UX/autocomplete/history/presets/context actions/workspace persistence.
+- Kept structured filter UI in 12B representation-free: the UI emits grammar-compatible text queries only and reuses `onAddQuery`/existing intent-handler/filter-service flow.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - JSON confidence improvements are intentionally scoped to probing/hardening; broader canonical normalization remains deferred to Sprint `12A.7`.
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
@@ -3557,3 +3559,22 @@ For each sprint/task
 - This was a documentation-only change set with no Kotlin/Compose/runtime implementation updates.
 **Test coverage areas**
 - Documentation QA only: verified Sprint 12B and Sprint 13 no longer define competing grammar ownership and that Sprint 13 explicitly depends on 12B semantics.
+
+## Task: Sprint 12B Structured Filter UI Walking Skeleton
+**Title**: Deliver discoverable structured-entry filter UI with canonical text query flow
+**Date/time completed**: 2026-06-07 09:59
+**What was shipped**
+- Updated sprint planning docs in `docs/tasks/TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md` and `docs/sprints/sprint-12-structured-data.md` to include the walking-skeleton structured filter UI scope, deferred UI work list, and explicit acceptance criteria.
+- Implemented structured filter UI in `ui/src/main/kotlin/com/klogviewer/ui/components/FilterBar.kt` with a discoverable trigger, compact dialog (`field/path`, operator selector, conditional value input), and `Apply`/`Cancel` controls.
+- Added deterministic UI-side query generation for operators (`=`, `contains`, `~`, `>`, `>=`, `<`, `<=`, `exists`, `missing`) that emits canonical grammar-compatible text expressions via existing `onAddQuery` flow.
+- Added lightweight validation in the dialog by disabling `Apply` when required field/value input is missing.
+- Added component and integration coverage in `ui/src/test/kotlin/com/klogviewer/ui/components/FilterBarStructuredFilterTest.kt` and `ui/src/test/kotlin/com/klogviewer/ui/test/KLogViewerUiTest.kt`.
+**Key decisions**
+- Kept text query input as the single canonical representation and avoided any secondary structured query model/state in ViewModel.
+- Reused existing filtering pipeline (`AddFilterQuery` intent path) so structured and manual entries share identical downstream behavior.
+- Scoped this delivery to discoverability and minimal workflow only; autocomplete/discovery/presets/history/visual boolean builder remain deferred.
+**Gotchas**
+- Current app state exposes time-filter validation messaging, but no separate structured-query validation field yet; malformed/generated query handling therefore remains non-blocking through the shared query pipeline behavior.
+- Structured value tokenization is intentionally lightweight (`number|boolean|null` passthrough; otherwise escaped quoted string) to match walking-skeleton scope.
+**Test coverage areas**
+- `./gradlew :ui:test --tests com.klogviewer.ui.components.FilterBarStructuredFilterTest --tests com.klogviewer.ui.components.FilterBarTimeFilterControlsTest --tests com.klogviewer.ui.test.KLogViewerUiTest` (`BUILD SUCCESSFUL`).
