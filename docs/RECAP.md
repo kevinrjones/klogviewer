@@ -1314,3 +1314,27 @@ Recap from the previous entry (`2026-06-03 21:35`) up to now:
 - `./gradlew check` → passed (`BUILD SUCCESSFUL`).
 - Repository state at recap capture time: `git status --short` shows uncommitted changes in `core/src/main/kotlin/com/klogviewer/core/parser/JsonLogParser.kt`, `core/src/test/kotlin/com/klogviewer/core/parser/JsonLogParserTest.kt`, `domain/src/main/kotlin/com/klogviewer/domain/model/LogEntry.kt`, `docs/tasks/TASKS-SPRINT-12A-STRUCTURED-DATA-FOUNDATION.md`, `docs/project_memory.md`, plus untracked `docs/STRUCTURED-DATA-MODEL.md`, `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredLogData.kt`, `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredValue.kt`, and `domain/src/test/kotlin/com/klogviewer/domain/model/StructuredLogDataTest.kt`.
 
+
+# 2026-06-06
+
+## 20:03
+
+### Structured-Data Maintainability Decomposition Recap
+
+Recap from the previous entry (`2026-06-05 21:50`) up to now:
+
+#### Changes:
+- **Commit `fc711e1` (2026-06-06 10:12)**: Implemented typed structured-data modeling with backward compatibility, including `StructuredValue`/`StructuredLogData` integration, parser alignment, test expansion, and documentation/task-memory updates.
+- **Commit `193bae2` (2026-06-06 17:24)**: Refactored level-filter handling around string keys and enhanced structured parser detection/filter integration across `core`, `domain`, and `ui` modules with broader regression coverage.
+- **Current working session (uncommitted)**:
+    - Implemented the decomposition pass to restore maintainability guardrails by introducing typed level-filter boundaries via `domain/src/main/kotlin/com/klogviewer/domain/model/LevelFilterKey.kt` and centralized filter semantics in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LevelFilterPolicy.kt`.
+    - Integrated `LevelFilterPolicy` and typed level keys through state/intent/viewmodel/filtering/persistence flows (`KLogViewerState`, `KLogViewerIntent`, `FilterIntentHandler`, `KLogViewerViewModel`, `LogFilterService`, `PreferencesStateMapper`, and `Sidebar`) while removing duplicated ad-hoc level policy branches.
+    - Added canonical alias/source-of-truth + confidence-policy decomposition in parser paths (`CanonicalFieldAliases`, `JsonConfidenceScorer`) and aligned `HeuristicProbe`/`JsonLogParser` behavior around shared policy collaborators.
+    - Added/updated focused tests for extracted policy/scorer behavior and regression stability (`LevelFilterPolicyTest`, `JsonConfidenceScorerTest`, `DashboardIntentTest`, plus parser suite updates), and documented the architecture decision in `docs/adr/adr-042-level-filter-policy-and-json-alias-confidence-decomposition.md` with supporting `docs/project_memory.md` updates.
+- **Repository state at recap capture time**: `git status --short` shows ongoing uncommitted decomposition updates across `core/parser`, `ui/viewmodel` + `ui/mvi` + `ui/components`, `domain/model`, and docs (`docs/project_memory.md`), plus untracked additions for `LevelFilterKey`, `LevelFilterPolicy`, parser alias/scorer files, related tests, ADR-042, and the plan artifact under `.junie/plans/`.
+
+#### Verification:
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests com.klogviewer.core.parser.JsonLogParserTest --tests com.klogviewer.core.parser.HeuristicProbeTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests com.klogviewer.core.parser.JsonConfidenceScorerTest --tests com.klogviewer.core.parser.HeuristicProbeTest --tests com.klogviewer.core.parser.JsonLogParserTest :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` → passed (`BUILD SUCCESSFUL`).
+

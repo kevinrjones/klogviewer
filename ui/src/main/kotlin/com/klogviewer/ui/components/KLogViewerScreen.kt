@@ -2093,6 +2093,7 @@ private fun DashboardLevelDistributionRow(
 private fun dashboardLevelColor(level: LogLevel): Color {
     val colors = KLogViewerTheme.logColors
     return when (level) {
+        LogLevel.TRACE -> colors.trace
         LogLevel.DEBUG -> colors.debug
         LogLevel.INFO -> colors.info
         LogLevel.WARN -> colors.warn

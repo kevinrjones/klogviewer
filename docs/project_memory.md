@@ -34,6 +34,7 @@
 - Sprint 12 structured-data sprint specification was fully expanded into an implementation-ready, ecosystem-compatible execution plan (`docs/sprints/sprint-12-structured-data.md`) with concrete architecture, compatibility matrices, workstreams, acceptance criteria, and fixture-driven testing scope.
 - Sprint 12 structured-data epic is now split into five incremental implementation task documents (`12A`–`12E`) covering foundation, filtering, inspector UI, ecosystem compatibility, and performance/polish delivery slices.
 - Sprint 12A.6 completed: JSON ingestion hardening now tolerates mixed-validity records, parser auto-detection emits structured JSON confidence metrics, parser override authority is preserved, and low-confidence JSON-like samples fall back deterministically to existing Template/Simple selection rules.
+- Thermo-nuclear maintainability decomposition completed for level-filter and JSON detection paths: typed level-filter contract + centralized level policy, shared canonical alias catalog, and extracted JSON confidence scorer with orchestrator-focused probe flow.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -55,6 +56,7 @@
 - Adopted a single root Detekt baseline/config strategy (`detekt-baseline.xml`, `detekt.yml`) with CI no-new-violations enforcement to enable incremental static-analysis burn-down without blocking active delivery.
 - Confirmed Sprint 12 structured payload architecture as `typed tree + flattened path index`, with canonical-field normalization preserved alongside raw field namespaces.
 - Added deterministic JSON detection-confidence policy (`parse success`, `canonical key hits`, `malformed ratio`, `low-sample penalty`) with explicit structured probe output while preserving parser override precedence and fallback ordering.
+- Standardized level-filter behavior ownership in `LevelFilterPolicy` with `LevelFilterKey` as runtime contract and isolated raw-string normalization to persistence/IO boundaries.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - JSON confidence improvements are intentionally scoped to probing/hardening; broader canonical normalization remains deferred to Sprint `12A.7`.
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
@@ -3514,3 +3516,23 @@ For each sprint/task
 - `./gradlew :domain:test --tests "com.klogviewer.domain.model.StructuredLogDataTest" :core:test --tests "com.klogviewer.core.parser.JsonLogParserTest" --tests "com.klogviewer.core.parser.HeuristicProbeTest" :ui:test --tests "com.klogviewer.ui.viewmodel.WorkspaceLogLoaderTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew detekt` (`BUILD SUCCESSFUL`).
 - `./gradlew check` (`BUILD SUCCESSFUL`).
+
+## Task: Thermo-Nuclear Maintainability Decomposition
+**Title**: Decompose level-filter policy and JSON alias/confidence ownership
+**Date/time completed**: 2026-06-06 17:56
+**What was shipped**
+- Added `domain/src/main/kotlin/com/klogviewer/domain/model/LevelFilterKey.kt` and `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LevelFilterPolicy.kt` to centralize level ordering/toggle/toggle-all/reconcile/match semantics under a typed key contract.
+- Refactored UI filtering flow (`KLogViewerState`, `KLogViewerIntent`, `Sidebar`, `FilterIntentHandler`, `KLogViewerViewModel`, `LogFilterService`, `PreferencesStateMapper`, and affected tests) to use typed level filters and policy delegation instead of scattered raw-string logic.
+- Added `core/src/main/kotlin/com/klogviewer/core/parser/CanonicalFieldAliases.kt` and refactored `JsonLogParser` + `HeuristicProbe` to consume one shared alias source for canonical projection, mapping hints, and confidence-hit groups.
+- Added `core/src/main/kotlin/com/klogviewer/core/parser/JsonConfidenceScorer.kt` and refactored `HeuristicProbe` to delegate confidence scoring/selection thresholds to this collaborator.
+- Added/updated focused tests in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LevelFilterPolicyTest.kt`, `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt`, and `core/src/test/kotlin/com/klogviewer/core/parser/JsonConfidenceScorerTest.kt`.
+- Added ADR `docs/adr/adr-042-level-filter-policy-and-json-alias-confidence-decomposition.md` documenting rationale and alternatives.
+**Key decisions**
+- Kept user-visible behavior stable by preserving existing level-filter semantics and parser confidence thresholds while moving ownership to dedicated policy collaborators.
+- Kept parser alias precedence deterministic by centralizing catalog values without changing existing precedence order for parser and probe consumers.
+**Gotchas**
+- `LevelFilterPolicy` preserves explicit empty filter selections; preference restore fallback to defaults is only applied for invalid non-empty legacy raw values.
+- `CanonicalFieldAliases` intentionally exposes separate content/message precedence lists to preserve existing parser extraction vs probe mapping behavior.
+**Test coverage areas**
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests com.klogviewer.core.parser.JsonConfidenceScorerTest --tests com.klogviewer.core.parser.HeuristicProbeTest --tests com.klogviewer.core.parser.JsonLogParserTest :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).

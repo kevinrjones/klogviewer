@@ -3,8 +3,6 @@ package com.klogviewer.core.parser
 import com.klogviewer.domain.parser.LogParser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.serialization.json.*
-import kotlin.math.max
-import kotlin.math.min
 
 private val logger = KotlinLogging.logger {}
 
@@ -28,7 +26,10 @@ data class ParseDetectionConfidence(
     val debugFactors: Map<String, Double> = emptyMap()
 )
 
-class HeuristicProbe(val registry: ParserRegistry) {
+class HeuristicProbe(
+    val registry: ParserRegistry,
+    private val jsonConfidenceScorer: JsonConfidenceScorer = JsonConfidenceScorer()
+) {
     
     /**
      * Attempts to detect the best parser for the given sample lines.
@@ -111,30 +112,15 @@ class HeuristicProbe(val registry: ParserRegistry) {
             .toSet()
             .ifEmpty { return JsonMapping() }
 
-        val timestampKey = keys.firstAvailableKey(TIMESTAMP_KEYS)
-        val levelKey = keys.firstAvailableKey(LEVEL_KEYS)
-        val contentKey = keys.firstAvailableKey(CONTENT_KEYS)
+        val timestampKey = keys.firstAvailableKey(CanonicalFieldAliases.TIMESTAMP_ALIASES_IN_PRECEDENCE_ORDER)
+        val levelKey = keys.firstAvailableKey(CanonicalFieldAliases.LEVEL_ALIASES_IN_PRECEDENCE_ORDER)
+        val contentKey = keys.firstAvailableKey(CanonicalFieldAliases.CONTENT_KEYS_IN_PRECEDENCE_ORDER)
 
         return JsonMapping(timestampKey, levelKey, contentKey)
     }
 
     private fun Set<String>.firstAvailableKey(candidates: List<String>): String =
         candidates.firstOrNull { it in this } ?: candidates.first()
-
-    companion object {
-        private val TIMESTAMP_KEYS = listOf("timestamp", "@timestamp", "time", "ts", "@t", "Timestamp")
-        private val LEVEL_KEYS = listOf("level", "severity", "lvl", "@l", "LogLevel", "Level")
-        private val CONTENT_KEYS = listOf("message", "msg", "content", "body", "@m", "@mt", "Message")
-        private val LOGGER_KEYS = listOf("logger", "logger_name", "SourceContext", "Category", "CategoryName")
-        private val EXCEPTION_KEYS = listOf("exception", "error", "stackTrace", "Exception", "@x")
-        private val TRACE_ID_KEYS = listOf("traceId", "TraceId", "@tr")
-        private val SPAN_ID_KEYS = listOf("spanId", "SpanId", "@sp")
-
-        private const val JSON_CONFIDENCE_THRESHOLD = 0.45
-        private const val LOW_SAMPLE_SINGLE_RECORD_PENALTY = 0.25
-        private const val LOW_SAMPLE_DOUBLE_RECORD_NO_CANONICAL_PENALTY = 0.15
-        private const val LOW_SAMPLE_DOUBLE_RECORD_CANONICAL_PENALTY = 0.05
-    }
 
     private fun isLogfmt(line: String): Boolean {
         val trimmed = line.trim()
@@ -146,7 +132,7 @@ class HeuristicProbe(val registry: ParserRegistry) {
 
     private fun analyzeJson(lines: List<String>): JsonDetectionAnalysis {
         val sampleStats = collectJsonSamples(lines)
-        val confidence = buildJsonConfidence(
+        val confidence = jsonConfidenceScorer.score(
             parsedObjects = sampleStats.parsedObjects,
             sampledCount = lines.size,
             malformedCount = sampleStats.malformedCount
@@ -155,9 +141,7 @@ class HeuristicProbe(val registry: ParserRegistry) {
         return JsonDetectionAnalysis(
             parsedJsonObjects = sampleStats.parsedObjects,
             confidence = confidence,
-            shouldSelectJson =
-                confidence.successfulParseCount > 0 &&
-                    confidence.finalConfidenceScore >= JSON_CONFIDENCE_THRESHOLD
+            shouldSelectJson = jsonConfidenceScorer.shouldSelectJson(confidence)
         )
     }
 
@@ -185,74 +169,11 @@ class HeuristicProbe(val registry: ParserRegistry) {
         return JsonSampleStats(parsedObjects = parsedObjects, malformedCount = malformedCount)
     }
 
-    private fun buildJsonConfidence(
-        parsedObjects: List<JsonObject>,
-        sampledCount: Int,
-        malformedCount: Int
-    ): ParseDetectionConfidence {
-        val successfulParseCount = parsedObjects.size
-        val parseSuccessRatio = successfulParseCount.toRatio(sampledCount)
-        val malformedRatio = malformedCount.toRatio(sampledCount)
-        val canonicalKeyHitCount = parsedObjects.sumOf { jsonObject ->
-            canonicalKeyGroups.count { group -> jsonObject.keys.any { key -> key in group } }
-        }
-        val maxCanonicalHits = max(1, successfulParseCount * canonicalKeyGroups.size)
-        val canonicalKeyHitRatio = canonicalKeyHitCount.toRatio(maxCanonicalHits)
-        val lowSamplePenalty = when {
-            sampledCount == 1 && canonicalKeyHitCount == 0 -> LOW_SAMPLE_SINGLE_RECORD_PENALTY
-            sampledCount <= 2 && canonicalKeyHitCount == 0 -> LOW_SAMPLE_DOUBLE_RECORD_NO_CANONICAL_PENALTY
-            sampledCount <= 2 -> LOW_SAMPLE_DOUBLE_RECORD_CANONICAL_PENALTY
-            else -> 0.0
-        }
-
-        val finalScore = (
-            (parseSuccessRatio * 0.65) +
-                (canonicalKeyHitRatio * 0.35) -
-                (malformedRatio * 0.45) -
-                lowSamplePenalty
-            ).coerceToUnitRange()
-
-        return ParseDetectionConfidence(
-            parserName = "JSON",
-            sampledRecordCount = sampledCount,
-            successfulParseCount = successfulParseCount,
-            malformedCount = malformedCount,
-            parseSuccessRatio = parseSuccessRatio,
-            malformedRatio = malformedRatio,
-            canonicalKeyHitCount = canonicalKeyHitCount,
-            canonicalKeyHitRatio = canonicalKeyHitRatio,
-            finalConfidenceScore = finalScore,
-            debugFactors = mapOf(
-                "parseSuccessRatio" to parseSuccessRatio,
-                "canonicalKeyHitRatio" to canonicalKeyHitRatio,
-                "malformedRatio" to malformedRatio,
-                "lowSamplePenalty" to lowSamplePenalty
-            )
-        )
-    }
-
     private fun looksJsonLike(trimmedLine: String): Boolean {
         val startsLikeJson = trimmedLine.startsWith("{") || trimmedLine.startsWith("[")
         val endsLikeJson = trimmedLine.endsWith("}") || trimmedLine.endsWith("]")
         return startsLikeJson || endsLikeJson
     }
-
-    private fun Int.toRatio(total: Int): Double {
-        if (total <= 0) return 0.0
-        return toDouble() / total.toDouble()
-    }
-
-    private fun Double.coerceToUnitRange(): Double = min(1.0, max(0.0, this))
-
-    private val canonicalKeyGroups: List<Set<String>> = listOf(
-        TIMESTAMP_KEYS.toSet(),
-        LEVEL_KEYS.toSet(),
-        CONTENT_KEYS.toSet(),
-        LOGGER_KEYS.toSet(),
-        EXCEPTION_KEYS.toSet(),
-        TRACE_ID_KEYS.toSet(),
-        SPAN_ID_KEYS.toSet()
-    )
 
     private data class JsonDetectionAnalysis(
         val parsedJsonObjects: List<JsonObject>,

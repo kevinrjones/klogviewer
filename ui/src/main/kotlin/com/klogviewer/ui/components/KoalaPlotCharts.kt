@@ -123,12 +123,13 @@ internal fun timeAxisDateTooltipFormatter(zoneId: ZoneId = ZoneId.systemDefault(
 internal fun orderedLevelDistributionSlices(slices: List<DashboardLevelSlice>): List<DashboardLevelSlice> {
     return slices.sortedBy { slice ->
         when (slice.level) {
-            LogLevel.DEBUG -> 0
-            LogLevel.INFO -> 1
-            LogLevel.WARN -> 2
-            LogLevel.ERROR -> 3
-            LogLevel.FATAL -> 4
-            LogLevel.UNKNOWN -> 5
+            LogLevel.TRACE -> 0
+            LogLevel.DEBUG -> 1
+            LogLevel.INFO -> 2
+            LogLevel.WARN -> 3
+            LogLevel.ERROR -> 4
+            LogLevel.FATAL -> 5
+            LogLevel.UNKNOWN -> 6
         }
     }
 }
@@ -844,6 +845,7 @@ fun KoalaPlotLevelDistributionChart(
 
 private fun levelDistributionColor(level: LogLevel, colors: LogLevelColors): Color {
     return when (level) {
+        LogLevel.TRACE -> colors.trace
         LogLevel.DEBUG -> colors.debug
         LogLevel.INFO -> colors.info
         LogLevel.WARN -> colors.warn

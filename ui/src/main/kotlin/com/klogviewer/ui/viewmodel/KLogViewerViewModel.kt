@@ -10,6 +10,7 @@ import com.klogviewer.domain.model.AnalysisFailure
 import com.klogviewer.domain.model.AnalysisFieldKey
 import com.klogviewer.domain.model.DiffWindow
 import com.klogviewer.domain.model.FieldFrequencyQuery
+import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.LogUpdate
@@ -405,9 +406,13 @@ class KLogViewerViewModel(
                 val currentDashboardData = currentWindow.dashboardDataState as? DashboardDataState.Content
                     ?: return@updateWindow currentWindow
                 val isClearingSelection = currentDashboardData.selectedLevel == level
-                val allLevels = currentWindow.availableLevels.toSet().ifEmpty { defaultLevelFilters }
+                val allLevels = currentWindow.availableLevels.toSet().ifEmpty { LevelFilterPolicy.defaultFilters }
                 currentWindow.copy(
-                    levelFilters = if (isClearingSelection) allLevels else setOf(level.name),
+                    levelFilters = if (isClearingSelection) {
+                        allLevels
+                    } else {
+                        setOf(LevelFilterKey.fromLogLevel(level))
+                    },
                     dashboardDataState = currentDashboardData.copy(
                         selectedLevel = if (isClearingSelection) null else level
                     )
@@ -613,7 +618,7 @@ class KLogViewerViewModel(
                 val currentDashboardData = window.dashboardDataState as? DashboardDataState.Content
                 window.copy(
                     filterQueries = removeDashboardFieldFilterQueries(window.filterQueries),
-                    levelFilters = window.availableLevels.toSet().ifEmpty { defaultLevelFilters },
+                    levelFilters = window.availableLevels.toSet().ifEmpty { LevelFilterPolicy.defaultFilters },
                     timeFilterFrom = "",
                     timeFilterTo = "",
                     timeFilterFromInstant = null,
@@ -637,31 +642,15 @@ class KLogViewerViewModel(
             currentState.updateWindow(windowId) { window ->
                 val reducedWindow = LogUpdateReducer.reduce(window, update, sourceId)
                 reducedWindow.copy(
-                    levelFilters = reconcileLevelFiltersForLogUpdate(
-                        previousWindow = window,
-                        updatedWindow = reducedWindow
+                    levelFilters = LevelFilterPolicy.reconcile(
+                        previousFilters = window.levelFilters,
+                        previousAvailableLevels = window.availableLevels.toSet(),
+                        updatedAvailableLevels = reducedWindow.availableLevels.toSet()
                     )
                 )
             }
         }
         filterLogs(windowId)
-    }
-
-    private fun reconcileLevelFiltersForLogUpdate(
-        previousWindow: LogWindow,
-        updatedWindow: LogWindow
-    ): Set<String> {
-        val updatedAvailableLevels = updatedWindow.availableLevels.toSet()
-        val previousFilters = previousWindow.levelFilters
-        val previousAvailableLevels = previousWindow.availableLevels.toSet()
-        val hadAllPreviouslyEnabled = previousFilters.containsAll(previousAvailableLevels)
-
-        return when {
-            updatedAvailableLevels.isEmpty() -> previousFilters
-            previousFilters.isEmpty() -> emptySet()
-            hadAllPreviouslyEnabled -> updatedAvailableLevels
-            else -> previousFilters.intersect(updatedAvailableLevels)
-        }
     }
 
     private fun filterLogs(windowId: String?) {
@@ -757,7 +746,7 @@ class KLogViewerViewModel(
         val selectedBucketFrom = latestContent.selectedBucketFrom
             ?.takeIf { selectedFrom -> computedContent.timeSeries.any { bucket -> bucket.from == selectedFrom } }
         val selectedLevel = latestContent.selectedLevel
-            ?.takeIf { selected -> latestWindow.levelFilters == setOf(selected.name) }
+            ?.takeIf { selected -> latestWindow.levelFilters == setOf(LevelFilterKey.fromLogLevel(selected)) }
             ?.takeIf { selected -> computedContent.levelDistribution.any { distribution -> distribution.level == selected && distribution.count > 0 } }
         val selectedFrequencyValue = latestContent.selectedFrequencyValue
             ?.takeIf { selectedValue -> computedContent.frequencyItems.any { item -> item.value == selectedValue } }
@@ -770,8 +759,6 @@ class KLogViewerViewModel(
     }
 
     private fun nanosToMillis(nanos: Long): Long = nanos / 1_000_000
-
-    private val defaultLevelFilters: Set<String> = LogLevel.entries.map { it.name }.toSet()
 
     private suspend fun buildDashboardDataState(
         filteredLogs: List<LogEntry>,

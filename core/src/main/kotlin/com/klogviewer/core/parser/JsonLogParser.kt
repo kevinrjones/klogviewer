@@ -31,16 +31,16 @@ class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParse
             val canonicalFields = element.toCanonicalFields()
 
             val timestampRaw = element[mapping.timestampKey].nonNullOrNull()?.toValueString()
-                ?: canonicalFields[CANONICAL_TIMESTAMP]?.asDisplayString()
+                ?: canonicalFields[CanonicalFieldAliases.CANONICAL_TIMESTAMP]?.asDisplayString()
                 ?: ""
             val levelRaw = element[mapping.levelKey].nonNullOrNull()?.toValueString()
-                ?: canonicalFields[CANONICAL_LEVEL]?.asDisplayString()
+                ?: canonicalFields[CanonicalFieldAliases.CANONICAL_LEVEL]?.asDisplayString()
             val contentElement = element[mapping.contentKey].nonNullOrNull()
 
             val content = when (contentElement) {
                 is JsonPrimitive -> contentElement.content
                 is JsonObject, is JsonArray -> contentElement.toString()
-                null -> canonicalFields[CANONICAL_MESSAGE]?.asDisplayString().orEmpty()
+                null -> canonicalFields[CanonicalFieldAliases.CANONICAL_MESSAGE]?.asDisplayString().orEmpty()
             }
 
             val mappedLevel = mapping.levelMapper.map(levelRaw)
@@ -115,13 +115,41 @@ class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParse
 
     private fun JsonObject.toCanonicalFields(): Map<String, StructuredValue> {
         return linkedMapOf<String, StructuredValue>().apply {
-            putCanonicalValue(this@toCanonicalFields, CANONICAL_TIMESTAMP, TIMESTAMP_ALIASES)
-            putCanonicalValue(this@toCanonicalFields, CANONICAL_LEVEL, LEVEL_ALIASES)
-            putCanonicalValue(this@toCanonicalFields, CANONICAL_MESSAGE, messageAliasesInPrecedenceOrder)
-            putCanonicalValue(this@toCanonicalFields, CANONICAL_LOGGER, LOGGER_ALIASES)
-            putCanonicalValue(this@toCanonicalFields, CANONICAL_EXCEPTION, EXCEPTION_ALIASES)
-            putCanonicalValue(this@toCanonicalFields, CANONICAL_TRACE_ID, TRACE_ID_ALIASES)
-            putCanonicalValue(this@toCanonicalFields, CANONICAL_SPAN_ID, SPAN_ID_ALIASES)
+            putCanonicalValue(
+                this@toCanonicalFields,
+                CanonicalFieldAliases.CANONICAL_TIMESTAMP,
+                CanonicalFieldAliases.TIMESTAMP_ALIASES_IN_PRECEDENCE_ORDER
+            )
+            putCanonicalValue(
+                this@toCanonicalFields,
+                CanonicalFieldAliases.CANONICAL_LEVEL,
+                CanonicalFieldAliases.LEVEL_ALIASES_IN_PRECEDENCE_ORDER
+            )
+            putCanonicalValue(
+                this@toCanonicalFields,
+                CanonicalFieldAliases.CANONICAL_MESSAGE,
+                CanonicalFieldAliases.MESSAGE_ALIASES_IN_PRECEDENCE_ORDER
+            )
+            putCanonicalValue(
+                this@toCanonicalFields,
+                CanonicalFieldAliases.CANONICAL_LOGGER,
+                CanonicalFieldAliases.LOGGER_ALIASES_IN_PRECEDENCE_ORDER
+            )
+            putCanonicalValue(
+                this@toCanonicalFields,
+                CanonicalFieldAliases.CANONICAL_EXCEPTION,
+                CanonicalFieldAliases.EXCEPTION_ALIASES_IN_PRECEDENCE_ORDER
+            )
+            putCanonicalValue(
+                this@toCanonicalFields,
+                CanonicalFieldAliases.CANONICAL_TRACE_ID,
+                CanonicalFieldAliases.TRACE_ID_ALIASES_IN_PRECEDENCE_ORDER
+            )
+            putCanonicalValue(
+                this@toCanonicalFields,
+                CanonicalFieldAliases.CANONICAL_SPAN_ID,
+                CanonicalFieldAliases.SPAN_ID_ALIASES_IN_PRECEDENCE_ORDER
+            )
         }
     }
 
@@ -141,21 +169,4 @@ class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParse
             .firstOrNull()
     }
 
-    companion object {
-        private const val CANONICAL_TIMESTAMP = "timestamp"
-        private const val CANONICAL_LEVEL = "level"
-        private const val CANONICAL_MESSAGE = "message"
-        private const val CANONICAL_LOGGER = "logger"
-        private const val CANONICAL_EXCEPTION = "exception"
-        private const val CANONICAL_TRACE_ID = "trace.id"
-        private const val CANONICAL_SPAN_ID = "span.id"
-
-        private val TIMESTAMP_ALIASES = listOf("timestamp", "@timestamp", "time", "ts", "@t", "Timestamp")
-        private val LEVEL_ALIASES = listOf("level", "severity", "lvl", "@l", "LogLevel", "Level")
-        private val LOGGER_ALIASES = listOf("logger", "logger_name", "SourceContext", "Category", "CategoryName")
-        private val EXCEPTION_ALIASES = listOf("exception", "error", "stackTrace", "Exception", "@x")
-        private val TRACE_ID_ALIASES = listOf("traceId", "TraceId", "@tr")
-        private val SPAN_ID_ALIASES = listOf("spanId", "SpanId", "@sp")
-        private val messageAliasesInPrecedenceOrder = listOf("message", "msg", "body", "@m", "Message", "@mt")
-    }
 }

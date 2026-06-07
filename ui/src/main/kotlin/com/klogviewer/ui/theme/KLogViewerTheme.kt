@@ -23,6 +23,7 @@ private fun uiTextStyle(weight: FontWeight = FontWeight.Normal): TextStyle {
 }
 
 data class LogLevelColors(
+    val trace: Color,
     val debug: Color,
     val info: Color,
     val warn: Color,
@@ -37,7 +38,8 @@ data class CustomColors(
 
 val LocalLogLevelColors = staticCompositionLocalOf {
     LogLevelColors(
-        debug = Color.Gray,
+        trace = Color.LightGray,
+        debug = Color.DarkGray,
         info = Color.Blue,
         warn = Color.Yellow,
         error = Color.Red,
@@ -83,6 +85,7 @@ fun KLogViewerTheme(
 
     val logLevelColors = if (darkTheme) {
         LogLevelColors(
+            trace = KLogViewerColors.DarkTrace,
             debug = KLogViewerColors.DarkDebug,
             info = KLogViewerColors.DarkInfo,
             warn = KLogViewerColors.DarkWarn,
@@ -92,6 +95,7 @@ fun KLogViewerTheme(
         )
     } else {
         LogLevelColors(
+            trace = KLogViewerColors.LightTrace,
             debug = KLogViewerColors.LightDebug,
             info = KLogViewerColors.LightInfo,
             warn = KLogViewerColors.LightWarn,

@@ -16,15 +16,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.klogviewer.domain.model.LevelFilterKey
 @Composable
 fun Sidebar(
     isExpanded: Boolean,
     showLevels: Boolean,
-    levelFilters: Set<String>,
-    availableLevels: List<String>,
-    onToggleLevel: (String) -> Unit,
+    levelFilters: Set<LevelFilterKey>,
+    availableLevels: List<LevelFilterKey>,
+    onToggleLevel: (LevelFilterKey) -> Unit,
     onToggleAllLevels: () -> Unit,
-    levelCounts: Map<String, Int> = emptyMap(),
+    levelCounts: Map<LevelFilterKey, Int> = emptyMap(),
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -92,7 +93,7 @@ fun Sidebar(
 
                     availableLevels.forEach { level ->
                         LogLevelToggle(
-                            label = level.lowercase().replaceFirstChar { it.uppercase() },
+                            label = level.value.lowercase().replaceFirstChar { it.uppercase() },
                             isEnabled = levelFilters.contains(level),
                             count = levelCounts[level] ?: 0,
                             onToggle = { onToggleLevel(level) }
