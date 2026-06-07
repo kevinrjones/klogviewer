@@ -634,6 +634,7 @@ Message priority when both template and rendered variants exist:
 - [ ] Implement canonical alias fan-out behavior (for example `trace.id` -> `TraceId`, `traceId`, `@tr`).
 - [ ] Add array any-match semantics and index-addressed semantics (`items[0].id`).
 - [ ] Preserve backward compatibility for existing free-text and `@field:key=value` queries.
+- [ ] Keep Sprint 13 query-builder/autocomplete/history/persistence work layered on this filtering engine without introducing competing semantics.
 
 ### 12.5 UI details and log list integration
 

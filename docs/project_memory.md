@@ -35,6 +35,7 @@
 - Sprint 12 structured-data epic is now split into five incremental implementation task documents (`12A`–`12E`) covering foundation, filtering, inspector UI, ecosystem compatibility, and performance/polish delivery slices.
 - Sprint 12A.6 completed: JSON ingestion hardening now tolerates mixed-validity records, parser auto-detection emits structured JSON confidence metrics, parser override authority is preserved, and low-confidence JSON-like samples fall back deterministically to existing Template/Simple selection rules.
 - Thermo-nuclear maintainability decomposition completed for level-filter and JSON detection paths: typed level-filter contract + centralized level policy, shared canonical alias catalog, and extracted JSON confidence scorer with orchestrator-focused probe flow.
+- Sprint 12B/Sprint 13 planning overlap was resolved by keeping Sprint 12B as structured-filtering semantic owner and reframing Sprint 13 as a dependent power-user UX/workflow/persistence layer.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -57,6 +58,7 @@
 - Confirmed Sprint 12 structured payload architecture as `typed tree + flattened path index`, with canonical-field normalization preserved alongside raw field namespaces.
 - Added deterministic JSON detection-confidence policy (`parse success`, `canonical key hits`, `malformed ratio`, `low-sample penalty`) with explicit structured probe output while preserving parser override precedence and fallback ordering.
 - Standardized level-filter behavior ownership in `LevelFilterPolicy` with `LevelFilterKey` as runtime contract and isolated raw-string normalization to persistence/IO boundaries.
+- Kept Sprint 12B and Sprint 13 separate: 12B owns filtering semantics; Sprint 13 consumes 12B semantics for query UX/autocomplete/history/presets/context actions/workspace persistence.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - JSON confidence improvements are intentionally scoped to probing/hardening; broader canonical normalization remains deferred to Sprint `12A.7`.
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
@@ -3536,3 +3538,22 @@ For each sprint/task
 **Test coverage areas**
 - `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
 - `./gradlew :core:test --tests com.klogviewer.core.parser.JsonConfidenceScorerTest --tests com.klogviewer.core.parser.HeuristicProbeTest --tests com.klogviewer.core.parser.JsonLogParserTest :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 12B / Sprint 13 Scope Boundary Clarification
+**Title**: Clarify Sprint 12B semantics ownership and Sprint 13 UX dependency
+**Date/time completed**: 2026-06-07 09:09
+**What was shipped**
+- Updated `docs/sprints/sprint-13-power-user-tools.md` to reframe Sprint 13 as `Power User Workflows, Query UX & Workspace Persistence` layered on Sprint 12B semantics.
+- Added explicit Sprint 13 dependency and non-duplication boundary wording in `docs/tasks/TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md`.
+- Added `docs/tasks/TASKS-SPRINT-13-POWER-USER-TOOLS.md` with implementation-ready goal/scope/dependencies/workstreams/tasks/quality gates/acceptance criteria focused on UX workflow and persistence.
+- Added a light alignment note in `docs/sprints/sprint-12-structured-data.md` to keep Sprint 13 layered on the 12B filtering engine.
+**Key decisions**
+- Keep Sprint 12B and Sprint 13 as separate deliveries rather than merging.
+- Keep Sprint 12B as the canonical owner of structured filtering grammar and semantics.
+- Scope Sprint 13 to query UX, autocomplete, history, saved presets, context actions, workspace `.lvp` persistence, and external-tool integration entry points.
+- Make Sprint 13 explicitly dependent on Sprint 12B semantics and prohibit a competing query language.
+**Gotchas**
+- Existing historical sprint-number references in older planning docs are inconsistent; this update only clarified current ownership/dependency boundaries.
+- This was a documentation-only change set with no Kotlin/Compose/runtime implementation updates.
+**Test coverage areas**
+- Documentation QA only: verified Sprint 12B and Sprint 13 no longer define competing grammar ownership and that Sprint 13 explicitly depends on 12B semantics.
