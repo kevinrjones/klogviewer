@@ -179,6 +179,104 @@ class LogFilterServiceStructuredQueryTest {
         expectThat(filter(logs, "field:`items.id=1")).hasSize(0)
     }
 
+    @Test
+    fun `thread name field predicates support equals variants hyphen values case variants eq alias and generated queries`() = runTest {
+        val logs = listOf(
+            threadNameEntry(),
+            threadNameNonMatchEntry()
+        )
+
+        expectThat(filter(logs, "field:Thread_name=\"eventLoopGroupProxy-4-4\"")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, "field:Thread_name=eventLoopGroupProxy-4-4")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, "field:Thread_name = \"eventLoopGroupProxy-4-4\"")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, "field:Thread_name = eventLoopGroupProxy-4-4")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, "field:thread_name=\"eventLoopGroupProxy-4-4\"")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, "field:thread_name = eventLoopGroupProxy-4-4")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, "field:Thread_name eq \"eventLoopGroupProxy-4-4\"")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, "field:thread_name eq eventLoopGroupProxy-4-4")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, "@field:Thread_name=eventLoopGroupProxy-4-4")).containsExactly(
+            "structured-thread-match"
+        )
+        expectThat(filter(logs, StructuredInspectorFilterFormatter.fieldPredicate("Thread_name"))).containsExactly(
+            "structured-thread-match",
+            "structured-thread-non-match"
+        )
+        expectThat(
+            filter(
+                logs,
+                StructuredInspectorFilterFormatter.valuePredicate(
+                    path = "Thread_name",
+                    value = StructuredValue.StringValue("eventLoopGroupProxy-4-4")
+                )
+            )
+        ).containsExactly("structured-thread-match")
+
+        expectThat(filter(logs, "field:Thread_name=\"eventLoopGroupProxy-9-9\"")).hasSize(0)
+    }
+
+    @Test
+    fun `thread name field predicates support escaped quoted values`() = runTest {
+        val logs = listOf(
+            threadNameEntry(value = "event\"Loop\\Proxy-4-4"),
+            threadNameNonMatchEntry()
+        )
+
+        expectThat(filter(logs, "field:Thread_name=\"event\\\"Loop\\\\Proxy-4-4\"")).containsExactly(
+            "structured-thread-match"
+        )
+    }
+
+    @Test
+    fun `field predicates support case variants for content timestamp and at timestamp`() = runTest {
+        val logs = listOf(
+            timestampCaseEntry(),
+            timestampCaseNonMatchEntry()
+        )
+
+        expectThat(filter(logs, "field:content contains alpha")).containsExactly("timestamp-case-match")
+        expectThat(filter(logs, "field:Content contains alpha")).containsExactly("timestamp-case-match")
+        expectThat(
+            filter(
+                logs,
+                "field:timestamp=\"2026-06-01T11:05:17.942848+01:00\""
+            )
+        ).containsExactly("timestamp-case-match")
+        expectThat(
+            filter(
+                logs,
+                "field:Timestamp=\"2026-06-01T11:05:17.942848+01:00\""
+            )
+        ).containsExactly("timestamp-case-match")
+        expectThat(
+            filter(
+                logs,
+                "field:@timestamp=\"2026-06-01T11:05:17.942848+01:00\""
+            )
+        ).containsExactly("timestamp-case-match")
+        expectThat(
+            filter(
+                logs,
+                "field:@Timestamp=\"2026-06-01T11:05:17.942848+01:00\""
+            )
+        ).containsExactly("timestamp-case-match")
+    }
+
     private suspend fun filter(logs: List<LogEntry>, query: String): List<String> {
         val filtered = LogFilterService.filter(
             LogWindow(
@@ -352,6 +450,58 @@ class LogFilterServiceStructuredQueryTest {
                         )
                     )
                 )
+            )
+        )
+    }
+
+    private fun threadNameEntry(value: String = "eventLoopGroupProxy-4-4"): LogEntry {
+        return baseEntry(
+            content = "structured-thread-match",
+            fields = mapOf("Thread_name" to value),
+            structuredData = StructuredLogData(
+                root = StructuredValue.ObjectValue(
+                    fields = mapOf(
+                        "Thread_name" to StructuredValue.StringValue(value),
+                        "message" to StructuredValue.StringValue("started")
+                    )
+                )
+            )
+        )
+    }
+
+    private fun threadNameNonMatchEntry(): LogEntry {
+        return baseEntry(
+            content = "structured-thread-non-match",
+            fields = mapOf("Thread_name" to "eventLoopGroupProxy-1-1"),
+            structuredData = StructuredLogData(
+                root = StructuredValue.ObjectValue(
+                    fields = mapOf(
+                        "Thread_name" to StructuredValue.StringValue("eventLoopGroupProxy-1-1"),
+                        "message" to StructuredValue.StringValue("started")
+                    )
+                )
+            )
+        )
+    }
+
+    private fun timestampCaseEntry(): LogEntry {
+        return baseEntry(
+            content = "timestamp-case-match",
+            fields = mapOf(
+                "content" to "alpha event",
+                "timestamp" to "2026-06-01T11:05:17.942848+01:00",
+                "@timestamp" to "2026-06-01T11:05:17.942848+01:00"
+            )
+        )
+    }
+
+    private fun timestampCaseNonMatchEntry(): LogEntry {
+        return baseEntry(
+            content = "timestamp-case-non-match",
+            fields = mapOf(
+                "content" to "beta event",
+                "timestamp" to "2026-06-01T11:05:18.942848+01:00",
+                "@timestamp" to "2026-06-01T11:05:18.942848+01:00"
             )
         )
     }

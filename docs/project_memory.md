@@ -38,6 +38,7 @@
 - Sprint 12B/Sprint 13 planning overlap was resolved by keeping Sprint 12B as structured-filtering semantic owner and reframing Sprint 13 as a dependent power-user UX/workflow/persistence layer.
 - Sprint 12B walking-skeleton structured filter UI is now implemented: a discoverable structured-entry dialog in `FilterBar` generates canonical text predicates through the existing filter pipeline with dedicated UI/integration coverage.
 - Sprint 12B structured filtering semantics are now closed out: escaped literal path segments, explicit raw-path precision, array any-match + indexed lookups, and user-facing syntax docs are implemented and verified.
+- Sprint 12C structured-entry inspector UI is now implemented with structured/raw detail views, expandable typed tree inspection, node-level copy/filter actions, row-level structured indicators, and large-payload guardrails.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -63,6 +64,7 @@
 - Kept Sprint 12B and Sprint 13 separate: 12B owns filtering semantics; Sprint 13 consumes 12B semantics for query UX/autocomplete/history/presets/context actions/workspace persistence.
 - Kept structured filter UI in 12B representation-free: the UI emits grammar-compatible text queries only and reuses `onAddQuery`/existing intent-handler/filter-service flow.
 - Kept explicit `field:` predicates path-precise while preserving canonical alias fan-out for non-explicit canonical query forms.
+- Kept Sprint 12C filter handoff representation-free by emitting existing 12B-compatible text predicates (`has:path` and `path:literal`) via the current query-input pipeline.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - JSON confidence improvements are intentionally scoped to probing/hardening; broader canonical normalization remains deferred to Sprint `12A.7`.
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
@@ -3536,6 +3538,7 @@ For each sprint/task
 **Key decisions**
 - Kept user-visible behavior stable by preserving existing level-filter semantics and parser confidence thresholds while moving ownership to dedicated policy collaborators.
 - Kept parser alias precedence deterministic by centralizing catalog values without changing existing precedence order for parser and probe consumers.
+- Sprint 12C guardrails intentionally prioritize deterministic bounded rendering (limited child expansion + scalar/raw truncation controls) over full virtualization, with deeper performance polish deferred to 12E.
 **Gotchas**
 - `LevelFilterPolicy` preserves explicit empty filter selections; preference restore fallback to defaults is only applied for invalid non-empty legacy raw values.
 - `CanonicalFieldAliases` intentionally exposes separate content/message precedence lists to preserve existing parser extraction vs probe mapping behavior.
@@ -3601,3 +3604,61 @@ For each sprint/task
 - `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LogQueryParserTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest --tests com.klogviewer.ui.test.KLogViewerUiTest --tests com.klogviewer.ui.components.FilterBarStructuredFilterTest --tests com.klogviewer.ui.components.FilterBarTimeFilterControlsTest` (`BUILD SUCCESSFUL`).
 - `./gradlew detekt` (`BUILD FAILED` due `:ui` detekt findings, including pre-existing complexity/style debt and strict rule violations on parser/filter files).
 - `./gradlew check` (`BUILD FAILED` due the same `:ui` detekt findings).
+
+## Task: Sprint 12C Structured Entry Inspector UI
+**Title**: Deliver structured detail inspector, row indicators, and field-action filter handoff
+**Date/time completed**: 2026-06-08 09:56
+**What was shipped**
+- Implemented structured detail-pane inspection in `ui/src/main/kotlin/com/klogviewer/ui/components/LogEntryDetails.kt` with typed object/array/scalar rendering, deterministic ordering, expand/collapse interaction, and clear type cues.
+- Added detail-pane `Structured` / `Raw` mode support with per-window inspector state (`detailViewMode`, expanded-node/scalar paths, raw show-more state) via `KLogViewerState`, `KLogViewerIntent`, `EntryIntentHandler`, and `KLogViewerScreen` wiring.
+- Added large-payload safety guardrails: bounded child rendering per expanded node, scalar preview truncation with explicit show-more control, and raw payload truncation/show-more behavior.
+- Added node actions (`Copy path`, `Copy value`, `Filter field`, `Filter value`) with 12B-compatible query generation via `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/StructuredInspectorFilterFormatter.kt` and existing `AddFilterQuery` flow.
+- Added structured-row visual marker in `ui/src/main/kotlin/com/klogviewer/ui/components/LogList.kt` with tooltip/test tags while preserving source badge/severity/readability behavior in mixed structured/plain files.
+- Updated sprint/task tracking docs in `docs/tasks/TASKS-SPRINT-12C-STRUCTURED-DATA-INSPECTOR.md` and `docs/sprints/sprint-12-structured-data.md` (including partial note for bounded discovered-field column integration deferral).
+**Key decisions**
+- Kept structured inspector interaction state window-scoped and selection-sensitive to avoid expensive rebuilds when toggling views or expanding/collapsing nodes for the same selected entry.
+- Reused typed domain `StructuredValue` + escaped-path conventions for deterministic path/action behavior (`user.id`, `items[0].id`) instead of introducing a parallel path model.
+- Preserved plain-entry details rendering path to avoid regressions for non-structured logs.
+**Gotchas**
+- `./gradlew :ui:detekt` and `./gradlew check` still fail due broad pre-existing `:ui` static-analysis debt outside this 12C slice (for example `FilterBar` and query-parser complexity/style rules).
+- Combined sprint-epic checklist line `structured-row visual indicator and bounded discovered-field column integration` remains partially open because discovered-field column bounds are out of 12C scope.
+**Test coverage areas**
+- `./gradlew :ui:test --tests "com.klogviewer.ui.components.LogEntryDetailsInspectorTest" --tests "com.klogviewer.ui.test.LogListSourceBadgeTooltipTest" --tests "com.klogviewer.ui.viewmodel.StructuredInspectorFilterFormatterTest" --tests "com.klogviewer.ui.viewmodel.EntryIntentHandlerTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:compileKotlin :ui:compileTestKotlin` (`BUILD SUCCESSFUL` after fixes).
+- `./gradlew :ui:detekt` (`BUILD FAILED` due existing `:ui` detekt debt outside this slice).
+- `./gradlew check` (`BUILD FAILED` due the same existing `:ui` detekt findings).
+
+## Task: Sprint 12 Structured Filtering Regression Fix
+**Title**: Restore structured/manual/generated filtering for `Thread_name` and hyphenated values
+**Date/time completed**: 2026-06-08 12:54
+**What was shipped**
+- Fixed structured predicate parsing in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogQueryPredicateParser.kt` by adding `eq` alias support for equality and preserving existing symbolic operator behavior.
+- Fixed structured inspector query generation in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/StructuredInspectorFilterFormatter.kt` so actions emit explicit grammar-compatible forms (`field:path exists`, `field:path=<literal>`).
+- Fixed field-path matching in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogFilterService.kt` to support case-variant fallback for explicit snake_case paths (for example `thread_name` resolving `Thread_name`) while preserving explicit precision behavior for non-snake-case paths.
+- Added/extended regression coverage in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceStructuredQueryTest.kt`, `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogQueryParserTest.kt`, `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/StructuredInspectorFilterFormatterTest.kt`, and `ui/src/test/kotlin/com/klogviewer/ui/test/KLogViewerUiTest.kt` for manual typed filters, hyphenated values, quoted/escaped values, case variants, `@field` compatibility, tune-generated queries, and negative matches.
+**Key decisions**
+- Added `eq` as a parser alias for `=` to match user expectations while keeping documented symbolic operator syntax unchanged.
+- Kept malformed structured-query safety behavior (`TextQuery` fallback) intact; fixes focus on making valid structured syntax parse/match correctly.
+- Constrained case-variant fallback to underscore paths to satisfy `Thread_name` expectations without breaking explicit raw-path precision tests.
+**Gotchas**
+- Full `./gradlew check` still fails because of pre-existing detekt debt in `:ui`; this regression slice did not attempt global style cleanup.
+- The full-screen inspector-click integration path remained brittle in `KLogViewerUiTest`; stable coverage is split between deterministic UI integration for manual/tune chip application and inspector-action component tests.
+**Test coverage areas**
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest" --tests "com.klogviewer.ui.viewmodel.LogQueryParserTest" --tests "com.klogviewer.ui.viewmodel.StructuredInspectorFilterFormatterTest" --tests "com.klogviewer.ui.test.KLogViewerUiTest" --tests "com.klogviewer.ui.components.LogEntryDetailsInspectorTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test && ./gradlew check` (`:ui:test` ran successfully; `check` failed due existing detekt findings in `:ui`, reported as 56 issues in this run).
+
+## Task: Structured filter case-insensitive column variants
+**Title**: Support `Content`/`Timestamp`/`@Timestamp` case-variant field queries
+**Date/time completed**: 2026-06-08 14:22
+**What was shipped**
+- Updated `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogFilterService.kt` case-variant fallback gating so explicit field predicates can resolve case variants for non-camel keys (including `content`, `timestamp`, and `@timestamp`) in addition to existing underscore-path support.
+- Added regression coverage in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceStructuredQueryTest.kt` for `field:content`/`field:Content`, `field:timestamp`/`field:Timestamp`, and `field:@timestamp`/`field:@Timestamp` using quoted timestamp literals.
+**Key decisions**
+- Preserved exact-match-first semantics and only applied case fallback when no direct key match exists.
+- Kept explicit raw-path precision behavior for camel-case disambiguation scenarios by restricting broad fallback for paths with internal uppercase transitions.
+**Gotchas**
+- This slice addresses reported column-case regressions without broad query-language changes; malformed-structured-query fallback behavior remains unchanged.
+**Test coverage areas**
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest.field predicates support case variants for content timestamp and at timestamp"` (`BUILD SUCCESSFUL`, after first reproducing the failure pre-fix).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest" --tests "com.klogviewer.ui.viewmodel.LogQueryParserTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest.givenStructuredLogs_whenManualStructuredFilterTyped_thenChipIsCreatedAndRowsAreFiltered" --tests "com.klogviewer.ui.test.KLogViewerUiTest.givenStructuredLogs_whenTuneFilterApplied_thenGeneratedChipFiltersRows"` (`BUILD SUCCESSFUL`).

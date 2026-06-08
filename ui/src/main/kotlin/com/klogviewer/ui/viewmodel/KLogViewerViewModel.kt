@@ -106,7 +106,8 @@ class KLogViewerViewModel(
     
     private val entryIntentHandler = EntryIntentHandler(
         state = _state,
-        onCopySelectedToClipboard = { copySelectedToClipboard() }
+        onCopySelectedToClipboard = { copySelectedToClipboard() },
+        onCopyStructuredText = { copyTextToClipboard(it) }
     )
     
     private val dialogIntentHandler = DialogIntentHandler(
@@ -1161,9 +1162,20 @@ class KLogViewerViewModel(
         val textToCopy = indices.mapNotNull { activeWindow.filteredLogs.getOrNull(it) }
             .joinToString("\n") { it.content.value }
 
+        copyTextToClipboard(textToCopy, successMessage = "Copied ${indices.size} lines to clipboard")
+    }
+
+    private fun copyTextToClipboard(
+        text: String,
+        successMessage: String = "Copied text to clipboard"
+    ) {
+        if (text.isEmpty()) {
+            return
+        }
+
         try {
-            clipboard.copy(textToCopy)
-            logger.info { "Copied ${indices.size} lines to clipboard" }
+            clipboard.copy(text)
+            logger.info { successMessage }
         } catch (e: Exception) {
             logger.error(e) { "Failed to copy to clipboard" }
         }

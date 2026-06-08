@@ -65,6 +65,11 @@ sealed interface KLogViewerIntent {
     
     data class SelectEntry(val entry: com.klogviewer.domain.model.LogEntry?) : EntryIntent
     data class ToggleEntrySelection(val index: Int, val isShiftPressed: Boolean = false, val isMetaPressed: Boolean = false) : EntryIntent
+    data class SetEntryDetailViewMode(val mode: LogEntryDetailViewMode) : EntryIntent
+    data class ToggleStructuredPathExpansion(val path: String) : EntryIntent
+    data class ToggleStructuredScalarExpansion(val path: String) : EntryIntent
+    data class ToggleRawPayloadExpansion(val expanded: Boolean) : EntryIntent
+    data class CopyStructuredText(val text: String) : EntryIntent
     data object CopySelected : EntryIntent
     
     // Dialogs
