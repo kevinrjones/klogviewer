@@ -1338,3 +1338,32 @@ Recap from the previous entry (`2026-06-05 21:50`) up to now:
 - `./gradlew :core:test --tests com.klogviewer.core.parser.JsonLogParserTest --tests com.klogviewer.core.parser.HeuristicProbeTest` → passed (`BUILD SUCCESSFUL`).
 - `./gradlew :core:test --tests com.klogviewer.core.parser.JsonConfidenceScorerTest --tests com.klogviewer.core.parser.HeuristicProbeTest --tests com.klogviewer.core.parser.JsonLogParserTest :ui:test --tests com.klogviewer.ui.viewmodel.LevelFilterPolicyTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` → passed (`BUILD SUCCESSFUL`).
 
+
+# 2026-06-08
+
+## 06:41
+
+### Sprint 12B Structured Filtering Completion, Documentation, and Quality Review Recap
+
+Recap from the previous entry (`2026-06-06 20:03`) up to now:
+
+#### Changes:
+- **Commit `0f9dbc5` (2026-06-07 09:03)**: Added `TRACE` level support with typed level-filter integration and color handling.
+- **Commit `2e0a22a` (2026-06-07 09:09)**: Merged `feat/struct-data` updates.
+- **Commit `1a642bf` (2026-06-07 09:46)**: Added Sprint 13 power-user task breakdown documentation.
+- **Commit `9a037ab` (2026-06-07 09:46)**: Merged `main` into `feat/struct-data`.
+- **Commit `574a5be` (2026-06-07 13:50)**: Implemented the walking-skeleton structured filter UI in `FilterBar`, with existing query-pipeline wiring and UI coverage.
+- **Commit `99acf42` (2026-06-07 17:23)**: Added `LogQueryParser` and structured-query parser/evaluator integration.
+- **Current working session (uncommitted)**:
+    - Completed remaining Sprint `12B` unchecked filtering behavior (escaped literal path segments, explicit raw-path precision, array any-match semantics, deterministic indexed paths) with parser/evaluator updates and expanded unit coverage.
+    - Updated Sprint `12B` docs and progress markers (`docs/tasks/TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md`, `docs/sprints/sprint-12-structured-data.md`, `docs/STRUCTURED-DATA-MODEL.md`) and captured sprint/task outcomes in `docs/project_memory.md`.
+    - Added `docs/USER-GUIDE.md` with user-facing filtering syntax/behavior examples (plain text, structured predicates, aliases, escaping, arrays, indexing, compatibility, and safety notes).
+    - Ran the thermo-nuclear code-quality review and captured maintainability findings highlighting parser/evaluator/path-parser/UI complexity hotspots for follow-up refactoring.
+
+#### Verification:
+- `./gradlew :ui:test --tests com.klogviewer.ui.components.FilterBarStructuredFilterTest --tests com.klogviewer.ui.components.FilterBarTimeFilterControlsTest --tests com.klogviewer.ui.test.KLogViewerUiTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LogQueryParserTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest --tests com.klogviewer.ui.test.KLogViewerUiTest --tests com.klogviewer.ui.components.FilterBarStructuredFilterTest --tests com.klogviewer.ui.components.FilterBarTimeFilterControlsTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LogQueryParserTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest --tests com.klogviewer.ui.viewmodel.LogFilterServiceTimeRangeTest --tests com.klogviewer.ui.viewmodel.DashboardIntentTest --tests com.klogviewer.ui.test.KLogViewerUiTest --tests com.klogviewer.ui.components.FilterBarStructuredFilterTest --tests com.klogviewer.ui.components.FilterBarTimeFilterControlsTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` and `./gradlew check` were executed and failed on Detekt findings (including pre-existing and broader style/complexity debt); failures were documented in sprint/task notes.
+
