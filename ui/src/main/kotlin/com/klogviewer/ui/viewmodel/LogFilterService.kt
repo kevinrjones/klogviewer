@@ -7,9 +7,11 @@ import kotlinx.coroutines.withContext
 import java.time.Instant
 
 object LogFilterService {
-    private const val DASHBOARD_FIELD_QUERY_PREFIX = "@field:"
     private const val MISSING_BUCKET_VALUE = "(missing)"
     private const val TIME_FILTER_TOLERANCE_SECONDS = 1L
+    private val NUMERIC_LITERAL_PATTERN = Regex("^-?\\d+(\\.\\d+)?$")
+    private val queryPathResolver: QueryPathResolver = CanonicalQueryPathResolver()
+    private val fieldPredicateEvaluator = FieldPredicateEvaluator()
 
     suspend fun filter(window: LogWindow): List<LogEntry> = withContext(Dispatchers.Default) {
         val timeRange = TimeRangeFilterSupport.resolveRange(window)
@@ -36,21 +38,136 @@ object LogFilterService {
     }
 
     private fun matchesQuery(entry: LogEntry, query: String): Boolean {
-        if (query.startsWith(DASHBOARD_FIELD_QUERY_PREFIX)) {
-            val payload = query.removePrefix(DASHBOARD_FIELD_QUERY_PREFIX)
-            val delimiterIndex = payload.indexOf('=')
-            if (delimiterIndex <= 0 || delimiterIndex == payload.lastIndex) {
-                return false
+        return matchesExpression(
+            entry = entry,
+            expression = LogQueryParser.parse(query)
+        )
+    }
+
+    private fun matchesExpression(
+        entry: LogEntry,
+        expression: LogQueryExpression
+    ): Boolean {
+        return when (expression) {
+            is LogQueryExpression.TextQuery -> {
+                matchesLegacyTextQuery(entry = entry, query = expression.text)
             }
 
-            val key = payload.substring(0, delimiterIndex)
-            val value = payload.substring(delimiterIndex + 1)
-            val fieldValue = entry.fields[key] ?: MISSING_BUCKET_VALUE
-            return fieldValue.contains(value, ignoreCase = true)
-        }
+            is LogQueryExpression.LegacyDashboardFieldQuery -> {
+                matchesLegacyDashboardFieldQuery(entry = entry, query = expression)
+            }
 
+            is LogQueryExpression.FieldPredicate -> {
+                matchesFieldPredicate(entry = entry, predicate = expression)
+            }
+
+            is LogQueryExpression.BooleanExpression -> {
+                val leftMatches = matchesExpression(entry = entry, expression = expression.left)
+                val rightMatches = matchesExpression(entry = entry, expression = expression.right)
+                when (expression.operator) {
+                    BooleanOperator.AND -> leftMatches && rightMatches
+                    BooleanOperator.OR -> leftMatches || rightMatches
+                }
+            }
+        }
+    }
+
+    private fun matchesLegacyTextQuery(entry: LogEntry, query: String): Boolean {
         return entry.content.value.contains(query, ignoreCase = true) ||
             entry.timestamp.value.contains(query, ignoreCase = true)
+    }
+
+    private fun matchesLegacyDashboardFieldQuery(
+        entry: LogEntry,
+        query: LogQueryExpression.LegacyDashboardFieldQuery
+    ): Boolean {
+        val fieldValue = entry.fields[query.field] ?: MISSING_BUCKET_VALUE
+        return fieldValue.contains(query.value, ignoreCase = true)
+    }
+
+    private fun matchesFieldPredicate(
+        entry: LogEntry,
+        predicate: LogQueryExpression.FieldPredicate
+    ): Boolean {
+        val fieldValues = resolveFieldValues(
+            entry = entry,
+            path = predicate.path,
+            isExplicitFieldPath = predicate.explicitFieldPrefix
+        )
+        val fieldExists = pathExists(
+            entry = entry,
+            path = predicate.path,
+            isExplicitFieldPath = predicate.explicitFieldPrefix
+        )
+        return fieldPredicateEvaluator.matches(
+            predicate = predicate,
+            fieldValues = fieldValues,
+            fieldExists = fieldExists
+        )
+    }
+
+    private fun resolveFieldValues(
+        entry: LogEntry,
+        path: String,
+        isExplicitFieldPath: Boolean
+    ): List<ResolvedFieldValue> {
+        val resolvedValues = mutableListOf<ResolvedFieldValue>()
+        val candidatePaths = candidatePaths(
+            path = path,
+            isExplicitFieldPath = isExplicitFieldPath
+        )
+        val structuredPathIndex = entry.structuredData?.flatPathIndex.orEmpty()
+        val compatibilityFields = entry.compatibilityFields()
+
+        candidatePaths.forEach { candidatePath ->
+            structuredPathIndex[candidatePath]
+                .orEmpty()
+                .mapTo(resolvedValues) { structuredValue ->
+                    structuredValue.toResolvedFieldValue(numericLiteralPattern = NUMERIC_LITERAL_PATTERN)
+                }
+
+            compatibilityFields[candidatePath]
+                ?.let { value -> parseRawFieldValue(value, numericLiteralPattern = NUMERIC_LITERAL_PATTERN) }
+                ?.let { resolvedValues += it }
+        }
+
+        if (!isExplicitFieldPath && path.equals("message", ignoreCase = true)) {
+            resolvedValues += ResolvedFieldValue.StringValue(entry.content.value)
+        }
+        if (!isExplicitFieldPath && path.equals("level", ignoreCase = true)) {
+            resolvedValues += ResolvedFieldValue.StringValue(entry.resolvedLevelKey())
+        }
+
+        return resolvedValues.distinct()
+    }
+
+    private fun pathExists(
+        entry: LogEntry,
+        path: String,
+        isExplicitFieldPath: Boolean
+    ): Boolean {
+        val loweredPath = path.lowercase()
+        if (!isExplicitFieldPath && (loweredPath == "message" || loweredPath == "level")) {
+            return true
+        }
+
+        val candidatePaths = candidatePaths(
+            path = path,
+            isExplicitFieldPath = isExplicitFieldPath
+        )
+        val structuredPathIndex = entry.structuredData?.flatPathIndex.orEmpty()
+        val compatibilityFields = entry.compatibilityFields()
+
+        return candidatePaths.any { candidatePath ->
+            structuredPathIndex.containsKey(candidatePath) || compatibilityFields.containsKey(candidatePath)
+        }
+    }
+
+    private fun candidatePaths(path: String, isExplicitFieldPath: Boolean): List<String> {
+        return queryPathResolver.candidatePaths(
+            path = path,
+            isExplicitFieldPath = isExplicitFieldPath
+        )
     }
 
     private fun lowerBoundWithTolerance(bound: Instant): Instant {
@@ -62,4 +179,5 @@ object LogFilterService {
         return runCatching { bound.plusSeconds(TIME_FILTER_TOLERANCE_SECONDS) }
             .getOrElse { bound }
     }
+
 }

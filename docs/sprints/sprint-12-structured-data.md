@@ -609,35 +609,37 @@ Message priority when both template and rendered variants exist:
 
 ### 12.1 Domain model and compatibility projection
 
-- [ ] Introduce typed structured payload model (`StructuredValue`) and flattened path index contract in `:domain`.
-- [ ] Add canonical projection contract for `timestamp`, `level`, `message`, `logger`, `thread`, `exception`,
+- [x] Introduce typed structured payload model (`StructuredValue`) and flattened path index contract in `:domain`.
+- [x] Add canonical projection contract for `timestamp`, `level`, `message`, `logger`, `thread`, `exception`,
   `trace.id`, `span.id`, `correlation.id`.
-- [ ] Define compatibility projection back to `LogEntry.fields` for existing consumers during rollout.
+- [x] Define compatibility projection back to `LogEntry.fields` for existing consumers during rollout.
 
 ### 12.2 Parser and detection implementation
 
-- [ ] Extend JSON parser to preserve nested typed structures and populate canonical + raw projections.
+- [x] Extend JSON parser to preserve nested typed structures and populate canonical + raw projections.
 - [ ] Implement XML parser (best-effort tier) with safe fallback on malformed/unsupported records.
 - [ ] Upgrade logfmt handling to preserve raw pairs and normalize aliases.
-- [ ] Add confidence-based parser scoring in `HeuristicProbe` and deterministic fallback policy.
+- [x] Add confidence-based parser scoring in `HeuristicProbe` and deterministic fallback policy.
 
 ### 12.3 Normalization and alias mapping
 
 - [ ] Implement canonical alias resolver with JVM/.NET/container/cloud mappings.
 - [ ] Add conflict-resolution precedence rules and diagnostics metadata.
-- [ ] Add namespace-preservation rules for `Properties.*`, `attributes.*`, `resource.*`, `scope.*`, and wrappers.
+- [x] Add namespace-preservation rules for `Properties.*`, `attributes.*`, `resource.*`, `scope.*`, and wrappers.
 
 ### 12.4 Filtering engine enhancements
 
-- [ ] Implement structured filter grammar parser (`exact`, `contains`, `regex`, numeric compare, `exists`, `missing`,
+- [x] Implement structured filter grammar parser (`exact`, `contains`, `regex`, numeric compare, `exists`, `missing`,
   `null`).
-- [ ] Implement canonical alias fan-out behavior (for example `trace.id` -> `TraceId`, `traceId`, `@tr`).
-- [ ] Add array any-match semantics and index-addressed semantics (`items[0].id`).
-- [ ] Preserve backward compatibility for existing free-text and `@field:key=value` queries.
-- [ ] Keep Sprint 13 query-builder/autocomplete/history/persistence work layered on this filtering engine without introducing competing semantics.
+- [x] Implement canonical alias fan-out behavior (for example `trace.id` -> `TraceId`, `traceId`, `@tr`).
+- [x] Add array any-match semantics and index-addressed semantics (`items[0].id`).
+- [x] Preserve backward compatibility for existing free-text and `@field:key=value` queries.
+- [x] Add a minimal, discoverable structured field-entry UI in 12B (trigger near filter input + compact field/operator/value panel) that emits grammar-compatible text predicates through the existing filter query flow.
+- [x] Keep text query input canonical in 12B; defer full query-builder/autocomplete/history/persistence UX to Sprint 13 without introducing competing semantics.
 
 ### 12.5 UI details and log list integration
 
+- [x] Keep 12B structured entry intentionally minimal (`Apply`/`Cancel`, no autocomplete/discovery), focused on a walking skeleton users can discover.
 - [ ] Add structured detail tree component with expandable object/array nodes.
 - [ ] Add raw/structured toggle and value truncation safeguards.
 - [ ] Add field actions: copy path/value and “filter by this field/value”.
@@ -651,7 +653,7 @@ Message priority when both template and rendered variants exist:
 
 ### 12.7 Settings and persistence
 
-- [ ] Keep parser override behavior and `parserName` persistence unchanged.
+- [x] Keep parser override behavior and `parserName` persistence unchanged.
 - [ ] Add persistence model for future custom alias mappings and discovered column preferences.
 
 ### 12.8 Documentation and ADR alignment
@@ -670,19 +672,19 @@ Message priority when both template and rendered variants exist:
 
 ## 13. Acceptance Criteria
 
-- [ ] JSON structured logs are auto-detected and parsed with canonical + raw fields preserved.
+- [x] JSON structured logs are auto-detected and parsed with canonical + raw fields preserved.
 - [ ] XML records are handled per best-effort policy with graceful fallback for malformed input.
-- [ ] Common Logstash/Logback and Log4j2 fields normalize to canonical concepts.
-- [ ] Common Serilog fields (`@t`, `@mt`, `@m`, `@l`, `@x`, `@tr`, `@sp`) normalize correctly.
-- [ ] Common MEL JSON console fields (`Timestamp`, `LogLevel`, `Category`, `Message`, `OriginalFormat`, `Scopes`)
+- [x] Common Logstash/Logback and Log4j2 fields normalize to canonical concepts.
+- [x] Common Serilog fields (`@t`, `@mt`, `@m`, `@l`, `@x`, `@tr`, `@sp`) normalize correctly.
+- [x] Common MEL JSON console fields (`Timestamp`, `LogLevel`, `Category`, `Message`, `OriginalFormat`, `Scopes`)
   normalize correctly.
 - [ ] NLog/log4net JSON-style fields normalize where feasible while preserving raw namespaces.
 - [ ] Nested fields are inspectable in a structured tree and filterable via path syntax.
-- [ ] Users can filter by .NET-specific fields including `SourceContext`, `RequestPath`, `TraceId`, `Properties.UserId`.
+- [x] Users can filter by .NET-specific fields including `SourceContext`, `RequestPath`, `TraceId`, `Properties.UserId`.
 - [ ] Dashboard frequency/grouping works with structured/canonical paths and maintains `(missing)` behavior.
-- [ ] Mixed structured/plain-text sources remain usable with deterministic fallback behavior.
+- [x] Mixed structured/plain-text sources remain usable with deterministic fallback behavior.
 - [ ] Large structured payloads respect configured limits and do not freeze the UI.
-- [ ] Parser override from status bar remains functional and persisted.
+- [x] Parser override from status bar remains functional and persisted.
 
 ## 14. Test Plan
 

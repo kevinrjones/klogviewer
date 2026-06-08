@@ -13,7 +13,13 @@ object CanonicalFieldAliases {
     val LEVEL_ALIASES_IN_PRECEDENCE_ORDER = listOf("level", "severity", "lvl", "@l", "LogLevel", "Level")
     val MESSAGE_ALIASES_IN_PRECEDENCE_ORDER = listOf("message", "msg", "body", "@m", "Message", "@mt")
     val CONTENT_KEYS_IN_PRECEDENCE_ORDER = listOf("message", "msg", "content", "body", "@m", "@mt", "Message")
-    val LOGGER_ALIASES_IN_PRECEDENCE_ORDER = listOf("logger", "logger_name", "SourceContext", "Category", "CategoryName")
+    val LOGGER_ALIASES_IN_PRECEDENCE_ORDER = listOf(
+        "logger",
+        "logger_name",
+        "SourceContext",
+        "Category",
+        "CategoryName"
+    )
     val EXCEPTION_ALIASES_IN_PRECEDENCE_ORDER = listOf("exception", "error", "stackTrace", "Exception", "@x")
     val TRACE_ID_ALIASES_IN_PRECEDENCE_ORDER = listOf("traceId", "TraceId", "@tr")
     val SPAN_ID_ALIASES_IN_PRECEDENCE_ORDER = listOf("spanId", "SpanId", "@sp")
