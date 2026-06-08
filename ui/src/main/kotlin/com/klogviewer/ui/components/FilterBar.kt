@@ -33,6 +33,12 @@ private data class StructuredFilterOperator(
     val requiresValue: Boolean = true
 )
 
+private data class StructuredFilterDraftState(
+    val fieldPath: String = "",
+    val operatorId: String = STRUCTURED_FILTER_OPERATORS.first().id,
+    val value: String = ""
+)
+
 private val STRUCTURED_FILTER_OPERATORS = listOf(
     StructuredFilterOperator(id = "eq", token = "=", label = "Equals"),
     StructuredFilterOperator(id = "contains", token = "contains", label = "Contains"),
@@ -46,6 +52,26 @@ private val STRUCTURED_FILTER_OPERATORS = listOf(
 )
 
 private val NUMERIC_VALUE_PATTERN = Regex("^-?\\d+(\\.\\d+)?$")
+
+private fun StructuredFilterDraftState.selectedOperator(): StructuredFilterOperator {
+    return STRUCTURED_FILTER_OPERATORS.firstOrNull { operator ->
+        operator.id == operatorId
+    } ?: STRUCTURED_FILTER_OPERATORS.first()
+}
+
+private fun StructuredFilterDraftState.canApply(): Boolean {
+    val selectedOperator = selectedOperator()
+    return fieldPath.trim().isNotEmpty() &&
+        (!selectedOperator.requiresValue || value.trim().isNotEmpty())
+}
+
+private fun StructuredFilterDraftState.buildQuery(): String {
+    return buildStructuredFilterQuery(
+        path = fieldPath,
+        operator = selectedOperator(),
+        rawValue = value
+    )
+}
 
 private fun buildStructuredFilterQuery(
     path: String,
@@ -142,24 +168,14 @@ fun FilterBar(
 ) {
     var textState by remember { mutableStateOf("") }
     var isStructuredFilterDialogOpen by remember { mutableStateOf(false) }
-    var structuredFilterFieldPath by remember { mutableStateOf("") }
-    var structuredFilterOperatorId by remember {
-        mutableStateOf(STRUCTURED_FILTER_OPERATORS.first().id)
-    }
-    var structuredFilterValue by remember { mutableStateOf("") }
+    var structuredFilterDraft by remember { mutableStateOf(StructuredFilterDraftState()) }
 
-    val selectedStructuredOperator = STRUCTURED_FILTER_OPERATORS.firstOrNull {
-        it.id == structuredFilterOperatorId
-    } ?: STRUCTURED_FILTER_OPERATORS.first()
-
-    val canApplyStructuredFilter = structuredFilterFieldPath.trim().isNotEmpty() &&
-        (!selectedStructuredOperator.requiresValue || structuredFilterValue.trim().isNotEmpty())
+    val selectedStructuredOperator = structuredFilterDraft.selectedOperator()
+    val canApplyStructuredFilter = structuredFilterDraft.canApply()
 
     val closeStructuredFilterDialog = {
         isStructuredFilterDialogOpen = false
-        structuredFilterFieldPath = ""
-        structuredFilterOperatorId = STRUCTURED_FILTER_OPERATORS.first().id
-        structuredFilterValue = ""
+        structuredFilterDraft = StructuredFilterDraftState()
     }
 
     Surface(
@@ -171,128 +187,32 @@ fun FilterBar(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // File Actions
-            FilterBarIcon(
-                icon = Icons.AutoMirrored.Filled.InsertDriveFile,
-                tooltip = "Open Log File",
-                onClick = onOpenFileClick,
-                testTag = "toolbar_open_file"
+            SourceActions(
+                onOpenFileClick = onOpenFileClick,
+                onSftpClick = onSftpClick,
+                onS3Click = onS3Click
             )
-            FilterBarIcon(
-                icon = Icons.Default.Cloud,
-                tooltip = "Connect to SFTP",
-                onClick = onSftpClick,
-                testTag = "toolbar_connect_sftp"
-            )
-            FilterBarIcon(
-                icon = Icons.Default.CloudQueue,
-                tooltip = "Connect to S3",
-                onClick = onS3Click,
-                testTag = "toolbar_connect_s3"
+            WorkspaceAddActions(
+                onAddFileClick = onAddFileClick,
+                onAddDirectoryClick = onAddDirectoryClick,
+                onAddSftpClick = onAddSftpClick,
+                onAddS3Click = onAddS3Click
             )
 
-            Box {
-                var menuExpanded by remember { mutableStateOf(false) }
-                FilterBarIcon(
-                    icon = Icons.Default.AddCircle, 
-                    tooltip = "Add Logs to Workspace (Interleave)", 
-                    onClick = { menuExpanded = true },
-                    testTag = "add_file_to_workspace"
-                )
-                
-                DropdownMenu(
-                    expanded = menuExpanded,
-                    onDismissRequest = { menuExpanded = false }
-                ) {
-                    DropdownMenuItem(
-                        onClick = {
-                            menuExpanded = false
-                            onAddFileClick()
-                        },
-                        modifier = Modifier.testTag("add_local_file_item")
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Add Local File...")
-                        }
-                    }
-                    DropdownMenuItem(
-                        onClick = {
-                            menuExpanded = false
-                            onAddDirectoryClick()
-                        },
-                        modifier = Modifier.testTag("add_local_directory_item")
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Add Local Directory...")
-                        }
-                    }
-                    DropdownMenuItem(
-                        onClick = {
-                            menuExpanded = false
-                            onAddSftpClick()
-                        },
-                        modifier = Modifier.testTag("add_remote_sftp_item")
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Cloud, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Add Remote SFTP...")
-                        }
-                    }
-                    DropdownMenuItem(
-                        onClick = {
-                            menuExpanded = false
-                            onAddS3Click()
-                        },
-                        modifier = Modifier.testTag("add_remote_s3_item")
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.CloudQueue, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text("Add Remote S3...")
-                        }
-                    }
-                }
-            }
-            
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
-            
-            // View Actions
-            FilterBarIcon(icon = Icons.Default.Brightness4, tooltip = "Toggle Theme", onClick = onToggleTheme)
-            FilterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)
-            FilterBarIcon(icon = Icons.Default.VerticalSplit, tooltip = "Split Horizontal", onClick = onSplitClick)
-            FilterBarIcon(
-                icon = if (isReversed) Icons.Default.SwapVert else Icons.AutoMirrored.Filled.Sort,
-                tooltip = if (isReversed) "Newest First" else "Oldest First",
-                onClick = onToggleSortOrder
-            )
-            FilterBarIcon(
-                icon = Icons.Default.ArrowDownward,
-                tooltip = if (isAutoScrollEnabled) "Auto-scroll ON" else "Auto-scroll OFF",
-                onClick = onToggleAutoScroll,
-                tint = if (isAutoScrollEnabled) MaterialTheme.colors.primary else LocalContentColor.current
-            )
-            FilterBarIcon(
-                icon = Icons.Default.Palette,
-                tooltip = if (showAnsiColors) "ANSI Colors ON" else "ANSI Colors OFF",
-                onClick = onToggleAnsiColors,
-                tint = if (showAnsiColors) MaterialTheme.colors.primary else LocalContentColor.current
-            )
-            FilterBarIcon(
-                icon = if (isConnected) Icons.Default.Link else Icons.Default.LinkOff,
-                tooltip = if (isConnected) "Connected (Click to Disconnect)" else "Disconnected (Click to Connect)",
-                onClick = onToggleConnection,
-                tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray
-            )
-            FilterBarIcon(
-                icon = Icons.Default.Refresh,
-                tooltip = "Refresh Sources",
-                onClick = onRefresh,
-                testTag = "toolbar_refresh"
+            ViewActions(
+                onToggleTheme = onToggleTheme,
+                onToggleSidebar = onToggleSidebar,
+                onSplitClick = onSplitClick,
+                isReversed = isReversed,
+                onToggleSortOrder = onToggleSortOrder,
+                isAutoScrollEnabled = isAutoScrollEnabled,
+                onToggleAutoScroll = onToggleAutoScroll,
+                showAnsiColors = showAnsiColors,
+                onToggleAnsiColors = onToggleAnsiColors,
+                isConnected = isConnected,
+                onToggleConnection = onToggleConnection,
+                onRefresh = onRefresh
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
@@ -306,109 +226,309 @@ fun FilterBar(
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
 
-            Box {
-                FilterBarIcon(
-                    icon = Icons.Default.Tune,
-                    tooltip = "Add structured field filter",
-                    onClick = { isStructuredFilterDialogOpen = true },
-                    testTag = "structured_filter_trigger"
-                )
+            StructuredFilterActions(
+                draft = structuredFilterDraft,
+                selectedOperator = selectedStructuredOperator,
+                canApply = canApplyStructuredFilter,
+                isDialogOpen = isStructuredFilterDialogOpen,
+                onOpen = { isStructuredFilterDialogOpen = true },
+                onDraftChange = { structuredFilterDraft = it },
+                onApply = {
+                    onAddQuery(structuredFilterDraft.buildQuery())
+                    closeStructuredFilterDialog()
+                },
+                onCancel = closeStructuredFilterDialog
+            )
 
-                if (isStructuredFilterDialogOpen) {
-                    StructuredFilterDialog(
-                        fieldPath = structuredFilterFieldPath,
-                        onFieldPathChange = { structuredFilterFieldPath = it },
-                        operators = STRUCTURED_FILTER_OPERATORS,
-                        selectedOperator = selectedStructuredOperator,
-                        onOperatorSelected = { structuredFilterOperatorId = it.id },
-                        value = structuredFilterValue,
-                        onValueChange = { structuredFilterValue = it },
-                        canApply = canApplyStructuredFilter,
-                        onApply = {
-                            val generatedQuery = buildStructuredFilterQuery(
-                                path = structuredFilterFieldPath,
-                                operator = selectedStructuredOperator,
-                                rawValue = structuredFilterValue
-                            )
-                            onAddQuery(generatedQuery)
-                            closeStructuredFilterDialog()
-                        },
-                        onCancel = closeStructuredFilterDialog
-                    )
+            FilterQueryInputArea(
+                modifier = Modifier.weight(1f),
+                filterQueries = filterQueries,
+                text = textState,
+                onTextChange = { textState = it },
+                onAddQuery = onAddQuery,
+                onRemoveQuery = onRemoveQuery,
+                onClearQueries = {
+                    onClearQueries()
+                    textState = ""
                 }
-            }
+            )
 
-            // Search Area
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 8.dp)
-                    .background(MaterialTheme.colors.onSurface.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                contentAlignment = Alignment.CenterStart
+            ResultsCount(matchesCount = matchesCount, totalCount = totalCount)
+        }
+    }
+}
+
+@Composable
+private fun SourceActions(
+    onOpenFileClick: () -> Unit,
+    onSftpClick: () -> Unit,
+    onS3Click: () -> Unit
+) {
+    FilterBarIcon(
+        icon = Icons.AutoMirrored.Filled.InsertDriveFile,
+        tooltip = "Open Log File",
+        onClick = onOpenFileClick,
+        testTag = "toolbar_open_file"
+    )
+    FilterBarIcon(
+        icon = Icons.Default.Cloud,
+        tooltip = "Connect to SFTP",
+        onClick = onSftpClick,
+        testTag = "toolbar_connect_sftp"
+    )
+    FilterBarIcon(
+        icon = Icons.Default.CloudQueue,
+        tooltip = "Connect to S3",
+        onClick = onS3Click,
+        testTag = "toolbar_connect_s3"
+    )
+}
+
+@Composable
+private fun WorkspaceAddActions(
+    onAddFileClick: () -> Unit,
+    onAddDirectoryClick: () -> Unit,
+    onAddSftpClick: () -> Unit,
+    onAddS3Click: () -> Unit
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box {
+        FilterBarIcon(
+            icon = Icons.Default.AddCircle,
+            tooltip = "Add Logs to Workspace (Interleave)",
+            onClick = { menuExpanded = true },
+            testTag = "add_file_to_workspace"
+        )
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false }
+        ) {
+            DropdownMenuItem(
+                onClick = {
+                    menuExpanded = false
+                    onAddFileClick()
+                },
+                modifier = Modifier.testTag("add_local_file_item")
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    // Filter Chips
-                    filterQueries.forEach { query ->
-                        FilterChip(query = query, onRemove = { onRemoveQuery(query) })
-                        Spacer(modifier = Modifier.width(4.dp))
-                    }
+                    Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add Local File...")
+                }
+            }
+            DropdownMenuItem(
+                onClick = {
+                    menuExpanded = false
+                    onAddDirectoryClick()
+                },
+                modifier = Modifier.testTag("add_local_directory_item")
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Folder, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add Local Directory...")
+                }
+            }
+            DropdownMenuItem(
+                onClick = {
+                    menuExpanded = false
+                    onAddSftpClick()
+                },
+                modifier = Modifier.testTag("add_remote_sftp_item")
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Cloud, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add Remote SFTP...")
+                }
+            }
+            DropdownMenuItem(
+                onClick = {
+                    menuExpanded = false
+                    onAddS3Click()
+                },
+                modifier = Modifier.testTag("add_remote_s3_item")
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.CloudQueue, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Add Remote S3...")
+                }
+            }
+        }
+    }
+}
 
-                    // Input field
-                    BasicTextField(
-                        value = textState,
-                        onValueChange = { textState = it },
-                        modifier = Modifier.weight(1f).testTag("filter_input"),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                        keyboardActions = KeyboardActions(onSearch = {
-                            if (textState.isNotBlank()) {
-                                onAddQuery(textState)
-                                textState = ""
-                            }
-                        }),
-                        textStyle = MaterialTheme.typography.body2.copy(
-                            fontSize = 13.sp,
-                            color = MaterialTheme.colors.onSurface
-                        ),
-                        cursorBrush = SolidColor(MaterialTheme.colors.onSurface),
-                        decorationBox = { innerTextField ->
-                            Box(contentAlignment = Alignment.CenterStart) {
-                                if (textState.isEmpty() && filterQueries.isEmpty()) {
-                                    Text(
-                                        text = "Filter...",
-                                        style = MaterialTheme.typography.body2,
-                                        fontSize = 13.sp,
-                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
-                                    )
-                                }
-                                innerTextField()
-                            }
+@Composable
+private fun ViewActions(
+    onToggleTheme: () -> Unit,
+    onToggleSidebar: () -> Unit,
+    onSplitClick: () -> Unit,
+    isReversed: Boolean,
+    onToggleSortOrder: () -> Unit,
+    isAutoScrollEnabled: Boolean,
+    onToggleAutoScroll: () -> Unit,
+    showAnsiColors: Boolean,
+    onToggleAnsiColors: () -> Unit,
+    isConnected: Boolean,
+    onToggleConnection: () -> Unit,
+    onRefresh: () -> Unit
+) {
+    FilterBarIcon(icon = Icons.Default.Brightness4, tooltip = "Toggle Theme", onClick = onToggleTheme)
+    FilterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)
+    FilterBarIcon(icon = Icons.Default.VerticalSplit, tooltip = "Split Horizontal", onClick = onSplitClick)
+    FilterBarIcon(
+        icon = if (isReversed) Icons.Default.SwapVert else Icons.AutoMirrored.Filled.Sort,
+        tooltip = if (isReversed) "Newest First" else "Oldest First",
+        onClick = onToggleSortOrder
+    )
+    FilterBarIcon(
+        icon = Icons.Default.ArrowDownward,
+        tooltip = if (isAutoScrollEnabled) "Auto-scroll ON" else "Auto-scroll OFF",
+        onClick = onToggleAutoScroll,
+        tint = if (isAutoScrollEnabled) MaterialTheme.colors.primary else LocalContentColor.current
+    )
+    FilterBarIcon(
+        icon = Icons.Default.Palette,
+        tooltip = if (showAnsiColors) "ANSI Colors ON" else "ANSI Colors OFF",
+        onClick = onToggleAnsiColors,
+        tint = if (showAnsiColors) MaterialTheme.colors.primary else LocalContentColor.current
+    )
+    FilterBarIcon(
+        icon = if (isConnected) Icons.Default.Link else Icons.Default.LinkOff,
+        tooltip = if (isConnected) "Connected (Click to Disconnect)" else "Disconnected (Click to Connect)",
+        onClick = onToggleConnection,
+        tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray
+    )
+    FilterBarIcon(
+        icon = Icons.Default.Refresh,
+        tooltip = "Refresh Sources",
+        onClick = onRefresh,
+        testTag = "toolbar_refresh"
+    )
+}
+
+@Composable
+private fun StructuredFilterActions(
+    draft: StructuredFilterDraftState,
+    selectedOperator: StructuredFilterOperator,
+    canApply: Boolean,
+    isDialogOpen: Boolean,
+    onOpen: () -> Unit,
+    onDraftChange: (StructuredFilterDraftState) -> Unit,
+    onApply: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Box {
+        FilterBarIcon(
+            icon = Icons.Default.Tune,
+            tooltip = "Add structured field filter",
+            onClick = onOpen,
+            testTag = "structured_filter_trigger"
+        )
+
+        if (isDialogOpen) {
+            StructuredFilterDialog(
+                fieldPath = draft.fieldPath,
+                onFieldPathChange = { value -> onDraftChange(draft.copy(fieldPath = value)) },
+                operators = STRUCTURED_FILTER_OPERATORS,
+                selectedOperator = selectedOperator,
+                onOperatorSelected = { operator ->
+                    onDraftChange(draft.copy(operatorId = operator.id))
+                },
+                value = draft.value,
+                onValueChange = { value -> onDraftChange(draft.copy(value = value)) },
+                canApply = canApply,
+                onApply = onApply,
+                onCancel = onCancel
+            )
+        }
+    }
+}
+
+@Composable
+private fun FilterQueryInputArea(
+    modifier: Modifier = Modifier,
+    filterQueries: List<String>,
+    text: String,
+    onTextChange: (String) -> Unit,
+    onAddQuery: (String) -> Unit,
+    onRemoveQuery: (String) -> Unit,
+    onClearQueries: () -> Unit
+) {
+    Box(
+        modifier = modifier
+            .padding(horizontal = 8.dp)
+            .background(MaterialTheme.colors.onSurface.copy(alpha = 0.05f), RoundedCornerShape(4.dp))
+            .padding(horizontal = 8.dp, vertical = 4.dp),
+        contentAlignment = Alignment.CenterStart
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            filterQueries.forEach { query ->
+                FilterChip(query = query, onRemove = { onRemoveQuery(query) })
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+
+            BasicTextField(
+                value = text,
+                onValueChange = onTextChange,
+                modifier = Modifier.weight(1f).testTag("filter_input"),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = {
+                    if (text.isNotBlank()) {
+                        onAddQuery(text)
+                        onTextChange("")
+                    }
+                }),
+                textStyle = MaterialTheme.typography.body2.copy(
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colors.onSurface
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colors.onSurface),
+                decorationBox = { innerTextField ->
+                    Box(contentAlignment = Alignment.CenterStart) {
+                        if (text.isEmpty() && filterQueries.isEmpty()) {
+                            Text(
+                                text = "Filter...",
+                                style = MaterialTheme.typography.body2,
+                                fontSize = 13.sp,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                            )
                         }
-                    )
-                    
-                    if (filterQueries.isNotEmpty() || textState.isNotEmpty()) {
-                        TooltipWrapper(tooltip = "Clear all filters") {
-                            IconButton(onClick = { 
-                                onClearQueries()
-                                textState = ""
-                            }, modifier = Modifier.size(20.dp).testTag("clear_all_filters")) {
-                                Icon(Icons.Default.Close, contentDescription = "Clear all filters", modifier = Modifier.size(14.dp))
-                            }
-                        }
+                        innerTextField()
+                    }
+                }
+            )
+
+            if (filterQueries.isNotEmpty() || text.isNotEmpty()) {
+                TooltipWrapper(tooltip = "Clear all filters") {
+                    IconButton(
+                        onClick = onClearQueries,
+                        modifier = Modifier.size(20.dp).testTag("clear_all_filters")
+                    ) {
+                        Icon(
+                            Icons.Default.Close,
+                            contentDescription = "Clear all filters",
+                            modifier = Modifier.size(14.dp)
+                        )
                     }
                 }
             }
-
-            // Results count
-            if (totalCount > 0) {
-                Text(
-                    text = "$matchesCount / $totalCount",
-                    style = MaterialTheme.typography.caption,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-            }
         }
+    }
+}
+
+@Composable
+private fun ResultsCount(matchesCount: Int, totalCount: Int) {
+    if (totalCount > 0) {
+        Text(
+            text = "$matchesCount / $totalCount",
+            style = MaterialTheme.typography.caption,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
     }
 }
 

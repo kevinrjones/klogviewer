@@ -180,3 +180,27 @@ Run required commands and finalize quality-gate-related checklist items based on
 - Run targeted tests for touched modules.
 - Run `./gradlew detekt` and, when feasible, `./gradlew check`.
 - Update task checklist statuses for 12B.10.4 and 12B.10.6 strictly according to command results.
+
+### ✓ Step 10: Extract parser internals into dedicated classes without changing behavior
+Refactor `LogQueryParser` internals into smaller focused parser collaborators while preserving all accepted grammar forms and fallback behavior.
+- Keep public parser entrypoint contract unchanged for callers/tests.
+- Extract tokenization/boolean-expression parsing/predicate parsing/literal parsing concerns into dedicated classes or helpers.
+- Maintain deterministic parsing and safe fallback to legacy text query for malformed/unsupported structured syntax.
+
+### ✓ Step 11: Extract evaluator operator strategies and alias resolver dependency
+Refactor `LogFilterService` to isolate operator evaluation and alias resolution concerns into focused collaborators.
+- Move field-operator evaluation logic behind explicit strategy helpers.
+- Introduce alias resolver dependency instead of hardcoded alias map placement in evaluator flow.
+- Preserve explicit `field:` path precision and canonical alias fan-out behavior.
+
+### ✓ Step 12: Decompose FilterBar into focused composables and isolate structured draft state
+Reduce `FilterBar.kt` complexity by splitting UI responsibilities into smaller composables and explicit structured-filter draft state.
+- Extract clear UI sections (query input/chips/actions/dialog content).
+- Keep test tags and user-visible behavior stable.
+- Preserve structured filter apply/cancel/validation semantics.
+
+### ✓ Step 13: Split PreferencesStateMapper.toState into policy and mapping helpers
+Refactor `PreferencesStateMapper` to separate policy/default reconciliation from state shape mapping.
+- Keep state output and existing behavior unchanged.
+- Use small pure helpers to improve readability and testability.
+- Add or update tests for touched behavior where coverage is missing.
