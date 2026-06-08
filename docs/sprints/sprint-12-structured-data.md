@@ -640,10 +640,12 @@ Message priority when both template and rendered variants exist:
 ### 12.5 UI details and log list integration
 
 - [x] Keep 12B structured entry intentionally minimal (`Apply`/`Cancel`, no autocomplete/discovery), focused on a walking skeleton users can discover.
-- [ ] Add structured detail tree component with expandable object/array nodes.
-- [ ] Add raw/structured toggle and value truncation safeguards.
-- [ ] Add field actions: copy path/value and “filter by this field/value”.
+- [x] Add structured detail tree component with expandable object/array nodes.
+- [x] Add raw/structured toggle and value truncation safeguards.
+- [x] Add field actions: copy path/value and “filter by this field/value”.
 - [ ] Add structured-row visual indicator and bounded discovered-field column integration.
+
+_Note: the structured-row visual indicator is complete in this slice; bounded discovered-field column integration remains deferred._
 
 ### 12.6 Dashboard and analysis integration
 
@@ -679,11 +681,11 @@ Message priority when both template and rendered variants exist:
 - [x] Common MEL JSON console fields (`Timestamp`, `LogLevel`, `Category`, `Message`, `OriginalFormat`, `Scopes`)
   normalize correctly.
 - [ ] NLog/log4net JSON-style fields normalize where feasible while preserving raw namespaces.
-- [ ] Nested fields are inspectable in a structured tree and filterable via path syntax.
+- [x] Nested fields are inspectable in a structured tree and filterable via path syntax.
 - [x] Users can filter by .NET-specific fields including `SourceContext`, `RequestPath`, `TraceId`, `Properties.UserId`.
 - [ ] Dashboard frequency/grouping works with structured/canonical paths and maintains `(missing)` behavior.
 - [x] Mixed structured/plain-text sources remain usable with deterministic fallback behavior.
-- [ ] Large structured payloads respect configured limits and do not freeze the UI.
+- [x] Large structured payloads respect configured limits and do not freeze the UI.
 - [x] Parser override from status bar remains functional and persisted.
 
 ## 14. Test Plan

@@ -20,7 +20,7 @@ class EntryIntentHandlerTest {
     fun `given selected index when shift selecting later index then full range is selected`() {
         val logs = listOf(logEntry("line-1"), logEntry("line-2"), logEntry("line-3"), logEntry("line-4"))
         val state = MutableStateFlow(stateWithLogs(logs))
-        val handler = EntryIntentHandler(state = state, onCopySelectedToClipboard = {})
+        val handler = EntryIntentHandler(state = state, onCopySelectedToClipboard = {}, onCopyStructuredText = {})
 
         handler.handle(KLogViewerIntent.ToggleEntrySelection(index = 1))
         handler.handle(KLogViewerIntent.ToggleEntrySelection(index = 3, isShiftPressed = true))
@@ -33,7 +33,7 @@ class EntryIntentHandlerTest {
     fun `given selection when meta toggling selected index then index is removed`() {
         val logs = listOf(logEntry("line-1"), logEntry("line-2"), logEntry("line-3"))
         val state = MutableStateFlow(stateWithLogs(logs))
-        val handler = EntryIntentHandler(state = state, onCopySelectedToClipboard = {})
+        val handler = EntryIntentHandler(state = state, onCopySelectedToClipboard = {}, onCopyStructuredText = {})
 
         handler.handle(KLogViewerIntent.ToggleEntrySelection(index = 0))
         handler.handle(KLogViewerIntent.ToggleEntrySelection(index = 2, isMetaPressed = true))
@@ -48,7 +48,11 @@ class EntryIntentHandlerTest {
         val logs = listOf(logEntry("line-1"), logEntry("line-2"))
         val state = MutableStateFlow(stateWithLogs(logs))
         var copyInvocations = 0
-        val handler = EntryIntentHandler(state = state, onCopySelectedToClipboard = { copyInvocations += 1 })
+        val handler = EntryIntentHandler(
+            state = state,
+            onCopySelectedToClipboard = { copyInvocations += 1 },
+            onCopyStructuredText = {}
+        )
 
         handler.handle(KLogViewerIntent.CopySelected)
 
@@ -60,7 +64,11 @@ class EntryIntentHandlerTest {
         val logs = listOf(logEntry("line-1"), logEntry("line-2"))
         val state = MutableStateFlow(stateWithLogs(logs))
         var copyInvocations = 0
-        val handler = EntryIntentHandler(state = state, onCopySelectedToClipboard = { copyInvocations += 1 })
+        val handler = EntryIntentHandler(
+            state = state,
+            onCopySelectedToClipboard = { copyInvocations += 1 },
+            onCopyStructuredText = {}
+        )
 
         handler.handle(KLogViewerIntent.ToggleEntrySelection(index = 1))
         handler.handle(KLogViewerIntent.CopySelected)

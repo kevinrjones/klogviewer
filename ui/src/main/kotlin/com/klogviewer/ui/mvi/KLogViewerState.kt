@@ -13,6 +13,11 @@ enum class WorkspaceMode {
     DASHBOARD
 }
 
+enum class LogEntryDetailViewMode {
+    STRUCTURED,
+    RAW
+}
+
 enum class DashboardBucketSize {
     PER_SECOND,
     PER_MINUTE
@@ -127,6 +132,10 @@ data class LogWindow(
     val hiddenSourceIds: Set<String> = emptySet(),
     val missingSourceIds: Set<String> = emptySet(),
     val selectedEntry: LogEntry? = null,
+    val detailViewMode: LogEntryDetailViewMode = LogEntryDetailViewMode.STRUCTURED,
+    val expandedStructuredPaths: Set<String> = emptySet(),
+    val expandedStructuredScalarPaths: Set<String> = emptySet(),
+    val isRawPayloadExpanded: Boolean = false,
     val selectedIndices: Set<Int> = emptySet(),
     val lastSelectedIndex: Int? = null,
     val parserName: String? = null,

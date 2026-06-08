@@ -40,6 +40,7 @@ import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.mvi.*
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
+import com.klogviewer.ui.viewmodel.StructuredInspectorFilterFormatter
 import io.github.oshai.kotlinlogging.KotlinLogging
 import java.awt.datatransfer.DataFlavor
 import java.io.File
@@ -54,6 +55,50 @@ private data class SourceVisibilityTextColors(
     val shown: Color,
     val hidden: Color
 )
+
+private class DetailPaneIntentAdapter(
+    private val dispatch: (KLogViewerIntent) -> Unit
+) {
+    fun closeDetails() {
+        dispatch(KLogViewerIntent.SelectEntry(null))
+    }
+
+    fun setDetailMode(mode: LogEntryDetailViewMode) {
+        dispatch(KLogViewerIntent.SetEntryDetailViewMode(mode))
+    }
+
+    fun togglePath(path: String) {
+        dispatch(KLogViewerIntent.ToggleStructuredPathExpansion(path))
+    }
+
+    fun toggleScalar(path: String) {
+        dispatch(KLogViewerIntent.ToggleStructuredScalarExpansion(path))
+    }
+
+    fun setRawExpansion(expanded: Boolean) {
+        dispatch(KLogViewerIntent.ToggleRawPayloadExpansion(expanded))
+    }
+
+    fun copyStructuredText(text: String) {
+        dispatch(KLogViewerIntent.CopyStructuredText(text))
+    }
+
+    fun filterByField(path: String) {
+        dispatch(
+            KLogViewerIntent.AddFilterQuery(
+                StructuredInspectorFilterFormatter.fieldPredicate(path)
+            )
+        )
+    }
+
+    fun filterByValue(path: String, value: com.klogviewer.domain.model.StructuredValue) {
+        dispatch(
+            KLogViewerIntent.AddFilterQuery(
+                StructuredInspectorFilterFormatter.valuePredicate(path, value)
+            )
+        )
+    }
+}
 
 private fun resolveSourceVisibilityTextColors(baseColor: Color): SourceVisibilityTextColors {
     val isLightBase = baseColor.luminance() > 0.5f
@@ -846,12 +891,27 @@ private fun LogWindowItem(
         if (window.selectedEntry != null) {
             Divider(modifier = Modifier.height(1.dp).fillMaxWidth())
             Box(modifier = Modifier.height(200.dp)) {
+                val detailIntentAdapter = remember(viewModel) {
+                    DetailPaneIntentAdapter(dispatch = viewModel::handleIntent)
+                }
                 LogEntryDetails(
                     entry = window.selectedEntry,
-                    onClose = { viewModel.handleIntent(KLogViewerIntent.SelectEntry(null)) },
+                    onClose = detailIntentAdapter::closeDetails,
                     filterQueries = window.filterQueries,
                     isDarkMode = state.isDarkMode,
-                    showAnsiColors = window.showAnsiColors
+                    showAnsiColors = window.showAnsiColors,
+                    detailViewMode = window.detailViewMode,
+                    expandedStructuredPaths = window.expandedStructuredPaths,
+                    expandedStructuredScalarPaths = window.expandedStructuredScalarPaths,
+                    isRawPayloadExpanded = window.isRawPayloadExpanded,
+                    onDetailViewModeChanged = detailIntentAdapter::setDetailMode,
+                    onToggleStructuredPathExpansion = detailIntentAdapter::togglePath,
+                    onToggleStructuredScalarExpansion = detailIntentAdapter::toggleScalar,
+                    onRawPayloadExpansionChanged = detailIntentAdapter::setRawExpansion,
+                    onCopyPath = detailIntentAdapter::copyStructuredText,
+                    onCopyValue = detailIntentAdapter::copyStructuredText,
+                    onFilterByField = detailIntentAdapter::filterByField,
+                    onFilterByValue = detailIntentAdapter::filterByValue
                 )
             }
         }

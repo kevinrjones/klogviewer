@@ -5,11 +5,12 @@ internal class LogQueryPredicateParser(
 ) {
     private val canonicalShortFormPattern = Regex("^([A-Za-z_][A-Za-z0-9_.\\[\\]`\\-]*)\\s*:(.+)$")
     private val symbolOperatorPattern = Regex("^(.+?)(>=|<=|=|~|>|<)(.+)$")
+    private val eqOperatorPattern = Regex("^(.+?)\\s+eq\\s+(.+)$", RegexOption.IGNORE_CASE)
     private val containsPattern = Regex("^(.+?)\\s+contains\\s+(.+)$", RegexOption.IGNORE_CASE)
     private val existsMissingPattern = Regex("^(.+?)\\s+(exists|missing)$", RegexOption.IGNORE_CASE)
     private val isNullPattern = Regex("^(.+?)\\s+is\\s+null$", RegexOption.IGNORE_CASE)
     private val knownCanonicalAliases = setOf("level", "message", "trace.id")
-    private val nonValueOperatorTokens = setOf("=", "~", ">", ">=", "<", "<=")
+    private val nonValueOperatorTokens = setOf("=", "~", ">", ">=", "<", "<=", "eq")
 
     fun parse(rawPredicate: String): LogQueryExpression? {
         val predicate = rawPredicate.trim()
@@ -134,10 +135,8 @@ internal class LogQueryPredicateParser(
     }
 
     private fun parseSymbolOperatorPredicate(predicate: String): LogQueryExpression.FieldPredicate? {
-        val match = symbolOperatorPattern.matchEntire(predicate) ?: return null
-        val pathToken = parsePathToken(match.groupValues[1]) ?: return null
-        val operator = parseSymbolOperator(match.groupValues[2].trim()) ?: return null
-        val rawLiteral = match.groupValues[3].trim()
+        val (pathTokenRaw, operator, rawLiteral) = parseOperatorParts(predicate) ?: return null
+        val pathToken = parsePathToken(pathTokenRaw) ?: return null
         if (rawLiteral.isEmpty() || nonValueOperatorTokens.contains(rawLiteral)) {
             return null
         }
@@ -152,6 +151,25 @@ internal class LogQueryPredicateParser(
             },
             value = literal,
             explicitFieldPrefix = pathToken.explicitFieldPrefix
+        )
+    }
+
+    private fun parseOperatorParts(predicate: String): Triple<String, FieldOperator, String>? {
+        val eqMatch = eqOperatorPattern.matchEntire(predicate)
+        if (eqMatch != null) {
+            return Triple(
+                eqMatch.groupValues[1],
+                FieldOperator.EQUALS,
+                eqMatch.groupValues[2].trim()
+            )
+        }
+
+        val symbolMatch = symbolOperatorPattern.matchEntire(predicate) ?: return null
+        val operator = parseSymbolOperator(symbolMatch.groupValues[2].trim()) ?: return null
+        return Triple(
+            symbolMatch.groupValues[1],
+            operator,
+            symbolMatch.groupValues[3].trim()
         )
     }
 

@@ -36,6 +36,37 @@ class KLogViewerUiTest {
         LogEntry(LogTimestamp("2023-01-01 10:00:02"), LogLevel.DEBUG, LogContent("Third log message (debug)"))
     )
 
+    private val structuredThreadEntries = listOf(
+        LogEntry(
+            timestamp = LogTimestamp("2023-01-01 10:00:00"),
+            level = LogLevel.INFO,
+            content = LogContent("structured-thread-match"),
+            fields = mapOf("Thread_name" to "eventLoopGroupProxy-4-4", "message" to "started"),
+            structuredData = StructuredLogData(
+                root = StructuredValue.ObjectValue(
+                    fields = mapOf(
+                        "Thread_name" to StructuredValue.StringValue("eventLoopGroupProxy-4-4"),
+                        "message" to StructuredValue.StringValue("started")
+                    )
+                )
+            )
+        ),
+        LogEntry(
+            timestamp = LogTimestamp("2023-01-01 10:00:01"),
+            level = LogLevel.INFO,
+            content = LogContent("structured-thread-non-match"),
+            fields = mapOf("Thread_name" to "eventLoopGroupProxy-9-9", "message" to "started"),
+            structuredData = StructuredLogData(
+                root = StructuredValue.ObjectValue(
+                    fields = mapOf(
+                        "Thread_name" to StructuredValue.StringValue("eventLoopGroupProxy-9-9"),
+                        "message" to StructuredValue.StringValue("started")
+                    )
+                )
+            )
+        )
+    )
+
     private val testEntriesWithRawLevel = listOf(
         LogEntry(
             timestamp = LogTimestamp("2023-01-01 10:00:00"),
@@ -322,4 +353,55 @@ class KLogViewerUiTest {
             assertTextDoesNotExist("Second log message (error)")
         }
     }
+
+    @Test
+    fun givenStructuredLogs_whenManualStructuredFilterTyped_thenChipIsCreatedAndRowsAreFiltered() = runComposeUiTest {
+        setupApp()
+
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
+        every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
+            LogUpdate.Initial(structuredThreadEntries).right()
+        )
+
+        mainRobot {
+            clickAddFile()
+            typeFilter("field:Thread_name=eventLoopGroupProxy-4-4")
+        }
+
+        onNodeWithText("field:Thread_name=eventLoopGroupProxy-4-4").assertExists()
+
+        logList {
+            assertLogCount(1)
+            assertTextExists("structured-thread-match")
+            assertTextDoesNotExist("structured-thread-non-match")
+        }
+    }
+
+    @Test
+    fun givenStructuredLogs_whenTuneFilterApplied_thenGeneratedChipFiltersRows() = runComposeUiTest {
+        setupApp()
+
+        every { dialogProvider.showOpenFileDialog(any(), any()) } returns testLogPath
+        every { logSource.observeLogs(LogFilePath(testLogPath), any()) } returns flowOf(
+            LogUpdate.Initial(structuredThreadEntries).right()
+        )
+
+        mainRobot {
+            clickAddFile()
+        }
+
+        onNodeWithTag("structured_filter_trigger").performClick()
+        onNodeWithTag("structured_filter_field_input").performTextInput("Thread_name")
+        onNodeWithTag("structured_filter_value_input").performTextInput("eventLoopGroupProxy-4-4")
+        onNodeWithTag("structured_filter_apply").performClick()
+
+        onNodeWithText("field:Thread_name=\"eventLoopGroupProxy-4-4\"").assertExists()
+
+        logList {
+            assertLogCount(1)
+            assertTextExists("structured-thread-match")
+            assertTextDoesNotExist("structured-thread-non-match")
+        }
+    }
+
 }

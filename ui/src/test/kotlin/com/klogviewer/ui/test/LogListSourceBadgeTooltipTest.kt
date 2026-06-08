@@ -9,6 +9,8 @@ import com.klogviewer.domain.model.LogContent
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.LogTimestamp
+import com.klogviewer.domain.model.StructuredLogData
+import com.klogviewer.domain.model.StructuredValue
 import com.klogviewer.ui.components.LogList
 import com.klogviewer.ui.components.SourceShadeIndexSemanticsKey
 import org.junit.Assert.assertEquals
@@ -92,6 +94,26 @@ class LogListSourceBadgeTooltipTest {
         assertNotEquals(updatedDbFirstRowShadeIndex, updatedCacheShadeIndex)
     }
 
+    @Test
+    fun `given mixed structured and plain rows when rendering list then only structured rows show marker`() = runComposeUiTest {
+        val logs = listOf(
+            createStructuredEntry(sourceId = "structured.log", message = "structured"),
+            createEntry(sourceId = "plain.log", message = "plain")
+        )
+
+        setContent {
+            LogList(
+                logs = logs,
+                filterQueries = emptyList(),
+                isDarkMode = true,
+                sourceIds = listOf("structured.log", "plain.log")
+            )
+        }
+
+        onNodeWithTag("log_structured_badge_0", useUnmergedTree = true).assertExists()
+        onNodeWithTag("log_structured_badge_1", useUnmergedTree = true).assertDoesNotExist()
+    }
+
     private fun ComposeUiTest.assertBadgeTooltip(rowIndex: Int, expectedTooltip: String) {
         onNodeWithTag("log_source_badge_$rowIndex", useUnmergedTree = true)
             .assertExists()
@@ -128,5 +150,21 @@ class LogListSourceBadgeTooltipTest {
         level = LogLevel.INFO,
         content = LogContent(message),
         sourceId = sourceId
+    )
+
+    private fun createStructuredEntry(sourceId: String, message: String): LogEntry = LogEntry(
+        timestamp = LogTimestamp("2024-01-01 10:00:00"),
+        level = LogLevel.INFO,
+        content = LogContent(message),
+        sourceId = sourceId,
+        structuredData = StructuredLogData(
+            root = StructuredValue.ObjectValue(
+                mapOf(
+                    "user" to StructuredValue.ObjectValue(
+                        mapOf("id" to StructuredValue.NumberValue("1"))
+                    )
+                )
+            )
+        )
     )
 }

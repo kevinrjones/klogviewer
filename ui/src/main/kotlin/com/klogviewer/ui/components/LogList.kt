@@ -538,6 +538,7 @@ private fun LogGutter(
     gutterWidth: Dp,
     logFontStyle: TextStyle
 ) {
+    val rowIndex = lineNumber - 1
     Row(
         modifier = Modifier.width(gutterWidth).padding(horizontal = 4.dp),
         verticalAlignment = Alignment.Top
@@ -545,7 +546,6 @@ private fun LogGutter(
         if (sourceIds.size > 1) {
             val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
             val badgeColor = getSourceBadgeColor(entry.sourceId, sourceIds, isMissing)
-            val rowIndex = lineNumber - 1
             val tooltip = buildSourceBadgeTooltip(entry.sourceId, isMissing)
             TooltipWrapper(
                 tooltip = tooltip,
@@ -556,6 +556,20 @@ private fun LogGutter(
                         .size(8.dp)
                         .testTag("log_source_badge_$rowIndex")
                         .background(badgeColor, CircleShape)
+                )
+            }
+            Spacer(modifier = Modifier.width(6.dp))
+        }
+        if (entry.structuredData != null) {
+            TooltipWrapper(
+                tooltip = "Structured payload available",
+                tooltipTestTag = "log_structured_badge_tooltip_$rowIndex"
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .testTag("log_structured_badge_$rowIndex")
+                        .background(MaterialTheme.colors.primary.copy(alpha = 0.7f), CircleShape)
                 )
             }
             Spacer(modifier = Modifier.width(6.dp))

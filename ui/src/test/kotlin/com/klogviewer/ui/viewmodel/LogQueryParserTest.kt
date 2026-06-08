@@ -22,6 +22,20 @@ class LogQueryParserTest {
     }
 
     @Test
+    fun `parses explicit equals alias operator`() {
+        val expression = LogQueryParser.parse("field:Thread_name eq \"eventLoopGroupProxy-4-4\"")
+
+        expectThat(expression).isEqualTo(
+            LogQueryExpression.FieldPredicate(
+                path = "Thread_name",
+                operator = FieldOperator.EQUALS,
+                value = QueryLiteral.StringValue("eventLoopGroupProxy-4-4"),
+                explicitFieldPrefix = true
+            )
+        )
+    }
+
+    @Test
     fun `parses explicit numeric comparison predicate`() {
         val expression = LogQueryParser.parse("field:StatusCode >= 500")
 
