@@ -120,7 +120,7 @@ object LogFilterService {
         val compatibilityFields = entry.compatibilityFields()
 
         candidatePaths.forEach { candidatePath ->
-            resolveStructuredValues(
+            resolveStructuredValuesForCandidate(
                 structuredPathIndex = structuredPathIndex,
                 candidatePath = candidatePath
             )
@@ -170,73 +170,6 @@ object LogFilterService {
                 candidatePath = candidatePath
             )
         }
-    }
-
-    private fun resolveStructuredValues(
-        structuredPathIndex: Map<String, List<com.klogviewer.domain.model.StructuredValue>>,
-        candidatePath: String
-    ): List<com.klogviewer.domain.model.StructuredValue> {
-        val directMatch = structuredPathIndex[candidatePath]
-        if (directMatch != null) {
-            return directMatch
-        }
-        if (!allowsCaseVariantFallback(candidatePath)) {
-            return emptyList()
-        }
-        return structuredPathIndex.entries
-            .filter { (path, _) -> path.equals(candidatePath, ignoreCase = true) }
-            .flatMap { (_, values) -> values }
-    }
-
-    private fun resolveCompatibilityFieldValue(
-        compatibilityFields: Map<String, String>,
-        candidatePath: String
-    ): String? {
-        return compatibilityFields[candidatePath]
-            ?: if (!allowsCaseVariantFallback(candidatePath)) {
-                null
-            } else {
-                compatibilityFields.entries
-                    .firstOrNull { (path, _) -> path.equals(candidatePath, ignoreCase = true) }
-                    ?.value
-            }
-    }
-
-    private fun containsResolvedPath(
-        structuredPathIndex: Map<String, List<com.klogviewer.domain.model.StructuredValue>>,
-        compatibilityFields: Map<String, String>,
-        candidatePath: String
-    ): Boolean {
-        if (structuredPathIndex.containsKey(candidatePath) || compatibilityFields.containsKey(candidatePath)) {
-            return true
-        }
-        if (!allowsCaseVariantFallback(candidatePath)) {
-            return false
-        }
-        return structuredPathIndex.keys.any { path -> path.equals(candidatePath, ignoreCase = true) } ||
-            compatibilityFields.keys.any { path -> path.equals(candidatePath, ignoreCase = true) }
-    }
-
-    private fun allowsCaseVariantFallback(candidatePath: String): Boolean {
-        if (candidatePath.contains('_')) {
-            return true
-        }
-
-        val pathWithoutAtPrefix = candidatePath.removePrefix("@")
-        if (pathWithoutAtPrefix.isEmpty()) {
-            return false
-        }
-
-        if (
-            pathWithoutAtPrefix.contains('.') ||
-            pathWithoutAtPrefix.contains('[') ||
-            pathWithoutAtPrefix.contains(']') ||
-            pathWithoutAtPrefix.contains('`')
-        ) {
-            return false
-        }
-
-        return pathWithoutAtPrefix.drop(1).none { character -> character.isUpperCase() }
     }
 
     private fun candidatePaths(path: String, isExplicitFieldPath: Boolean): List<String> {

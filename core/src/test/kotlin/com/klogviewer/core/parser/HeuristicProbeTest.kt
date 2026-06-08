@@ -163,4 +163,47 @@ class HeuristicProbeTest {
 
         expectThat(parserNames).isEqualTo(setOf("Simple"))
     }
+
+    @Test
+    fun `should detect json parser for sprint 12d ecosystem samples`() {
+        val lines = listOf(
+            StructuredEcosystemFixtures.LOGSTASH_LOGBACK_JSON,
+            StructuredEcosystemFixtures.MEL_JSON_CONSOLE,
+            StructuredEcosystemFixtures.SERILOG_RENDERED_COMPACT_JSON,
+            StructuredEcosystemFixtures.DOCKER_JSON_WRAPPER,
+            StructuredEcosystemFixtures.CLOUD_PROVIDER_ENVELOPE,
+            StructuredEcosystemFixtures.OTEL_LIKE_JSON
+        )
+
+        val result = probe.detect(lines)
+
+        expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.parserName).isEqualTo("JSON")
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.sampledRecordCount).isEqualTo(lines.size)
+        expectThat(result.confidence?.successfulParseCount).isEqualTo(lines.size)
+        expectThat(result.confidence?.malformedCount).isEqualTo(0)
+        expectThat(result.confidence?.finalConfidenceScore ?: 0.0).isGreaterThan(0.45)
+    }
+
+    @Test
+    fun `should keep json detection deterministic for mixed structured and plain samples`() {
+        val lines = listOf(
+            StructuredEcosystemFixtures.LOG4J2_JSON_LAYOUT,
+            StructuredEcosystemFixtures.SERILOG_COMPACT_JSON,
+            "plain text that should be treated as malformed",
+            "{ malformed json",
+            StructuredEcosystemFixtures.KUBERNETES_CRI_WRAPPER,
+            StructuredEcosystemFixtures.OTEL_LIKE_JSON
+        )
+
+        val result = probe.detect(lines)
+
+        expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.parserName).isEqualTo("JSON")
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.successfulParseCount).isEqualTo(4)
+        expectThat(result.confidence?.malformedCount).isEqualTo(1)
+        expectThat(result.confidence?.finalConfidenceScore ?: 0.0).isGreaterThan(0.45)
+    }
 }

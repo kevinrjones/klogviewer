@@ -1,5 +1,3 @@
-@file:Suppress("FunctionNaming")
-
 package com.klogviewer.ui.components
 
 import androidx.compose.foundation.layout.*
@@ -55,9 +53,9 @@ fun LogEntryDetails(
         color = MaterialTheme.colors.surface
     ) {
         if (entry == null) {
-            EmptyLogEntryDetails()
+            emptyLogEntryDetails()
         } else {
-            LogEntryDetailsContent(
+            logEntryDetailsContent(
                 entry = entry,
                 onClose = onClose,
                 filterQueries = filterQueries,
@@ -78,7 +76,7 @@ fun LogEntryDetails(
 }
 
 @Composable
-private fun EmptyLogEntryDetails() {
+private fun emptyLogEntryDetails() {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -92,7 +90,7 @@ private fun EmptyLogEntryDetails() {
 }
 
 @Composable
-private fun LogEntryDetailsContent(
+private fun logEntryDetailsContent(
     entry: LogEntry,
     onClose: () -> Unit,
     filterQueries: List<String>,
@@ -117,14 +115,14 @@ private fun LogEntryDetailsContent(
             .padding(16.dp)
             .verticalScroll(rememberScrollState())
     ) {
-        LogEntryDetailsHeader(onClose = onClose)
+        logEntryDetailsHeader(onClose = onClose)
         Spacer(modifier = Modifier.height(16.dp))
 
-        EntryMetadataSection(entry = entry)
+        entryMetadataSection(entry = entry)
 
         if (structuredData != null) {
             Spacer(modifier = Modifier.height(16.dp))
-            DetailViewModeToggle(
+            detailViewModeToggle(
                 mode = detailViewMode,
                 onModeChanged = onDetailViewModeChanged
             )
@@ -132,7 +130,7 @@ private fun LogEntryDetailsContent(
 
         Spacer(modifier = Modifier.height(16.dp))
         if (showStructured) {
-            StructuredInspector(
+            structuredInspector(
                 root = structuredData.root,
                 expandedStructuredPaths = expandedStructuredPaths,
                 expandedStructuredScalarPaths = expandedStructuredScalarPaths,
@@ -141,7 +139,7 @@ private fun LogEntryDetailsContent(
                 actions = inspectorActions
             )
         } else {
-            RawPayloadSection(
+            rawPayloadSection(
                 rawPayload = rawPayload,
                 hasStructuredPayload = structuredData != null,
                 filterQueries = filterQueries,
@@ -155,7 +153,7 @@ private fun LogEntryDetailsContent(
 }
 
 @Composable
-private fun LogEntryDetailsHeader(onClose: () -> Unit) {
+private fun logEntryDetailsHeader(onClose: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -171,7 +169,7 @@ private fun LogEntryDetailsHeader(onClose: () -> Unit) {
 }
 
 @Composable
-private fun EntryMetadataSection(entry: LogEntry) {
+private fun entryMetadataSection(entry: LogEntry) {
     DetailItem(label = "Timestamp", value = entry.timestamp.value)
 
     if (entry.level != LogLevel.UNKNOWN) {
@@ -212,7 +210,7 @@ private fun isMetadataField(key: String): Boolean {
 }
 
 @Composable
-private fun DetailViewModeToggle(
+private fun detailViewModeToggle(
     mode: LogEntryDetailViewMode,
     onModeChanged: (LogEntryDetailViewMode) -> Unit
 ) {
@@ -235,7 +233,7 @@ private fun DetailViewModeToggle(
 }
 
 @Composable
-private fun RawPayloadSection(
+private fun rawPayloadSection(
     rawPayload: String,
     hasStructuredPayload: Boolean,
     filterQueries: List<String>,

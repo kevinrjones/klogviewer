@@ -73,7 +73,8 @@ internal object LevelFilterPolicy {
      * @param previousFilters A set of level filters that were previously selected.
      * @param previousAvailableLevels A set of levels that were previously available in the system.
      * @param updatedAvailableLevels A set of levels that are currently available in the system.
-     * @return A set of level filters after reconciling the changes, ensuring compatibility with the updated available levels.
+     * @return A set of level filters after reconciling the changes,
+     * ensuring compatibility with the updated available levels.
      */
     fun reconcile(
         previousFilters: Set<LevelFilterKey>,

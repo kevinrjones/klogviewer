@@ -32,20 +32,18 @@ internal fun StructuredValue.toResolvedFieldValue(numericLiteralPattern: Regex):
 
 internal fun parseRawFieldValue(value: String, numericLiteralPattern: Regex): ResolvedFieldValue {
     val normalized = value.trim()
-    if (normalized.equals("true", ignoreCase = true)) {
-        return ResolvedFieldValue.BooleanValue(true)
+    val scalarValue = when {
+        normalized.equals("true", ignoreCase = true) -> ResolvedFieldValue.BooleanValue(true)
+        normalized.equals("false", ignoreCase = true) -> ResolvedFieldValue.BooleanValue(false)
+        normalized.equals("null", ignoreCase = true) -> ResolvedFieldValue.NullValue
+        numericLiteralPattern.matches(normalized) -> {
+            runCatching { ResolvedFieldValue.NumberValue(BigDecimal(normalized)) }
+                .getOrElse { ResolvedFieldValue.StringValue(value) }
+        }
+
+        else -> null
     }
-    if (normalized.equals("false", ignoreCase = true)) {
-        return ResolvedFieldValue.BooleanValue(false)
-    }
-    if (normalized.equals("null", ignoreCase = true)) {
-        return ResolvedFieldValue.NullValue
-    }
-    if (numericLiteralPattern.matches(normalized)) {
-        return runCatching { ResolvedFieldValue.NumberValue(BigDecimal(normalized)) }
-            .getOrElse { ResolvedFieldValue.StringValue(value) }
-    }
-    return ResolvedFieldValue.StringValue(value)
+    return scalarValue ?: ResolvedFieldValue.StringValue(value)
 }
 
 internal fun QueryLiteral?.toComparableNumber(): BigDecimal? {

@@ -22,13 +22,19 @@ data class JsonMapping(
 class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParser {
     private val json = Json { ignoreUnknownKeys = true }
     private val timestampParser = mapping.timestampPattern?.let { TimestampParser(it) }
+    private val nestedJsonScopeExtractor = NestedJsonScopeExtractor(json = json)
+    private val canonicalFieldExtractor = CanonicalFieldExtractor()
 
     override fun parse(line: String): Either<LogFailure.ParsingError, LogEntry> {
         return try {
             val element = json.parseToJsonElement(line).jsonObject
+            val nestedScopeExtraction = nestedJsonScopeExtractor.extract(element)
 
-            val rootStructuredValue = element.toStructuredObjectValue()
-            val canonicalFields = element.toCanonicalFields()
+            val rootStructuredValue = element.toStructuredObjectValue(nestedScopeExtraction)
+            val canonicalFields = canonicalFieldExtractor.extract(
+                source = element,
+                fallbackScopes = nestedScopeExtraction.fallbackScopes
+            )
 
             val timestampRaw = element[mapping.timestampKey].nonNullOrNull()?.toValueString()
                 ?: canonicalFields[CanonicalFieldAliases.CANONICAL_TIMESTAMP]?.asDisplayString()
@@ -76,97 +82,21 @@ class JsonLogParser(private val mapping: JsonMapping = JsonMapping()) : LogParse
         }
     }
 
-    private fun JsonElement.toValueString(): String {
-        return if (this is JsonPrimitive) this.content else this.toString()
-    }
+    private fun JsonObject.toStructuredObjectValue(
+        nestedScopeExtraction: NestedJsonScopeExtraction
+    ): StructuredValue.ObjectValue {
+        val rawFields = entries.associate { (key, value) ->
+            key to value.toStructuredValue()
+        }
+        val derivedNamespaceKey = nestedScopeExtraction.derivedNamespaceKey
+        val derivedNestedField = nestedScopeExtraction.derivedStructuredFieldOrNull()
 
-    private fun JsonElement?.nonNullOrNull(): JsonElement? {
-        return this?.takeUnless { element -> element is JsonNull }
-    }
-
-    private fun JsonObject.toStructuredObjectValue(): StructuredValue.ObjectValue {
         return StructuredValue.ObjectValue(
-            fields = entries.associate { (key, value) ->
-                key to value.toStructuredValue()
+            fields = if (derivedNamespaceKey == null || derivedNestedField == null) {
+                rawFields
+            } else {
+                rawFields + (derivedNamespaceKey to derivedNestedField)
             }
         )
     }
-
-    private fun JsonElement.toStructuredValue(): StructuredValue {
-        return when (this) {
-            is JsonObject -> StructuredValue.ObjectValue(
-                fields = entries.associate { (key, value) ->
-                    key to value.toStructuredValue()
-                }
-            )
-
-            is JsonArray -> StructuredValue.ArrayValue(
-                values = map { element -> element.toStructuredValue() }
-            )
-
-            is JsonPrimitive -> when {
-                this is JsonNull -> StructuredValue.NullValue
-                booleanOrNull != null -> StructuredValue.BooleanValue(value = boolean)
-                isString -> StructuredValue.StringValue(value = content)
-                else -> StructuredValue.NumberValue(value = content)
-            }
-        }
-    }
-
-    private fun JsonObject.toCanonicalFields(): Map<String, StructuredValue> {
-        return linkedMapOf<String, StructuredValue>().apply {
-            putCanonicalValue(
-                this@toCanonicalFields,
-                CanonicalFieldAliases.CANONICAL_TIMESTAMP,
-                CanonicalFieldAliases.TIMESTAMP_ALIASES_IN_PRECEDENCE_ORDER
-            )
-            putCanonicalValue(
-                this@toCanonicalFields,
-                CanonicalFieldAliases.CANONICAL_LEVEL,
-                CanonicalFieldAliases.LEVEL_ALIASES_IN_PRECEDENCE_ORDER
-            )
-            putCanonicalValue(
-                this@toCanonicalFields,
-                CanonicalFieldAliases.CANONICAL_MESSAGE,
-                CanonicalFieldAliases.MESSAGE_ALIASES_IN_PRECEDENCE_ORDER
-            )
-            putCanonicalValue(
-                this@toCanonicalFields,
-                CanonicalFieldAliases.CANONICAL_LOGGER,
-                CanonicalFieldAliases.LOGGER_ALIASES_IN_PRECEDENCE_ORDER
-            )
-            putCanonicalValue(
-                this@toCanonicalFields,
-                CanonicalFieldAliases.CANONICAL_EXCEPTION,
-                CanonicalFieldAliases.EXCEPTION_ALIASES_IN_PRECEDENCE_ORDER
-            )
-            putCanonicalValue(
-                this@toCanonicalFields,
-                CanonicalFieldAliases.CANONICAL_TRACE_ID,
-                CanonicalFieldAliases.TRACE_ID_ALIASES_IN_PRECEDENCE_ORDER
-            )
-            putCanonicalValue(
-                this@toCanonicalFields,
-                CanonicalFieldAliases.CANONICAL_SPAN_ID,
-                CanonicalFieldAliases.SPAN_ID_ALIASES_IN_PRECEDENCE_ORDER
-            )
-        }
-    }
-
-    private fun MutableMap<String, StructuredValue>.putCanonicalValue(
-        source: JsonObject,
-        canonicalKey: String,
-        aliasesInOrder: List<String>
-    ) {
-        val value = source.firstNonNullAliasValue(aliasesInOrder) ?: return
-        put(canonicalKey, value.toStructuredValue())
-    }
-
-    private fun JsonObject.firstNonNullAliasValue(aliasesInOrder: List<String>): JsonElement? {
-        return aliasesInOrder
-            .asSequence()
-            .mapNotNull { alias -> this[alias].nonNullOrNull() }
-            .firstOrNull()
-    }
-
 }

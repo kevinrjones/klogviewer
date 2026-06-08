@@ -3,8 +3,10 @@ package com.klogviewer.ui.components
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import com.klogviewer.domain.model.LogContent
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel

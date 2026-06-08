@@ -1,5 +1,6 @@
 package com.klogviewer.ui.viewmodel
 
+import com.klogviewer.core.parser.JsonLogParser
 import com.klogviewer.domain.model.LogContent
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
@@ -180,7 +181,7 @@ class LogFilterServiceStructuredQueryTest {
     }
 
     @Test
-    fun `thread name field predicates support equals variants hyphen values case variants eq alias and generated queries`() = runTest {
+    fun `thread name predicates support equals variants and generated queries`() = runTest {
         val logs = listOf(
             threadNameEntry(),
             threadNameNonMatchEntry()
@@ -277,6 +278,63 @@ class LogFilterServiceStructuredQueryTest {
         ).containsExactly("timestamp-case-match")
     }
 
+    @Test
+    fun `alias aware filtering supports span and correlation ids from ecosystem fixtures`() = runTest {
+        val logs = listOf(
+            parsedFixtureEntry(DOCKER_WRAPPER_FIXTURE),
+            parsedFixtureEntry(SERILOG_ASPNET_FIXTURE)
+        )
+
+        expectThat(filter(logs, "has:span.id")).containsExactly("docker app ready")
+        expectThat(filter(logs, "span.id:span-docker-1")).containsExactly("docker app ready")
+    }
+
+    @Test
+    fun `correlation alias short form matches canonical compatibility fields`() = runTest {
+        val logs = listOf(
+            baseEntry(
+                content = "correlation-match",
+                structuredData = StructuredLogData(
+                    root = StructuredValue.ObjectValue(
+                        fields = mapOf(
+                            "RequestId" to StructuredValue.StringValue("req-aspnet-1")
+                        )
+                    ),
+                    canonicalFields = mapOf(
+                        "correlation.id" to StructuredValue.StringValue("req-aspnet-1")
+                    )
+                )
+            ),
+            baseEntry(
+                content = "correlation-non-match",
+                structuredData = StructuredLogData(
+                    root = StructuredValue.ObjectValue(
+                        fields = mapOf(
+                            "RequestId" to StructuredValue.StringValue("req-other")
+                        )
+                    ),
+                    canonicalFields = mapOf(
+                        "correlation.id" to StructuredValue.StringValue("req-other")
+                    )
+                )
+            )
+        )
+
+        expectThat(filter(logs, "correlation.id:\"req-aspnet-1\"")).containsExactly("correlation-match")
+    }
+
+    @Test
+    fun `explicit decoded nested paths remain filterable for wrapped payloads`() = runTest {
+        val logs = listOf(
+            parsedFixtureEntry(DOCKER_WRAPPER_FIXTURE),
+            parsedFixtureEntry(KUBERNETES_WRAPPER_FIXTURE)
+        )
+
+        expectThat(filter(logs, "field:_decoded.log.logger=com.example.Docker")).containsExactly("docker app ready")
+        expectThat(filter(logs, "field:_decoded.log.requestId=req-k8s-1")).containsExactly("k8s app failed")
+        expectThat(filter(logs, "field:kubernetes.namespace=payments")).containsExactly("k8s app failed")
+    }
+
     private suspend fun filter(logs: List<LogEntry>, query: String): List<String> {
         val filtered = LogFilterService.filter(
             LogWindow(
@@ -287,6 +345,11 @@ class LogFilterServiceStructuredQueryTest {
         )
 
         return filtered.map { entry -> entry.content.value }
+    }
+
+    private fun parsedFixtureEntry(json: String): LogEntry {
+        return JsonLogParser().parse(json).getOrNull()
+            ?: error("Fixture should parse successfully: $json")
     }
 
     private fun matchingEntry(content: String = "timeout happened"): LogEntry {
@@ -519,5 +582,16 @@ class LogFilterServiceStructuredQueryTest {
             instant = Instant.parse("2026-01-01T11:00:00Z"),
             structuredData = structuredData
         )
+    }
+
+    private companion object {
+        private const val DOCKER_WRAPPER_FIXTURE =
+            """{"log":"{\"timestamp\":\"2026-06-01T11:00:00Z\",\"level\":\"INFO\",\"message\":\"docker app ready\",\"logger\":\"com.example.Docker\",\"traceId\":\"trace-docker-1\",\"spanId\":\"span-docker-1\",\"RequestId\":\"req-docker-1\"}\n","stream":"stdout","time":"2026-06-01T11:00:00.123456789Z"}"""
+
+        private const val KUBERNETES_WRAPPER_FIXTURE =
+            """{"time":"2026-06-01T11:00:01.123456789Z","stream":"stderr","kubernetes":{"namespace":"payments","pod":"checkout-7f89"},"log":"{\"timestamp\":\"2026-06-01T11:00:01Z\",\"level\":\"ERROR\",\"message\":\"k8s app failed\",\"logger\":\"com.example.K8s\",\"traceId\":\"trace-k8s-1\",\"spanId\":\"span-k8s-1\",\"requestId\":\"req-k8s-1\"}"}"""
+
+        private const val SERILOG_ASPNET_FIXTURE =
+            """{"@t":"2026-06-01T10:01:04Z","@mt":"HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms","@m":"HTTP POST /checkout responded 201 in 55.20 ms","@l":"Information","RequestPath":"/checkout","RequestMethod":"POST","StatusCode":201,"Elapsed":55.2,"RequestId":"req-aspnet-1","TraceId":"trace-aspnet-1","SpanId":"span-aspnet-1"}"""
     }
 }

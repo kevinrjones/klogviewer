@@ -1,6 +1,6 @@
-# Structured Data Model (Sprint 12A Foundation)
+# Structured Data Model (Sprints 12A + 12D)
 
-This document defines the structured payload contract for Sprint `12A` (`12A.5` + `12A.7`) including baseline canonical normalization and backward-compatible projection rules.
+This document defines the structured payload contract introduced in Sprint `12A` (`12A.5` + `12A.7`) and extended in Sprint `12D` for ecosystem compatibility normalization.
 
 ## Scope
 
@@ -14,7 +14,6 @@ Deferred to later sprint slices:
 
 - Structured filtering grammar and advanced query language (`12B`).
 - Structured detail-tree inspector UX and context actions (`12C`).
-- Ecosystem-wide normalization pack beyond baseline aliases (`12D`).
 - Performance/polish deep tuning and dashboard redesign (`12E`).
 
 ## Domain Contract
@@ -77,19 +76,21 @@ Deferred to later sprint slices:
 - Empty objects/arrays do not emit leaf entries in `flatPathIndex`.
 - Presence is still represented in `root`/`rawPayload`.
 
-## Baseline Canonical Alias Mapping (12A.7)
+## Canonical Alias Mapping (12A + 12D)
 
 Canonical projection keys and alias precedence:
 
 | Canonical key | Alias precedence (left = highest) |
 | --- | --- |
-| `timestamp` | `timestamp`, `@timestamp`, `time`, `ts`, `@t`, `Timestamp` |
-| `level` | `level`, `severity`, `lvl`, `@l`, `LogLevel`, `Level` |
-| `message` | `message`, `msg`, `body`, `@m`, `Message`, `@mt` |
-| `logger` | `logger`, `logger_name`, `SourceContext`, `Category`, `CategoryName` |
-| `exception` | `exception`, `error`, `stackTrace`, `Exception`, `@x` |
-| `trace.id` | `traceId`, `TraceId`, `@tr` |
-| `span.id` | `spanId`, `SpanId`, `@sp` |
+| `timestamp` | `timestamp`, `@timestamp`, `time`, `ts`, `@t`, `Timestamp`, `timeMillis`, `timeUnixNano` |
+| `level` | `level`, `severity`, `lvl`, `@l`, `LogLevel`, `Level`, `severityText` |
+| `message` | `message`, `msg`, `body`, `@m`, `RenderedMessage`, `Message`, `@mt`, `MessageTemplate`, `OriginalFormat` |
+| `message.template` | `@mt`, `MessageTemplate`, `OriginalFormat` |
+| `logger` | `logger`, `logger_name`, `loggerName`, `SourceContext`, `Category`, `CategoryName`, `LoggerName` |
+| `exception` | `exception`, `error`, `stackTrace`, `Exception`, `@x`, `thrown` |
+| `trace.id` | `trace.id`, `traceId`, `TraceId`, `@tr`, `trace_id` |
+| `span.id` | `span.id`, `spanId`, `SpanId`, `@sp`, `span_id` |
+| `correlation.id` | `correlation.id`, `correlationId`, `CorrelationId`, `RequestId`, `requestId` |
 
 Canonical selection rules:
 
@@ -108,7 +109,41 @@ Canonical selection rules:
 ## Canonical vs Raw Coexistence
 
 - Raw namespaces (`Properties.*`, `attributes.*`, wrapper metadata, and unknown fields) are preserved in `root` and `flatPathIndex`.
-- Baseline canonical projection only applies declared 12A aliases; unsupported ecosystem-specific fields remain raw.
+- Canonical projection is additive and never deletes raw source fields.
+
+## 12D Ecosystem Support Matrix
+
+| Ecosystem | Representative formats | Expected canonical extraction | Preserved raw namespaces |
+| --- | --- | --- | --- |
+| JVM | LogStash Logback JSON, Logback + MDC, Spring Boot JSON, Log4j2 `JSONLayout`/`JsonTemplateLayout` | `timestamp`, `level`, `message`, `logger`, `exception`, `trace.id`, `span.id` | `mdc.*`, `MDC.*`, nested payload blocks (`payload.*`, `context.*`) |
+| .NET | MEL JSON console, Serilog compact/rendered compact/standard, Serilog ASP.NET request logs, NLog JSON, log4net JSON-style | `timestamp`, `level`, `message`, `message.template`, `logger`, `exception`, `trace.id`, `span.id`, `correlation.id` | `EventId.*`, `Scopes[]`, `Properties.*`, request metadata (`RequestPath`, `RequestMethod`, `StatusCode`, `Elapsed`) |
+| Containers | Docker JSON wrappers, Kubernetes/CRI wrappers | Canonical fields extracted from nested app payload where available | Envelope metadata (`stream`, wrapper `time`, `kubernetes.*`) + raw nested `log` |
+| Cloud envelopes | Provider envelope with nested app event (for example `jsonPayload`) | Canonical fields sourced from nested application event if root aliases are absent | Provider metadata (`insertId`, `resource.*`, provider severity) |
+| OTel-like JSON | `timeUnixNano`, `severityText`, `body`, `resource.*`, `attributes.*` | `timestamp`, `level`, `message` from OTel-like fields | `resource.*`, `attributes.*` preserved as raw/filterable paths |
+
+## Nested Wrapper Decoding
+
+- For wrapper/envelope formats, nested JSON payloads are decoded additively under `_decoded.*` for filterability.
+- Canonical projection can source values from decoded nested scopes when root aliases are absent.
+- Raw wrapper fields (including original string payloads) remain unchanged.
+
+## Fixture Catalog (12D)
+
+Primary fixture constants live in:
+
+- `core/src/test/kotlin/com/klogviewer/core/parser/StructuredEcosystemFixtures.kt`
+
+Referenced fixture groups:
+
+- JVM: `LOGSTASH_LOGBACK_JSON`, `LOGBACK_JSON_WITH_MDC`, `SPRING_BOOT_STRUCTURED_JSON`, `LOG4J2_JSON_LAYOUT`, `LOG4J2_JSON_TEMPLATE_LAYOUT`
+- .NET: `MEL_JSON_CONSOLE`, `SERILOG_COMPACT_JSON`, `SERILOG_RENDERED_COMPACT_JSON`, `SERILOG_STANDARD_JSON`, `SERILOG_ASPNET_REQUEST_JSON`, `NLOG_JSON_LAYOUT`, `LOG4NET_JSON_STYLE`
+- Container/cloud/OTel: `DOCKER_JSON_WRAPPER`, `KUBERNETES_CRI_WRAPPER`, `CLOUD_PROVIDER_ENVELOPE`, `OTEL_LIKE_JSON`
+
+## Known Limitations and Partial Support
+
+- Unsupported variants are ingested as raw structured fields with existing fallback behavior (no destructive transformations).
+- Deep ecosystem-specific semantics (for example, provider-specific severity translation rules) are not normalized beyond alias-driven canonical extraction.
+- Some alias-aware filtering behavior is validated primarily through canonical and preserved raw paths; unsupported short forms continue to use existing grammar fallbacks.
 - Compatibility projection combines flattened raw paths and canonical keys.
 
 ## Compatibility Projection Rules

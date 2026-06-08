@@ -120,19 +120,18 @@ internal fun timeAxisDateTooltipFormatter(zoneId: ZoneId = ZoneId.systemDefault(
     return DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(zoneId)
 }
 
-internal fun orderedLevelDistributionSlices(slices: List<DashboardLevelSlice>): List<DashboardLevelSlice> {
-    return slices.sortedBy { slice ->
-        when (slice.level) {
-            LogLevel.TRACE -> 0
-            LogLevel.DEBUG -> 1
-            LogLevel.INFO -> 2
-            LogLevel.WARN -> 3
-            LogLevel.ERROR -> 4
-            LogLevel.FATAL -> 5
-            LogLevel.UNKNOWN -> 6
-        }
-    }
-}
+private val LOG_LEVEL_SEVERITY_ORDER = listOf(
+    LogLevel.TRACE,
+    LogLevel.DEBUG,
+    LogLevel.INFO,
+    LogLevel.WARN,
+    LogLevel.ERROR,
+    LogLevel.FATAL,
+    LogLevel.UNKNOWN
+)
+
+internal fun orderedLevelDistributionSlices(slices: List<DashboardLevelSlice>): List<DashboardLevelSlice> =
+    slices.sortedBy { slice -> LOG_LEVEL_SEVERITY_ORDER.indexOf(slice.level) }
 
 internal fun formatLevelDistributionPercentage(ratio: Float): String {
     val normalizedRatio = ratio.coerceIn(0f, 1f)

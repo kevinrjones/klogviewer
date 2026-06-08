@@ -39,6 +39,7 @@
 - Sprint 12B walking-skeleton structured filter UI is now implemented: a discoverable structured-entry dialog in `FilterBar` generates canonical text predicates through the existing filter pipeline with dedicated UI/integration coverage.
 - Sprint 12B structured filtering semantics are now closed out: escaped literal path segments, explicit raw-path precision, array any-match + indexed lookups, and user-facing syntax docs are implemented and verified.
 - Sprint 12C structured-entry inspector UI is now implemented with structured/raw detail views, expandable typed tree inspection, node-level copy/filter actions, row-level structured indicators, and large-payload guardrails.
+- Sprint 12D structured-data ecosystem compatibility pack is now implemented with additive JVM/.NET/container/cloud/OTel normalization coverage, fixture-driven parser/detection/filter tests, and updated support-matrix documentation.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -65,6 +66,7 @@
 - Kept structured filter UI in 12B representation-free: the UI emits grammar-compatible text queries only and reuses `onAddQuery`/existing intent-handler/filter-service flow.
 - Kept explicit `field:` predicates path-precise while preserving canonical alias fan-out for non-explicit canonical query forms.
 - Kept Sprint 12C filter handoff representation-free by emitting existing 12B-compatible text predicates (`has:path` and `path:literal`) via the current query-input pipeline.
+- Kept Sprint 12D compatibility additive: canonical aliases/fields were expanded (including `message.template` and `correlation.id`) while preserving raw namespaces and existing parser/filter architecture.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - JSON confidence improvements are intentionally scoped to probing/hardening; broader canonical normalization remains deferred to Sprint `12A.7`.
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
@@ -3662,3 +3664,25 @@ For each sprint/task
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest.field predicates support case variants for content timestamp and at timestamp"` (`BUILD SUCCESSFUL`, after first reproducing the failure pre-fix).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest" --tests "com.klogviewer.ui.viewmodel.LogQueryParserTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest.givenStructuredLogs_whenManualStructuredFilterTyped_thenChipIsCreatedAndRowsAreFiltered" --tests "com.klogviewer.ui.test.KLogViewerUiTest.givenStructuredLogs_whenTuneFilterApplied_thenGeneratedChipFiltersRows"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 12D Structured Data Ecosystem Compatibility
+**Title**: Deliver fixture-driven JVM/.NET/container/cloud/OTel compatibility normalization
+**Date/time completed**: 2026-06-08 14:23
+**What was shipped**
+- Extended canonical alias coverage in `core/src/main/kotlin/com/klogviewer/core/parser/CanonicalFieldAliases.kt` with 12D ecosystem mappings (`timeMillis`/`timeUnixNano`, `severityText`, `message.template`, `correlation.id`, and expanded trace/span/logger/exception variants).
+- Updated `core/src/main/kotlin/com/klogviewer/core/parser/JsonLogParser.kt` to preserve raw wrapper/envelope fields while additively decoding nested payload scopes under `_decoded.*` and sourcing canonical values from nested scopes when root aliases are absent.
+- Added 12D fixture catalog constants in `core/src/test/kotlin/com/klogviewer/core/parser/StructuredEcosystemFixtures.kt` and expanded parser/detection coverage in `JsonLogParserTest` and `HeuristicProbeTest`.
+- Extended structured filtering compatibility by updating alias resolution (`QueryPathResolver`, `LogQueryPredicateParser`) and adding regression coverage in `ui` query/filter tests.
+- Updated 12D support documentation and sprint task tracking (`docs/STRUCTURED-DATA-MODEL.md`, `docs/tasks/TASKS-SPRINT-12D-STRUCTURED-DATA-ECOSYSTEM-COMPATIBILITY.md`).
+**Key decisions**
+- Preserved parser architecture and fallback behavior; compatibility improvements are fixture-driven and additive only.
+- Preserved raw source namespaces verbatim; canonical fields are projections layered on top, never destructive rewrites.
+- Implemented deterministic rendered-vs-template handling by projecting both `message` and `message.template` while maintaining rendered-first precedence and template fallback.
+**Gotchas**
+- Global `./gradlew detekt` remains blocked by broad existing `:ui` static-analysis backlog outside this 12D slice.
+- Global `./gradlew check` remains blocked by the same existing `:ui` detekt backlog and an unrelated app test compile mismatch in `TabManagementTest` (`LogLevel` vs `LevelFilterKey`).
+**Test coverage areas**
+- `./gradlew :core:test --tests "*JsonLogParserTest" --tests "*HeuristicProbeTest" :ui:test --tests "*LogQueryParserTest" --tests "*LogFilterServiceStructuredQueryTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests "*JsonLogParserTest" :core:detekt` (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` (`BUILD FAILED` due existing `:ui` detekt backlog outside 12D scope).
+- `./gradlew check` (`BUILD FAILED` due existing `:ui` detekt backlog and unrelated `app` test compile mismatch).

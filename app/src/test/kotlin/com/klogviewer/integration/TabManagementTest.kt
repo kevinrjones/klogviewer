@@ -6,6 +6,7 @@ import com.klogviewer.core.parser.SimpleLogParser
 import com.klogviewer.core.repository.JsonPreferencesRepository
 import com.klogviewer.core.repository.InMemorySecureCredentialStore
 import com.klogviewer.core.source.FileLogSource
+import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.LogWindow
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -170,14 +171,14 @@ class TabManagementTest {
 
     @Test
     fun `should toggle all levels at once`() = runBlocking {
-        val allLevels = com.klogviewer.domain.model.LogLevel.entries.toSet()
+        val allLevels = LevelFilterKey.defaults
         
         // Initially all levels are filtered in (assuming default state)
         assertEquals(allLevels, viewModel.state.value.activeTab?.activeWindow?.levelFilters)
         
         // Toggle All (to disable all)
         viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels)
-        assertEquals(emptySet<com.klogviewer.domain.model.LogLevel>(), viewModel.state.value.activeTab?.activeWindow?.levelFilters)
+        assertEquals(emptySet<LevelFilterKey>(), viewModel.state.value.activeTab?.activeWindow?.levelFilters)
         
         // Toggle All (to enable all)
         viewModel.handleIntent(KLogViewerIntent.ToggleAllLevels)
@@ -185,7 +186,7 @@ class TabManagementTest {
         
         // Deselect one level
         val infoLevel = com.klogviewer.domain.model.LogLevel.INFO
-        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(infoLevel))
+        viewModel.handleIntent(KLogViewerIntent.ToggleLevel(LevelFilterKey.fromLogLevel(infoLevel)))
         assertNotEquals(allLevels, viewModel.state.value.activeTab?.activeWindow?.levelFilters)
         
         // Toggle All should now enable all again because NOT all were selected

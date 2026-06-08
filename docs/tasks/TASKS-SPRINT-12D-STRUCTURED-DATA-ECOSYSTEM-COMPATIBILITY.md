@@ -47,48 +47,52 @@ Expand structured parsing and normalization compatibility for real-world JVM, .N
 - Docs and support matrix (`9`) -> supported formats, caveats, and deferred gaps.
 
 ### 12D.5. JVM Compatibility Workstream
-- [ ] 12D.5.1. Add fixtures for LogStash Logback JSON including MDC and trace/span fields.
-- [ ] 12D.5.2. Add fixtures for Spring Boot JSON structured output variants.
-- [ ] 12D.5.3. Add fixtures for Log4j2 JSONLayout/JsonTemplateLayout field naming variants.
-- [ ] 12D.5.4. Ensure canonical extraction for timestamp/level/message/logger/exception/trace/span across JVM fixtures.
-- [ ] 12D.5.5. Validate raw namespace preservation for MDC and nested payload sections.
+- [x] 12D.5.1. Add fixtures for LogStash Logback JSON including MDC and trace/span fields.
+- [x] 12D.5.2. Add fixtures for Spring Boot JSON structured output variants.
+- [x] 12D.5.3. Add fixtures for Log4j2 JSONLayout/JsonTemplateLayout field naming variants.
+- [x] 12D.5.4. Ensure canonical extraction for timestamp/level/message/logger/exception/trace/span across JVM fixtures.
+- [x] 12D.5.5. Validate raw namespace preservation for MDC and nested payload sections.
 
 ### 12D.6. .NET Compatibility Workstream
-- [ ] 12D.6.1. Add MEL JSON console fixtures covering `Timestamp`, `LogLevel`, `Category`, `EventId`, `Message`, `Scopes`, and exception fields.
-- [ ] 12D.6.2. Add Serilog compact fixtures including `@t`, `@mt`, `@m`, `@l`, `@x`, `@i`, `@tr`, and `@sp` combinations.
-- [ ] 12D.6.3. Add Serilog rendered compact and standard sink fixtures with `Properties.*` and request metadata fields.
-- [ ] 12D.6.4. Add Serilog ASP.NET Core request log fixtures (`RequestPath`, `RequestMethod`, `StatusCode`, `Elapsed`, `RequestId`, `TraceId`, `SpanId`).
-- [ ] 12D.6.5. Add NLog JSON layout fixtures with context properties.
-- [ ] 12D.6.6. Add log4net JSON-style fixtures where feasible and document unsupported variants.
-- [ ] 12D.6.7. Define deterministic rendered-message vs template precedence for Serilog/MEL while preserving both values.
+- [x] 12D.6.1. Add MEL JSON console fixtures covering `Timestamp`, `LogLevel`, `Category`, `EventId`, `Message`, `Scopes`, and exception fields.
+- [x] 12D.6.2. Add Serilog compact fixtures including `@t`, `@mt`, `@m`, `@l`, `@x`, `@i`, `@tr`, and `@sp` combinations.
+- [x] 12D.6.3. Add Serilog rendered compact and standard sink fixtures with `Properties.*` and request metadata fields.
+- [x] 12D.6.4. Add Serilog ASP.NET Core request log fixtures (`RequestPath`, `RequestMethod`, `StatusCode`, `Elapsed`, `RequestId`, `TraceId`, `SpanId`).
+- [x] 12D.6.5. Add NLog JSON layout fixtures with context properties.
+- [x] 12D.6.6. Add log4net JSON-style fixtures where feasible and document unsupported variants.
+- [x] 12D.6.7. Define deterministic rendered-message vs template precedence for Serilog/MEL while preserving both values.
 
 ### 12D.7. Container / Cloud / OTel Compatibility Workstream
-- [ ] 12D.7.1. Add fixtures for Docker JSON wrapper with nested app-event JSON in `log` field.
-- [ ] 12D.7.2. Add fixtures for Kubernetes/CRI wrapper metadata plus structured nested payload.
-- [ ] 12D.7.3. Add OTel-like fixtures with `timeUnixNano`, `severityText`, `body`, `resource.*`, and `attributes.*` fields.
-- [ ] 12D.7.4. Add cloud-envelope fixtures where application event is nested under provider metadata.
-- [ ] 12D.7.5. Validate wrapper metadata is preserved while nested app payload remains canonicalized and filterable.
+- [x] 12D.7.1. Add fixtures for Docker JSON wrapper with nested app-event JSON in `log` field.
+- [x] 12D.7.2. Add fixtures for Kubernetes/CRI wrapper metadata plus structured nested payload.
+- [x] 12D.7.3. Add OTel-like fixtures with `timeUnixNano`, `severityText`, `body`, `resource.*`, and `attributes.*` fields.
+- [x] 12D.7.4. Add cloud-envelope fixtures where application event is nested under provider metadata.
+- [x] 12D.7.5. Validate wrapper metadata is preserved while nested app payload remains canonicalized and filterable.
 
 ### 12D.8. Verification & Quality Gates
-- [ ] 12D.8.1. Add/extend parser unit tests for each supported ecosystem fixture.
-- [ ] 12D.8.2. Add/extend heuristic detection tests to verify parser selection on representative samples.
-- [ ] 12D.8.3. Add/extend normalization tests for canonical field extraction and raw field retention.
-- [ ] 12D.8.4. Add/extend regression tests for mixed structured/plain files and fallback behavior.
-- [ ] 12D.8.5. Add/extend integration tests validating alias-aware filtering on representative compatibility fixtures.
+- [x] 12D.8.1. Add/extend parser unit tests for each supported ecosystem fixture.
+- [x] 12D.8.2. Add/extend heuristic detection tests to verify parser selection on representative samples.
+- [x] 12D.8.3. Add/extend normalization tests for canonical field extraction and raw field retention.
+- [x] 12D.8.4. Add/extend regression tests for mixed structured/plain files and fallback behavior.
+- [x] 12D.8.5. Add/extend integration tests validating alias-aware filtering on representative compatibility fixtures.
 - [ ] 12D.8.6. Run static analysis with `./gradlew detekt`.
-- [ ] 12D.8.7. Run relevant module tests for touched modules.
+- [x] 12D.8.7. Run relevant module tests for touched modules.
 - [ ] 12D.8.8. Run broader `./gradlew check` before closing 12D when feasible.
 
 ### 12D.9. Documentation and Support Matrix
-- [ ] 12D.9.1. Publish/update supported-ecosystem matrix with examples and expected canonical extraction behavior.
-- [ ] 12D.9.2. Document known limitations and explicit non-goals per ecosystem format.
-- [ ] 12D.9.3. Update sprint epic progress markers for compatibility-slice completion.
-- [ ] 12D.9.4. Add fixture catalog references for future regression triage.
+- [x] 12D.9.1. Publish/update supported-ecosystem matrix with examples and expected canonical extraction behavior.
+- [x] 12D.9.2. Document known limitations and explicit non-goals per ecosystem format.
+- [x] 12D.9.3. Update sprint epic progress markers for compatibility-slice completion.
+- [x] 12D.9.4. Add fixture catalog references for future regression triage.
 
 ### 12D.10. Acceptance Criteria
-- [ ] Representative JVM/.NET/container/cloud fixture sets parse without breaking existing ingestion flows.
-- [ ] Canonical fields are extracted consistently for all supported ecosystem fixtures.
-- [ ] Serilog compact and rendered compact events preserve both message template and rendered message with documented precedence.
-- [ ] MEL and ASP.NET request metadata fields are normalized and remain available as raw fields.
-- [ ] Container/cloud wrappers preserve envelope metadata while still parsing nested application logs.
-- [ ] Unsupported or partially supported variants are explicitly documented with fallback behavior.
+- [x] Representative JVM/.NET/container/cloud fixture sets parse without breaking existing ingestion flows.
+- [x] Canonical fields are extracted consistently for all supported ecosystem fixtures.
+- [x] Serilog compact and rendered compact events preserve both message template and rendered message with documented precedence.
+- [x] MEL and ASP.NET request metadata fields are normalized and remain available as raw fields.
+- [x] Container/cloud wrappers preserve envelope metadata while still parsing nested application logs.
+- [x] Unsupported or partially supported variants are explicitly documented with fallback behavior.
+
+### 12D.11. Verification Notes
+- `./gradlew detekt` was executed; run currently fails due existing non-12D UI detekt backlog in unrelated files.
+- `./gradlew check` was executed; run currently fails due the same existing UI detekt backlog and an unrelated app test compile mismatch in `TabManagementTest`.
