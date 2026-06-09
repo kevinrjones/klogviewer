@@ -3709,3 +3709,33 @@ For each sprint/task
 - `./gradlew :domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
 - `./gradlew :core:test --tests com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest :domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
+
+## Sprint 12E: Structured Data Performance, Dashboard, and Polish
+
+**Date/time completed:** 2026-06-09 09:04
+
+### What was shipped
+
+- Finalized structured list/render guardrails by memoizing per-entry compatibility projection in `domain/src/main/kotlin/com/klogviewer/domain/model/LogEntry.kt`.
+- Finalized discovered-column behavior in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogLoadingCoordinator.kt` with stable canonical defaults, discovered auto-column cap (`8`), `Message` alias dedupe, and deterministic persisted-column merge under mixed/fallback parser flows.
+- Added focused regression coverage in `domain/src/test/kotlin/com/klogviewer/domain/model/LogEntryTest.kt` and `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogLoadingCoordinatorColumnMergeTest.kt`.
+- Updated Sprint 12E status/docs in `docs/tasks/TASKS-SPRINT-12E-STRUCTURED-DATA-PERFORMANCE-AND-POLISH.md`, `docs/STRUCTURED-DATA-MODEL.md`, `RELEASE_NOTES.md`, and `docs/RECAP.md`.
+
+### Key decisions
+
+- Preserve stable canonical list defaults (`Timestamp`, `Level`, `Content`) while bounding discovered auto-promotion rather than replacing defaults with parser-specific column sets.
+- Treat parser `Message` as canonical-equivalent for auto-promotion to prevent duplicate content columns while maintaining backward-compatible display behavior.
+- Keep high-cardinality field filterability decoupled from auto-promotion limits so overloaded discovery does not block precise field-based filtering.
+
+### Gotchas
+
+- `./gradlew check` initially surfaced a UI regression (`KLogViewerUiTest.givenFileSelected_whenLoaded_thenLogsAreDisplayed`) caused by duplicate content/message column rendering after the first merge implementation; resolved by alias dedupe in canonical key handling.
+- `./gradlew detekt` initially failed on formatting in newly added tests (line length/newline); resolved before final verification.
+
+### Test coverage areas
+
+- `./gradlew :domain:test --tests com.klogviewer.domain.model.LogEntryTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LogLoadingCoordinatorColumnMergeTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.test.KLogViewerUiTest.givenFileSelected_whenLoaded_thenLogsAreDisplayed` (`BUILD SUCCESSFUL`, after reproducing and fixing the regression).
+- `./gradlew detekt` (`BUILD SUCCESSFUL`).
+- `./gradlew check` (`BUILD SUCCESSFUL`).

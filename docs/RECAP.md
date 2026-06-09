@@ -1398,3 +1398,23 @@ Recap from the previous entry (`2026-06-08 06:41`) up to now:
 - `./gradlew detekt` → passed (`BUILD SUCCESSFUL`).
 - `./gradlew check` → passed (`BUILD SUCCESSFUL`).
 
+## 09:04
+
+### Sprint 12E Structured Data Performance, Dashboard, and Polish Completion Recap
+
+Recap from the previous entry (`2026-06-09 08:32`) up to now:
+
+#### Changes:
+- Finalized remaining Sprint 12E list/column behavior by memoizing `LogEntry.compatibilityFields()` projection reuse and by stabilizing column merge semantics in `LogLoadingCoordinator`.
+- Added deterministic discovered-column guardrails: canonical defaults remain stable, discovered auto-promotion is capped (`8`), and parser `Message` alias is deduped against canonical content behavior.
+- Preserved persisted user column preferences while supporting mixed parser/fallback flows without clobbering canonical defaults.
+- Added focused regression coverage in `LogEntryTest` and `LogLoadingCoordinatorColumnMergeTest` for memoization, alias dedupe, discovered-column limits, fallback behavior, and persisted-column merge behavior.
+- Updated Sprint 12E closure artifacts: task checklist + verification notes, structured-data model docs (guardrails and mapping overrides), release notes, and project memory.
+
+#### Verification:
+- `./gradlew :domain:test --tests com.klogviewer.domain.model.LogEntryTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LogLoadingCoordinatorColumnMergeTest` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.test.KLogViewerUiTest.givenFileSelected_whenLoaded_thenLogsAreDisplayed` → passed (`BUILD SUCCESSFUL`) after reproducing and fixing a temporary duplicate message/content column regression.
+- `./gradlew detekt` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew check` → passed (`BUILD SUCCESSFUL`).
+

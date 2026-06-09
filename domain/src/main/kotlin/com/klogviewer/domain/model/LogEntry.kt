@@ -1,6 +1,7 @@
 package com.klogviewer.domain.model
 
 import java.time.Instant
+import kotlin.LazyThreadSafetyMode
 
 data class LogEntry(
     val timestamp: LogTimestamp,
@@ -11,9 +12,13 @@ data class LogEntry(
     val instant: Instant? = null,
     val structuredData: StructuredLogData? = null
 ) {
-    fun compatibilityFields(): Map<String, String> {
+    private val compatibilityProjection: Map<String, String> by lazy(LazyThreadSafetyMode.NONE) {
         val projectedFields = structuredData?.toCompatibilityFields().orEmpty()
-        return projectedFields + fields
+        projectedFields + fields
+    }
+
+    fun compatibilityFields(): Map<String, String> {
+        return compatibilityProjection
     }
 
     fun resolvedLevelKey(): String {

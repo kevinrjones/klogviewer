@@ -1,6 +1,6 @@
-# Structured Data Model (Sprints 12A + 12D)
+# Structured Data Model (Sprints 12A + 12D + 12E)
 
-This document defines the structured payload contract introduced in Sprint `12A` (`12A.5` + `12A.7`) and extended in Sprint `12D` for ecosystem compatibility normalization.
+This document defines the structured payload contract introduced in Sprint `12A` (`12A.5` + `12A.7`), extended in Sprint `12D` for ecosystem compatibility normalization, and finalized in Sprint `12E` for performance/column guardrails and polish behavior.
 
 ## Scope
 
@@ -14,7 +14,7 @@ Deferred to later sprint slices:
 
 - Structured filtering grammar and advanced query language (`12B`).
 - Structured detail-tree inspector UX and context actions (`12C`).
-- Performance/polish deep tuning and dashboard redesign (`12E`).
+- Power-user query-builder UX improvements (`13`).
 
 ## Domain Contract
 
@@ -159,6 +159,31 @@ Referenced fixture groups:
 - `structuredData != null` -> `(structured projection incl. canonical) + explicit fields`
 - Explicit `LogEntry.fields` remain authoritative on collisions for backward compatibility.
 
+## Sprint 12E Performance and Column Guardrails
+
+- `LogEntry.compatibilityFields()` now memoizes per-entry compatibility projection to avoid repeated heavy expansion during list rendering, scrolling, and dashboard/filter recomputation.
+- Dashboard discovered structured-field auto-discovery is bounded by `DASHBOARD_STRUCTURED_DISCOVERED_FIELD_LIMIT = 200` to prevent UI overload.
+- List column auto-promotion for discovered structured fields is bounded to `8` discovered columns per merge pass while preserving canonical defaults.
+- Canonical list defaults remain stable as `Timestamp`, `Level`, and `Content`.
+- Parser-reported `Message` is treated as a canonical alias during auto-promotion to avoid duplicate content columns.
+- Mixed parser/fallback flows retain canonical defaults and merge persisted user columns deterministically.
+- High-cardinality fields remain directly filterable through explicit predicates (`field:<path>`, `has:<path>`) even when they are not auto-promoted.
+
+## Default Mapping vs User Overrides (12E.9.2)
+
+- Canonical mapping remains additive and deterministic; raw source fields are preserved.
+- Canonical defaults apply only as fallbacks and do not delete or rewrite emitter-specific keys.
+- Explicit user predicates (`field:<path>`) remain path-precise and do not fan out through alias siblings.
+- Explicit `LogEntry.fields` values override compatibility projection keys on collision for backward compatibility.
+- Persisted user column preferences are preserved and merged with safe canonical/discovered defaults across sessions.
+
+## UX Help and Terminology Alignment (12E.9.3)
+
+- **Structured filtering** terminology uses explicit field predicates (`field:<path>`, `exists`, `missing`) as the primary guidance.
+- **Inspector actions** are documented as path/value-focused helpers (`Copy path`, `Copy value`, `Filter field`, `Filter value`).
+- **Dashboard frequency guidance** distinguishes canonical defaults, discovered fields, and high-cardinality behavior (`(missing)`, `(other)`).
+- **Column behavior guidance** distinguishes stable canonical defaults from bounded discovered-column auto-promotion.
+
 ## Sprint 12B Structured Filter Syntax
 
 Structured filtering is text-first: the parser consumes query text, including text emitted by the minimal structured
@@ -243,5 +268,5 @@ Indexed paths compose with escaped segments:
 
 - `12C`: richer structured inspector interactions (`filter by this field/value` from detail tree).
 - `12D`: broader ecosystem normalization beyond baseline alias pack.
-- `12E`: performance/polish and dashboard redesign work.
+- `12E`: delivered core performance/polish guardrails and structured dashboard integration; remaining benchmark telemetry/reporting depth is tracked as follow-up.
 - Sprint `13`: autocomplete, query history, presets, and fuller query-builder UX.
