@@ -122,7 +122,7 @@ Sprint 8 introduced end-to-end remote connectivity in KLogViewer:
 TCP/UDP network listeners are tracked as a dedicated Sprint 16 scope. See:
 
 - `docs/sprints/sprint-16-network-log-adapters.md`
-- `docs/tasks/TASKS-SPRINT-15-NETWORK-LOG-ADAPTERS.md`
+- `docs/tasks/TASKS-SPRINT-16-NETWORK-LOG-ADAPTERS.md`
 - `docs/CONNECTIVITY-DESIGN.md`
 
 ### Connecting to SFTP Log Sources

@@ -143,3 +143,4 @@ app/jsonlogs/
 .output.txt
 
 /secrets/
+/graphify-out/**
