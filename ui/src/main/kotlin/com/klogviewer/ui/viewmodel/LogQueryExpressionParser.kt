@@ -5,8 +5,11 @@ internal class LogQueryExpressionParser(
     private val predicateParser: LogQueryPredicateParser = LogQueryPredicateParser()
 ) {
     fun parse(query: String): LogQueryExpression? {
-        val tokens = tokenizer.tokenize(query) ?: return null
-        return BooleanExpressionParser(tokens = tokens, predicateParser = predicateParser).parse()
+        return tokenizer
+            .tokenize(query)
+            ?.let { tokens ->
+                BooleanExpressionParser(tokens = tokens, predicateParser = predicateParser).parse()
+            }
     }
 }
 
@@ -73,10 +76,14 @@ internal class LogQueryTokenizer {
 
     private fun findAtomTokenEnd(query: String, atomStart: Int): Int {
         var index = atomStart
-        while (index < query.length && !query[index].isWhitespace() && query[index] != '(' && query[index] != ')') {
+        while (index < query.length && isAtomCharacter(query[index])) {
             index += 1
         }
         return index
+    }
+
+    private fun isAtomCharacter(character: Char): Boolean {
+        return !character.isWhitespace() && character != '(' && character != ')'
     }
 }
 
@@ -87,66 +94,79 @@ internal class BooleanExpressionParser(
     private val tokenStream = QueryTokenStream(tokens)
 
     fun parse(): LogQueryExpression? {
-        val expression = parseOrExpression() ?: return null
-        if (!tokenStream.isAtEnd()) {
-            return null
-        }
-        return expression
+        return parseOrExpression()?.takeIf { tokenStream.isAtEnd() }
     }
 
     private fun parseOrExpression(): LogQueryExpression? {
-        var expression = parseAndExpression() ?: return null
-        while (tokenStream.matchKeyword("OR")) {
-            val rightExpression = parseAndExpression() ?: return null
-            expression = LogQueryExpression.BooleanExpression(
-                operator = BooleanOperator.OR,
-                left = expression,
-                right = rightExpression
-            )
-        }
-
-        return expression
+        return parseBinaryExpression(
+            keyword = "OR",
+            operator = BooleanOperator.OR,
+            parseOperand = ::parseAndExpression
+        )
     }
 
     private fun parseAndExpression(): LogQueryExpression? {
-        var expression = parsePrimaryExpression() ?: return null
-        while (tokenStream.matchKeyword("AND")) {
-            val rightExpression = parsePrimaryExpression() ?: return null
-            expression = LogQueryExpression.BooleanExpression(
-                operator = BooleanOperator.AND,
-                left = expression,
-                right = rightExpression
-            )
-        }
-
-        return expression
+        return parseBinaryExpression(
+            keyword = "AND",
+            operator = BooleanOperator.AND,
+            parseOperand = ::parsePrimaryExpression
+        )
     }
 
     private fun parsePrimaryExpression(): LogQueryExpression? {
-        if (tokenStream.matchType(QueryTokenType.LEFT_PARENTHESIS)) {
-            val expression = parseOrExpression() ?: return null
-            if (!tokenStream.matchType(QueryTokenType.RIGHT_PARENTHESIS)) {
-                return null
+        return if (tokenStream.matchType(QueryTokenType.LEFT_PARENTHESIS)) {
+            parseParenthesizedExpression()
+        } else {
+            parsePredicateExpression()
+        }
+    }
+
+    private fun parseBinaryExpression(
+        keyword: String,
+        operator: BooleanOperator,
+        parseOperand: () -> LogQueryExpression?
+    ): LogQueryExpression? {
+        var expression = parseOperand()
+        var malformed = expression == null
+
+        while (!malformed && tokenStream.matchKeyword(keyword)) {
+            val rightExpression = parseOperand()
+            if (rightExpression == null || expression == null) {
+                malformed = true
+            } else {
+                expression = LogQueryExpression.BooleanExpression(
+                    operator = operator,
+                    left = expression,
+                    right = rightExpression
+                )
             }
-            return expression
         }
 
+        return if (malformed) null else expression
+    }
+
+    private fun parseParenthesizedExpression(): LogQueryExpression? {
+        val expression = parseOrExpression()
+        val isClosed = tokenStream.matchType(QueryTokenType.RIGHT_PARENTHESIS)
+        return if (expression != null && isClosed) expression else null
+    }
+
+    private fun parsePredicateExpression(): LogQueryExpression? {
         val predicateTokens = mutableListOf<QueryToken>()
-        while (
-            !tokenStream.isAtEnd() &&
-            tokenStream.peekType() != QueryTokenType.RIGHT_PARENTHESIS &&
-            !tokenStream.peekKeyword("AND") &&
-            !tokenStream.peekKeyword("OR")
-        ) {
+        while (!isExpressionTerminator()) {
             predicateTokens += tokenStream.advance()
         }
 
-        if (predicateTokens.isEmpty()) {
-            return null
-        }
+        val predicate = predicateTokens
+            .takeIf { tokens -> tokens.isNotEmpty() }
+            ?.joinToString(separator = " ") { token -> token.lexeme }
+        return predicate?.let(predicateParser::parse)
+    }
 
-        val predicate = predicateTokens.joinToString(separator = " ") { token -> token.lexeme }
-        return predicateParser.parse(predicate)
+    private fun isExpressionTerminator(): Boolean {
+        val isRightParenthesis = tokenStream.peekType() == QueryTokenType.RIGHT_PARENTHESIS
+        val isLogicalKeyword = tokenStream.peekKeyword("AND") || tokenStream.peekKeyword("OR")
+        return tokenStream.isAtEnd() || isRightParenthesis || isLogicalKeyword
     }
 }
 

@@ -1,5 +1,3 @@
-@file:Suppress("FunctionNaming")
-
 package com.klogviewer.ui.components
 
 import androidx.compose.foundation.clickable
@@ -22,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.klogviewer.domain.model.StructuredValue
 
 @Composable
-fun StructuredInspector(
+fun structuredInspector(
     root: StructuredValue,
     expandedStructuredPaths: Set<String>,
     expandedStructuredScalarPaths: Set<String>,
@@ -32,7 +30,7 @@ fun StructuredInspector(
 ) {
     Text("Structured payload", style = MaterialTheme.typography.subtitle2)
     Spacer(modifier = Modifier.height(8.dp))
-    StructuredValueNode(
+    structuredValueNode(
         label = "root",
         path = "",
         value = root,
@@ -46,7 +44,7 @@ fun StructuredInspector(
 }
 
 @Composable
-private fun StructuredValueNode(
+private fun structuredValueNode(
     label: String,
     path: String,
     value: StructuredValue,
@@ -58,7 +56,7 @@ private fun StructuredValueNode(
     actions: StructuredInspectorActions
 ) {
     if (isContainerNode(value)) {
-        ContainerNode(
+        containerNode(
             label = label,
             path = path,
             value = value,
@@ -70,7 +68,7 @@ private fun StructuredValueNode(
             actions = actions
         )
     } else {
-        ScalarNode(
+        scalarNode(
             label = label,
             path = path,
             value = value,
@@ -83,7 +81,7 @@ private fun StructuredValueNode(
 }
 
 @Composable
-private fun ContainerNode(
+private fun containerNode(
     label: String,
     path: String,
     value: StructuredValue,
@@ -96,7 +94,7 @@ private fun ContainerNode(
 ) {
     val isExpanded = path.isBlank() || expandedStructuredPaths.contains(path)
 
-    ContainerNodeRow(
+    containerNodeRow(
         label = label,
         path = path,
         isExpanded = isExpanded,
@@ -104,7 +102,7 @@ private fun ContainerNode(
         value = value,
         onTogglePathExpansion = onTogglePathExpansion
     )
-    StructuredNodeActionsRow(path = path, value = value, depth = depth, actions = actions)
+    structuredNodeActionsRow(path = path, value = value, depth = depth, actions = actions)
 
     if (!isExpanded) {
         return
@@ -114,7 +112,7 @@ private fun ContainerNode(
     children
         .take(MAX_STRUCTURED_CHILDREN_PER_NODE)
         .forEach { child ->
-            StructuredValueNode(
+            structuredValueNode(
                 label = child.label,
                 path = child.path,
                 value = child.value,
@@ -138,7 +136,7 @@ private fun ContainerNode(
 }
 
 @Composable
-private fun ContainerNodeRow(
+private fun containerNodeRow(
     label: String,
     path: String,
     isExpanded: Boolean,
@@ -166,12 +164,12 @@ private fun ContainerNodeRow(
             fontFamily = FontFamily.Monospace
         )
         Spacer(modifier = Modifier.width(8.dp))
-        TypeCue(type = structuredTypeLabel(value))
+        typeCue(type = structuredTypeLabel(value))
     }
 }
 
 @Composable
-private fun ScalarNode(
+private fun scalarNode(
     label: String,
     path: String,
     value: StructuredValue,
@@ -202,7 +200,7 @@ private fun ScalarNode(
             fontFamily = FontFamily.Monospace
         )
         Spacer(modifier = Modifier.width(8.dp))
-        TypeCue(type = structuredTypeLabel(value))
+        typeCue(type = structuredTypeLabel(value))
     }
     Text(
         text = displayValue,
@@ -219,11 +217,11 @@ private fun ScalarNode(
         }
     }
 
-    StructuredNodeActionsRow(path = path, value = value, depth = depth, actions = actions)
+    structuredNodeActionsRow(path = path, value = value, depth = depth, actions = actions)
 }
 
 @Composable
-private fun StructuredNodeActionsRow(
+private fun structuredNodeActionsRow(
     path: String,
     value: StructuredValue,
     depth: Int,
@@ -268,7 +266,7 @@ private fun StructuredNodeActionsRow(
 }
 
 @Composable
-private fun TypeCue(type: String) {
+private fun typeCue(type: String) {
     Text(
         text = type,
         style = MaterialTheme.typography.overline,

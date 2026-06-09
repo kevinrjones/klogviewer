@@ -74,6 +74,8 @@ class LogQueryParserTest {
     fun `parses canonical short forms`() {
         val hasExpression = LogQueryParser.parse("has:trace.id")
         val levelExpression = LogQueryParser.parse("level:error")
+        val spanExpression = LogQueryParser.parse("span.id:span-123")
+        val correlationExpression = LogQueryParser.parse("correlation.id:req-123")
 
         expectThat(hasExpression).isEqualTo(
             LogQueryExpression.FieldPredicate(
@@ -87,6 +89,22 @@ class LogQueryParserTest {
                 path = "level",
                 operator = FieldOperator.EQUALS,
                 value = QueryLiteral.StringValue("error"),
+                explicitFieldPrefix = false
+            )
+        )
+        expectThat(spanExpression).isEqualTo(
+            LogQueryExpression.FieldPredicate(
+                path = "span.id",
+                operator = FieldOperator.EQUALS,
+                value = QueryLiteral.StringValue("span-123"),
+                explicitFieldPrefix = false
+            )
+        )
+        expectThat(correlationExpression).isEqualTo(
+            LogQueryExpression.FieldPredicate(
+                path = "correlation.id",
+                operator = FieldOperator.EQUALS,
+                value = QueryLiteral.StringValue("req-123"),
                 explicitFieldPrefix = false
             )
         )

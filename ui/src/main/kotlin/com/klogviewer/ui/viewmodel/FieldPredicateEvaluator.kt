@@ -115,6 +115,7 @@ private data object ContainsOperatorStrategy : FieldOperatorStrategy {
 private data object RegexOperatorStrategy : FieldOperatorStrategy {
     override val operator: FieldOperator = FieldOperator.REGEX
 
+    @Suppress("ReturnCount")
     override fun matches(context: OperatorEvaluationContext): Boolean {
         val pattern = context.predicate.value?.toSearchToken() ?: return false
         val regex = runCatching {

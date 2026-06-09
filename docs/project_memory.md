@@ -39,6 +39,7 @@
 - Sprint 12B walking-skeleton structured filter UI is now implemented: a discoverable structured-entry dialog in `FilterBar` generates canonical text predicates through the existing filter pipeline with dedicated UI/integration coverage.
 - Sprint 12B structured filtering semantics are now closed out: escaped literal path segments, explicit raw-path precision, array any-match + indexed lookups, and user-facing syntax docs are implemented and verified.
 - Sprint 12C structured-entry inspector UI is now implemented with structured/raw detail views, expandable typed tree inspection, node-level copy/filter actions, row-level structured indicators, and large-payload guardrails.
+- Sprint 12D structured-data ecosystem compatibility pack is now implemented with additive JVM/.NET/container/cloud/OTel normalization coverage, fixture-driven parser/detection/filter tests, and updated support-matrix documentation.
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.
@@ -65,6 +66,7 @@
 - Kept structured filter UI in 12B representation-free: the UI emits grammar-compatible text queries only and reuses `onAddQuery`/existing intent-handler/filter-service flow.
 - Kept explicit `field:` predicates path-precise while preserving canonical alias fan-out for non-explicit canonical query forms.
 - Kept Sprint 12C filter handoff representation-free by emitting existing 12B-compatible text predicates (`has:path` and `path:literal`) via the current query-input pipeline.
+- Kept Sprint 12D compatibility additive: canonical aliases/fields were expanded (including `message.template` and `correlation.id`) while preserving raw namespaces and existing parser/filter architecture.
 - Sprint 5: Recursive Directory Loading completed (Recursive scanning, Merging, Textual source badges).
 - JSON confidence improvements are intentionally scoped to probing/hardening; broader canonical normalization remains deferred to Sprint `12A.7`.
 - Sprint 6: UI Redesign ("Enema") completed (high-density layout, consolidated filters, IDE-style theme).
@@ -3662,3 +3664,78 @@ For each sprint/task
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest.field predicates support case variants for content timestamp and at timestamp"` (`BUILD SUCCESSFUL`, after first reproducing the failure pre-fix).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest" --tests "com.klogviewer.ui.viewmodel.LogQueryParserTest"` (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests "com.klogviewer.ui.test.KLogViewerUiTest.givenStructuredLogs_whenManualStructuredFilterTyped_thenChipIsCreatedAndRowsAreFiltered" --tests "com.klogviewer.ui.test.KLogViewerUiTest.givenStructuredLogs_whenTuneFilterApplied_thenGeneratedChipFiltersRows"` (`BUILD SUCCESSFUL`).
+
+## Task: Sprint 12D Structured Data Ecosystem Compatibility
+**Title**: Deliver fixture-driven JVM/.NET/container/cloud/OTel compatibility normalization
+**Date/time completed**: 2026-06-08 14:23
+**What was shipped**
+- Extended canonical alias coverage in `core/src/main/kotlin/com/klogviewer/core/parser/CanonicalFieldAliases.kt` with 12D ecosystem mappings (`timeMillis`/`timeUnixNano`, `severityText`, `message.template`, `correlation.id`, and expanded trace/span/logger/exception variants).
+- Updated `core/src/main/kotlin/com/klogviewer/core/parser/JsonLogParser.kt` to preserve raw wrapper/envelope fields while additively decoding nested payload scopes under `_decoded.*` and sourcing canonical values from nested scopes when root aliases are absent.
+- Added 12D fixture catalog constants in `core/src/test/kotlin/com/klogviewer/core/parser/StructuredEcosystemFixtures.kt` and expanded parser/detection coverage in `JsonLogParserTest` and `HeuristicProbeTest`.
+- Extended structured filtering compatibility by updating alias resolution (`QueryPathResolver`, `LogQueryPredicateParser`) and adding regression coverage in `ui` query/filter tests.
+- Updated 12D support documentation and sprint task tracking (`docs/STRUCTURED-DATA-MODEL.md`, `docs/tasks/TASKS-SPRINT-12D-STRUCTURED-DATA-ECOSYSTEM-COMPATIBILITY.md`).
+**Key decisions**
+- Preserved parser architecture and fallback behavior; compatibility improvements are fixture-driven and additive only.
+- Preserved raw source namespaces verbatim; canonical fields are projections layered on top, never destructive rewrites.
+- Implemented deterministic rendered-vs-template handling by projecting both `message` and `message.template` while maintaining rendered-first precedence and template fallback.
+**Gotchas**
+- Global `./gradlew detekt` remains blocked by broad existing `:ui` static-analysis backlog outside this 12D slice.
+- Global `./gradlew check` remains blocked by the same existing `:ui` detekt backlog and an unrelated app test compile mismatch in `TabManagementTest` (`LogLevel` vs `LevelFilterKey`).
+**Test coverage areas**
+- `./gradlew :core:test --tests "*JsonLogParserTest" --tests "*HeuristicProbeTest" :ui:test --tests "*LogQueryParserTest" --tests "*LogFilterServiceStructuredQueryTest"` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests "*JsonLogParserTest" :core:detekt` (`BUILD SUCCESSFUL`).
+- `./gradlew detekt` (`BUILD FAILED` due existing `:ui` detekt backlog outside 12D scope).
+- `./gradlew check` (`BUILD FAILED` due existing `:ui` detekt backlog and unrelated `app` test compile mismatch).
+
+## Task: Sprint 12E Structured Data Performance and Dashboard Integration (partial)
+**Title**: Deliver bounded structured projection caching and structured dashboard frequency integration
+**Date/time completed**: 2026-06-08 21:31
+**What was shipped**
+- Added bounded, deterministic structured projection caches in `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredLogData.kt` for flattened path-index and compatibility projections, including eviction behavior and test reset hooks.
+- Added structured flattening guardrails in `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredValue.kt` with configurable depth/array-breadth/indexed-path limits and truncation metadata marker (`_meta.limit=(limit-exceeded)`).
+- Updated dashboard frequency field discovery and aggregation in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/KLogViewerViewModel.kt` to include discovered structured compatibility paths, preserve selected structured fields, and bucket top-N overflow into `(other)`.
+- Updated analysis aggregation in `core/src/main/kotlin/com/klogviewer/core/analysis/InMemoryAnalysisMetricsRepository.kt` to resolve frequency values via compatibility fields so structured-path frequency analysis works end-to-end.
+- Added/updated coverage in `domain/src/test/kotlin/com/klogviewer/domain/model/StructuredLogDataTest.kt` and `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` for cache reuse/eviction, flatten-limit behavior, structured dashboard frequency discovery, `(missing)` semantics, and `(other)` bucketing.
+- Updated Sprint 12E checklist and release notes (`docs/tasks/TASKS-SPRINT-12E-STRUCTURED-DATA-PERFORMANCE-AND-POLISH.md`, `RELEASE_NOTES.md`) with completion status and known follow-ups.
+**Key decisions**
+- Kept Sprint 12E parser/domain changes incremental by extending the existing typed-tree/path-index model instead of rewriting parser architecture.
+- Implemented deterministic process-local LRU caches keyed by projection identity to reduce compatibility/path-index recomputation during filter/dashboard workflows.
+- Kept dashboard missing-value semantics unchanged and layered structured-value resolution behind existing frequency controls.
+- Added `(other)` bucket only when threshold-filtered values exceed top-N to keep dashboards concise under high-cardinality inputs.
+**Gotchas**
+- Discovered-structured column selection/persistence enhancements (`12E.8`) remain open and are intentionally deferred to a follow-up pass.
+- Full sprint closure gates (`./gradlew detekt`, full `./gradlew check`) are pending and should be rerun before marking 12E fully complete.
+**Test coverage areas**
+- `./gradlew :domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest :domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
+
+## Sprint 12E: Structured Data Performance, Dashboard, and Polish
+
+**Date/time completed:** 2026-06-09 09:04
+
+### What was shipped
+
+- Finalized structured list/render guardrails by memoizing per-entry compatibility projection in `domain/src/main/kotlin/com/klogviewer/domain/model/LogEntry.kt`.
+- Finalized discovered-column behavior in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogLoadingCoordinator.kt` with stable canonical defaults, discovered auto-column cap (`8`), `Message` alias dedupe, and deterministic persisted-column merge under mixed/fallback parser flows.
+- Added focused regression coverage in `domain/src/test/kotlin/com/klogviewer/domain/model/LogEntryTest.kt` and `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogLoadingCoordinatorColumnMergeTest.kt`.
+- Updated Sprint 12E status/docs in `docs/tasks/TASKS-SPRINT-12E-STRUCTURED-DATA-PERFORMANCE-AND-POLISH.md`, `docs/STRUCTURED-DATA-MODEL.md`, `RELEASE_NOTES.md`, and `docs/RECAP.md`.
+
+### Key decisions
+
+- Preserve stable canonical list defaults (`Timestamp`, `Level`, `Content`) while bounding discovered auto-promotion rather than replacing defaults with parser-specific column sets.
+- Treat parser `Message` as canonical-equivalent for auto-promotion to prevent duplicate content columns while maintaining backward-compatible display behavior.
+- Keep high-cardinality field filterability decoupled from auto-promotion limits so overloaded discovery does not block precise field-based filtering.
+
+### Gotchas
+
+- `./gradlew check` initially surfaced a UI regression (`KLogViewerUiTest.givenFileSelected_whenLoaded_thenLogsAreDisplayed`) caused by duplicate content/message column rendering after the first merge implementation; resolved by alias dedupe in canonical key handling.
+- `./gradlew detekt` initially failed on formatting in newly added tests (line length/newline); resolved before final verification.
+
+### Test coverage areas
+
+- `./gradlew :domain:test --tests com.klogviewer.domain.model.LogEntryTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LogLoadingCoordinatorColumnMergeTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.test.KLogViewerUiTest.givenFileSelected_whenLoaded_thenLogsAreDisplayed` (`BUILD SUCCESSFUL`, after reproducing and fixing the regression).
+- `./gradlew detekt` (`BUILD SUCCESSFUL`).
+- `./gradlew check` (`BUILD SUCCESSFUL`).

@@ -1,6 +1,6 @@
-# Structured Data Model (Sprint 12A Foundation)
+# Structured Data Model (Sprints 12A + 12D + 12E)
 
-This document defines the structured payload contract for Sprint `12A` (`12A.5` + `12A.7`) including baseline canonical normalization and backward-compatible projection rules.
+This document defines the structured payload contract introduced in Sprint `12A` (`12A.5` + `12A.7`), extended in Sprint `12D` for ecosystem compatibility normalization, and finalized in Sprint `12E` for performance/column guardrails and polish behavior.
 
 ## Scope
 
@@ -14,8 +14,7 @@ Deferred to later sprint slices:
 
 - Structured filtering grammar and advanced query language (`12B`).
 - Structured detail-tree inspector UX and context actions (`12C`).
-- Ecosystem-wide normalization pack beyond baseline aliases (`12D`).
-- Performance/polish deep tuning and dashboard redesign (`12E`).
+- Power-user query-builder UX improvements (`13`).
 
 ## Domain Contract
 
@@ -77,19 +76,21 @@ Deferred to later sprint slices:
 - Empty objects/arrays do not emit leaf entries in `flatPathIndex`.
 - Presence is still represented in `root`/`rawPayload`.
 
-## Baseline Canonical Alias Mapping (12A.7)
+## Canonical Alias Mapping (12A + 12D)
 
 Canonical projection keys and alias precedence:
 
 | Canonical key | Alias precedence (left = highest) |
 | --- | --- |
-| `timestamp` | `timestamp`, `@timestamp`, `time`, `ts`, `@t`, `Timestamp` |
-| `level` | `level`, `severity`, `lvl`, `@l`, `LogLevel`, `Level` |
-| `message` | `message`, `msg`, `body`, `@m`, `Message`, `@mt` |
-| `logger` | `logger`, `logger_name`, `SourceContext`, `Category`, `CategoryName` |
-| `exception` | `exception`, `error`, `stackTrace`, `Exception`, `@x` |
-| `trace.id` | `traceId`, `TraceId`, `@tr` |
-| `span.id` | `spanId`, `SpanId`, `@sp` |
+| `timestamp` | `timestamp`, `@timestamp`, `time`, `ts`, `@t`, `Timestamp`, `timeMillis`, `timeUnixNano` |
+| `level` | `level`, `severity`, `lvl`, `@l`, `LogLevel`, `Level`, `severityText` |
+| `message` | `message`, `msg`, `body`, `@m`, `RenderedMessage`, `Message`, `@mt`, `MessageTemplate`, `OriginalFormat` |
+| `message.template` | `@mt`, `MessageTemplate`, `OriginalFormat` |
+| `logger` | `logger`, `logger_name`, `loggerName`, `SourceContext`, `Category`, `CategoryName`, `LoggerName` |
+| `exception` | `exception`, `error`, `stackTrace`, `Exception`, `@x`, `thrown` |
+| `trace.id` | `trace.id`, `traceId`, `TraceId`, `@tr`, `trace_id` |
+| `span.id` | `span.id`, `spanId`, `SpanId`, `@sp`, `span_id` |
+| `correlation.id` | `correlation.id`, `correlationId`, `CorrelationId`, `RequestId`, `requestId` |
 
 Canonical selection rules:
 
@@ -108,7 +109,41 @@ Canonical selection rules:
 ## Canonical vs Raw Coexistence
 
 - Raw namespaces (`Properties.*`, `attributes.*`, wrapper metadata, and unknown fields) are preserved in `root` and `flatPathIndex`.
-- Baseline canonical projection only applies declared 12A aliases; unsupported ecosystem-specific fields remain raw.
+- Canonical projection is additive and never deletes raw source fields.
+
+## 12D Ecosystem Support Matrix
+
+| Ecosystem | Representative formats | Expected canonical extraction | Preserved raw namespaces |
+| --- | --- | --- | --- |
+| JVM | LogStash Logback JSON, Logback + MDC, Spring Boot JSON, Log4j2 `JSONLayout`/`JsonTemplateLayout` | `timestamp`, `level`, `message`, `logger`, `exception`, `trace.id`, `span.id` | `mdc.*`, `MDC.*`, nested payload blocks (`payload.*`, `context.*`) |
+| .NET | MEL JSON console, Serilog compact/rendered compact/standard, Serilog ASP.NET request logs, NLog JSON, log4net JSON-style | `timestamp`, `level`, `message`, `message.template`, `logger`, `exception`, `trace.id`, `span.id`, `correlation.id` | `EventId.*`, `Scopes[]`, `Properties.*`, request metadata (`RequestPath`, `RequestMethod`, `StatusCode`, `Elapsed`) |
+| Containers | Docker JSON wrappers, Kubernetes/CRI wrappers | Canonical fields extracted from nested app payload where available | Envelope metadata (`stream`, wrapper `time`, `kubernetes.*`) + raw nested `log` |
+| Cloud envelopes | Provider envelope with nested app event (for example `jsonPayload`) | Canonical fields sourced from nested application event if root aliases are absent | Provider metadata (`insertId`, `resource.*`, provider severity) |
+| OTel-like JSON | `timeUnixNano`, `severityText`, `body`, `resource.*`, `attributes.*` | `timestamp`, `level`, `message` from OTel-like fields | `resource.*`, `attributes.*` preserved as raw/filterable paths |
+
+## Nested Wrapper Decoding
+
+- For wrapper/envelope formats, nested JSON payloads are decoded additively under `_decoded.*` for filterability.
+- Canonical projection can source values from decoded nested scopes when root aliases are absent.
+- Raw wrapper fields (including original string payloads) remain unchanged.
+
+## Fixture Catalog (12D)
+
+Primary fixture constants live in:
+
+- `core/src/test/kotlin/com/klogviewer/core/parser/StructuredEcosystemFixtures.kt`
+
+Referenced fixture groups:
+
+- JVM: `LOGSTASH_LOGBACK_JSON`, `LOGBACK_JSON_WITH_MDC`, `SPRING_BOOT_STRUCTURED_JSON`, `LOG4J2_JSON_LAYOUT`, `LOG4J2_JSON_TEMPLATE_LAYOUT`
+- .NET: `MEL_JSON_CONSOLE`, `SERILOG_COMPACT_JSON`, `SERILOG_RENDERED_COMPACT_JSON`, `SERILOG_STANDARD_JSON`, `SERILOG_ASPNET_REQUEST_JSON`, `NLOG_JSON_LAYOUT`, `LOG4NET_JSON_STYLE`
+- Container/cloud/OTel: `DOCKER_JSON_WRAPPER`, `KUBERNETES_CRI_WRAPPER`, `CLOUD_PROVIDER_ENVELOPE`, `OTEL_LIKE_JSON`
+
+## Known Limitations and Partial Support
+
+- Unsupported variants are ingested as raw structured fields with existing fallback behavior (no destructive transformations).
+- Deep ecosystem-specific semantics (for example, provider-specific severity translation rules) are not normalized beyond alias-driven canonical extraction.
+- Some alias-aware filtering behavior is validated primarily through canonical and preserved raw paths; unsupported short forms continue to use existing grammar fallbacks.
 - Compatibility projection combines flattened raw paths and canonical keys.
 
 ## Compatibility Projection Rules
@@ -123,6 +158,31 @@ Canonical selection rules:
 - `structuredData == null` -> existing `fields`
 - `structuredData != null` -> `(structured projection incl. canonical) + explicit fields`
 - Explicit `LogEntry.fields` remain authoritative on collisions for backward compatibility.
+
+## Sprint 12E Performance and Column Guardrails
+
+- `LogEntry.compatibilityFields()` now memoizes per-entry compatibility projection to avoid repeated heavy expansion during list rendering, scrolling, and dashboard/filter recomputation.
+- Dashboard discovered structured-field auto-discovery is bounded by `DASHBOARD_STRUCTURED_DISCOVERED_FIELD_LIMIT = 200` to prevent UI overload.
+- List column auto-promotion for discovered structured fields is bounded to `8` discovered columns per merge pass while preserving canonical defaults.
+- Canonical list defaults remain stable as `Timestamp`, `Level`, and `Content`.
+- Parser-reported `Message` is treated as a canonical alias during auto-promotion to avoid duplicate content columns.
+- Mixed parser/fallback flows retain canonical defaults and merge persisted user columns deterministically.
+- High-cardinality fields remain directly filterable through explicit predicates (`field:<path>`, `has:<path>`) even when they are not auto-promoted.
+
+## Default Mapping vs User Overrides (12E.9.2)
+
+- Canonical mapping remains additive and deterministic; raw source fields are preserved.
+- Canonical defaults apply only as fallbacks and do not delete or rewrite emitter-specific keys.
+- Explicit user predicates (`field:<path>`) remain path-precise and do not fan out through alias siblings.
+- Explicit `LogEntry.fields` values override compatibility projection keys on collision for backward compatibility.
+- Persisted user column preferences are preserved and merged with safe canonical/discovered defaults across sessions.
+
+## UX Help and Terminology Alignment (12E.9.3)
+
+- **Structured filtering** terminology uses explicit field predicates (`field:<path>`, `exists`, `missing`) as the primary guidance.
+- **Inspector actions** are documented as path/value-focused helpers (`Copy path`, `Copy value`, `Filter field`, `Filter value`).
+- **Dashboard frequency guidance** distinguishes canonical defaults, discovered fields, and high-cardinality behavior (`(missing)`, `(other)`).
+- **Column behavior guidance** distinguishes stable canonical defaults from bounded discovered-column auto-promotion.
 
 ## Sprint 12B Structured Filter Syntax
 
@@ -208,5 +268,5 @@ Indexed paths compose with escaped segments:
 
 - `12C`: richer structured inspector interactions (`filter by this field/value` from detail tree).
 - `12D`: broader ecosystem normalization beyond baseline alias pack.
-- `12E`: performance/polish and dashboard redesign work.
+- `12E`: delivered core performance/polish guardrails and structured dashboard integration; remaining benchmark telemetry/reporting depth is tracked as follow-up.
 - Sprint `13`: autocomplete, query history, presets, and fuller query-builder UX.

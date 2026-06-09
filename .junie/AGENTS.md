@@ -45,6 +45,11 @@ data class OidcConfiguration(
 - Log all Exceptions using the standard logger mechanism
 - Add logs extensively throughout the code, making use of the different logging levels
 
+### After Adding Code at Any Time
+- After adding code, make sure all the tests run
+- After adding code, make sure that the gradle `check` task runs successfully for all modules
+- Do not simply 'suppress' any errors or warnings, fix the code instead
+
 
 ### Build & Dependencies
 - Use Gradle (`build.gradle.kts`) for dependency management and builds in JVM based projects (eg Kotlin or Java).

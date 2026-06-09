@@ -11,6 +11,8 @@ import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.LogTimestamp
 import com.klogviewer.domain.model.LogUpdate
+import com.klogviewer.domain.model.StructuredLogData
+import com.klogviewer.domain.model.StructuredValue
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.mvi.DashboardDataState
 import com.klogviewer.ui.mvi.KLogViewerIntent
@@ -422,6 +424,75 @@ class DashboardIntentTest {
     }
 
     @Test
+    fun `given structured path values when selecting field then structured frequency analysis is available`() {
+        reconfigureLogSource(
+            listOf(
+                logEntry(
+                    "2026-01-01T00:00:00Z",
+                    "first",
+                    structuredData = structuredDataOf("request" to objectOf("id" to stringValue("req-1")))
+                ),
+                logEntry(
+                    "2026-01-01T00:00:01Z",
+                    "second",
+                    structuredData = structuredDataOf("request" to objectOf("id" to stringValue("req-2")))
+                ),
+                logEntry("2026-01-01T00:00:02Z", "third")
+            )
+        )
+
+        val testFile = File(tempDir, "dashboard-frequency-structured-path.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("request.id"))
+
+        waitUntil {
+            val content = activeDashboardContentOrNull() ?: return@waitUntil false
+            content.selectedFrequencyField == "request.id" &&
+                content.availableFrequencyFields.contains("request.id") &&
+                content.frequencyItems.any { item -> item.value == "req-1" } &&
+                content.frequencyItems.any { item -> item.value == "(missing)" }
+        }
+    }
+
+    @Test
+    fun `given top n truncation when applying frequency analysis then overflow is bucketed as other`() {
+        reconfigureLogSource(
+            listOf(
+                logEntry("2026-01-01T00:00:00Z", "first", fields = mapOf("team" to "a")),
+                logEntry("2026-01-01T00:00:01Z", "second", fields = mapOf("team" to "a")),
+                logEntry("2026-01-01T00:00:02Z", "third", fields = mapOf("team" to "a")),
+                logEntry("2026-01-01T00:00:03Z", "fourth", fields = mapOf("team" to "b")),
+                logEntry("2026-01-01T00:00:04Z", "fifth", fields = mapOf("team" to "b")),
+                logEntry("2026-01-01T00:00:05Z", "sixth", fields = mapOf("team" to "c"))
+            )
+        )
+
+        val testFile = File(tempDir, "dashboard-frequency-other-bucket.log").apply { writeText("line1\n") }
+        viewModel.handleIntent(KLogViewerIntent.LoadFiles(listOf(testFile.absolutePath)))
+        waitUntilWindowReady()
+
+        viewModel.handleIntent(KLogViewerIntent.ShowDashboard)
+        waitUntilDashboardContentReady()
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyField("team"))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyThreshold(1))
+        viewModel.handleIntent(KLogViewerIntent.SetDashboardFrequencyTopN(2))
+
+        waitUntilFrequencyControlsApplied(
+            selectedField = "team",
+            threshold = 1,
+            topN = 2,
+            expectedValues = listOf("a", "b", "(other)")
+        )
+
+        val content = activeDashboardContent()
+        expectThat(content.frequencyItems.map { it.count }).isEqualTo(listOf(3, 2, 1))
+    }
+
+    @Test
     fun `given top n and threshold controls when applying frequency analysis then ordering remains deterministic`() {
         reconfigureLogSource(
             listOf(
@@ -447,7 +518,7 @@ class DashboardIntentTest {
             selectedField = "team",
             threshold = 2,
             topN = 1,
-            expectedValues = listOf("a")
+            expectedValues = listOf("a", "(other)")
         )
     }
 
@@ -550,7 +621,7 @@ class DashboardIntentTest {
             selectedField = "team",
             threshold = 2,
             topN = 1,
-            expectedValues = listOf("a")
+            expectedValues = listOf("a", "(other)")
         )
     }
 
@@ -1170,7 +1241,8 @@ class DashboardIntentTest {
         content: String,
         level: LogLevel = LogLevel.INFO,
         fields: Map<String, String> = emptyMap(),
-        sourceId: String? = null
+        sourceId: String? = null,
+        structuredData: StructuredLogData? = null
     ): LogEntry {
         return LogEntry(
             timestamp = LogTimestamp(timestamp),
@@ -1178,7 +1250,22 @@ class DashboardIntentTest {
             content = LogContent(content),
             fields = fields,
             sourceId = sourceId,
-            instant = Instant.parse(timestamp)
+            instant = Instant.parse(timestamp),
+            structuredData = structuredData
         )
+    }
+
+    private fun structuredDataOf(vararg fields: Pair<String, StructuredValue>): StructuredLogData {
+        return StructuredLogData(
+            root = StructuredValue.ObjectValue(fields.toMap())
+        )
+    }
+
+    private fun objectOf(vararg fields: Pair<String, StructuredValue>): StructuredValue.ObjectValue {
+        return StructuredValue.ObjectValue(fields.toMap())
+    }
+
+    private fun stringValue(value: String): StructuredValue.StringValue {
+        return StructuredValue.StringValue(value)
     }
 }

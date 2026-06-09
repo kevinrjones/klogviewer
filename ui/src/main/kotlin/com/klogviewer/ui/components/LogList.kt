@@ -645,8 +645,7 @@ private fun LogEntryCell(
             )
         }
         else -> {
-            val fieldName = column.lowercase().replace(" ", "_")
-            val value = entry.fields[fieldName] ?: ""
+            val value = resolveCustomColumnValue(column, entry)
             Text(
                 text = value,
                 color = MaterialTheme.colors.onSurface,
@@ -658,6 +657,24 @@ private fun LogEntryCell(
             )
         }
     }
+}
+
+internal fun resolveCustomColumnValue(column: String, entry: LogEntry): String {
+    val fields = entry.compatibilityFields()
+    val normalizedColumn = column.normalizedFieldLookupKey()
+    val snakeCaseColumn = column.lowercase().replace(" ", "_")
+
+    return fields[column]
+        ?: fields[snakeCaseColumn]
+        ?: fields.entries.firstOrNull { (key, _) -> key.equals(column, ignoreCase = true) }?.value
+        ?: fields.entries.firstOrNull { (key, _) ->
+            key.normalizedFieldLookupKey() == normalizedColumn
+        }?.value
+        ?: ""
+}
+
+private fun String.normalizedFieldLookupKey(): String {
+    return lowercase().filter { it.isLetterOrDigit() }
 }
 
 internal fun createLogFontStyle(fontFamily: String, fontSizeSp: Int): TextStyle {

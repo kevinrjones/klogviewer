@@ -59,7 +59,8 @@ internal sealed interface QueryLiteral {
  * - canonical `path op value` forms for known aliases (`level`, `message`, `trace.id`) and dotted/indexed paths
  * - boolean composition with `AND` / `OR` and parentheses
  *
- * Any malformed or unsupported structured syntax falls back to `TextQuery` so existing free-text behavior remains non-blocking.
+ * Any malformed or unsupported structured syntax falls back to `TextQuery`
+ * so existing free-text behavior remains non-blocking.
  */
 internal object LogQueryParser {
     private val expressionParser = LogQueryExpressionParser()

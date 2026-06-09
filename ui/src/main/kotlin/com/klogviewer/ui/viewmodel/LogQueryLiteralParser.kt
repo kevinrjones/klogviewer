@@ -11,16 +11,15 @@ internal class LogQueryLiteralParser {
             return null
         }
 
-        if (literal.startsWith('"') || literal.endsWith('"')) {
-            val parsedString = parseQuotedString(literal) ?: return null
-            return QueryLiteral.StringValue(parsedString)
-        }
-
-        return when (literal.lowercase()) {
+        return if (literal.startsWith('"') || literal.endsWith('"')) {
+            parseQuotedString(literal)?.let(QueryLiteral::StringValue)
+        } else {
+            when (literal.lowercase()) {
             "true" -> QueryLiteral.BooleanValue(true)
             "false" -> QueryLiteral.BooleanValue(false)
             "null" -> QueryLiteral.NullValue
             else -> parseNumberOrString(literal)
+            }
         }
     }
 
@@ -41,22 +40,25 @@ internal class LogQueryLiteralParser {
         val unescaped = StringBuilder()
         var index = 1
         val lastIndex = quotedLiteral.lastIndex
+        var malformed = false
         while (index < lastIndex) {
             val character = quotedLiteral[index]
-            if (character == '\\') {
-                if (index + 1 >= lastIndex) {
-                    return null
-                }
-                unescaped.append(unescapeCharacter(quotedLiteral[index + 1]))
-                index += 2
-                continue
+            val isEscapeSequence = character == '\\'
+            if (isEscapeSequence && index + 1 >= lastIndex) {
+                malformed = true
+                break
             }
 
-            unescaped.append(character)
-            index += 1
+            if (isEscapeSequence) {
+                unescaped.append(unescapeCharacter(quotedLiteral[index + 1]))
+                index += 2
+            } else {
+                unescaped.append(character)
+                index += 1
+            }
         }
 
-        return unescaped.toString()
+        return if (malformed) null else unescaped.toString()
     }
 
     private fun unescapeCharacter(escaped: Char): Char {

@@ -110,7 +110,7 @@ class LogLoadingCoordinator(
                         sourceIds = listOf(sourceId),
                         logs = emptyList(),
                         parserName = parserName,
-                        columns = listOf("Timestamp", "Level", "Content"),
+                        columns = CANONICAL_COLUMNS,
                         isDirectory = false
                     )
                 }
@@ -168,7 +168,7 @@ class LogLoadingCoordinator(
                         sourceIds = listOf(sourceId),
                         logs = emptyList(),
                         parserName = parserName,
-                        columns = listOf("Timestamp", "Level", "Content"),
+                        columns = CANONICAL_COLUMNS,
                         isDirectory = false
                     )
                 }
@@ -213,7 +213,7 @@ class LogLoadingCoordinator(
                         filePath = keys.joinToString(", "),
                         sourceIds = keys.map { "s3://${config.bucket}/${it.removePrefix("/")}" },
                         logs = emptyList(),
-                        columns = listOf("Timestamp", "Level", "Content"),
+                        columns = CANONICAL_COLUMNS,
                         isDirectory = false
                     )
                 }
@@ -319,7 +319,7 @@ class LogLoadingCoordinator(
                         filePath = paths.joinToString(", "),
                         sourceIds = paths.map { "sftp://${config.username.value}@${config.host.value}:${config.port.value}$it" },
                         logs = emptyList(),
-                        columns = listOf("Timestamp", "Level", "Content"),
+                        columns = CANONICAL_COLUMNS,
                         isDirectory = false
                     )
                 }
@@ -495,12 +495,41 @@ class LogLoadingCoordinator(
         state.update { currentState ->
             currentState.updateWindow(windowId) { window ->
                 window.copy(
-                    columns = results.firstNotNullOfOrNull { it?.columns } ?: listOf("Timestamp", "Level", "Content"),
+                    columns = mergeColumnsWithDiscovered(
+                        persistedColumns = window.columns,
+                        results = results
+                    ),
                     parserName = if (results.size > 1 && overrideParserName == null) "Multiple" else (overrideParserName ?: results.firstOrNull()?.parserName ?: "Auto")
                 )
             }
         }
     }
+
+    internal fun mergeColumnsWithDiscovered(persistedColumns: List<String>, results: List<ProbeResult?>): List<String> {
+        val stableColumns = persistedColumns
+            .asSequence()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .toList()
+            .ifEmpty { CANONICAL_COLUMNS }
+
+        val stableColumnKeys = stableColumns.map { it.normalizedColumnKey() }.toSet()
+        val discoveredColumns = results.asSequence()
+            .filterNotNull()
+            .flatMap { it.columns.asSequence() }
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .filterNot { it.normalizedColumnKey() in CANONICAL_COLUMN_KEYS }
+            .filterNot { it.normalizedColumnKey() in stableColumnKeys }
+            .distinctBy { it.normalizedColumnKey() }
+            .take(DISCOVERED_AUTO_COLUMN_LIMIT)
+            .toList()
+
+        return (CANONICAL_COLUMNS + stableColumns + discoveredColumns)
+            .distinctBy { it.normalizedColumnKey() }
+    }
+
+    private fun String.normalizedColumnKey(): String = trim().lowercase()
 
     internal suspend fun handleLogLoadingFailure(windowId: String, path: String, failure: LogFailure) {
         val originalMessage = failure.message
@@ -528,5 +557,11 @@ class LogLoadingCoordinator(
         if (currentWindow?.error != null || currentWindow?.logs?.isEmpty() == true) {
             onShowError(displayMessage)
         }
+    }
+
+    private companion object {
+        private val CANONICAL_COLUMNS = listOf("Timestamp", "Level", "Content")
+        private val CANONICAL_COLUMN_KEYS = setOf("timestamp", "level", "content", "message")
+        private const val DISCOVERED_AUTO_COLUMN_LIMIT = 8
     }
 }
