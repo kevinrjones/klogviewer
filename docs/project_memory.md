@@ -3686,3 +3686,26 @@ For each sprint/task
 - `./gradlew :core:test --tests "*JsonLogParserTest" :core:detekt` (`BUILD SUCCESSFUL`).
 - `./gradlew detekt` (`BUILD FAILED` due existing `:ui` detekt backlog outside 12D scope).
 - `./gradlew check` (`BUILD FAILED` due existing `:ui` detekt backlog and unrelated `app` test compile mismatch).
+
+## Task: Sprint 12E Structured Data Performance and Dashboard Integration (partial)
+**Title**: Deliver bounded structured projection caching and structured dashboard frequency integration
+**Date/time completed**: 2026-06-08 21:31
+**What was shipped**
+- Added bounded, deterministic structured projection caches in `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredLogData.kt` for flattened path-index and compatibility projections, including eviction behavior and test reset hooks.
+- Added structured flattening guardrails in `domain/src/main/kotlin/com/klogviewer/domain/model/StructuredValue.kt` with configurable depth/array-breadth/indexed-path limits and truncation metadata marker (`_meta.limit=(limit-exceeded)`).
+- Updated dashboard frequency field discovery and aggregation in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/KLogViewerViewModel.kt` to include discovered structured compatibility paths, preserve selected structured fields, and bucket top-N overflow into `(other)`.
+- Updated analysis aggregation in `core/src/main/kotlin/com/klogviewer/core/analysis/InMemoryAnalysisMetricsRepository.kt` to resolve frequency values via compatibility fields so structured-path frequency analysis works end-to-end.
+- Added/updated coverage in `domain/src/test/kotlin/com/klogviewer/domain/model/StructuredLogDataTest.kt` and `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/DashboardIntentTest.kt` for cache reuse/eviction, flatten-limit behavior, structured dashboard frequency discovery, `(missing)` semantics, and `(other)` bucketing.
+- Updated Sprint 12E checklist and release notes (`docs/tasks/TASKS-SPRINT-12E-STRUCTURED-DATA-PERFORMANCE-AND-POLISH.md`, `RELEASE_NOTES.md`) with completion status and known follow-ups.
+**Key decisions**
+- Kept Sprint 12E parser/domain changes incremental by extending the existing typed-tree/path-index model instead of rewriting parser architecture.
+- Implemented deterministic process-local LRU caches keyed by projection identity to reduce compatibility/path-index recomputation during filter/dashboard workflows.
+- Kept dashboard missing-value semantics unchanged and layered structured-value resolution behind existing frequency controls.
+- Added `(other)` bucket only when threshold-filtered values exceed top-N to keep dashboards concise under high-cardinality inputs.
+**Gotchas**
+- Discovered-structured column selection/persistence enhancements (`12E.8`) remain open and are intentionally deferred to a follow-up pass.
+- Full sprint closure gates (`./gradlew detekt`, full `./gradlew check`) are pending and should be rerun before marking 12E fully complete.
+**Test coverage areas**
+- `./gradlew :domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).
+- `./gradlew :core:test --tests com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest :domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest :ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest` (`BUILD SUCCESSFUL`).

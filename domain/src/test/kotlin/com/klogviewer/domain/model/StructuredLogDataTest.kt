@@ -1,11 +1,18 @@
 package com.klogviewer.domain.model
 
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
+import strikt.assertions.containsKey
 import strikt.assertions.isEqualTo
 import strikt.assertions.isNull
 
 class StructuredLogDataTest {
+
+    @BeforeEach
+    fun resetCaches() {
+        resetStructuredProjectionCachesForTests()
+    }
 
     @Test
     fun `structured value supports all required value kinds`() {
@@ -79,6 +86,56 @@ class StructuredLogDataTest {
     }
 
     @Test
+    fun `flattening applies array breadth limit and exposes truncation marker`() {
+        val value = StructuredValue.ObjectValue(
+            mapOf(
+                "items" to StructuredValue.ArrayValue(
+                    listOf(
+                        StructuredValue.ObjectValue(mapOf("id" to StructuredValue.StringValue("a"))),
+                        StructuredValue.ObjectValue(mapOf("id" to StructuredValue.StringValue("b"))),
+                        StructuredValue.ObjectValue(mapOf("id" to StructuredValue.StringValue("c")))
+                    )
+                )
+            )
+        )
+
+        val flat = value.flattenToPathIndex(
+            limits = StructuredFlattenLimits(maxArrayBreadth = 2)
+        )
+
+        expectThat(flat).containsKey("items[0].id")
+        expectThat(flat).containsKey("items[1].id")
+        expectThat(flat).containsKey("_meta.limit")
+        expectThat(flat["items[].id"]).isEqualTo(
+            listOf(
+                StructuredValue.StringValue("a"),
+                StructuredValue.StringValue("b")
+            )
+        )
+    }
+
+    @Test
+    fun `flattening applies depth limit and exposes truncation marker`() {
+        val value = StructuredValue.ObjectValue(
+            mapOf(
+                "a" to StructuredValue.ObjectValue(
+                    mapOf(
+                        "b" to StructuredValue.ObjectValue(
+                            mapOf("c" to StructuredValue.StringValue("deep"))
+                        )
+                    )
+                )
+            )
+        )
+
+        val flat = value.flattenToPathIndex(
+            limits = StructuredFlattenLimits(maxDepth = 1)
+        )
+
+        expectThat(flat).containsKey("_meta.limit")
+    }
+
+    @Test
     fun `compatibility projection exposes flattened scalar fields and deterministic null string`() {
         val data = StructuredLogData(
             root = StructuredValue.ObjectValue(
@@ -125,6 +182,74 @@ class StructuredLogDataTest {
         expectThat(projected["@m"]).isEqualTo("rendered message")
         expectThat(projected["@mt"]).isEqualTo("template {Id}")
         expectThat(projected["Properties.SourceContext"]).isEqualTo("OrdersController")
+    }
+
+    @Test
+    fun `structured projection cache reuses previously projected payload`() {
+        val root = StructuredValue.ObjectValue(
+            mapOf(
+                "service" to StructuredValue.StringValue("auth"),
+                "request" to StructuredValue.ObjectValue(
+                    mapOf("id" to StructuredValue.StringValue("req-1"))
+                )
+            )
+        )
+
+        val first = StructuredLogData(
+            root = root,
+            rawPayload = "{\"service\":\"auth\",\"request\":{\"id\":\"req-1\"}}",
+            projectionCacheKey = "cache-key"
+        )
+        val second = StructuredLogData(
+            root = root,
+            rawPayload = "{\"service\":\"auth\",\"request\":{\"id\":\"req-1\"}}",
+            projectionCacheKey = "cache-key"
+        )
+
+        expectThat(first.flatPathIndex).containsKey("request.id")
+        expectThat(structuredProjectionPathCacheSizeForTests()).isEqualTo(1)
+        expectThat(second.flatPathIndex).containsKey("request.id")
+        expectThat(structuredProjectionPathCacheSizeForTests()).isEqualTo(1)
+    }
+
+    @Test
+    fun `structured projection cache evicts oldest keys when limit is exceeded`() {
+        StructuredLogData(
+            root = StructuredValue.ObjectValue(mapOf("id" to StructuredValue.StringValue("1"))),
+            projectionCacheKey = "entry-1",
+            cacheLimit = 2
+        ).flatPathIndex
+
+        StructuredLogData(
+            root = StructuredValue.ObjectValue(mapOf("id" to StructuredValue.StringValue("2"))),
+            projectionCacheKey = "entry-2",
+            cacheLimit = 2
+        ).flatPathIndex
+
+        StructuredLogData(
+            root = StructuredValue.ObjectValue(mapOf("id" to StructuredValue.StringValue("3"))),
+            projectionCacheKey = "entry-3",
+            cacheLimit = 2
+        ).flatPathIndex
+
+        expectThat(structuredProjectionPathCacheSizeForTests()).isEqualTo(2)
+    }
+
+    @Test
+    fun `compatibility projection cache is bounded by cache limit`() {
+        StructuredLogData(
+            root = StructuredValue.ObjectValue(mapOf("id" to StructuredValue.StringValue("1"))),
+            projectionCacheKey = "compat-1",
+            cacheLimit = 1
+        ).toCompatibilityFields()
+
+        StructuredLogData(
+            root = StructuredValue.ObjectValue(mapOf("id" to StructuredValue.StringValue("2"))),
+            projectionCacheKey = "compat-2",
+            cacheLimit = 1
+        ).toCompatibilityFields()
+
+        expectThat(structuredProjectionCompatibilityCacheSizeForTests()).isEqualTo(1)
     }
 
     @Test

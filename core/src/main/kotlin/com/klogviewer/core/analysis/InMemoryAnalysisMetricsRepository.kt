@@ -91,7 +91,11 @@ class InMemoryAnalysisMetricsRepository : AnalysisMetricsRepository {
             }
 
             val frequencies = filteredEntries
-                .groupingBy { entry -> entry.fields[query.fieldKey.value] ?: "(missing)" }
+                .groupingBy { entry ->
+                    entry.compatibilityFields()[query.fieldKey.value]
+                        ?.takeIf { value -> value.isNotBlank() }
+                        ?: "(missing)"
+                }
                 .eachCount()
                 .entries
                 .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })

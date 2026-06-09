@@ -261,6 +261,39 @@ class LogColumnResizeTest {
     }
 
     @Test
+    fun givenStructuredColumnsWithOriginalCase_whenRendering_thenValuesAreShown() = runComposeUiTest {
+        val entry = LogEntry(
+            timestamp = LogTimestamp("2026-06-09T06:16:29.9316770Z"),
+            level = LogLevel.INFO,
+            content = LogContent("App starting"),
+            fields = mapOf(
+                "MachineName" to "Kevins-MacBook-Pro",
+                "ProcessId" to "85794",
+                "ProcessName" to "ids-mysql",
+                "ThreadId" to "1"
+            )
+        )
+
+        setContent {
+            LogList(
+                logs = listOf(entry),
+                filterQueries = emptyList(),
+                isDarkMode = false,
+                columns = listOf("Timestamp", "Content", "MachineName", "ProcessId", "ProcessName", "ThreadId"),
+                isAutoScrollEnabled = false,
+                windowId = "structured-case-test"
+            )
+        }
+
+        waitForIdle()
+
+        onNodeWithText("Kevins-MacBook-Pro", useUnmergedTree = true).assertExists()
+        onNodeWithText("85794", useUnmergedTree = true).assertExists()
+        onNodeWithText("ids-mysql", useUnmergedTree = true).assertExists()
+        onNodeWithText("1", useUnmergedTree = true).assertExists()
+    }
+
+    @Test
     fun givenMessageColumnShrinksAfterBeingWide_whenListRecomposes_thenContentWidthAlsoShrinks() = runComposeUiTest {
         val entry = LogEntry(
             timestamp = LogTimestamp("2026-05-25T12:00:00Z"),

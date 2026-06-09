@@ -34,22 +34,22 @@ Scale structured logging support for larger datasets and live streams, integrate
 - Release readiness (`11`) -> sprint docs, recap/project-memory, release notes.
 
 ### 12E.5. Lazy Parsing and Caching Strategy
-- [ ] 12E.5.1. Define cache boundaries for typed tree/path index materialization per log entry.
-- [ ] 12E.5.2. Implement bounded cache eviction policy (for example LRU) with deterministic behavior.
+- [x] 12E.5.1. Define cache boundaries for typed tree/path index materialization per log entry.
+- [x] 12E.5.2. Implement bounded cache eviction policy (for example LRU) with deterministic behavior.
 - [ ] 12E.5.3. Ensure list rendering uses minimal canonical projection and defers heavy expansion.
-- [ ] 12E.5.4. Prevent cache churn from causing repeated reparsing during normal selection/filter workflows.
+- [x] 12E.5.4. Prevent cache churn from causing repeated reparsing during normal selection/filter workflows.
 
 ### 12E.6. Limits and High-Cardinality Controls
-- [ ] 12E.6.1. Implement configurable limits for payload size, nesting depth, and indexed array breadth.
+- [x] 12E.6.1. Implement configurable limits for payload size, nesting depth, and indexed array breadth.
 - [ ] 12E.6.2. Implement discovered-field and auto-column limits to prevent UI overload.
-- [ ] 12E.6.3. Add high-cardinality safeguards for dashboard top-N aggregation and `(other)` bucketing where applicable.
+- [x] 12E.6.3. Add high-cardinality safeguards for dashboard top-N aggregation and `(other)` bucketing where applicable.
 - [ ] 12E.6.4. Keep direct filtering by high-cardinality fields available even when not auto-promoted to columns.
 
 ### 12E.7. Dashboard and Frequency Integration
-- [ ] 12E.7.1. Extend dashboard dimension discovery to include canonical and selected structured paths.
-- [ ] 12E.7.2. Ensure frequency analysis works for structured values with `(missing)` semantics preserved.
-- [ ] 12E.7.3. Validate mixed structured/plain datasets still produce stable dashboard summaries.
-- [ ] 12E.7.4. Add dashboard-level regression checks for compatibility with prior analysis behavior.
+- [x] 12E.7.1. Extend dashboard dimension discovery to include canonical and selected structured paths.
+- [x] 12E.7.2. Ensure frequency analysis works for structured values with `(missing)` semantics preserved.
+- [x] 12E.7.3. Validate mixed structured/plain datasets still produce stable dashboard summaries.
+- [x] 12E.7.4. Add dashboard-level regression checks for compatibility with prior analysis behavior.
 
 ### 12E.8. Column Selection and Discoverability
 - [ ] 12E.8.1. Add/extend column selection for discovered structured fields with sensible defaults.
@@ -58,19 +58,19 @@ Scale structured logging support for larger datasets and live streams, integrate
 - [ ] 12E.8.4. Validate column behavior in mixed data files and parser fallback scenarios.
 
 ### 12E.9. Settings, Mapping Extensions, and Final Polish
-- [ ] 12E.9.1. Evaluate need for user-configurable alias/mapping extensions and implement if low-risk.
+- [x] 12E.9.1. Evaluate need for user-configurable alias/mapping extensions and implement if low-risk.
 - [ ] 12E.9.2. Document default mapping behavior vs user overrides.
 - [ ] 12E.9.3. Align final UX copy/tooltips/help text for structured filtering, inspector, and dashboard usage.
-- [ ] 12E.9.4. Capture deferred follow-ups for post-Sprint 12 roadmap.
+- [x] 12E.9.4. Capture deferred follow-ups for post-Sprint 12 roadmap.
 
 ### 12E.10. Verification & Quality Gates
 - [ ] 12E.10.1. Add/extend performance tests using large JSON/mixed-format datasets and live-tail-like ingestion patterns.
-- [ ] 12E.10.2. Add/extend memory/regression tests for cache limits, deep nesting, and high-cardinality fields.
-- [ ] 12E.10.3. Add/extend integration tests for dashboard grouping on structured fields.
+- [x] 12E.10.2. Add/extend memory/regression tests for cache limits, deep nesting, and high-cardinality fields.
+- [x] 12E.10.3. Add/extend integration tests for dashboard grouping on structured fields.
 - [ ] 12E.10.4. Add/extend UI tests for discovered-column selection and persistence behavior.
 - [ ] 12E.10.5. Re-run regression checks for plain-text/template workflows across list/filter/dashboard/details.
 - [ ] 12E.10.6. Run static analysis with `./gradlew detekt`.
-- [ ] 12E.10.7. Run relevant module tests for touched modules.
+- [x] 12E.10.7. Run relevant module tests for touched modules.
 - [ ] 12E.10.8. Run broader `./gradlew check` before closing 12E.
 
 ### 12E.11. Documentation, Release Notes, and Closure

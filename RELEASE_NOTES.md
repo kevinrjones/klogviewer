@@ -31,3 +31,33 @@
 ## Known Issues
 
 - No new customer-facing known issues were identified for this release.
+
+## Sprint 12 Structured Data Update (post-1.7.1)
+
+### Structured Performance and Analysis Improvements
+
+- Added bounded, deterministic projection caching for structured payload compatibility/path projections to reduce repeated reparsing across dashboard/filter workflows.
+- Added structured flattening guardrails with configurable limits for depth, array breadth, and indexed-path count.
+- Added graceful truncation metadata marker (`_meta.limit=(limit-exceeded)`) when structured projection limits are hit.
+
+### Dashboard Structured Field Enhancements
+
+- Dashboard frequency field discovery now includes canonical fields plus bounded discovered structured compatibility paths.
+- Frequency analysis now resolves selected fields via compatibility projections, preserving `(missing)` behavior when structured values are absent.
+- Added top-N overflow bucketing to `(other)` for high-cardinality frequency summaries.
+
+### Verification Highlights
+
+- Added/extended regression coverage for:
+  - structured projection cache reuse and eviction,
+  - flattening limits (depth/array breadth) and truncation markers,
+  - structured dashboard frequency field discovery and `(other)` bucketing.
+- Validated touched-module suites:
+  - `:core:test --tests com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepositoryTest`
+  - `:domain:test --tests com.klogviewer.domain.model.StructuredLogDataTest`
+  - `:ui:test --tests com.klogviewer.ui.viewmodel.DashboardIntentTest`
+
+### Known Limitations / Deferred Follow-ups
+
+- Discovered structured column selection/persistence UI enhancements remain open for a follow-up Sprint 12E completion pass.
+- Broader performance/live-tail stress suites and full-sprint quality gates (`detekt`, full `check`) should be rerun before final Sprint 12E closure.

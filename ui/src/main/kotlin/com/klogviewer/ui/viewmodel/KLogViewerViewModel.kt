@@ -29,9 +29,11 @@ import kotlin.time.Duration.Companion.milliseconds
 private val logger = KotlinLogging.logger {}
 private const val DASHBOARD_FIELD_QUERY_PREFIX = "@field:"
 private const val MISSING_BUCKET_VALUE = "(missing)"
+private const val OTHER_BUCKET_VALUE = "(other)"
 private const val DASHBOARD_RECOMPUTE_DEBOUNCE_MS = 75L
 private const val DASHBOARD_SAMPLING_THRESHOLD = 50_000
 private const val DASHBOARD_SAMPLING_TARGET_SIZE = 20_000
+private const val DASHBOARD_STRUCTURED_DISCOVERED_FIELD_LIMIT = 200
 
 class KLogViewerViewModel(
     private val logSource: LogSource,
@@ -775,11 +777,20 @@ class KLogViewerViewModel(
         )
 
         val previousContent = previousState as? DashboardDataState.Content
-        val availableFrequencyFields = sampledEntries.entries.asSequence()
-            .flatMap { entry -> entry.fields.keys.asSequence() }
-            .distinct()
-            .sorted()
-            .toList()
+        val discoveredFrequencyFields = collectAvailableFrequencyFields(
+            entries = sampledEntries.entries,
+            discoveredFieldLimit = DASHBOARD_STRUCTURED_DISCOVERED_FIELD_LIMIT
+        )
+        val availableFrequencyFields = previousContent?.selectedFrequencyField
+            ?.takeIf { selectedField -> selectedField.isNotBlank() }
+            ?.let { selectedField ->
+                if (discoveredFrequencyFields.contains(selectedField)) {
+                    discoveredFrequencyFields
+                } else {
+                    (discoveredFrequencyFields + selectedField).sorted()
+                }
+            }
+            ?: discoveredFrequencyFields
         val selectedFrequencyField = previousContent?.selectedFrequencyField
             ?.takeIf { field -> availableFrequencyFields.contains(field) }
             ?: availableFrequencyFields.firstOrNull()
@@ -918,10 +929,12 @@ class KLogViewerViewModel(
                 ).fold(
                     ifLeft = { emptyList() },
                     ifRight = { result ->
-                        result.frequencies
+                        val filteredItems = result.frequencies
                             .asSequence()
                             .sortedWith(compareByDescending<com.klogviewer.domain.model.FieldFrequencyItem> { it.count.value }.thenBy { it.value })
                             .filter { item -> item.count.value >= threshold }
+                            .toList()
+                        val retainedItems = filteredItems
                             .take(topN)
                             .map { item ->
                                 DashboardFieldFrequencyItem(
@@ -929,7 +942,16 @@ class KLogViewerViewModel(
                                     count = item.count.value
                                 )
                             }
-                            .toList()
+                        val overflowCount = filteredItems.drop(topN).sumOf { item -> item.count.value }
+
+                        if (overflowCount > 0) {
+                            retainedItems + DashboardFieldFrequencyItem(
+                                value = OTHER_BUCKET_VALUE,
+                                count = overflowCount
+                            )
+                        } else {
+                            retainedItems
+                        }
                     }
                 )
             }
@@ -1019,8 +1041,41 @@ class KLogViewerViewModel(
     }
 
     private fun List<LogEntry>.countFieldValues(fieldKey: String): Map<String, Int> {
-        return groupingBy { entry -> entry.fields[fieldKey] ?: MISSING_BUCKET_VALUE }
+        return groupingBy { entry -> entry.resolveDashboardFieldValue(fieldKey) }
             .eachCount()
+    }
+
+    private fun collectAvailableFrequencyFields(
+        entries: List<LogEntry>,
+        discoveredFieldLimit: Int
+    ): List<String> {
+        val canonicalFields = entries.asSequence()
+            .flatMap { entry -> entry.fields.keys.asSequence() }
+            .distinct()
+            .sorted()
+            .toList()
+
+        val canonicalFieldSet = canonicalFields.toSet()
+        val structuredFields = entries.asSequence()
+            .flatMap { entry -> entry.structuredData?.toCompatibilityFields()?.keys?.asSequence() ?: emptySequence() }
+            .filterNot { field -> canonicalFieldSet.contains(field) }
+            .distinct()
+            .sorted()
+            .take(discoveredFieldLimit)
+            .toList()
+
+        return canonicalFields + structuredFields
+    }
+
+    private fun LogEntry.resolveDashboardFieldValue(fieldKey: String): String {
+        val explicitValue = fields[fieldKey]?.takeIf { it.isNotBlank() }
+        if (explicitValue != null) {
+            return explicitValue
+        }
+
+        val structuredValue = structuredData?.toCompatibilityFields()?.get(fieldKey)
+            ?.takeIf { value -> value.isNotBlank() }
+        return structuredValue ?: MISSING_BUCKET_VALUE
     }
 
     private fun deltaDirection(delta: Int): DashboardDeltaDirection {
