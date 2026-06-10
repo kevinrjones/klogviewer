@@ -206,4 +206,59 @@ class HeuristicProbeTest {
         expectThat(result.confidence?.malformedCount).isEqualTo(1)
         expectThat(result.confidence?.finalConfidenceScore ?: 0.0).isGreaterThan(0.45)
     }
+
+    @Test
+    fun `should fallback to simple parser for pretty printed multiline json object`() {
+        val lines = listOf(
+            "{",
+            "  \"@t\": \"2026-01-01T11:00:00Z\",",
+            "  \"@m\": \"multiline payload\"",
+            "}"
+        )
+
+        val result = probe.detect(lines)
+
+        expectThat(result.parser).isA<SimpleLogParser>()
+        expectThat(result.parserName).isEqualTo("Simple")
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.successfulParseCount).isEqualTo(0)
+        expectThat(result.confidence?.malformedCount).isEqualTo(2)
+    }
+
+    @Test
+    fun `should ignore top level json arrays and primitives when selecting parser`() {
+        val lines = listOf(
+            """[{"@t":"2026-01-01T11:00:00Z","@m":"array entry"}]""",
+            "42",
+            "true",
+            "null"
+        )
+
+        val result = probe.detect(lines)
+
+        expectThat(result.parser !is JsonLogParser).isTrue()
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.successfulParseCount).isEqualTo(0)
+        expectThat(result.confidence?.malformedCount).isEqualTo(0)
+        expectThat(result.confidence?.finalConfidenceScore ?: Double.MAX_VALUE).isLessThanOrEqualTo(0.45)
+    }
+
+    @Test
+    fun `should recover json detection when malformed prefix is followed by valid events`() {
+        val lines = listOf(
+            "{ malformed json",
+            """{"@timestamp":"2026-01-01T11:00:00Z","level":"INFO","message":"one"}""",
+            """{"@timestamp":"2026-01-01T11:00:01Z","level":"WARN","message":"two"}""",
+            """{"@timestamp":"2026-01-01T11:00:02Z","level":"ERROR","message":"three"}"""
+        )
+
+        val result = probe.detect(lines)
+
+        expectThat(result.parser).isA<JsonLogParser>()
+        expectThat(result.parserName).isEqualTo("JSON")
+        expectThat(result.confidence).isNotNull()
+        expectThat(result.confidence?.successfulParseCount).isEqualTo(3)
+        expectThat(result.confidence?.malformedCount).isEqualTo(1)
+        expectThat(result.confidence?.finalConfidenceScore ?: 0.0).isGreaterThan(0.45)
+    }
 }

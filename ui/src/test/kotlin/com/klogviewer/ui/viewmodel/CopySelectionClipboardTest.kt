@@ -12,6 +12,7 @@ import com.klogviewer.domain.repository.Clipboard
 import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
+import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
@@ -66,6 +67,39 @@ class CopySelectionClipboardTest {
         expectThat(viewModel.state.value.activeTab?.activeWindow?.selectedIndices.orEmpty())
             .isEqualTo(setOf(2, 0))
         verify(exactly = 1) { clipboard.copy("line-1\nline-3") }
+    }
+
+    @Test
+    fun `given empty selection when copy selected then clipboard is not called`() {
+        val logs = listOf(logEntry("line-1"), logEntry("line-2"))
+        seedWindowState(logs = logs, selectedIndices = emptySet())
+
+        viewModel.handleIntent(KLogViewerIntent.CopySelected)
+
+        verify(exactly = 0) { clipboard.copy(any()) }
+    }
+
+    @Test
+    fun `given out of range selected indices when copy selected then only visible indices are copied`() {
+        val logs = listOf(logEntry("line-1"), logEntry("line-2"))
+        seedWindowState(logs = logs, selectedIndices = setOf(0, 99))
+
+        viewModel.handleIntent(KLogViewerIntent.CopySelected)
+
+        verify(exactly = 1) { clipboard.copy("line-1") }
+    }
+
+    @Test
+    fun `given clipboard throws when copy selected then selection state remains stable`() {
+        val logs = listOf(logEntry("line-1"), logEntry("line-2"), logEntry("line-3"))
+        seedWindowState(logs = logs, selectedIndices = setOf(1, 2))
+        every { clipboard.copy(any()) } throws IllegalStateException("clipboard unavailable")
+
+        viewModel.handleIntent(KLogViewerIntent.CopySelected)
+
+        expectThat(viewModel.state.value.activeTab?.activeWindow?.selectedIndices.orEmpty())
+            .isEqualTo(setOf(1, 2))
+        verify(exactly = 1) { clipboard.copy("line-2\nline-3") }
     }
 
     private fun seedWindowState(logs: List<LogEntry>, selectedIndices: Set<Int>) {
