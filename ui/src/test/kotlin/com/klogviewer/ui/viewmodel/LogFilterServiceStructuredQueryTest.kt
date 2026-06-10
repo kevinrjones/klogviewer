@@ -109,6 +109,36 @@ class LogFilterServiceStructuredQueryTest {
     }
 
     @Test
+    fun `malformed path with empty segment falls back safely to text matching`() = runTest {
+        val logs = listOf(
+            matchingEntry(content = "field:items..id=\"a1\" happened"),
+            nonMatchingEntry()
+        )
+
+        expectThat(filter(logs, "field:items..id=\"a1\"")).containsExactly("field:items..id=\"a1\" happened")
+    }
+
+    @Test
+    fun `contains predicate treats regex-looking text literally`() = runTest {
+        val logs = listOf(
+            matchingEntry(content = "timeout|deadline literal"),
+            baseEntry(content = "timeout happened")
+        )
+
+        expectThat(filter(logs, "message contains \"timeout|deadline\"")).containsExactly("timeout|deadline literal")
+    }
+
+    @Test
+    fun `legacy dashboard field query supports values containing equals characters`() = runTest {
+        val logs = listOf(
+            baseEntry(content = "legacy-value-match", fields = mapOf("service" to "auth=api")),
+            baseEntry(content = "legacy-value-non-match", fields = mapOf("service" to "auth"))
+        )
+
+        expectThat(filter(logs, "@field:service=auth=api")).containsExactly("legacy-value-match")
+    }
+
+    @Test
     fun `invalid regex does not crash and safely evaluates to non match`() = runTest {
         val logs = listOf(
             matchingEntry(),

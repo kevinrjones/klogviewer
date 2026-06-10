@@ -1398,6 +1398,7 @@ Recap from the previous entry (`2026-06-08 06:41`) up to now:
 - `./gradlew detekt` → passed (`BUILD SUCCESSFUL`).
 - `./gradlew check` → passed (`BUILD SUCCESSFUL`).
 
+
 ## 09:04
 
 ### Sprint 12E Structured Data Performance, Dashboard, and Polish Completion Recap
@@ -1416,5 +1417,30 @@ Recap from the previous entry (`2026-06-09 08:32`) up to now:
 - `./gradlew :ui:test --tests com.klogviewer.ui.viewmodel.LogLoadingCoordinatorColumnMergeTest` → passed (`BUILD SUCCESSFUL`).
 - `./gradlew :ui:test --tests com.klogviewer.ui.test.KLogViewerUiTest.givenFileSelected_whenLoaded_thenLogsAreDisplayed` → passed (`BUILD SUCCESSFUL`) after reproducing and fixing a temporary duplicate message/content column regression.
 - `./gradlew detekt` → passed (`BUILD SUCCESSFUL`).
+- `./gradlew check` → passed (`BUILD SUCCESSFUL`).
+
+
+# 2026-06-10
+
+## 07:24
+
+### CLEF Sprint Documentation Commits and Adversarial Structured-Log Hardening Recap
+
+Recap from the previous entry (`2026-06-09 09:04`) up to now:
+
+#### Changes:
+- **Commit `c6ea1c4` (2026-06-09 14:38)**: Finalized structured-data performance optimizations, column-behavior guardrails, and Sprint 12E closure updates.
+- **Commit `07e85a0` (2026-06-09 14:38)**: Merged branch `feat/struct-data`.
+- **Commit `3dd2a33` (2026-06-09 14:39)**: Updated the Sidebar displayed version to `v1.8.0`.
+- **Commit `e09d3a8` (2026-06-09 21:25)**: Added Sprint 14 CLEF sprint/tasks documentation and adjusted roadmap numbering.
+- **Current working session (uncommitted)**:
+    - Added adversarial parser-detection tests in `core/src/test/kotlin/com/klogviewer/core/parser/HeuristicProbeTest.kt` covering pretty-printed multiline JSON fallback, top-level JSON array/primitive non-detection, and malformed-prefix recovery to JSON parsing.
+    - Added adversarial structured-query tests in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceStructuredQueryTest.kt` for malformed empty path-segment fallback, literal `contains` handling for regex-like tokens, and legacy `@field` values containing `=`.
+    - Added copy/export resilience tests in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/CopySelectionClipboardTest.kt` for empty selection no-op, out-of-range selected indices, and clipboard exception safety with stable selection state.
+    - Updated `docs/project_memory.md` with the completed task entry for adversarial structured-log test hardening.
+- **Repository state at recap capture time**: `git status --short` shows modified files in `core/src/test/kotlin/com/klogviewer/core/parser/HeuristicProbeTest.kt`, `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceStructuredQueryTest.kt`, `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/CopySelectionClipboardTest.kt`, and `docs/project_memory.md`.
+
+#### Verification:
+- `./gradlew :core:test --tests com.klogviewer.core.parser.HeuristicProbeTest :ui:test --tests com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest --tests com.klogviewer.ui.viewmodel.CopySelectionClipboardTest` → passed (`BUILD SUCCESSFUL`).
 - `./gradlew check` → passed (`BUILD SUCCESSFUL`).
 

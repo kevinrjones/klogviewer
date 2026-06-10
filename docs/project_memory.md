@@ -3739,3 +3739,29 @@ For each sprint/task
 - `./gradlew :ui:test --tests com.klogviewer.ui.test.KLogViewerUiTest.givenFileSelected_whenLoaded_thenLogsAreDisplayed` (`BUILD SUCCESSFUL`, after reproducing and fixing the regression).
 - `./gradlew detekt` (`BUILD SUCCESSFUL`).
 - `./gradlew check` (`BUILD SUCCESSFUL`).
+
+## Task: Adversarial Structured Log Test Hardening
+
+**Date/time completed:** 2026-06-09 21:36
+
+### What was shipped
+
+- Added adversarial parser-detection coverage in `core/src/test/kotlin/com/klogviewer/core/parser/HeuristicProbeTest.kt` for pretty-printed multi-line JSON fallback, top-level array/primitive JSON handling, and malformed-prefix stream recovery.
+- Added adversarial structured-query coverage in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/LogFilterServiceStructuredQueryTest.kt` for malformed empty path-segment fallback, literal `contains` behavior for regex-like text, and `@field` values containing `=` delimiters.
+- Added copy/export resilience coverage in `ui/src/test/kotlin/com/klogviewer/ui/viewmodel/CopySelectionClipboardTest.kt` for empty selection, out-of-range selection indices, and clipboard exception handling.
+
+### Key decisions
+
+- Kept all new tests deterministic and boundary-focused, favoring direct behavior assertions over broad integration scaffolding.
+- Preserved existing fallback semantics (structured-query parse failures degrade to text matching) and asserted them explicitly under hostile input.
+- Focused copy-flow adversarial tests on observable safety properties (no crash, stable selection, bounded copied content) rather than logger internals.
+
+### Gotchas
+
+- Initial adversarial fixture strings used over-escaped JSON in a parser test and were corrected to avoid false malformed counts.
+- During test authoring, one helper misuse in `LogFilterServiceStructuredQueryTest` (`nonMatchingEntry(content=...)`) caused compile failure and was replaced with `baseEntry(...)`.
+
+### Test coverage areas
+
+- `./gradlew :core:test --tests com.klogviewer.core.parser.HeuristicProbeTest :ui:test --tests com.klogviewer.ui.viewmodel.LogFilterServiceStructuredQueryTest --tests com.klogviewer.ui.viewmodel.CopySelectionClipboardTest` (`BUILD SUCCESSFUL`).
+- `./gradlew check` (`BUILD SUCCESSFUL`).
