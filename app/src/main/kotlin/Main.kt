@@ -22,6 +22,9 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 private val logger = KotlinLogging.logger {}
 
 fun main() {
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+        logger.error(throwable) { "Uncaught exception in thread '${thread.name}': ${throwable.message}" }
+    }
     logger.info { "Starting KLogViewer application" }
     val prefsRepository = JsonPreferencesRepository()
     val initialPrefs = prefsRepository.load()

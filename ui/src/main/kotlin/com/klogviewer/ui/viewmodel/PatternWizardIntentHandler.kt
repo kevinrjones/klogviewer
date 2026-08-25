@@ -223,23 +223,108 @@ class PatternWizardIntentHandler(
         return PatternDraft(name = "Default Guess", segments = defaultSegments, originalFormatString = DEFAULT_FORMAT_PATTERN)
     }
 
-    private fun parsePatternStringToDraft(text: String): PatternDraft {
+    private fun parsePatternStringToDraft(input: String): PatternDraft {
+        val presetMap = mapOf(
+            "Logback / Log4J Standard" to "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger - %msg",
+            "Serilog Text Layout" to
+                "{Timestamp:yyyy-MM-dd HH:mm:ss.SSS} [{Level}] [{ThreadId}] {SourceContext} - {Message}",
+            "ISO8601 Simple" to "%d{yyyy-MM-ddTHH:mm:ss} %level %logger - %msg",
+            "Custom Draft" to "%d{yyyy-MM-dd HH:mm:ss} %level [%t] %logger - %msg"
+        )
+
+        val formatString = presetMap[input] ?: input
+        val segments = parseFormatStringToSegments(formatString)
+        val draftName = when {
+            presetMap.containsKey(input) -> input
+            else -> if (input.startsWith("%") || input.contains("{")) "Imported Pattern" else "Custom Pattern"
+        }
+        return PatternDraft(name = draftName, originalFormatString = formatString, segments = segments)
+    }
+
+    internal fun parseFormatStringToSegments(formatString: String): List<PatternSegment> {
         val segments = mutableListOf<PatternSegment>()
-        if (text.contains("%d") || text.contains("%level") || text.contains("%msg")) {
-            segments.add(PatternSegment.Token(PatternToken(role = PatternTokenRole.TIMESTAMP)))
-            segments.add(PatternSegment.Delimiter(PatternDelimiter(value = " ")))
-            segments.add(PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL)))
-            segments.add(PatternSegment.Delimiter(PatternDelimiter(value = " ")))
-            segments.add(PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE)))
-        } else {
+        var lastIdx = 0
+        for (match in FORMAT_SPECIFIER_REGEX.findAll(formatString)) {
+            val start = match.range.first
+            val end = match.range.last + 1
+            if (start > lastIdx) {
+                val delimText = formatString.substring(lastIdx, start)
+                if (delimText.isNotEmpty()) {
+                    segments.add(PatternSegment.Delimiter(PatternDelimiter(value = delimText)))
+                }
+            }
+            segments.add(PatternSegment.Token(mapMatchToToken(match)))
+            lastIdx = end
+        }
+
+        if (lastIdx < formatString.length) {
+            val delimText = formatString.substring(lastIdx)
+            if (delimText.isNotEmpty()) {
+                segments.add(PatternSegment.Delimiter(PatternDelimiter(value = delimText)))
+            }
+        }
+
+        if (segments.isEmpty()) {
             segments.add(PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE)))
         }
-        return PatternDraft(name = "Pasted Pattern", originalFormatString = text, segments = segments)
+
+        return segments
     }
+
+    private fun mapMatchToToken(match: MatchResult): PatternToken {
+        val fullMatch = match.value
+        return when {
+            isTimestampMatch(fullMatch) -> {
+                val pattern = match.groupValues.getOrNull(1)?.takeIf { it.isNotBlank() }
+                    ?: match.groupValues.getOrNull(2)?.takeIf { it.isNotBlank() }
+                    ?: "yyyy-MM-dd HH:mm:ss.SSS"
+                PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = pattern)
+            }
+            isThreadMatch(fullMatch) -> PatternToken(role = PatternTokenRole.THREAD)
+            isLevelMatch(fullMatch) -> PatternToken(role = PatternTokenRole.LEVEL)
+            isLoggerMatch(fullMatch) -> PatternToken(role = PatternTokenRole.LOGGER)
+            isMessageMatch(fullMatch) -> PatternToken(role = PatternTokenRole.MESSAGE)
+            isExceptionMatch(fullMatch) -> PatternToken(role = PatternTokenRole.EXCEPTION)
+            fullMatch.startsWith("{") && fullMatch.endsWith("}") -> {
+                val propName = match.groupValues.getOrNull(3)?.takeIf { it.isNotBlank() } ?: "customProp"
+                PatternToken(role = PatternTokenRole.CUSTOM_PROPERTY, customPropertyName = propName)
+            }
+            else -> PatternToken(role = PatternTokenRole.MESSAGE)
+        }
+    }
+
+    private fun isTimestampMatch(match: String) =
+        match.startsWith("%d") || match.contains("Timestamp") || match.contains("@t")
+
+    private fun isThreadMatch(match: String) =
+        match.contains("thread") || match.contains("%t") || match.contains("Thread")
+
+    private fun isLevelMatch(match: String) =
+        match.contains("level") || match.contains("%le") || match.contains("%p") ||
+            match.contains("Level") || match.contains("@l")
+
+    private fun isLoggerMatch(match: String) =
+        match.contains("logger") || match.contains("%c") ||
+            match.contains("SourceContext") || match.contains("Logger")
+
+    private fun isMessageMatch(match: String) =
+        match.contains("msg") || match.contains("%m") || match.contains("Message") || match.contains("@m")
+
+    private fun isExceptionMatch(match: String) =
+        match.contains("ex") || match.contains("throwable") || match.contains("Exception") || match.contains("@x")
 
     companion object {
         private const val CONFIDENCE_HIGH = 0.95f
         private const val CONFIDENCE_LOW = 0.5f
         private const val DEFAULT_FORMAT_PATTERN = "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger - %msg"
+
+        private val FORMAT_SPECIFIER_REGEX = Regex(
+            """%d(?:\{([^}]+)\})?|%-?\d*(?:t|thread)|%-?\d*(?:level|le|p)|""" +
+                """%-?\d*(?:c|logger)(?:\{[^}]*\})?|%-?\d*(?:m|msg|message)|""" +
+                """%-?\d*(?:ex|exception|throwable)|\{(?:Timestamp|@t)(?::([^}]+))?\}|""" +
+                """\{(?:Level|@l)(?::[^}]*)?\}|\{(?:ThreadId|ThreadName)(?::[^}]*)?\}|""" +
+                """\{(?:SourceContext|Logger)(?::[^}]*)?\}|\{(?:Message|@m|@mt)(?::[^}]*)?\}|""" +
+                """\{(?:Exception|@x)(?::[^}]*)?\}|\{([A-Za-z0-9_]+)(?::[^}]*)?\}"""
+        )
     }
 }

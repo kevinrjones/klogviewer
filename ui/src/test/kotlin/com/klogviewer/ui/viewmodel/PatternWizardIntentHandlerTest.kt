@@ -59,4 +59,22 @@ class PatternWizardIntentHandlerTest {
         expectThat(state.value.patternWizardState.isVisible).isFalse()
         expectThat(state.value.pendingDialog).isNull()
     }
+
+    @Test
+    fun `given import pattern string when logback or serilog or preset imported then draft creates valid segments`() {
+        val state = MutableStateFlow(KLogViewerState())
+        val handler = PatternWizardIntentHandler(state)
+
+        handler.handle(KLogViewerIntent.OpenPatternWizard(sampleLines = listOf("Sample line")))
+
+        handler.handle(KLogViewerIntent.ImportPatternString("Serilog Text Layout"))
+        val serilogDraft = state.value.patternWizardState.currentDraft
+        expectThat(serilogDraft.name).isEqualTo("Serilog Text Layout")
+        expectThat(serilogDraft.segments.isEmpty()).isFalse()
+
+        handler.handle(KLogViewerIntent.ImportPatternString("Custom Draft"))
+        val customDraft = state.value.patternWizardState.currentDraft
+        expectThat(customDraft.name).isEqualTo("Custom Draft")
+        expectThat(customDraft.segments.isEmpty()).isFalse()
+    }
 }

@@ -271,7 +271,7 @@ class PreferencesRepositoryTest {
                 customConfigDir = null,
                 secureCredentialStore = InMemorySecureCredentialStore()
             )
-            val newConfigFile = File(fakeHome, ".klogview/preferences.json")
+            val newConfigFile = File(fakeHome, ".klogviewer/preferences.json")
 
             val loaded = repository.load()
             assertTrue(newConfigFile.exists())

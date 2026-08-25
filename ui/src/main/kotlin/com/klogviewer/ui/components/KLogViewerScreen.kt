@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.SftpConfig
+import com.klogviewer.ui.components.pattern.PatternWizardDialog
 import com.klogviewer.ui.mvi.*
 import com.klogviewer.ui.theme.KLogViewerTheme
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
@@ -480,6 +481,85 @@ private fun DialogHandler(
                 }
             },
             onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
+        )
+    }
+
+    if (state.pendingDialog == KLogViewerState.DialogType.PATTERN_WIZARD || state.patternWizardState.isVisible) {
+        PatternWizardDialog(
+            state = state.patternWizardState,
+            isDarkMode = state.isDarkMode,
+            onPresetSelected = { presetName ->
+                viewModel.handleIntent(KLogViewerIntent.ImportPatternString(presetName))
+            },
+            onImportPattern = { patternText ->
+                viewModel.handleIntent(KLogViewerIntent.ImportPatternString(patternText))
+            },
+            onDirectoryPersistenceToggled = { enabled ->
+                viewModel.handleIntent(KLogViewerIntent.SetDirectoryPersistenceEnabled(enabled))
+            },
+            onTokenClick = { token ->
+                viewModel.handleIntent(KLogViewerIntent.OpenPatternTokenConfigPopover(token.id))
+            },
+            onSegmentHovered = { segmentId ->
+                viewModel.handleIntent(KLogViewerIntent.SetHoveredPatternSegment(segmentId))
+            },
+            onRemoveSegment = { segmentId ->
+                viewModel.handleIntent(KLogViewerIntent.RemovePatternSegment(segmentId))
+            },
+            onReorderSegment = { segmentId, moveLeft ->
+                viewModel.handleIntent(KLogViewerIntent.ReorderPatternSegment(segmentId, moveLeft))
+            },
+            onDelimiterUpdated = { delimiterId, newValue ->
+                viewModel.handleIntent(KLogViewerIntent.UpdatePatternDelimiter(delimiterId, newValue))
+            },
+            onAddToken = { segmentIndex, role ->
+                viewModel.handleIntent(KLogViewerIntent.AddPatternToken(segmentIndex, role))
+            },
+            onLineIndexChanged = { lineIndex ->
+                viewModel.handleIntent(KLogViewerIntent.SelectPatternSampleLine(lineIndex))
+            },
+            onColumnHovered = { columnName ->
+                viewModel.handleIntent(KLogViewerIntent.SetHoveredPatternColumn(columnName))
+            },
+            onExtractSpanAsToken = { textRange, role, customName ->
+                viewModel.handleIntent(KLogViewerIntent.ExtractSpanAsPatternToken(textRange, role, customName))
+            },
+            onTokenUpdated = { token ->
+                viewModel.handleIntent(KLogViewerIntent.UpdatePatternToken(token))
+            },
+            onTokenDeleted = { tokenId ->
+                viewModel.handleIntent(KLogViewerIntent.RemovePatternSegment(tokenId))
+            },
+            onToggleDiagnosticsDrawer = {
+                viewModel.handleIntent(KLogViewerIntent.TogglePatternDiagnosticsDrawer)
+            },
+            onResetToBestGuess = {
+                viewModel.handleIntent(KLogViewerIntent.ResetPatternToBestGuess)
+            },
+            onUndo = {
+                viewModel.handleIntent(KLogViewerIntent.UndoPatternDraft)
+            },
+            onRedo = {
+                viewModel.handleIntent(KLogViewerIntent.RedoPatternDraft)
+            },
+            onCancel = {
+                viewModel.handleIntent(KLogViewerIntent.ClosePatternWizard)
+            },
+            onSkip = {
+                viewModel.handleIntent(KLogViewerIntent.SkipPatternWizard)
+            },
+            onApply = {
+                viewModel.handleIntent(KLogViewerIntent.ApplyPatternDraft)
+            },
+            onExpandBannerToFullWizard = {
+                viewModel.handleIntent(KLogViewerIntent.ExpandPatternBannerToFullWizard)
+            },
+            onClosePopover = {
+                viewModel.handleIntent(KLogViewerIntent.ClosePatternTokenConfigPopover)
+            },
+            onCloseSelectionPopup = {
+                viewModel.handleIntent(KLogViewerIntent.ClosePatternSelectionPopup)
+            }
         )
     }
 }

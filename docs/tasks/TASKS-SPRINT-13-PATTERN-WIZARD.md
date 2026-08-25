@@ -55,7 +55,8 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
 - [x] 13.5.14. Implement in-wizard undo/redo for all draft mutations and the keyboard/focus model (`Esc`, `Cmd/Ctrl+Enter`, arrow-key pill navigation, `Delete`).
 - [x] 13.5.15. Implement dialog ergonomics: resizable wizard with remembered size, Zone 3/4 splitter, subtle pill animations, and preview level badges matching the main table styling.
 - [x] 13.5.16. Add `@Preview` composables (light/dark, matched/error states) for every component under `ui/components/pattern/` so HITL reviews can render the UI headlessly.
-- [ ] 13.5.17. Human in the Loop review: validate the 5-zone UI layout, interactive token pills, color-coded sample spans, hover sync, undo/redo, keyboard model, live table preview, and reopenability against real sample files before proceeding to deeper parser integration.
+- [x] 13.5.17. Human in the Loop review: validate the 5-zone UI layout, interactive token pills, color-coded sample 
+  spans, hover sync, undo/redo, keyboard model, live table preview, and reopenability against real sample files before proceeding to deeper parser integration.
 
 ### 13.6. Live Preview and Apply/Reload Flow
 - [ ] 13.6.1. Introduce a sample-based preview state/service boundary that updates as the draft changes without reloading the full table.

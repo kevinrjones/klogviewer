@@ -36,11 +36,12 @@ fun PatternImporterBar(
     var pasteText by remember { mutableStateOf("") }
     var isPresetDropdownExpanded by remember { mutableStateOf(false) }
 
-    val presets = listOf(
-        "Logback / Log4J Standard",
-        "Serilog Text Layout",
-        "ISO8601 Simple",
-        "Custom Draft"
+    val presetMap = mapOf(
+        "Logback / Log4J Standard" to "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger - %msg",
+        "Serilog Text Layout" to
+            "{Timestamp:yyyy-MM-dd HH:mm:ss.SSS} [{Level}] [{ThreadId}] {SourceContext} - {Message}",
+        "ISO8601 Simple" to "%d{yyyy-MM-ddTHH:mm:ss} %level %logger - %msg",
+        "Custom Draft" to "%d{yyyy-MM-dd HH:mm:ss} %level [%t] %logger - %msg"
     )
 
     Column(
@@ -55,7 +56,7 @@ fun PatternImporterBar(
             // Preset Dropdown
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Preset: ",
+                    text = "Preset Pattern: ",
                     style = MaterialTheme.typography.bodyMedium
                 )
                 OutlinedButton(onClick = { isPresetDropdownExpanded = true }) {
@@ -65,11 +66,12 @@ fun PatternImporterBar(
                     expanded = isPresetDropdownExpanded,
                     onDismissRequest = { isPresetDropdownExpanded = false }
                 ) {
-                    presets.forEach { preset ->
+                    presetMap.forEach { (presetName, formatStr) ->
                         DropdownMenuItem(
-                            text = { Text(preset) },
+                            text = { Text(presetName) },
                             onClick = {
-                                onPresetSelected(preset)
+                                pasteText = formatStr
+                                onPresetSelected(presetName)
                                 isPresetDropdownExpanded = false
                             }
                         )
@@ -104,7 +106,10 @@ fun PatternImporterBar(
                 value = pasteText,
                 onValueChange = { pasteText = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Paste pattern string (e.g. %d{yyyy-MM-dd} [%t] %-5level - %msg)") },
+                label = { Text("Paste Pattern String (Logback / Log4J / Serilog)") },
+                placeholder = {
+                    Text("e.g. %d{yyyy-MM-dd} [%t] %-5level %logger - %msg OR {Timestamp} [{Level}] {Message}")
+                },
                 singleLine = true
             )
             Button(

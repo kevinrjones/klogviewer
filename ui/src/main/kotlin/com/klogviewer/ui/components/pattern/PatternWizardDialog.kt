@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +33,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.klogviewer.domain.model.PatternDraft
@@ -80,7 +82,7 @@ fun PatternWizardDialog(
             tonalElevation = 8.dp,
             modifier = modifier
                 .width(state.windowWidth.dp)
-                .height(if (state.isBannerMode) 120.dp else state.windowHeight.dp)
+                .height(if (state.isBannerMode) 130.dp else state.windowHeight.dp)
                 .onKeyEvent { keyEvent ->
                     if (keyEvent.type == KeyEventType.KeyDown) {
                         val isCmdOrCtrl = keyEvent.isMetaPressed || keyEvent.isCtrlPressed
@@ -172,17 +174,11 @@ fun PatternWizardDialog(
                         )
 
                         // Zone 3: Sample Line Inspector
-                        val spansForLine = mapDraftToSampleSpans(
-                            draft = state.currentDraft,
-                            sampleLine = state.sampleLines.getOrNull(state.selectedLineIndex) ?: ""
-                        )
-                        val parseError = state.parseErrors.find { it.lineIndex == state.selectedLineIndex }
-
                         SampleLineInspector(
                             sampleLines = state.sampleLines,
                             selectedLineIndex = state.selectedLineIndex,
-                            spansForLine = spansForLine,
-                            parseErrorForLine = parseError,
+                            getSpansForLine = { line -> mapDraftToSampleSpans(state.currentDraft, line) },
+                            parseErrors = state.parseErrors,
                             hoveredSegmentId = state.hoveredSegmentId,
                             isDarkMode = isDarkMode,
                             onLineIndexChanged = onLineIndexChanged,
@@ -213,24 +209,36 @@ fun PatternWizardDialog(
                     }
 
                     // Footer / Action Bar
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Surface(
+                        tonalElevation = 2.dp,
+                        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     ) {
-                        TextButton(onClick = onResetToBestGuess) {
-                            Text("Reset to Best Guess")
-                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            TextButton(onClick = onResetToBestGuess) {
+                                Text("Reset to Best Guess")
+                            }
 
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = onSkip) {
-                                Text("Skip — open as plain text")
-                            }
-                            OutlinedButton(onClick = onCancel) {
-                                Text("Cancel")
-                            }
-                            Button(onClick = onApply) {
-                                Text("Apply & Load")
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedButton(onClick = onSkip) {
+                                    Text("Skip (Plain Text)")
+                                }
+                                OutlinedButton(onClick = onCancel) {
+                                    Text("Cancel")
+                                }
+                                Button(
+                                    onClick = onApply,
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text("Apply & Load (⌘↵)")
+                                }
                             }
                         }
                     }
@@ -284,27 +292,37 @@ fun PatternConfirmationBanner(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
+        Column(
+            modifier = Modifier.weight(1f).padding(end = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
             Text(
                 text = "Detected pattern layout: $draftName",
-                style = MaterialTheme.typography.titleSmall
+                style = MaterialTheme.typography.titleSmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = "High confidence match (${(confidenceScore * 100).toInt()}%). Click Apply to open or Review to customize.",
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             TextButton(onClick = onSkip) {
-                Text("Skip")
+                Text("Skip", maxLines = 1)
             }
             OutlinedButton(onClick = onReview) {
-                Text("Review")
+                Text("Review", maxLines = 1)
             }
             Button(onClick = onApply) {
-                Text("Apply")
+                Text("Apply", maxLines = 1)
             }
         }
     }
@@ -331,14 +349,19 @@ private fun generatePreviewRows(draft: PatternDraft, sampleLines: List<String>):
 }
 
 private fun mapDraftToSampleSpans(draft: PatternDraft, sampleLine: String): List<SampleLineSpan> {
+    if (sampleLine.isEmpty()) return emptyList()
     val spans = mutableListOf<SampleLineSpan>()
     var currentOffset = 0
+
     draft.segments.forEach { segment ->
         when (segment) {
             is PatternSegment.Delimiter -> {
-                val foundIdx = sampleLine.indexOf(segment.delimiter.value, currentOffset)
-                if (foundIdx != -1) {
-                    currentOffset = foundIdx + segment.delimiter.value.length
+                val valStr = segment.delimiter.value
+                if (valStr.isNotEmpty()) {
+                    val foundIdx = sampleLine.indexOf(valStr, currentOffset)
+                    if (foundIdx != -1) {
+                        currentOffset = foundIdx + valStr.length
+                    }
                 }
             }
             is PatternSegment.Token -> {
@@ -346,24 +369,26 @@ private fun mapDraftToSampleSpans(draft: PatternDraft, sampleLine: String): List
                     .dropWhile { it != segment }
                     .drop(1)
                     .filterIsInstance<PatternSegment.Delimiter>()
-                    .firstOrNull()?.delimiter?.value
+                    .firstOrNull { it.delimiter.value.isNotEmpty() }
+                    ?.delimiter?.value
 
                 val endIdx = if (nextDelimiter != null) {
                     val idx = sampleLine.indexOf(nextDelimiter, currentOffset)
-                    if (idx != -1) idx else sampleLine.length
+                    if (idx != -1 && idx >= currentOffset) idx else sampleLine.length
                 } else {
                     sampleLine.length
                 }
 
-                if (currentOffset < endIdx) {
+                if (currentOffset < endIdx && currentOffset < sampleLine.length) {
+                    val validEnd = endIdx.coerceAtMost(sampleLine.length)
                     spans.add(
                         SampleLineSpan(
-                            range = currentOffset until endIdx,
+                            range = currentOffset until validEnd,
                             segmentId = segment.id,
                             role = segment.token.role
                         )
                     )
-                    currentOffset = endIdx
+                    currentOffset = validEnd
                 }
             }
         }

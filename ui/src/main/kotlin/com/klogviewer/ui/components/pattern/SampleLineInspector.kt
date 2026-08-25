@@ -37,12 +37,21 @@ import com.klogviewer.domain.model.PatternSegment
 import com.klogviewer.domain.model.PatternTokenRole
 import com.klogviewer.domain.model.SampleLineSpan
 
+import androidx.compose.ui.text.AnnotatedString
+
+private const val MAX_DISPLAY_SAMPLE_LINES = 5
+private val DARK_SELECTED_BG = Color(0xFF2C2C2C)
+private val LIGHT_SELECTED_BG = Color(0xFFEBF3FE)
+private val DARK_UNSELECTED_BG = Color(0xFF1E1E1E)
+private val LIGHT_UNSELECTED_BG = Color(0xFFF5F5F5)
+private val PARSE_ERROR_RED = Color(0xFFE74C3C)
+
 @Composable
 fun SampleLineInspector(
     sampleLines: List<String>,
     selectedLineIndex: Int,
-    spansForLine: List<SampleLineSpan>,
-    parseErrorForLine: PatternParseError?,
+    getSpansForLine: (String) -> List<SampleLineSpan>,
+    parseErrors: List<PatternParseError>,
     hoveredSegmentId: String?,
     isDarkMode: Boolean,
     onLineIndexChanged: (Int) -> Unit,
@@ -58,14 +67,15 @@ fun SampleLineInspector(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // Header / Carousel Controls
+            // Header / Information Controls
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                val shownCount = sampleLines.take(MAX_DISPLAY_SAMPLE_LINES).size
                 Text(
-                    text = "Sample Line Inspector",
+                    text = "Sample Line Inspector ($shownCount of ${sampleLines.size} lines shown)",
                     style = MaterialTheme.typography.titleSmall
                 )
 
@@ -75,7 +85,7 @@ fun SampleLineInspector(
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         IconButton(
-                            onClick = { onLineIndexChanged(selectedLineIndex - 1) },
+                            onClick = { onLineIndexChanged((selectedLineIndex - 1).coerceAtLeast(0)) },
                             enabled = selectedLineIndex > 0,
                             modifier = Modifier.size(24.dp)
                         ) {
@@ -88,7 +98,9 @@ fun SampleLineInspector(
                         )
 
                         IconButton(
-                            onClick = { onLineIndexChanged(selectedLineIndex + 1) },
+                            onClick = {
+                                onLineIndexChanged((selectedLineIndex + 1).coerceAtMost(sampleLines.size - 1))
+                            },
                             enabled = selectedLineIndex < sampleLines.size - 1,
                             modifier = Modifier.size(24.dp)
                         ) {
@@ -98,91 +110,195 @@ fun SampleLineInspector(
                 }
             }
 
-            // Monospace Line Viewer
-            val currentLine = sampleLines.getOrNull(selectedLineIndex) ?: "No sample lines available"
-
-            SelectionContainer {
-                Surface(
-                    shape = RoundedCornerShape(4.dp),
-                    color = if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFF5F5F5),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .border(
-                            width = if (parseErrorForLine != null) 1.5.dp else 1.dp,
-                            color = if (parseErrorForLine != null) Color(0xFFE74C3C) else Color.Transparent,
-                            shape = RoundedCornerShape(4.dp)
-                        )
-                        .padding(12.dp)
+            // Multi-Line Sample Inspector View (Showing up to 5 sample lines)
+            val displayLines = sampleLines.take(MAX_DISPLAY_SAMPLE_LINES)
+            if (displayLines.isEmpty()) {
+                Text(
+                    text = "No sample lines available",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    val annotatedString = buildAnnotatedString {
-                        if (spansForLine.isEmpty()) {
-                            append(currentLine)
-                        } else {
-                            var lastIdx = 0
-                            val sortedSpans = spansForLine.sortedBy { it.range.first }
-                            for (span in sortedSpans) {
-                                if (span.range.first > lastIdx && lastIdx < currentLine.length) {
-                                    append(currentLine.substring(lastIdx, span.range.first.coerceAtMost(currentLine.length)))
-                                }
-                                val spanText = currentLine.substring(
-                                    span.range.first.coerceIn(0, currentLine.length),
-                                    (span.range.last + 1).coerceIn(0, currentLine.length)
-                                )
-                                val bgColor = PatternTheme.roleBackgroundColor(span.role, isDarkMode)
-                                val textColor = PatternTheme.roleColor(span.role, isDarkMode)
-                                val isHovered = hoveredSegmentId == span.segmentId
+                    displayLines.forEachIndexed { index, lineText ->
+                        val isSelected = index == selectedLineIndex
+                        val parseError = parseErrors.find { it.lineIndex == index }
+                        val spans = getSpansForLine(lineText)
 
-                                withStyle(
-                                    style = SpanStyle(
-                                        background = if (isHovered) bgColor.copy(alpha = 0.5f) else bgColor,
-                                        color = textColor,
-                                        fontWeight = if (isHovered) FontWeight.Bold else FontWeight.Normal
-                                    )
+                        Surface(
+                            shape = RoundedCornerShape(4.dp),
+                            color = if (isSelected) {
+                                if (isDarkMode) DARK_SELECTED_BG else LIGHT_SELECTED_BG
+                            } else {
+                                if (isDarkMode) DARK_UNSELECTED_BG else LIGHT_UNSELECTED_BG
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onLineIndexChanged(index) }
+                                .border(
+                                    width = if (parseError != null || isSelected) 1.5.dp else 1.dp,
+                                    color = when {
+                                        parseError != null -> PARSE_ERROR_RED
+                                        isSelected -> MaterialTheme.colorScheme.primary
+                                        else -> Color.Transparent
+                                    },
+                                    shape = RoundedCornerShape(4.dp)
+                                )
+                        ) {
+                            Column(modifier = Modifier.padding(8.dp)) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    append(spanText)
+                                    // Line Number Badge
+                                    Surface(
+                                        color = if (isSelected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceVariant
+                                        },
+                                        shape = RoundedCornerShape(3.dp)
+                                    ) {
+                                        Text(
+                                            text = "#${index + 1}",
+                                            style = TextStyle(
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (isSelected) {
+                                                    MaterialTheme.colorScheme.onPrimary
+                                                } else {
+                                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                                }
+                                            ),
+                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                        )
+                                    }
+
+                                    // Monospace Highlighted Line Text
+                                    SelectionContainer(modifier = Modifier.weight(1f)) {
+                                        val annotatedString = buildAnnotatedSampleLine(
+                                            lineText = lineText,
+                                            spans = spans,
+                                            hoveredSegmentId = hoveredSegmentId,
+                                            isDarkMode = isDarkMode
+                                        )
+                                        Text(
+                                            text = annotatedString,
+                                            style = TextStyle(
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 12.sp,
+                                                lineHeight = 18.sp
+                                            )
+                                        )
+                                    }
                                 }
-                                lastIdx = span.range.last + 1
-                            }
-                            if (lastIdx < currentLine.length) {
-                                append(currentLine.substring(lastIdx))
+
+                                // Inline Parse Error for this line
+                                if (parseError != null) {
+                                    Text(
+                                        text = "⚠️ Parse Error at offset ${parseError.errorOffset}: " +
+                                            parseError.message,
+                                        style = TextStyle(
+                                            color = PARSE_ERROR_RED,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        modifier = Modifier.padding(top = 4.dp, start = 32.dp)
+                                    )
+                                }
                             }
                         }
-                    }
-
-                    Text(
-                        text = annotatedString,
-                        style = TextStyle(
-                            fontFamily = FontFamily.Monospace,
-                            fontSize = 12.sp,
-                            lineHeight = 18.sp
-                        )
-                    )
-                }
-            }
-
-            // Error Annotation Banner
-            if (parseErrorForLine != null) {
-                Surface(
-                    color = Color(0xFFE74C3C).copy(alpha = 0.15f),
-                    shape = RoundedCornerShape(4.dp),
-                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.padding(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = "⚠️ Parse Error at offset ${parseErrorForLine.errorOffset}: ${parseErrorForLine.message}",
-                            style = TextStyle(
-                                color = Color(0xFFE74C3C),
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        )
                     }
                 }
             }
         }
+    }
+}
+
+// Backward-compatibility overload
+@Composable
+fun SampleLineInspector(
+    sampleLines: List<String>,
+    selectedLineIndex: Int,
+    spansForLine: List<SampleLineSpan>,
+    parseErrorForLine: PatternParseError?,
+    hoveredSegmentId: String?,
+    isDarkMode: Boolean,
+    onLineIndexChanged: (Int) -> Unit,
+    onSegmentHovered: (String?) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    SampleLineInspector(
+        sampleLines = sampleLines,
+        selectedLineIndex = selectedLineIndex,
+        getSpansForLine = { line ->
+            if (line == sampleLines.getOrNull(selectedLineIndex)) spansForLine else emptyList()
+        },
+        parseErrors = if (parseErrorForLine != null) listOf(parseErrorForLine) else emptyList(),
+        hoveredSegmentId = hoveredSegmentId,
+        isDarkMode = isDarkMode,
+        onLineIndexChanged = onLineIndexChanged,
+        onSegmentHovered = onSegmentHovered,
+        modifier = modifier
+    )
+}
+
+private fun buildAnnotatedSampleLine(
+    lineText: String,
+    spans: List<SampleLineSpan>,
+    hoveredSegmentId: String?,
+    isDarkMode: Boolean
+): AnnotatedString = buildAnnotatedString {
+    if (lineText.isEmpty()) {
+        append(" ")
+        return@buildAnnotatedString
+    }
+    if (spans.isEmpty()) {
+        append(lineText)
+        return@buildAnnotatedString
+    }
+
+    var lastIdx = 0
+    val validSpans = spans
+        .filter {
+            !it.range.isEmpty() &&
+                it.range.first >= 0 &&
+                it.range.last < lineText.length &&
+                it.range.first <= it.range.last
+        }
+        .sortedBy { it.range.first }
+
+    for (span in validSpans) {
+        val start = span.range.first
+        val end = span.range.last + 1
+        if (start > lastIdx && lastIdx < lineText.length) {
+            append(lineText.substring(lastIdx, start.coerceAtMost(lineText.length)))
+        }
+        val spanStart = start.coerceIn(0, lineText.length)
+        val spanEnd = end.coerceIn(spanStart, lineText.length)
+        if (spanStart < spanEnd) {
+            val spanText = lineText.substring(spanStart, spanEnd)
+            val bgColor = PatternTheme.roleBackgroundColor(span.role, isDarkMode)
+            val textColor = PatternTheme.roleColor(span.role, isDarkMode)
+            val isHovered = hoveredSegmentId == span.segmentId
+
+            withStyle(
+                style = SpanStyle(
+                    background = if (isHovered) bgColor.copy(alpha = 0.5f) else bgColor,
+                    color = textColor,
+                    fontWeight = if (isHovered) FontWeight.Bold else FontWeight.Normal
+                )
+            ) {
+                append(spanText)
+            }
+            lastIdx = spanEnd
+        }
+    }
+    if (lastIdx < lineText.length) {
+        append(lineText.substring(lastIdx))
     }
 }
 

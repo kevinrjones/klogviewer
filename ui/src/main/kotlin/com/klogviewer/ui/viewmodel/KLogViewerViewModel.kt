@@ -27,6 +27,9 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 
 private val logger = KotlinLogging.logger {}
+private val defaultCoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+    logger.error(throwable) { "Uncaught exception in coroutine: ${throwable.message}" }
+}
 private const val DASHBOARD_FIELD_QUERY_PREFIX = "@field:"
 private const val MISSING_BUCKET_VALUE = "(missing)"
 private const val OTHER_BUCKET_VALUE = "(other)"
@@ -42,7 +45,9 @@ class KLogViewerViewModel(
     private val logSourceFactory: LogSourceFactory = DefaultLogSourceFactory(),
     private val clipboard: Clipboard = AwtClipboard(),
     val localFileSystem: LocalFileSystem = JavaLocalFileSystem(),
-    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob()),
+    private val scope: CoroutineScope = CoroutineScope(
+        Dispatchers.Main + SupervisorJob() + defaultCoroutineExceptionHandler
+    ),
     private val remoteFileSystem: RemoteFileSystem = UnifiedRemoteFileSystem(),
     private val analysisMetricsRepository: AnalysisMetricsRepository = InMemoryAnalysisMetricsRepository(),
     private val dashboardRecomputeDebounceMs: Long = DASHBOARD_RECOMPUTE_DEBOUNCE_MS,
@@ -219,20 +224,26 @@ class KLogViewerViewModel(
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     fun handleIntent(intent: KLogViewerIntent) {
         logger.debug { "Handling intent: ${intent::class.simpleName}" }
-        when (intent) {
-            is KLogViewerIntent.WorkspaceIntent -> workspaceIntentHandler.handle(intent)
-            is KLogViewerIntent.UiToggleIntent -> uiToggleIntentHandler.handle(intent)
-            is KLogViewerIntent.FilterIntent -> filterIntentHandler.handle(intent)
-            is KLogViewerIntent.DashboardIntent -> handleDashboardIntent(intent)
-            is KLogViewerIntent.TabWindowIntent -> tabWindowIntentHandler.handle(intent)
-            is KLogViewerIntent.EntryIntent -> entryIntentHandler.handle(intent)
-            is KLogViewerIntent.SftpIntent -> sftpIntentHandler.handle(intent)
-            is KLogViewerIntent.S3Intent -> s3IntentHandler.handle(intent)
-            is KLogViewerIntent.DialogIntent -> handleDialogIntent(intent)
-            is KLogViewerIntent.RecentItemsIntent -> recentItemsIntentHandler.handle(intent)
-            is KLogViewerIntent.PatternWizardIntent -> patternWizardIntentHandler.handle(intent)
+        try {
+            when (intent) {
+                is KLogViewerIntent.WorkspaceIntent -> workspaceIntentHandler.handle(intent)
+                is KLogViewerIntent.UiToggleIntent -> uiToggleIntentHandler.handle(intent)
+                is KLogViewerIntent.FilterIntent -> filterIntentHandler.handle(intent)
+                is KLogViewerIntent.DashboardIntent -> handleDashboardIntent(intent)
+                is KLogViewerIntent.TabWindowIntent -> tabWindowIntentHandler.handle(intent)
+                is KLogViewerIntent.EntryIntent -> entryIntentHandler.handle(intent)
+                is KLogViewerIntent.SftpIntent -> sftpIntentHandler.handle(intent)
+                is KLogViewerIntent.S3Intent -> s3IntentHandler.handle(intent)
+                is KLogViewerIntent.DialogIntent -> handleDialogIntent(intent)
+                is KLogViewerIntent.RecentItemsIntent -> recentItemsIntentHandler.handle(intent)
+                is KLogViewerIntent.PatternWizardIntent -> patternWizardIntentHandler.handle(intent)
+            }
+        } catch (t: Throwable) {
+            logger.error(t) { "Unhandled exception processing intent '${intent::class.simpleName}': ${t.message}" }
+            throw t
         }
     }
 

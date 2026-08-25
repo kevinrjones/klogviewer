@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -27,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -62,7 +61,7 @@ fun PatternTablePreview(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             } else {
-                LazyColumn(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(
@@ -72,48 +71,46 @@ fun PatternTablePreview(
                         )
                 ) {
                     // Column Header Row
-                    item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .padding(vertical = 6.dp, horizontal = 8.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            columns.forEach { colName ->
-                                val interactionSource = remember { MutableInteractionSource() }
-                                val isHovered by interactionSource.collectIsHoveredAsState()
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(vertical = 6.dp, horizontal = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        columns.forEach { colName ->
+                            val interactionSource = remember { MutableInteractionSource() }
+                            val isHovered by interactionSource.collectIsHoveredAsState()
 
-                                LaunchedEffect(isHovered) {
-                                    if (isHovered) onColumnHovered(colName) else if (hoveredColumnName == colName) onColumnHovered(null)
-                                }
+                            LaunchedEffect(isHovered) {
+                                if (isHovered) onColumnHovered(colName) else if (hoveredColumnName == colName) onColumnHovered(null)
+                            }
 
-                                val isColumnHighlighted = hoveredColumnName.equals(colName, ignoreCase = true)
+                            val isColumnHighlighted = hoveredColumnName.equals(colName, ignoreCase = true)
 
-                                Box(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .hoverable(interactionSource)
-                                        .background(
-                                            if (isColumnHighlighted) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
-                                            shape = RoundedCornerShape(4.dp)
-                                        )
-                                        .padding(vertical = 2.dp, horizontal = 4.dp)
-                                ) {
-                                    Text(
-                                        text = colName,
-                                        style = MaterialTheme.typography.labelSmall.copy(
-                                            fontWeight = FontWeight.Bold,
-                                            color = if (isColumnHighlighted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .hoverable(interactionSource)
+                                    .background(
+                                        if (isColumnHighlighted) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                                        shape = RoundedCornerShape(4.dp)
                                     )
-                                }
+                                    .padding(vertical = 2.dp, horizontal = 4.dp)
+                            ) {
+                                Text(
+                                    text = colName,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (isColumnHighlighted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                )
                             }
                         }
                     }
 
                     // Data Rows
-                    itemsIndexed(rows) { index, row ->
+                    rows.forEachIndexed { index, row ->
                         val rowBg = if (index % 2 == 0) {
                             if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFAFAFA)
                         } else {
@@ -146,7 +143,8 @@ fun PatternTablePreview(
                                                 fontWeight = if (isColumnHighlighted) FontWeight.Bold else FontWeight.Normal,
                                                 color = if (isColumnHighlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                             ),
-                                            maxLines = 1
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
                                         )
                                     }
                                 }

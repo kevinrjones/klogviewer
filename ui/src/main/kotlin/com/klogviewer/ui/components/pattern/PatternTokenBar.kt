@@ -170,7 +170,6 @@ fun PatternTokenPill(
     Surface(
         modifier = modifier
             .hoverable(interactionSource)
-            .clickable(onClick = onClick)
             .border(
                 width = if (isHovered || isFocused) 2.dp else 1.dp,
                 color = borderColor,
@@ -184,37 +183,47 @@ fun PatternTokenPill(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(
-                text = token.effectiveName,
-                style = TextStyle(
-                    color = baseColor,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp
-                )
-            )
-
-            if (token.formatPattern.isNotBlank()) {
+            Row(
+                modifier = Modifier.clickable(onClick = onClick),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
                 Text(
-                    text = "(${token.formatPattern})",
-                    style = TextStyle(
-                        color = baseColor.copy(alpha = 0.8f),
-                        fontSize = 10.sp
-                    )
+                    text = token.effectiveName,
+                    style = TextStyle(color = baseColor, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                 )
+
+                if (token.formatPattern.isNotBlank()) {
+                    Text(
+                        text = "(${token.formatPattern})",
+                        style = TextStyle(color = baseColor.copy(alpha = 0.8f), fontSize = 10.sp)
+                    )
+                }
             }
 
             if (isMouseHovered || isFocused) {
-                IconButton(onClick = onMoveLeft, modifier = Modifier.size(16.dp)) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Move Left", tint = baseColor)
-                }
-                IconButton(onClick = onMoveRight, modifier = Modifier.size(16.dp)) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Move Right", tint = baseColor)
-                }
-                IconButton(onClick = onRemove, modifier = Modifier.size(16.dp)) {
-                    Icon(Icons.Default.Close, contentDescription = "Remove", tint = baseColor)
-                }
+                TokenPillActions(baseColor, onMoveLeft, onMoveRight, onRemove)
             }
         }
+    }
+}
+
+@Composable
+@Suppress("FunctionNaming")
+private fun TokenPillActions(
+    baseColor: Color,
+    onMoveLeft: () -> Unit,
+    onMoveRight: () -> Unit,
+    onRemove: () -> Unit
+) {
+    IconButton(onClick = onMoveLeft, modifier = Modifier.size(16.dp)) {
+        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Move Left", tint = baseColor)
+    }
+    IconButton(onClick = onMoveRight, modifier = Modifier.size(16.dp)) {
+        Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = "Move Right", tint = baseColor)
+    }
+    IconButton(onClick = onRemove, modifier = Modifier.size(16.dp)) {
+        Icon(Icons.Default.Close, contentDescription = "Remove", tint = baseColor)
     }
 }
 
