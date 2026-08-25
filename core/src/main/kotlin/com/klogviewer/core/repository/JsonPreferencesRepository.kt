@@ -26,7 +26,7 @@ class JsonPreferencesRepository(
         val userHome = System.getProperty("user.home")
         
         val dir = customConfigDir ?: when {
-            os.contains("mac") -> File(userHome, "Library/Application Support/com.klogviewer.app")
+            os.contains("mac") -> File(userHome, ".klogviewer")
             os.contains("win") -> {
                 val appData = System.getenv("APPDATA")
                 if (appData != null) File(appData, appName) else File(userHome, "AppData/Roaming/$appName")
@@ -44,7 +44,28 @@ class JsonPreferencesRepository(
             }
         }
         
-        File(dir, "preferences.json")
+        val targetFile = File(dir, "preferences.json")
+        if (customConfigDir == null && os.contains("mac") && !targetFile.exists()) {
+            val legacyPaths = listOf(
+                File(userHome, "Library/Application Support/com.klogviewer.app/preferences.json"),
+                File(userHome, "Library/Application Support/KLogViewer/preferences.json")
+            )
+            for (legacyFile in legacyPaths) {
+                if (legacyFile.exists()) {
+                    try {
+                        legacyFile.copyTo(targetFile, overwrite = false)
+                        logger.info {
+                            "Migrated preferences from legacy location " +
+                                "${legacyFile.absolutePath} to ${targetFile.absolutePath}"
+                        }
+                        break
+                    } catch (e: Exception) {
+                        logger.warn(e) { "Failed to copy legacy preferences from ${legacyFile.absolutePath}" }
+                    }
+                }
+            }
+        }
+        targetFile
     }
 
     override fun load(): UserPreferences {

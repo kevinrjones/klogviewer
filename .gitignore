@@ -144,3 +144,4 @@ app/jsonlogs/
 
 /secrets/
 /graphify-out/**
+docs/temp/

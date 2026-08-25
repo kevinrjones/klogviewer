@@ -12,8 +12,8 @@ We will use a JSON-based configuration file stored in platform-specific applicat
 ### Persistence Mechanism
 - **Format**: JSON (using `kotlinx-serialization`) for its readability, standard support, and ease of use with Kotlin data classes.
 - **Storage Locations**:
-    - **macOS**: `~/Library/Application Support/com.klogviewer.app/preferences.json`
-    - **Windows**: `%APPDATA%\KLogViewer\preferences.json`
+    - **macOS**: `~/.klogviewer/preferences.json` (migrated from `~/Library/Application Support/com.klogviewer.app/preferences.json`)
+    - **Windows**: `%APPDATA%\KLogViewerer\preferences.json`
     - **Linux**: `~/.config/klogviewer/preferences.json` (following XDG Base Directory Specification)
 
 ### Key Data to Persist
