@@ -4,9 +4,6 @@
   <CurrentIssues>
     <ID>CyclomaticComplexMethod:DialogIntentHandler.kt:DialogIntentHandler$fun handle</ID>
     <ID>CyclomaticComplexMethod:FileLogSource.kt:FileLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
-    <ID>CyclomaticComplexMethod:FilterBar.kt:@Composable fun FilterBar</ID>
-    <ID>CyclomaticComplexMethod:FilterIntentHandler.kt:FilterIntentHandler$fun handle</ID>
-    <ID>CyclomaticComplexMethod:HeuristicProbe.kt:HeuristicProbe$private fun detectJsonMapping: JsonMapping</ID>
     <ID>CyclomaticComplexMethod:KLogViewerScreen.kt:@Composable private fun AbComparisonSection</ID>
     <ID>CyclomaticComplexMethod:KLogViewerScreen.kt:@Composable private fun DashboardContent</ID>
     <ID>CyclomaticComplexMethod:KLogViewerScreen.kt:@Composable private fun DialogHandler</ID>
@@ -15,7 +12,12 @@
     <ID>CyclomaticComplexMethod:KoalaPlotCharts.kt:@OptIn(ExperimentalKoalaPlotApi::class, ExperimentalFoundationApi::class) @Composable fun KoalaPlotTimeSeriesChart</ID>
     <ID>CyclomaticComplexMethod:LogHighlighter.kt:LogHighlighter$private fun updateStyleFromAnsi: SpanStyle</ID>
     <ID>CyclomaticComplexMethod:LogList.kt:@Composable fun LogEntryRow</ID>
+    <ID>CyclomaticComplexMethod:LogLoadingCoordinator.kt:LogLoadingCoordinator$private fun updateWindowStateWithParserResults</ID>
     <ID>CyclomaticComplexMethod:Main.kt:fun main</ID>
+    <ID>CyclomaticComplexMethod:PatternTablePreview.kt:@Composable fun PatternTablePreview</ID>
+    <ID>CyclomaticComplexMethod:PatternTheme.kt:PatternTheme$fun roleColor: Color</ID>
+    <ID>CyclomaticComplexMethod:PatternWizardDialog.kt:@Composable fun PatternWizardDialog</ID>
+    <ID>CyclomaticComplexMethod:PatternWizardIntentHandler.kt:PatternWizardIntentHandler$fun handle</ID>
     <ID>CyclomaticComplexMethod:RecentItemsDialog.kt:@Composable fun RecentItemsDialog</ID>
     <ID>CyclomaticComplexMethod:S3ConnectionDialog.kt:@Composable fun S3ConnectionDialog</ID>
     <ID>CyclomaticComplexMethod:S3LogSource.kt:S3LogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
@@ -27,9 +29,6 @@
     <ID>CyclomaticComplexMethod:WorkspaceLogLoader.kt:WorkspaceLogLoader$fun filterRedundantPaths: List&lt;String&gt;</ID>
     <ID>FunctionNaming:FileSelector.kt:@Composable fun FileSelector</ID>
     <ID>FunctionNaming:FilterBar.kt:@Composable fun FilterBar</ID>
-    <ID>FunctionNaming:FilterBar.kt:@Composable private fun CompactMenuItem</ID>
-    <ID>FunctionNaming:FilterBar.kt:@Composable private fun FilterBarIcon</ID>
-    <ID>FunctionNaming:FilterBar.kt:@Composable private fun FilterChip</ID>
     <ID>FunctionNaming:FilterBar.kt:@Composable private fun TimeFilterControls</ID>
     <ID>FunctionNaming:KLogViewerScreen.kt:@Composable fun KLogViewerScreen</ID>
     <ID>FunctionNaming:KLogViewerScreen.kt:@Composable private fun AbComparisonSection</ID>
@@ -65,10 +64,30 @@
     <ID>FunctionNaming:LogList.kt:@Composable private fun LogEntryCell</ID>
     <ID>FunctionNaming:LogList.kt:@Composable private fun LogGutter</ID>
     <ID>FunctionNaming:LogList.kt:@Composable private fun ResizeHandle</ID>
+    <ID>FunctionNaming:PatternImporterBar.kt:@Composable fun PatternImporterBar</ID>
+    <ID>FunctionNaming:PatternImporterBar.kt:@Preview @Composable fun PatternImporterBarPreview</ID>
+    <ID>FunctionNaming:PatternMatchSummary.kt:@Composable fun PatternMatchSummary</ID>
+    <ID>FunctionNaming:PatternMatchSummary.kt:@Preview @Composable fun PatternMatchSummaryPreview</ID>
+    <ID>FunctionNaming:PatternTablePreview.kt:@Composable fun LevelBadge</ID>
+    <ID>FunctionNaming:PatternTablePreview.kt:@Composable fun PatternTablePreview</ID>
+    <ID>FunctionNaming:PatternTablePreview.kt:@Preview @Composable fun PatternTablePreviewPreview</ID>
+    <ID>FunctionNaming:PatternTokenBar.kt:@Composable fun PatternDelimiterChip</ID>
+    <ID>FunctionNaming:PatternTokenBar.kt:@Composable fun PatternTokenPill</ID>
+    <ID>FunctionNaming:PatternTokenBar.kt:@OptIn(ExperimentalLayoutApi::class) @Composable fun PatternTokenBar</ID>
+    <ID>FunctionNaming:PatternTokenBar.kt:@Preview @Composable fun PatternTokenBarPreview</ID>
+    <ID>FunctionNaming:PatternTokenConfigPopover.kt:@Composable fun PatternTokenConfigPopover</ID>
+    <ID>FunctionNaming:PatternTokenConfigPopover.kt:@Preview @Composable fun PatternTokenConfigPopoverPreview</ID>
+    <ID>FunctionNaming:PatternWizardDialog.kt:@Composable fun PatternConfirmationBanner</ID>
+    <ID>FunctionNaming:PatternWizardDialog.kt:@Composable fun PatternWizardDialog</ID>
+    <ID>FunctionNaming:PatternWizardDialog.kt:@Preview @Composable fun PatternWizardDialogPreview</ID>
     <ID>FunctionNaming:RecentItemsDialog.kt:@Composable fun RecentItemsDialog</ID>
     <ID>FunctionNaming:RecentItemsDialog.kt:@Composable private fun RecentItemRow</ID>
     <ID>FunctionNaming:RemoteFileBrowserDialog.kt:@Composable fun RemoteFileBrowserDialog</ID>
     <ID>FunctionNaming:S3ConnectionDialog.kt:@Composable fun S3ConnectionDialog</ID>
+    <ID>FunctionNaming:SampleLineInspector.kt:@Composable fun SampleLineInspector</ID>
+    <ID>FunctionNaming:SampleLineInspector.kt:@Preview @Composable fun SampleLineInspectorPreview</ID>
+    <ID>FunctionNaming:SampleLineSelectionPopup.kt:@Composable fun SampleLineSelectionPopup</ID>
+    <ID>FunctionNaming:SampleLineSelectionPopup.kt:@Preview @Composable fun SampleLineSelectionPopupPreview</ID>
     <ID>FunctionNaming:SftpConnectionDialog.kt:@Composable fun SftpConnectionDialog</ID>
     <ID>FunctionNaming:Sidebar.kt:@Composable fun Sidebar</ID>
     <ID>FunctionNaming:Sidebar.kt:@Composable private fun LogLevelToggle</ID>
@@ -100,17 +119,24 @@
     <ID>LongMethod:KLogViewerViewModel.kt:KLogViewerViewModel$private suspend fun buildDashboardDataState: DashboardDataState</ID>
     <ID>LongMethod:KoalaPlotCharts.kt:@OptIn(ExperimentalKoalaPlotApi::class) @Composable fun KoalaPlotLevelDistributionChart</ID>
     <ID>LongMethod:KoalaPlotCharts.kt:@OptIn(ExperimentalKoalaPlotApi::class, ExperimentalFoundationApi::class) @Composable fun KoalaPlotTimeSeriesChart</ID>
-    <ID>LongMethod:LogEntryDetails.kt:@Composable fun LogEntryDetails</ID>
     <ID>LongMethod:LogList.kt:@Composable fun LogEntryRow</ID>
     <ID>LongMethod:LogList.kt:@Composable fun LogList</ID>
     <ID>LongMethod:LogList.kt:@Composable fun LogListHeader</ID>
     <ID>LongMethod:LogList.kt:@Composable private fun LogEntryCell</ID>
     <ID>LongMethod:Main.kt:fun main</ID>
+    <ID>LongMethod:PatternImporterBar.kt:@Composable fun PatternImporterBar</ID>
+    <ID>LongMethod:PatternMatchSummary.kt:@Composable fun PatternMatchSummary</ID>
+    <ID>LongMethod:PatternTablePreview.kt:@Composable fun PatternTablePreview</ID>
+    <ID>LongMethod:PatternTokenBar.kt:@OptIn(ExperimentalLayoutApi::class) @Composable fun PatternTokenBar</ID>
+    <ID>LongMethod:PatternTokenConfigPopover.kt:@Composable fun PatternTokenConfigPopover</ID>
+    <ID>LongMethod:PatternWizardDialog.kt:@Composable fun PatternWizardDialog</ID>
     <ID>LongMethod:RecentItemsDialog.kt:@Composable fun RecentItemsDialog</ID>
     <ID>LongMethod:RemoteFileBrowserDialog.kt:@Composable fun RemoteFileBrowserDialog</ID>
     <ID>LongMethod:S3ConnectionDialog.kt:@Composable fun S3ConnectionDialog</ID>
     <ID>LongMethod:S3DirectoryLogSource.kt:S3DirectoryLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
     <ID>LongMethod:S3LogSource.kt:S3LogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
+    <ID>LongMethod:SampleLineInspector.kt:@Composable fun SampleLineInspector</ID>
+    <ID>LongMethod:SampleLineSelectionPopup.kt:@Composable fun SampleLineSelectionPopup</ID>
     <ID>LongMethod:SftpConnectionDialog.kt:@Composable fun SftpConnectionDialog</ID>
     <ID>LongMethod:SftpDirectoryLogSource.kt:SftpDirectoryLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
     <ID>LongMethod:SftpLogSource.kt:SftpLogSource$override fun observeLogs: Flow&lt;Either&lt;LogFailure, LogUpdate&gt;&gt;</ID>
@@ -134,9 +160,6 @@
     <ID>MagicNumber:KoalaPlotCharts.kt:0.58f</ID>
     <ID>MagicNumber:KoalaPlotCharts.kt:1000.0</ID>
     <ID>MagicNumber:KoalaPlotCharts.kt:10f</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt:3</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt:4</ID>
-    <ID>MagicNumber:KoalaPlotCharts.kt:5</ID>
     <ID>MagicNumber:KoalaPlotCharts.kt:90f</ID>
     <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF0097A7</ID>
     <ID>MagicNumber:LogHighlighter.kt:LogHighlighter$0xFF1565C0</ID>
@@ -182,11 +205,35 @@
     <ID>MagicNumber:LogList.kt:72</ID>
     <ID>MagicNumber:LogList.kt:8</ID>
     <ID>MagicNumber:Main.kt:5</ID>
+    <ID>MagicNumber:PatternMatchSummary.kt:0xFFE74C3C</ID>
+    <ID>MagicNumber:PatternTablePreview.kt:0xFF2ECC71</ID>
+    <ID>MagicNumber:PatternTablePreview.kt:0xFF3498DB</ID>
+    <ID>MagicNumber:PatternTablePreview.kt:0xFFE74C3C</ID>
+    <ID>MagicNumber:PatternTablePreview.kt:0xFFF39C12</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF00796B</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF1976D2</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF1ABC9C</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF2ECC71</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF388E3C</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF4A90E2</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF546E7A</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF7B1FA2</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF7F8C8D</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF95A5A6</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF9B59B6</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFF9E9E9E</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFFC62828</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFFE65100</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFFE74C3C</ID>
+    <ID>MagicNumber:PatternTheme.kt:PatternTheme$0xFFF39C12</ID>
     <ID>MagicNumber:RemoteConnection.kt:SftpConfig$22</ID>
     <ID>MagicNumber:RemoteDirectoryFileObserver.kt:RemoteDirectoryFileObserver$200L</ID>
     <ID>MagicNumber:RemoteFileBrowserDialog.kt:0xFFFFA000</ID>
     <ID>MagicNumber:RemoteFileBrowserDialog.kt:1024</ID>
     <ID>MagicNumber:S3DirectoryFileObserver.kt:S3DirectoryFileObserver$200L</ID>
+    <ID>MagicNumber:SampleLineInspector.kt:0xFF1E1E1E</ID>
+    <ID>MagicNumber:SampleLineInspector.kt:0xFFE74C3C</ID>
+    <ID>MagicNumber:SampleLineInspector.kt:0xFFF5F5F5</ID>
     <ID>MagicNumber:SftpConnectionDialog.kt:22</ID>
     <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$10</ID>
     <ID>MagicNumber:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$13</ID>
@@ -233,12 +280,8 @@
     <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$handleLogUpdateMethod.invoke(viewModel, activeWindowId, LogUpdate.SourceMissing(file1.absolutePath), tempDir.absolutePath)</ID>
     <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)</ID>
     <ID>MaxLineLength:DirectoryTabTest.kt:DirectoryTabTest$val longSourcePath = "/tmp/very-long-directory-segment/very-long-directory-segment/very-long-directory-segment/very-long-directory-segment/app-source.log"</ID>
-    <ID>MaxLineLength:EntryIntentHandler.kt:EntryIntentHandler$selectedEntry = if (newIndices.size == 1) window.filteredLogs.getOrNull(intent.index) else window.selectedEntry</ID>
     <ID>MaxLineLength:FileDeletionTest.kt:FileDeletionTest$// Wait for initial load (DirectoryLogSource has a 5s rescan delay, so we need to wait at least that long if it missed the first check)</ID>
     <ID>MaxLineLength:FileLogSource.kt:FileLogSource$logger.info { "Started observing log file: ${path.value} using ${effectiveParser::class.simpleName} (multiline=${multilineProcessor != null})" }</ID>
-    <ID>MaxLineLength:FilterBar.kt:FilterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)</ID>
-    <ID>MaxLineLength:FilterBar.kt:Icon(Icons.AutoMirrored.Filled.InsertDriveFile, contentDescription = null, modifier = Modifier.size(18.dp))</ID>
-    <ID>MaxLineLength:FilterBar.kt:Icon(Icons.Default.Close, contentDescription = "Clear all filters", modifier = Modifier.size(14.dp))</ID>
     <ID>MaxLineLength:FilterBarTimeFilterControlsTest.kt:FilterBarTimeFilterControlsTest$assertTrue(firstStep in 1f..36f, "Expected compact spacing between first and second preset items, was $firstStep")</ID>
     <ID>MaxLineLength:FilterBarTimeFilterControlsTest.kt:FilterBarTimeFilterControlsTest$assertTrue(secondStep in 1f..36f, "Expected compact spacing between second and third preset items, was $secondStep")</ID>
     <ID>MaxLineLength:HeuristicProbe.kt:HeuristicProbe$logger.info { "Heuristic: Detected template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }</ID>
@@ -254,7 +297,9 @@
     <ID>MaxLineLength:KLogViewerComplexUiTest.kt:KLogViewerComplexUiTest$WindowPreference(id = "window2", filePath = "test.log", columns = listOf("Timestamp", "Level", "Message"))</ID>
     <ID>MaxLineLength:KLogViewerComplexUiTest.kt:KLogViewerComplexUiTest$val handleLogUpdateMethod = viewModel.javaClass.getDeclaredMethod("handleLogUpdate", String::class.java, LogUpdate::class.java, String::class.java)</ID>
     <ID>MaxLineLength:KLogViewerComplexUiTest.kt:KLogViewerComplexUiTest$val interaction = onNode(hasTestTag("column_header_Level") and hasAnyAncestor(hasTestTag("window_$window1Id")), useUnmergedTree = true)</ID>
+    <ID>MaxLineLength:KLogViewerIntent.kt:KLogViewerIntent$AddPatternToken : PatternWizardIntent</ID>
     <ID>MaxLineLength:KLogViewerIntent.kt:KLogViewerIntent$ToggleEntrySelection : EntryIntent</ID>
+    <ID>MaxLineLength:KLogViewerIntent.kt:KLogViewerIntent$UpdatePatternDialogBounds : PatternWizardIntent</ID>
     <ID>MaxLineLength:KLogViewerScreen.kt:(delta.level == LogLevel.ERROR || delta.level == LogLevel.WARN || delta.level == LogLevel.FATAL)</ID>
     <ID>MaxLineLength:KLogViewerScreen.kt:.</ID>
     <ID>MaxLineLength:KLogViewerScreen.kt:backgroundColor = if (isSelected) MaterialTheme.colors.primary.copy(alpha = 0.15f) else MaterialTheme.colors.surface</ID>
@@ -298,9 +343,6 @@
     <ID>MaxLineLength:LogColumnResizeTest.kt:LogColumnResizeTest$"Message column width should continue increasing on repeated right resize, but first=$firstWidth second=$secondWidth"</ID>
     <ID>MaxLineLength:LogColumnResizeTest.kt:LogColumnResizeTest$content = LogContent("This is a long message that should wrap across multiple lines when the message column is narrow. ".repeat(5))</ID>
     <ID>MaxLineLength:LogColumnResizeTest.kt:LogColumnResizeTest$fields = mapOf("thread" to "long worker thread name that should wrap into multiple lines in a narrow column")</ID>
-    <ID>MaxLineLength:LogEntryDetails.kt:Text("Select a log entry to see details", style = MaterialTheme.typography.body2, color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f))</ID>
-    <ID>MaxLineLength:LogEntryDetails.kt:fullContent.take(50000) + "\n... (truncated for performance, total length: ${fullContent.length} chars)"</ID>
-    <ID>MaxLineLength:LogEntryDetails.kt:val displayLevel = entry.fields["level"] ?: entry.level.name.lowercase().replaceFirstChar { it.uppercase() }</ID>
     <ID>MaxLineLength:LogFailure.kt:LogFailure$FileError : LogFailure</ID>
     <ID>MaxLineLength:LogFailure.kt:LogFailure$ParsingError : LogFailure</ID>
     <ID>MaxLineLength:LogList.kt:val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value</ID>
@@ -310,10 +352,10 @@
     <ID>MaxLineLength:LogListSourceShadeIndexTest.kt:LogListSourceShadeIndexTest$fun</ID>
     <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path, overrideParserName)</ID>
     <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$fun</ID>
-    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$parserName = if (results.size &gt; 1 &amp;&amp; overrideParserName == null) "Multiple" else (overrideParserName ?: results.firstOrNull()?.parserName ?: "Auto")</ID>
-    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$private</ID>
+    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$parserName = if (results.size &gt; 1 &amp;&amp; overrideParserName == null) "Multiple" else (overrideParserName ?: firstResult?.parserName ?: "Auto")</ID>
     <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$sourceIds = paths.map { "sftp://${config.username.value}@${config.host.value}:${config.port.value}$it" }</ID>
     <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$val newTitle = if (tab.windows.any { it.id == windowId } &amp;&amp; tab.windows.size &lt;= 1) fileName else tab.title</ID>
+    <ID>MaxLineLength:LogLoadingCoordinator.kt:LogLoadingCoordinator$val nextPendingDialog = if (currentState.pendingDialog == KLogViewerState.DialogType.PATTERN_WIZARD) null else currentState.pendingDialog</ID>
     <ID>MaxLineLength:LogLoadingIntegrationTest.kt:LogLoadingIntegrationTest$expectThat(window.logs.map { it.sourceId }).contains(first.absolutePath, second.absolutePath, third.absolutePath)</ID>
     <ID>MaxLineLength:LogSortingTest.kt:LogSortingTest$viewModel.state.first { it.activeTab?.activeWindow?.isLoading == false &amp;&amp; it.activeTab?.activeWindow?.logs?.size == 1 }</ID>
     <ID>MaxLineLength:LogSortingTest.kt:LogSortingTest$viewModel.state.first { it.activeTab?.activeWindow?.isReversed == false &amp;&amp; it.activeTab?.activeWindow?.filteredLogs?.get(0)?.content?.value == "Entry 1" }</ID>
@@ -333,6 +375,22 @@
     <ID>MaxLineLength:ParserRegistry.kt:ParserRegistry$regex = """^(?&lt;timestamp&gt;[A-Z][a-z]{2}\s+\d+\s+\d{2}:\d{2}:\d{2})\s+(?&lt;hostname&gt;\S+)\s+(?&lt;process&gt;[^:\[\s]+)(?:\[(?&lt;pid&gt;\d+)\])?:\s+(?&lt;content&gt;.*)$"""</ID>
     <ID>MaxLineLength:ParserRegistry.kt:ParserRegistry$regex = """^(?&lt;timestamp&gt;\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z?)\s+(?&lt;level&gt;\S+)\s+(?&lt;content&gt;.*)$"""</ID>
     <ID>MaxLineLength:ParserRegistry.kt:ParserRegistry$regex = """^\s*(?&lt;timestamp&gt;\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?&lt;metadata&gt;.*?)\]\s*)?(?&lt;level&gt;\[.*?\]|\S+)?(?:\s+(?&lt;content&gt;.*))?$"""</ID>
+    <ID>MaxLineLength:PatternTablePreview.kt:PreviewTableRow(0, mapOf("timestamp" to "2026-08-25 10:00:00", "level" to "INFO", "thread" to "main", "message" to "Service booted"))</ID>
+    <ID>MaxLineLength:PatternTablePreview.kt:PreviewTableRow(1, mapOf("timestamp" to "2026-08-25 10:00:01", "level" to "WARN", "thread" to "pool-1", "message" to "High memory usage"))</ID>
+    <ID>MaxLineLength:PatternTablePreview.kt:color = if (isColumnHighlighted) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant</ID>
+    <ID>MaxLineLength:PatternTablePreview.kt:color = if (isColumnHighlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface</ID>
+    <ID>MaxLineLength:PatternTablePreview.kt:fontWeight = if (isColumnHighlighted) FontWeight.Bold else FontWeight.Normal</ID>
+    <ID>MaxLineLength:PatternTablePreview.kt:if (isColumnHighlighted) MaterialTheme.colorScheme.primaryContainer else Color.Transparent</ID>
+    <ID>MaxLineLength:PatternTablePreview.kt:if (isHovered) onColumnHovered(colName) else if (hoveredColumnName == colName) onColumnHovered(null)</ID>
+    <ID>MaxLineLength:PatternTokenConfigPopover.kt:customPropertyName = if (selectedRole == PatternTokenRole.CUSTOM_PROPERTY) customPropertyName else null</ID>
+    <ID>MaxLineLength:PatternTokenConfigPopover.kt:label = { Text(if (selectedRole == PatternTokenRole.TIMESTAMP) "Date/Time Format" else "Pattern / Format") }</ID>
+    <ID>MaxLineLength:PatternTokenConfigPopover.kt:placeholder = { Text(if (selectedRole == PatternTokenRole.TIMESTAMP) "yyyy-MM-dd HH:mm:ss.SSS" else "e.g. %-5level") }</ID>
+    <ID>MaxLineLength:PatternWizardDialog.kt:line.substring(selectionRange.first.coerceIn(0, line.length), (selectionRange.last + 1).coerceIn(0, line.length))</ID>
+    <ID>MaxLineLength:PatternWizardDialog.kt:text = "High confidence match (${(confidenceScore * 100).toInt()}%). Click Apply to open or Review to customize."</ID>
+    <ID>MaxLineLength:PatternWizardIntentHandler.kt:PatternWizardIntentHandler$PatternSegment.Token(PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = "yyyy-MM-dd HH:mm:ss.SSS"))</ID>
+    <ID>MaxLineLength:PatternWizardIntentHandler.kt:PatternWizardIntentHandler$pendingDialog = if (it.pendingDialog == KLogViewerState.DialogType.PATTERN_WIZARD) null else it.pendingDialog</ID>
+    <ID>MaxLineLength:PatternWizardIntentHandler.kt:PatternWizardIntentHandler$return PatternDraft(name = "Default Guess", segments = defaultSegments, originalFormatString = DEFAULT_FORMAT_PATTERN)</ID>
+    <ID>MaxLineLength:PatternWizardIntentHandler.kt:PatternWizardIntentHandler$val nextIdx = intent.lineIndex.coerceIn(0, (it.patternWizardState.sampleLines.size - 1).coerceAtLeast(0))</ID>
     <ID>MaxLineLength:PersistenceIntegrationTest.kt:PersistenceIntegrationTest$vm.state.first { it.activeTab?.activeWindow?.isLoading == true || it.activeTab?.activeWindow?.logs?.isNotEmpty() == true }</ID>
     <ID>MaxLineLength:PersistenceIntegrationTest.kt:PersistenceIntegrationTest$while</ID>
     <ID>MaxLineLength:RecentItemsDialog.kt:color = if (isMissing) MaterialTheme.colors.onSurface.copy(alpha = 0.4f) else MaterialTheme.colors.onSurface</ID>
@@ -361,6 +419,8 @@
     <ID>MaxLineLength:S3LogSource.kt:S3LogSource$override</ID>
     <ID>MaxLineLength:S3LogSourceTest.kt:S3LogSourceTest$coEvery { mockClient.headObject(any&lt;HeadObjectRequest&gt;()) } returns headResponse andThen headResponse andThen headResponse</ID>
     <ID>MaxLineLength:S3LogSourceTest.kt:S3LogSourceTest$coEvery { mockClient.headObject(any&lt;HeadObjectRequest&gt;()) } throws Exception("connection reset") andThen headResponse andThen headResponse</ID>
+    <ID>MaxLineLength:SampleLineInspector.kt:append(currentLine.substring(lastIdx, span.range.first.coerceAtMost(currentLine.length)))</ID>
+    <ID>MaxLineLength:SampleLineInspector.kt:text = "⚠️ Parse Error at offset ${parseErrorForLine.errorOffset}: ${parseErrorForLine.message}"</ID>
     <ID>MaxLineLength:SftpConnectionDialog.kt:focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)</ID>
     <ID>MaxLineLength:SftpConnectionDialog.kt:keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Next) })</ID>
     <ID>MaxLineLength:SftpDirectoryLogSource.kt:SftpDirectoryLogSource$"Remote directory scan recovered for $directorySourceId after $failedScanCount failed attempt(s)"</ID>
@@ -395,14 +455,11 @@
     <ID>MaxLineLength:SftpPersistenceTest.kt:SftpPersistenceTest$val initialConfig = SftpConfig(name, Host("old.com"), Port(22), Username("old"), SftpAuth.Password("old"), "/old.log")</ID>
     <ID>MaxLineLength:SimpleLogParser.kt:SimpleLogParser$finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw</ID>
     <ID>MaxLineLength:SimpleLogParser.kt:SimpleLogParser$private val regex = """^\s*(?&lt;timestamp&gt;\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\s*\d{1,2}:\d{2}:\d{2}(?:\.\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?)\s*(?:\[(?&lt;metadata&gt;.*?)]\s*)?(?&lt;level&gt;\[.*?]|\S+)?(?:\s+(?&lt;content&gt;.*))?$""".toRegex()</ID>
-    <ID>MaxLineLength:TabManagementTest.kt:TabManagementTest$assertEquals(emptySet&lt;com.klogviewer.domain.model.LogLevel&gt;(), viewModel.state.value.activeTab?.activeWindow?.levelFilters)</ID>
     <ID>MaxLineLength:TemplateLogParser.kt:TemplateLogParser$finalMetadata = if (finalMetadata.isNotEmpty()) "$finalMetadata] [$cleanLevelRaw" else cleanLevelRaw</ID>
     <ID>MaxLineLength:TemplateLogParserTest.kt:TemplateLogParserTest$regex = """^(?&lt;timestamp&gt;\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\s+\[(?&lt;metadata&gt;.*?)\]\s+(?&lt;level&gt;\S+)\s+(?&lt;content&gt;.*)$"""</ID>
     <ID>MaxLineLength:UiToggleIntentHandler.kt:UiToggleIntentHandler$logLoadingCoordinator.loadFilesIntoWindow(activeWindow.id, activeWindow.sourceIds, activeWindow.parserName)</ID>
     <ID>MaxLineLength:WorkspaceLogLoader.kt:WorkspaceLogLoader$fun</ID>
-    <ID>MaxLineLength:WorkspaceLogLoader.kt:WorkspaceLogLoader$if</ID>
     <ID>MaxLineLength:WorkspaceLogLoader.kt:WorkspaceLogLoader$localFileSystem.isDirectory(path) -&gt; DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))</ID>
-    <ID>MaxLineLength:WorkspaceLogLoader.kt:WorkspaceLogLoader$}</ID>
     <ID>NestedBlockDepth:LogHighlighter.kt:LogHighlighter$private fun applyOtherHighlights</ID>
     <ID>NewLineAtEndOfFile:DragDropImportIntegrationTest.kt:com.klogviewer.integration.DragDropImportIntegrationTest.kt</ID>
     <ID>NewLineAtEndOfFile:FilterBarTimeFilterControlsTest.kt:com.klogviewer.ui.components.FilterBarTimeFilterControlsTest.kt</ID>
@@ -428,9 +485,7 @@
     <ID>ReturnCount:KoalaPlotCharts.kt:internal fun bucketRangeFromDrag: IntRange?</ID>
     <ID>ReturnCount:KoalaPlotCharts.kt:internal fun pointerXToBucketIndex: Int?</ID>
     <ID>ReturnCount:KoalaPlotCharts.kt:internal fun selectedBucketIndexRange: IntRange?</ID>
-    <ID>ReturnCount:KoalaPlotCharts.kt:internal fun timeSeriesXAxisRange: ClosedFloatingPointRange&lt;Float&gt;</ID>
     <ID>ReturnCount:LevelMapper.kt:LevelMapper$fun map: LogLevel</ID>
-    <ID>ReturnCount:LogFilterService.kt:LogFilterService$private fun matchesQuery: Boolean</ID>
     <ID>ReturnCount:LogList.kt:private fun getSourceBadgeColor: Color</ID>
     <ID>ReturnCount:LogLoadingCoordinator.kt:LogLoadingCoordinator$private fun handleSingleRemotePath: Boolean</ID>
     <ID>ReturnCount:RemoteConnection.kt:S3Uri.Companion$fun parse: S3Uri?</ID>
@@ -441,10 +496,8 @@
     <ID>ReturnCount:TimeRangeFilterSupport.kt:TimeRangeFilterSupport$private fun toInstant: Instant</ID>
     <ID>ReturnCount:TimestampParser.kt:TimestampParser$fun parse: Instant?</ID>
     <ID>ReturnCount:WorkspaceIntentHandler.kt:WorkspaceIntentHandler$private fun isSupportedDropPath: Boolean</ID>
-    <ID>SwallowedException:HeuristicProbe.kt:HeuristicProbe$e: Exception</ID>
     <ID>TooGenericExceptionCaught:DirectoryLogSource.kt:DirectoryLogSource$e: Exception</ID>
     <ID>TooGenericExceptionCaught:FileLogSource.kt:FileLogSource$e: Exception</ID>
-    <ID>TooGenericExceptionCaught:HeuristicProbe.kt:HeuristicProbe$e: Exception</ID>
     <ID>TooGenericExceptionCaught:JsonPreferencesRepository.kt:JsonPreferencesRepository$e: Exception</ID>
     <ID>TooGenericExceptionCaught:KLogViewerViewModel.kt:KLogViewerViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:RemoteDirectoryFileObserver.kt:RemoteDirectoryFileObserver$e: Exception</ID>
@@ -467,11 +520,15 @@
     <ID>TooManyFunctions:KoalaPlotCharts.kt:com.klogviewer.ui.components.KoalaPlotCharts.kt</ID>
     <ID>TooManyFunctions:LogList.kt:com.klogviewer.ui.components.LogList.kt</ID>
     <ID>TooManyFunctions:LogLoadingCoordinator.kt:LogLoadingCoordinator</ID>
+    <ID>TooManyFunctions:PatternWizardIntentHandler.kt:PatternWizardIntentHandler</ID>
     <ID>TooManyFunctions:SecureCredentialStore.kt:OsKeychainCredentialStore : SecureCredentialStore</ID>
     <ID>TooManyFunctions:TimeRangeFilterSupport.kt:TimeRangeFilterSupport</ID>
     <ID>TopLevelPropertyNaming:KLogViewerScreen.kt:private const val sourceVisibilityColorDelta = 0.22f</ID>
     <ID>UnusedParameter:FilterBar.kt:timeFilterFrom: String</ID>
     <ID>UnusedParameter:FilterBar.kt:timeFilterTo: String</ID>
+    <ID>UnusedParameter:PatternMatchSummary.kt:confidenceScore: Float</ID>
+    <ID>UnusedParameter:PatternTablePreview.kt:isDarkMode: Boolean</ID>
+    <ID>UnusedParameter:SampleLineInspector.kt:onSegmentHovered: (String?) -&gt; Unit</ID>
     <ID>UnusedParameter:SidebarRobot.kt:SidebarRobot$enabled: Boolean</ID>
     <ID>WildcardImport:BaseRobot.kt:import androidx.compose.ui.test.*</ID>
     <ID>WildcardImport:ConnectionToggleTest.kt:import io.mockk.*</ID>

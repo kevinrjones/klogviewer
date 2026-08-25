@@ -3,6 +3,7 @@ package com.klogviewer.ui.mvi
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.PatternWizardState
 import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
 import com.klogviewer.ui.viewmodel.LevelFilterPolicy
@@ -208,9 +209,10 @@ data class KLogViewerState(
     val currentSftpConfig: SftpConfig? = null,
     val currentS3Config: S3Config? = null,
     val pendingPlaintextSecretSave: PlaintextSecretSavePrompt? = null,
-    val isAddMode: Boolean = false
+    val isAddMode: Boolean = false,
+    val patternWizardState: PatternWizardState = PatternWizardState()
 ) {
-    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, ADD_DIRECTORY, RECENT_ITEMS, SFTP_CONNECT, SFTP_ADD, SFTP_BROWSE, S3_CONNECT, S3_ADD, S3_BROWSE, FONT }
+    enum class DialogType { OPEN, OPEN_DIRECTORY, ADD, ADD_DIRECTORY, RECENT_ITEMS, SFTP_CONNECT, SFTP_ADD, SFTP_BROWSE, S3_CONNECT, S3_ADD, S3_BROWSE, FONT, PATTERN_WIZARD }
     val activeTab: TabState? get() = tabs.find { it.id == activeTabId }
 
     fun updateActiveTab(block: (TabState) -> TabState): KLogViewerState {

@@ -14,6 +14,8 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
   - **Zone 4 (Live Table Grid Preview)**: Compact table preview with dynamic columns mapped directly from active tokens.
   - **Zone 5 (Match Health & Action Bar)**: Match confidence badge, error diagnostics drawer, reset, cancel, and apply actions.
 - Prefill the editor with the system best guess based on sampled lines.
+- When heuristic confidence is very high, open as a slim confirmation banner (`Apply / Review / Skip`) instead of the full editor.
+- Always offer a **Skip — open as plain text** escape hatch so the wizard never blocks viewing the file.
 - Keep structured JSON logs on the existing structured path unless the source is genuinely text-pattern-driven.
 
 #### HITL Review Checkpoint
@@ -25,6 +27,10 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
 - Support importing common pasted pattern formats, starting with Logback/Log4J-style layouts and Serilog-style text patterns where feasible.
 - Support point-and-click field extraction from sample line text selections.
 - Update a sample-based preview immediately as the draft changes so users can see how fields map onto real lines and table columns.
+- Provide bidirectional hover synchronization: hovering a pill highlights matching sample spans and the preview column, and vice versa.
+- Support in-wizard undo/redo of every draft mutation, plus keyboard shortcuts (`Esc` cancel, `Cmd/Ctrl+Enter` apply, arrow-key pill navigation).
+- Provide a **Resample** control drawing sample lines from the head, middle, and tail of the file, with multiline entries grouped in the inspector.
+- Keep preview recompilation debounced and off the UI thread within the performance budget defined in `docs/PATTERN-WIZARD-UI-DESIGN.md` §6.4.
 - Include a visible mapping/field-preview surface in the wizard so the UI is useful before the full table reload path is invoked.
 
 #### HITL Review Checkpoint
@@ -45,6 +51,8 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
 - Persist approved pattern mappings by source directory in user preferences stored outside the log directory.
 - Reuse persisted mappings automatically when later files are opened from the same directory identity.
 - Support local, SFTP, and S3 directory identities using the same normalized source conventions as the current loading flow.
+- If a saved mapping stops matching a newly opened file (below a match threshold), reopen the wizard preloaded with the saved mapping and a clear diagnostic instead of silently rendering garbage rows.
+- Provide a lightweight saved-mapping management surface (list, delete, open-in-wizard) for directory mappings across source types.
 - Add a reopen entry point from the active log UI, centered around the current parser/status controls.
 
 #### HITL Review Checkpoint
@@ -127,6 +135,7 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
 - **Directory-scoped persistence**: approved mappings live in user settings and are reused by normalized directory identity.
 - **Structured compatibility first**: JSON parsing remains authoritative and nested placeholder support is preview-only in this sprint.
 - **Deferred decisions tracked explicitly**: postponed design or implementation branches must be recorded in `docs/deferred_decisions.md`.
+- **Professional interaction polish is in scope**: hover sync, undo/redo, keyboard model, resampling, escape hatches, mapping mismatch recovery, and dialog ergonomics are defined in `docs/PATTERN-WIZARD-UI-DESIGN.md` §6 and treated as sprint scope, not stretch goals.
 
 ## 7. Definition of Done
 - [ ] Opening an unrecognized or heuristically detected text log shows a best-guess pattern wizard before final mapping is committed.
@@ -135,4 +144,8 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
 - [ ] Approved mappings are reused for later files in the same normalized directory scope.
 - [ ] Structured JSON logs continue to auto-detect and render through the existing structured path.
 - [ ] The wizard can be reopened later from the log UI.
+- [ ] The wizard never blocks viewing a file: skip/plain-text is always available and high-confidence detection collapses to a confirmation banner.
+- [ ] Hover synchronization, undo/redo, and keyboard shortcuts work across the wizard zones.
+- [ ] A saved mapping that stops matching triggers wizard re-entry with diagnostics rather than silent mis-parsing.
+- [ ] Saved directory mappings can be listed and deleted from a management surface.
 - [ ] Deferred items are captured in `docs/deferred_decisions.md` with revisit triggers.

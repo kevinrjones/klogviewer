@@ -678,6 +678,15 @@ private fun LogBottomBar(
                 viewModel.handleIntent(KLogViewerIntent.ChangeParser(id, name))
             }
         },
+        onReopenPatternWizard = {
+            val sampleLines = activeWindow?.logs?.take(20)?.map { it.content.value } ?: emptyList()
+            viewModel.handleIntent(
+                KLogViewerIntent.OpenPatternWizard(
+                    sampleLines = sampleLines,
+                    targetWindowId = activeWindow?.id
+                )
+            )
+        },
         isMissing = activeWindow?.let { it.missingSourceIds.contains(it.filePath) || it.error != null } ?: false,
         isConnected = activeWindow?.isConnected ?: true
     )

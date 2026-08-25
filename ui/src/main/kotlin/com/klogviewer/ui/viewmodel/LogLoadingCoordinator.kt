@@ -64,7 +64,7 @@ class LogLoadingCoordinator(
             onSavePreferences()
             
             val results = workspaceLogLoader.performHeuristicDetection(filteredPaths, overrideParserName)
-            updateWindowStateWithParserResults(windowId, results, overrideParserName)
+            updateWindowStateWithParserResults(windowId, results, overrideParserName, filteredPaths)
             
             val flows = workspaceLogLoader.createLogFlows(filteredPaths, results)
             val flow = if (flows.size == 1) flows[0] else flows.merge()
@@ -472,36 +472,77 @@ class LogLoadingCoordinator(
         val fileName = if (paths.size == 1) localFileSystem.getName(paths[0]) else "${paths.size} files"
         
         state.update { currentState ->
-            currentState.copy(tabs = currentState.tabs.map { tab ->
-                val newWindows = tab.windows.map { window ->
-                    if (window.id == windowId) {
-                        window.copy(
-                            isLoading = true, 
-                            error = null, 
-                            filePath = paths.joinToString(", "), 
-                            logs = emptyList(), 
-                            sourceIds = paths,
-                            isDirectory = isDir
-                        )
-                    } else window
+            val nextPendingDialog = if (currentState.pendingDialog == KLogViewerState.DialogType.PATTERN_WIZARD) null else currentState.pendingDialog
+            currentState.copy(
+                pendingDialog = nextPendingDialog,
+                patternWizardState = currentState.patternWizardState.copy(isVisible = false),
+                tabs = currentState.tabs.map { tab ->
+                    val newWindows = tab.windows.map { window ->
+                        if (window.id == windowId) {
+                            window.copy(
+                                isLoading = true, 
+                                error = null, 
+                                filePath = paths.joinToString(", "), 
+                                logs = emptyList(), 
+                                sourceIds = paths,
+                                isDirectory = isDir
+                            )
+                        } else window
+                    }
+                    val newTitle = if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) fileName else tab.title
+                    tab.copy(windows = newWindows, title = newTitle)
                 }
-                val newTitle = if (tab.windows.any { it.id == windowId } && tab.windows.size <= 1) fileName else tab.title
-                tab.copy(windows = newWindows, title = newTitle)
-            })
+            )
         }
     }
 
-    private fun updateWindowStateWithParserResults(windowId: String, results: List<ProbeResult?>, overrideParserName: String?) {
+    private fun updateWindowStateWithParserResults(
+        windowId: String,
+        results: List<ProbeResult?>,
+        overrideParserName: String?,
+        filteredPaths: List<String> = emptyList()
+    ) {
+        val firstResult = results.firstOrNull()
+        val path = filteredPaths.firstOrNull()
+        val isRemote = path != null && (path.startsWith("sftp://") || path.startsWith("s3://"))
+        val isTextLogDetected = overrideParserName == null &&
+            firstResult != null &&
+            firstResult.parser !is JsonLogParser &&
+            path != null &&
+            !isRemote &&
+            localFileSystem.exists(path)
+
         state.update { currentState ->
-            currentState.updateWindow(windowId) { window ->
+            val updatedState = currentState.updateWindow(windowId) { window ->
                 window.copy(
                     columns = mergeColumnsWithDiscovered(
                         persistedColumns = window.columns,
                         results = results
                     ),
-                    parserName = if (results.size > 1 && overrideParserName == null) "Multiple" else (overrideParserName ?: results.firstOrNull()?.parserName ?: "Auto")
+                    parserName = if (results.size > 1 && overrideParserName == null) "Multiple" else (overrideParserName ?: firstResult?.parserName ?: "Auto")
                 )
             }
+
+            if (isTextLogDetected) {
+                val sampleLines = workspaceLogLoader.readSampleLines(path, limit = 20)
+                if (sampleLines.isNotEmpty()) {
+                    val isHighConfidence = firstResult.parserName != "Simple" && firstResult.parserName != "Auto"
+                    val wizardState = updatedState.patternWizardState.copy(
+                        isVisible = true,
+                        isBannerMode = isHighConfidence,
+                        targetWindowId = windowId,
+                        sampleLines = sampleLines,
+                        selectedLineIndex = 0,
+                        confidenceScore = if (isHighConfidence) 0.95f else 0.6f,
+                        matchedLineCount = sampleLines.size,
+                        totalSampleLineCount = sampleLines.size
+                    )
+                    updatedState.copy(
+                        pendingDialog = KLogViewerState.DialogType.PATTERN_WIZARD,
+                        patternWizardState = wizardState
+                    )
+                } else updatedState
+            } else updatedState
         }
     }
 

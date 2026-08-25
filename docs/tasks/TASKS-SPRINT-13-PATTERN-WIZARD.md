@@ -12,6 +12,8 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
 - Apply/reload flow through the existing loading pipeline.
 - Directory-scoped mapping persistence in user preferences.
 - Reopenable wizard access from the active log UI.
+- Professional interaction polish: hover sync, undo/redo, keyboard model, resampling, escape hatches, and dialog ergonomics (`docs/PATTERN-WIZARD-UI-DESIGN.md` §6).
+- Saved-mapping mismatch recovery and a lightweight saved-mapping management surface.
 - Structured JSON compatibility and multiline regressions.
 - Deferred-decision documentation updates when scope is postponed.
 
@@ -37,25 +39,31 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
 - Verification and docs upkeep (`13.10`) -> tests, checks, deferred decisions, and memory/readme follow-through.
 
 ### 13.5. First-Load Wizard UI and Reopenable Editing
-- [ ] 13.5.1. Add wizard visibility, draft pattern representation, and sample lines to `ui/src/main/kotlin/com/klogviewer/ui/mvi/KLogViewerState.kt` and define corresponding intents/events in `KLogViewerIntent.kt`.
-- [ ] 13.5.2. Implement top-level modal container `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternWizardDialog.kt` managing 5-zone layout, scrolling, and action buttons.
-- [ ] 13.5.3. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternImporterBar.kt` with preset selection dropdown, raw format string paste input field (`logback.xml`, Serilog), import trigger, and directory persistence toggle.
-- [ ] 13.5.4. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternTokenBar.kt` rendering interactive field pills (`Timestamp`, `Level`, `Thread`, `Logger`, `Message`, `Custom Property`), delimiter chips, reordering controls, and `+ Add Field` buttons.
-- [ ] 13.5.5. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternTokenConfigPopover.kt` flyout editor to configure token column role, custom property names, date/time format patterns, and matching flags.
-- [ ] 13.5.6. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/SampleLineInspector.kt` with monospace font, color-coded background spans matching active token pills, line carousel navigation (`Line X of Y`), and parse failure annotations.
-- [ ] 13.5.7. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/SampleLineSelectionPopup.kt` allowing point-and-click text span extraction to create new tokens from unmapped sample segments.
-- [ ] 13.5.8. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternTablePreview.kt` compact log grid rendering parsed sample rows into dynamic columns matching mapped tokens.
-- [ ] 13.5.9. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternMatchSummary.kt` displaying match health confidence badge (e.g. `10/10 matched`) and error diagnostics drawer.
-- [ ] 13.5.10. Wire automatic first-load prompt for heuristically detected text logs in `WorkspaceLogLoader.kt` / `LogLoadingCoordinator.kt` and add reopen action from `StatusBar.kt`.
-- [ ] 13.5.11. Ensure cancel and close actions remain completely non-destructive to the current active parser state.
-- [ ] 13.5.12. Human in the Loop review: validate the 5-zone UI layout, interactive token pills, color-coded sample spans, live table preview, and reopenability against real sample files before proceeding to deeper parser integration.
+- [x] 13.5.1. Add wizard visibility, draft pattern representation, and sample lines to `ui/src/main/kotlin/com/klogviewer/ui/mvi/KLogViewerState.kt` and define corresponding intents/events in `KLogViewerIntent.kt`.
+- [x] 13.5.2. Implement top-level modal container `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternWizardDialog.kt` managing 5-zone layout, scrolling, and action buttons.
+- [x] 13.5.3. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternImporterBar.kt` with preset selection dropdown, raw format string paste input field (`logback.xml`, Serilog), import trigger, and directory persistence toggle.
+- [x] 13.5.4. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternTokenBar.kt` rendering interactive field pills (`Timestamp`, `Level`, `Thread`, `Logger`, `Message`, `Custom Property`), delimiter chips, reordering controls, and `+ Add Field` buttons.
+- [x] 13.5.5. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternTokenConfigPopover.kt` flyout editor to configure token column role, custom property names, date/time format patterns, and matching flags.
+- [x] 13.5.6. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/SampleLineInspector.kt` with monospace font, color-coded background spans matching active token pills, line carousel navigation (`Line X of Y`), and parse failure annotations.
+- [x] 13.5.7. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/SampleLineSelectionPopup.kt` allowing point-and-click text span extraction to create new tokens from unmapped sample segments.
+- [x] 13.5.8. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternTablePreview.kt` compact log grid rendering parsed sample rows into dynamic columns matching mapped tokens.
+- [x] 13.5.9. Implement `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/PatternMatchSummary.kt` displaying match health confidence badge (e.g. `10/10 matched`) and error diagnostics drawer.
+- [x] 13.5.10. Wire automatic first-load prompt for heuristically detected text logs in `WorkspaceLogLoader.kt` / `LogLoadingCoordinator.kt` and add reopen action from `StatusBar.kt`.
+- [x] 13.5.11. Ensure cancel and close actions remain completely non-destructive to the current active parser state.
+- [x] 13.5.12. Add the always-available `Skip — open as plain text` escape hatch and the collapsed high-confidence confirmation banner variant (`Apply / Review / Skip`).
+- [x] 13.5.13. Implement bidirectional hover synchronization between token pills, sample line spans, and preview table columns.
+- [x] 13.5.14. Implement in-wizard undo/redo for all draft mutations and the keyboard/focus model (`Esc`, `Cmd/Ctrl+Enter`, arrow-key pill navigation, `Delete`).
+- [x] 13.5.15. Implement dialog ergonomics: resizable wizard with remembered size, Zone 3/4 splitter, subtle pill animations, and preview level badges matching the main table styling.
+- [x] 13.5.16. Add `@Preview` composables (light/dark, matched/error states) for every component under `ui/components/pattern/` so HITL reviews can render the UI headlessly.
+- [ ] 13.5.17. Human in the Loop review: validate the 5-zone UI layout, interactive token pills, color-coded sample spans, hover sync, undo/redo, keyboard model, live table preview, and reopenability against real sample files before proceeding to deeper parser integration.
 
 ### 13.6. Live Preview and Apply/Reload Flow
 - [ ] 13.6.1. Introduce a sample-based preview state/service boundary that updates as the draft changes without reloading the full table.
-- [ ] 13.6.2. Wire preview refresh into the draft editor flow in `ui` so field mappings and unmatched fragments are visible immediately.
-- [ ] 13.6.3. Add `Apply` handling in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogLoadingCoordinator.kt` so approved drafts compile and reload through the existing window-loading path.
-- [ ] 13.6.4. Ensure preview results and applied parser results stay aligned for the same sample lines.
-- [ ] 13.6.5. Human in the Loop review: validate draft-preview responsiveness and the apply/reload experience against real sample logs.
+- [ ] 13.6.2. Wire preview refresh into the draft editor flow in `ui` so field mappings and unmatched fragments are visible immediately, with ~150 ms debounce, off-UI-thread parsing, stale-result discard, and a <250 ms visible-update budget.
+- [ ] 13.6.3. Add the `Resample` control drawing sample lines from head, middle, and tail of the file, with multiline entries grouped and long lines soft-wrapped with expand toggles.
+- [ ] 13.6.4. Add `Apply` handling in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogLoadingCoordinator.kt` so approved drafts compile and reload through the existing window-loading path.
+- [ ] 13.6.5. Ensure preview results and applied parser results stay aligned for the same sample lines.
+- [ ] 13.6.6. Human in the Loop review: validate draft-preview responsiveness, resampling, and the apply/reload experience against real sample logs.
 
 ### 13.7. Canonical Pattern Model and Directory-Scoped Persistence
 - [ ] 13.7.1. Extend `domain/src/main/kotlin/com/klogviewer/domain/model/UserPreferences.kt` with directory-scoped mapping persistence types for canonical pattern definitions.
@@ -63,7 +71,9 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
 - [ ] 13.7.3. Implement persistence support in `core/src/main/kotlin/com/klogviewer/core/repository/JsonPreferencesRepository.kt`.
 - [ ] 13.7.4. Define and reuse normalized directory identity rules for local, SFTP, and S3 sources across lookup and save flows.
 - [ ] 13.7.5. Ensure saved mappings are reused automatically when later files open from the same directory identity.
-- [ ] 13.7.6. Human in the Loop review: validate the saved-mapping behavior and confirm the directory scope feels correct across source types.
+- [ ] 13.7.6. Detect when a saved mapping falls below a match threshold on a newly opened file and reopen the wizard preloaded with the saved mapping plus diagnostics instead of silently mis-parsing.
+- [ ] 13.7.7. Add a lightweight saved-mapping management surface listing directory key, source type, pattern summary, and last-used time with delete and open-in-wizard actions.
+- [ ] 13.7.8. Human in the Loop review: validate the saved-mapping behavior, mismatch recovery, management surface, and confirm the directory scope feels correct across source types.
 
 ### 13.8. Importers, Heuristic Drafting, and Runtime Compilation
 - [ ] 13.8.1. Extend `core/src/main/kotlin/com/klogviewer/core/parser/HeuristicProbe.kt` so detection returns enough metadata to seed the canonical draft.
@@ -98,4 +108,8 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
 - [ ] Structured JSON logs continue to auto-detect and render correctly.
 - [ ] Serilog `@mt` placeholders are visible in preview without changing structured runtime parsing semantics.
 - [ ] The wizard can be reopened later from the active log UI.
+- [ ] The wizard never blocks viewing a file: skip/plain-text is always available and high-confidence detection collapses to a confirmation banner.
+- [ ] Hover synchronization, undo/redo, and keyboard shortcuts work across all wizard zones.
+- [ ] A saved mapping that stops matching triggers wizard re-entry with diagnostics rather than silent mis-parsing.
+- [ ] Saved directory mappings can be listed and deleted from the management surface.
 - [ ] Deferred items remain tracked in `docs/deferred_decisions.md`.

@@ -184,6 +184,8 @@ class KLogViewerViewModel(
             }
         }
     )
+
+    private val patternWizardIntentHandler = PatternWizardIntentHandler(_state)
     
     fun clear() {
         savePreferences(currentState = _state.value, debounce = false)
@@ -230,6 +232,7 @@ class KLogViewerViewModel(
             is KLogViewerIntent.S3Intent -> s3IntentHandler.handle(intent)
             is KLogViewerIntent.DialogIntent -> handleDialogIntent(intent)
             is KLogViewerIntent.RecentItemsIntent -> recentItemsIntentHandler.handle(intent)
+            is KLogViewerIntent.PatternWizardIntent -> patternWizardIntentHandler.handle(intent)
         }
     }
 

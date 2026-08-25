@@ -169,3 +169,37 @@ The documentation plan leaves the sprint sequence consistent after inserting the
 - Renumber the matching `docs/tasks/TASKS-SPRINT-13-...` and later task files, preserving references/dependencies.
 - Include `docs/deferred_decisions.md` in the documentation set for this sprint so renumbered follow-on sprints can reference it.
 - Note any follow-up architecture/document-memory updates that the implementation sprint should perform when the work is actually completed.
+
+### ✓ Step 5: Define canonical pattern draft model and MVI state/intents (Tasks 13.5.1, 13.5.14)
+Define domain data classes for pattern tokens/pills, token roles (`Timestamp`, `Level`, `Thread`, `Logger`, `Message`, `Custom Property`), delimiters, and pattern draft state with undo/redo stack.
+- Create canonical pattern draft model types in `:domain` or `:ui`.
+- Add pattern wizard draft state to `KLogViewerState.kt` / `LogWindow`.
+- Add pattern wizard intents in `KLogViewerIntent.kt` for wizard actions (toggle visibility, update draft, add/remove/reorder tokens, reconfigure token, undo/redo, apply draft, skip/cancel).
+- Implement unit tests for draft state mutation and undo/redo logic.
+
+### ✓ Step 6: Build Pattern Wizard sub-components (Tasks 13.5.3 - 13.5.9, 13.5.13, 13.5.16)
+Implement individual Compose components in `ui/src/main/kotlin/com/klogviewer/ui/components/pattern/`.
+- `PatternImporterBar.kt` (13.5.3)
+- `PatternTokenBar.kt` (13.5.4)
+- `PatternTokenConfigPopover.kt` (13.5.5)
+- `SampleLineInspector.kt` (13.5.6)
+- `SampleLineSelectionPopup.kt` (13.5.7)
+- `PatternTablePreview.kt` (13.5.8)
+- `PatternMatchSummary.kt` (13.5.9)
+- Bidirectional hover synchronization (13.5.13)
+- `@Preview` composables for each component (13.5.16)
+
+### ✓ Step 7: Build PatternWizardDialog container, banner mode, ergonomics & keyboard navigation (Tasks 13.5.2, 13.5.12, 13.5.14, 13.5.15)
+Integrate all 5 zones into `PatternWizardDialog.kt`.
+- Resizable modal container with Zone 3/4 draggable splitter and remembered window size (13.5.2, 13.5.15).
+- High-confidence confirmation banner variant (`Apply / Review / Skip`) and `Skip — open as plain text` escape hatch (13.5.12).
+- Keyboard shortcuts (`Esc`, `Cmd/Ctrl+Enter`, arrow-key pill navigation, `Delete`, `Cmd/Ctrl+Z`) (13.5.14).
+
+### ✓ Step 8: Wire first-load prompt & status bar reopen integration (Tasks 13.5.10, 13.5.11)
+Connect heuristic detection and UI state in `WorkspaceLogLoader` / `LogLoadingCoordinator` and `StatusBar`.
+- Trigger pattern wizard prompt when heuristically detected text logs are opened (13.5.10).
+- Add reopen button in `StatusBar.kt` (13.5.10).
+- Ensure cancel/close/skip actions are non-destructive to active parser state (13.5.11).
+
+### ✓ Step 9: Testing, verification, task checkbox updates, and HITL summary (Task 13.5.17)
+Run tests and check `./gradlew check`, verify UI with `./gradlew :app:run`, update task checkboxes in `docs/tasks/TASKS-SPRINT-13-PATTERN-WIZARD.md`, and summarize deliverables for HITL review.

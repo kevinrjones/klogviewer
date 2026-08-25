@@ -174,3 +174,51 @@ ui/src/main/kotlin/com/klogviewer/ui/components/pattern/
 8. **`PatternMatchSummary`**:
    - Calculates match ratio (e.g., 10/10 matched).
    - Displays parse warning/error badges and details on failed lines.
+
+---
+
+## 6. Interaction Polish & Professional Details
+
+These details are what separate a professional-grade editor from a functional dialog. They are in scope for Sprint 13 unless explicitly deferred in `docs/deferred_decisions.md`.
+
+### 6.1. Bidirectional Hover Synchronization
+- Hovering a token pill in Zone 2 highlights (glow/outline) the corresponding spans in every visible sample line and the matching column header in the preview table.
+- Hovering a colored span in a sample line highlights its owning token pill and column.
+- This makes the pattern → line → column relationship instantly legible without reading any text.
+
+### 6.2. Undo / Redo Inside the Wizard
+- Every draft mutation (token add/remove/reorder/reconfigure, import, span extraction) is pushed onto an in-wizard undo stack.
+- `Cmd/Ctrl+Z` / `Cmd/Ctrl+Shift+Z` operate only on the draft; the active parser is never involved.
+- `Reset to Best Guess` is itself undoable.
+
+### 6.3. Keyboard & Focus Model
+- `Esc` closes (non-destructive cancel), `Cmd/Ctrl+Enter` applies.
+- Full tab-order traversal across zones; arrow keys move selection between token pills; `Delete` removes the focused pill.
+- Popovers open with `Enter`/`Space` on a focused pill and restore focus on close.
+
+### 6.4. Preview Performance Budget
+- Draft edits recompile the preview against sampled lines with a short debounce (~150 ms) so typing in a format field never stutters.
+- Preview parsing runs off the UI thread; stale results are discarded when a newer draft supersedes them.
+- Target: visible preview update within 250 ms of the last edit for 10 sample lines.
+
+### 6.5. Sampling Controls
+- Default sample is drawn from the head of the file, but a **Resample** control lets the user pull lines from the middle and tail (long-running logs often change shape after startup).
+- Multiline entries (stack traces) are shown as grouped continuation lines in the inspector so users can see how the pattern treats them.
+- Very long lines are soft-wrapped with a per-line expand toggle rather than truncated silently.
+
+### 6.6. Escape Hatches & Confidence Behavior
+- A **Skip — open as plain text** action is always available so the wizard never blocks a user who just wants to see the file.
+- When the heuristic confidence is very high (all sampled lines match a known template), the wizard can open pre-collapsed to a slim confirmation banner ("Detected Logback layout — Apply / Review / Skip") instead of the full editor.
+- If a saved directory mapping stops matching a newly opened file (below a match threshold), the wizard reopens with the saved mapping preloaded and a clear diagnostic instead of silently producing garbage rows.
+
+### 6.7. Dialog Ergonomics
+- The wizard is resizable with a sensible minimum size; size and the collapsed/expanded state are remembered across sessions.
+- Zones 3 and 4 share a draggable vertical splitter.
+- Pill insert/remove/reorder use subtle (<150 ms) animations; no animation on preview reparse to keep it feeling instant.
+- Level values in the preview table reuse the exact badge styling of the main log table so "what you preview is what you get".
+
+### 6.8. Saved Mapping Management
+- A lightweight management surface (settings section or wizard menu) lists saved directory mappings with directory key, source type (local/SFTP/S3), pattern summary, and last-used time, and supports delete and open-in-wizard actions.
+
+### 6.9. Component Previews for HITL
+- Every component under `ui/components/pattern/` ships with `@Preview` composables (light + dark, matched + error states) so HITL reviews can render the UI headlessly before full integration.

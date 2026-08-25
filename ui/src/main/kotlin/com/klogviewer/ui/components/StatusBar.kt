@@ -20,6 +20,7 @@ fun StatusBar(
     parserName: String? = null,
     availableParsers: List<String> = emptyList(),
     onParserSelect: (String) -> Unit = {},
+    onReopenPatternWizard: () -> Unit = {},
     isMissing: Boolean = false,
     isConnected: Boolean = true,
     modifier: Modifier = Modifier
@@ -77,6 +78,13 @@ fun StatusBar(
                             expanded = showParserMenu,
                             onDismissRequest = { showParserMenu = false }
                         ) {
+                            DropdownMenuItem(onClick = {
+                                onReopenPatternWizard()
+                                showParserMenu = false
+                            }) {
+                                Text("Edit Pattern Mapping...", style = MaterialTheme.typography.caption)
+                            }
+                            Divider()
                             availableParsers.forEach { name ->
                                 DropdownMenuItem(onClick = {
                                     onParserSelect(name)

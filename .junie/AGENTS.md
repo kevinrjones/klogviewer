@@ -17,6 +17,7 @@ This document outlines the coding standards, architecture, and deployment proced
     - Constants: UPPER_SNAKE_CASE (e.g., `OVERALL_ROUTE`)
 - **Immutability**: Prefer `val` over `var` and `List` over `MutableList`.
 - Prefer immutable data classes, for example prefer
+- **Static analysis** Make use of static analysis tools like Detekt and Ktlint to enforce coding standards and catch potential issues early. Run these tools as part of your CI/CD pipeline and integrate them into your development workflow.
 
 ```kotlin
 data class OidcConfiguration(

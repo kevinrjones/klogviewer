@@ -36,3 +36,24 @@ This file tracks design and implementation choices that were intentionally postp
 - **Why deferred**: The immediate requirement is personal reuse without writing metadata into log directories, and project-file portability needs a separate design.
 - **Impact / risk**: Mappings are convenient for one user on one machine but are not yet portable as explicit project artifacts.
 - **Revisit trigger**: Revisit when project/workspace file persistence is extended to carry reusable mapping definitions.
+
+## 5. User-Defined Preset Library
+- **Title**: Saving custom patterns as named, reusable presets in the wizard preset dropdown
+- **Current choice**: Sprint 13 presets are the built-in/detected templates only; reuse happens implicitly via directory-scoped mappings.
+- **Why deferred**: A named preset library adds a second persistence and management concept on top of directory mappings before we know how users actually reuse patterns.
+- **Impact / risk**: Users with many similar-but-differently-located logs must re-import or re-apply patterns per directory.
+- **Revisit trigger**: Revisit if HITL feedback shows users repeatedly importing the same pattern across unrelated directories.
+
+## 6. Drag-and-Drop Token Reordering
+- **Title**: Full drag-and-drop pill reordering with drop indicators
+- **Current choice**: Sprint 13 ships keyboard/button-based left-right reordering; drag-and-drop is a polish follow-up.
+- **Why deferred**: Compose Desktop drag-and-drop within a flow-row needs careful gesture work and should not block the core wizard workflow.
+- **Impact / risk**: Reordering is slightly less fluid than a best-in-class editor until added.
+- **Revisit trigger**: Revisit during post-sprint polish once the token bar interaction model is validated by HITL review.
+
+## 7. Raw Regex Power-User Mode
+- **Title**: Direct raw-regex editing view alongside the token bar
+- **Current choice**: Sprint 13 exposes the canonical token model and framework-pattern import only; the compiled regex is internal.
+- **Why deferred**: Exposing raw regex creates a two-way sync problem between free-form regex and the canonical token model.
+- **Impact / risk**: Power users with exotic formats may hit limits of the token model; custom-span extraction is the workaround.
+- **Revisit trigger**: Revisit if HITL testing surfaces real log formats the token model plus span extraction cannot express.

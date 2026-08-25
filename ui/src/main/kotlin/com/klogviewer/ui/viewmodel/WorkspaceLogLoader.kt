@@ -166,7 +166,7 @@ class WorkspaceLogLoader(
         }
     }
 
-    private fun readSampleLines(path: String, limit: Int = 50): List<String> {
+    fun readSampleLines(path: String, limit: Int = 50): List<String> {
         return try {
             localFileSystem.readLines(path, limit)
         } catch (e: Exception) {

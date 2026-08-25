@@ -17,6 +17,7 @@ sealed interface KLogViewerIntent {
     sealed interface RecentItemsIntent : KLogViewerIntent
     sealed interface SftpIntent : KLogViewerIntent
     sealed interface S3Intent : KLogViewerIntent
+    sealed interface PatternWizardIntent : KLogViewerIntent
 
     data class LoadFiles(val paths: List<String>) : WorkspaceIntent
     data class AddToWorkspace(val paths: List<String>) : WorkspaceIntent
@@ -148,4 +149,41 @@ sealed interface KLogViewerIntent {
     data class ToggleSourceVisibilityInActiveWindow(val sourcePath: String) : TabWindowIntent
     data class UpdateColumnWidth(val windowId: String, val column: String, val width: Int) : TabWindowIntent
     data class ChangeParser(val windowId: String, val parserName: String) : TabWindowIntent
+
+    // Pattern Wizard
+    data class OpenPatternWizard(
+        val sampleLines: List<String>,
+        val initialDraft: com.klogviewer.domain.model.PatternDraft? = null,
+        val isBannerMode: Boolean = false,
+        val targetWindowId: String? = null
+    ) : PatternWizardIntent
+    data object ClosePatternWizard : PatternWizardIntent
+    data object SkipPatternWizard : PatternWizardIntent
+    data object ApplyPatternDraft : PatternWizardIntent
+    data class AddPatternToken(val segmentIndex: Int, val role: com.klogviewer.domain.model.PatternTokenRole) : PatternWizardIntent
+    data class RemovePatternSegment(val segmentId: String) : PatternWizardIntent
+    data class ReorderPatternSegment(val segmentId: String, val moveLeft: Boolean) : PatternWizardIntent
+    data class UpdatePatternToken(val token: com.klogviewer.domain.model.PatternToken) : PatternWizardIntent
+    data class UpdatePatternDelimiter(val delimiterId: String, val newValue: String) : PatternWizardIntent
+    data class ImportPatternString(val patternText: String) : PatternWizardIntent
+    data class ExtractSpanAsPatternToken(
+        val textRange: IntRange,
+        val role: com.klogviewer.domain.model.PatternTokenRole,
+        val customName: String? = null
+    ) : PatternWizardIntent
+    data class SetDirectoryPersistenceEnabled(val enabled: Boolean) : PatternWizardIntent
+    data object ResetPatternToBestGuess : PatternWizardIntent
+    data object UndoPatternDraft : PatternWizardIntent
+    data object RedoPatternDraft : PatternWizardIntent
+    data class SetHoveredPatternSegment(val segmentId: String?) : PatternWizardIntent
+    data class SetHoveredPatternColumn(val columnName: String?) : PatternWizardIntent
+    data class SetFocusedPatternToken(val tokenId: String?) : PatternWizardIntent
+    data class OpenPatternTokenConfigPopover(val tokenId: String?) : PatternWizardIntent
+    data object ClosePatternTokenConfigPopover : PatternWizardIntent
+    data class OpenPatternSelectionPopup(val range: IntRange?) : PatternWizardIntent
+    data object ClosePatternSelectionPopup : PatternWizardIntent
+    data class SelectPatternSampleLine(val lineIndex: Int) : PatternWizardIntent
+    data object TogglePatternDiagnosticsDrawer : PatternWizardIntent
+    data class UpdatePatternDialogBounds(val width: Int, val height: Int, val splitterRatio: Float) : PatternWizardIntent
+    data object ExpandPatternBannerToFullWizard : PatternWizardIntent
 }
