@@ -255,6 +255,33 @@ class PreferencesRepositoryTest {
         expectThat(repository.load()).isEqualTo(prefs)
     }
 
+    @Test
+    fun `should migrate mac legacy preferences if target does not exist`() {
+        val originalUserHome = System.getProperty("user.home")
+        val fakeHome = File(tempDir, "fakeHome").apply { mkdirs() }
+        val legacyDir = File(fakeHome, "Library/Application Support/com.klogviewer.app").apply { mkdirs() }
+        val legacyConfigFile = File(legacyDir, "preferences.json")
+        val legacyPrefs = UserPreferences(isDarkMode = true, recentFiles = listOf("/legacy/path.log"))
+        val json = kotlinx.serialization.json.Json { prettyPrint = true }
+        legacyConfigFile.writeText(json.encodeToString(UserPreferences.serializer(), legacyPrefs))
+
+        try {
+            System.setProperty("user.home", fakeHome.absolutePath)
+            val repository = JsonPreferencesRepository(
+                customConfigDir = null,
+                secureCredentialStore = InMemorySecureCredentialStore()
+            )
+            val newConfigFile = File(fakeHome, ".klogview/preferences.json")
+
+            val loaded = repository.load()
+            assertTrue(newConfigFile.exists())
+            expectThat(loaded.recentFiles).isEqualTo(listOf("/legacy/path.log"))
+            assertTrue(loaded.isDarkMode)
+        } finally {
+            System.setProperty("user.home", originalUserHome)
+        }
+    }
+
     private class FailingSecureCredentialStore : SecureCredentialStore {
         override fun put(reference: CredentialReference, secret: String): Boolean = false
 
