@@ -1,6 +1,7 @@
 package com.klogviewer.ui.viewmodel
 
 import com.klogviewer.core.parser.HeuristicProbe
+import com.klogviewer.core.parser.PatternDraftCompiler
 import com.klogviewer.core.repository.AwtClipboard
 import com.klogviewer.core.repository.JavaLocalFileSystem
 import com.klogviewer.core.analysis.InMemoryAnalysisMetricsRepository
@@ -14,6 +15,7 @@ import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.LogUpdate
+import com.klogviewer.domain.model.PatternDraft
 import com.klogviewer.domain.model.TimeBucketSize
 import com.klogviewer.domain.model.TimeSeriesMetricsQuery
 import com.klogviewer.domain.model.UserPreferences
@@ -220,6 +222,18 @@ class KLogViewerViewModel(
         val prefs = prefsRepository.load()
         val restoredState = PreferencesStateMapper.toState(prefs)
         _state.value = restoredState
+
+        // Register all saved directory pattern mappings into heuristicProbe.registry
+        restoredState.directoryPatternMappings.values.forEach { mapping ->
+            val compiled = PatternDraftCompiler().compile(mapping.patternDraft)
+            heuristicProbe.registry.register(compiled.template)
+        }
+
+        // Register all window pattern drafts into heuristicProbe.registry
+        restoredState.tabs.flatMap { it.windows }.mapNotNull { it.patternDraft }.forEach { draft ->
+            val compiled = PatternDraftCompiler().compile(draft)
+            heuristicProbe.registry.register(compiled.template)
+        }
         
         // Reload logs for all windows that are connected
         restoredState.tabs.forEach { tab ->

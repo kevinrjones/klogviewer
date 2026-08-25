@@ -48,6 +48,7 @@ data class WindowPreference(
     val isAutoScrollEnabled: Boolean = true,
     val showAnsiColors: Boolean = true,
     val parserName: String? = null,
+    val patternDraft: PatternDraft? = null,
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap(),
     val isConnected: Boolean = true,

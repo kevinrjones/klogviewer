@@ -538,8 +538,7 @@ class LogLoadingCoordinator(
         val firstResult = results.firstOrNull()
         val path = filteredPaths.firstOrNull()
         val isRemote = path != null && (path.startsWith("sftp://") || path.startsWith("s3://"))
-        val isTextLogDetected = overrideParserName == null &&
-            firstResult != null &&
+        val isTextLog = firstResult != null &&
             firstResult.parser !is JsonLogParser &&
             path != null &&
             !isRemote &&
@@ -550,7 +549,7 @@ class LogLoadingCoordinator(
             DirectoryIdentityNormalizer.normalize(it, isDirectory = isDir)
         }
 
-        val savedMapping = if (isTextLogDetected && directoryKey != null) {
+        val savedMapping = if (isTextLog && directoryKey != null) {
             state.value.directoryPatternMappings[directoryKey]
         } else null
 
@@ -563,7 +562,8 @@ class LogLoadingCoordinator(
             }
         }
 
-        applyDefaultParserResults(windowId, results, overrideParserName, isTextLogDetected, path, firstResult)
+        val shouldPromptWizard = (overrideParserName == null || overrideParserName == "Auto") && isTextLog
+        applyDefaultParserResults(windowId, results, overrideParserName, shouldPromptWizard, path, firstResult)
     }
 
     private fun applyDefaultParserResults(

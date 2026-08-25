@@ -4,6 +4,7 @@ import com.klogviewer.domain.model.DirectoryPatternMapping
 import com.klogviewer.domain.model.LogEntry
 import com.klogviewer.domain.model.LevelFilterKey
 import com.klogviewer.domain.model.LogLevel
+import com.klogviewer.domain.model.PatternDraft
 import com.klogviewer.domain.model.PatternWizardState
 import com.klogviewer.domain.model.S3Config
 import com.klogviewer.domain.model.SftpConfig
@@ -141,6 +142,7 @@ data class LogWindow(
     val selectedIndices: Set<Int> = emptySet(),
     val lastSelectedIndex: Int? = null,
     val parserName: String? = null,
+    val patternDraft: PatternDraft? = null,
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap(),
     val isConnected: Boolean = true,

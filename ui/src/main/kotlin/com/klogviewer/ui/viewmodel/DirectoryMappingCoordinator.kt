@@ -61,6 +61,7 @@ class DirectoryMappingCoordinator(
                 )
                 w.copy(
                     parserName = compiled.template.name,
+                    patternDraft = draft,
                     columns = LogLoadingCoordinator.mergeColumnsWithDiscoveredStatic(w.columns, listOf(probeResult))
                 )
             }
@@ -112,7 +113,8 @@ class DirectoryMappingCoordinator(
             updatedState.updateWindow(windowId) { window ->
                 window.copy(
                     columns = LogLoadingCoordinator.mergeColumnsWithDiscoveredStatic(window.columns, results),
-                    parserName = results.firstOrNull()?.parserName ?: "Auto"
+                    parserName = results.firstOrNull()?.parserName ?: "Auto",
+                    patternDraft = savedMapping.patternDraft
                 )
             }
         }

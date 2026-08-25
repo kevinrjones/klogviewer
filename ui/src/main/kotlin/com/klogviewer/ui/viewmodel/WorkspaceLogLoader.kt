@@ -74,15 +74,29 @@ class WorkspaceLogLoader(
                 val sampleLines = readSampleLines(path)
                 if (sampleLines.isEmpty()) {
                     null
-                } else if (overrideParserName != null) {
-                    getParserResultByName(overrideParserName, sampleLines)
                 } else {
                     val isDir = localFileSystem.exists(path) && localFileSystem.isDirectory(path)
                     val directoryKey = DirectoryIdentityNormalizer.normalize(path, isDirectory = isDir)
                     val savedMapping = state.value.directoryPatternMappings[directoryKey]
-                    val detected = heuristicProbe.detect(sampleLines)
 
-                    if (savedMapping != null && detected.parser !is JsonLogParser) {
+                    if (overrideParserName != null && overrideParserName != "Auto") {
+                        val result = getParserResultByName(overrideParserName, sampleLines)
+                        if (result.parser is SimpleLogParser &&
+                            overrideParserName != "Simple" &&
+                            savedMapping != null
+                        ) {
+                            val compiler = PatternDraftCompiler()
+                            val compiled = compiler.compile(savedMapping.patternDraft)
+                            heuristicProbe.registry.register(compiled.template)
+                            ProbeResult(
+                                parser = TemplateLogParser(compiled.template),
+                                parserName = compiled.template.name,
+                                columns = compiled.template.columns
+                            )
+                        } else {
+                            result
+                        }
+                    } else if (savedMapping != null) {
                         val previewService = DefaultPatternPreviewService()
                         val previewResult = previewService.computePreview(savedMapping.patternDraft, sampleLines)
                         if (previewResult.confidenceScore >= MATCH_CONFIDENCE_THRESHOLD) {
@@ -95,10 +109,10 @@ class WorkspaceLogLoader(
                                 columns = compiled.template.columns
                             )
                         } else {
-                            detected
+                            heuristicProbe.detect(sampleLines)
                         }
                     } else {
-                        detected
+                        heuristicProbe.detect(sampleLines)
                     }
                 }
             }
@@ -186,10 +200,27 @@ class WorkspaceLogLoader(
             }
             "logfmt" -> ProbeResult(LogfmtParser(), "logfmt", listOf("Timestamp", "Level", "Content"))
             "Simple" -> ProbeResult(SimpleLogParser(), "Simple", listOf("Timestamp", "Level", "Content"))
+            "Auto" -> heuristicProbe.detect(sampleLines)
             else -> {
                 val template = heuristicProbe.registry.getTemplate(name)
-                if (template != null) ProbeResult(TemplateLogParser(template), template.name, template.columns)
-                else ProbeResult(SimpleLogParser(), "Simple", listOf("Timestamp", "Level", "Content"))
+                if (template != null) {
+                    ProbeResult(TemplateLogParser(template), template.name, template.columns)
+                } else {
+                    val matchingMapping = state.value.directoryPatternMappings.values.find {
+                        it.patternDraft.name == name
+                    }
+                    if (matchingMapping != null) {
+                        val compiled = PatternDraftCompiler().compile(matchingMapping.patternDraft)
+                        heuristicProbe.registry.register(compiled.template)
+                        ProbeResult(
+                            parser = TemplateLogParser(compiled.template),
+                            parserName = compiled.template.name,
+                            columns = compiled.template.columns
+                        )
+                    } else {
+                        ProbeResult(SimpleLogParser(), "Simple", listOf("Timestamp", "Level", "Content"))
+                    }
+                }
             }
         }
     }
