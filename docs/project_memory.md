@@ -3564,9 +3564,9 @@ For each sprint/task
 **Title**: Clarify Sprint 12B semantics ownership and Sprint 13 UX dependency
 **Date/time completed**: 2026-06-07 09:09
 **What was shipped**
-- Updated `docs/sprints/sprint-13-power-user-tools.md` to reframe Sprint 13 as `Power User Workflows, Query UX & Workspace Persistence` layered on Sprint 12B semantics.
+- Updated `docs/sprints/sprint-14-power-user-tools.md` to reframe Sprint 14 as `Power User Workflows, Query UX & Workspace Persistence` layered on Sprint 12B semantics.
 - Added explicit Sprint 13 dependency and non-duplication boundary wording in `docs/tasks/TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md`.
-- Added `docs/tasks/TASKS-SPRINT-13-POWER-USER-TOOLS.md` with implementation-ready goal/scope/dependencies/workstreams/tasks/quality gates/acceptance criteria focused on UX workflow and persistence.
+- Added `docs/tasks/TASKS-SPRINT-14-POWER-USER-TOOLS.md` with implementation-ready goal/scope/dependencies/workstreams/tasks/quality gates/acceptance criteria focused on UX workflow and persistence.
 - Added a light alignment note in `docs/sprints/sprint-12-structured-data.md` to keep Sprint 13 layered on the 12B filtering engine.
 **Key decisions**
 - Keep Sprint 12B and Sprint 13 as separate deliveries rather than merging.
@@ -3917,3 +3917,34 @@ For each sprint/task
 - `./gradlew :ui:test` — BUILD SUCCESSFUL (27 new tests + all existing tests pass).
 - `./gradlew :ui:desktopTest` — BUILD SUCCESSFUL.
 - `./gradlew detekt` — BUILD SUCCESSFUL (all modules clean).
+
+---
+
+## Task: Sprint 13 Pattern Wizard Planning and Roadmap Renumbering
+
+**Title**: Define the new UI-first Sprint 13 and renumber downstream sprint/task docs
+**Date/time completed**: 2026-08-25 09:54
+
+### What was shipped
+
+- Added `docs/sprints/sprint-13-pattern-wizard.md` with a UI-first Sprint 13 plan centered on best-guess pattern prompting, live preview, apply/reload flow, directory mappings, and HITL checkpoints in each section.
+- Added `docs/tasks/TASKS-SPRINT-13-PATTERN-WIZARD.md` with implementation-ready workstreams mapped to concrete `ui`, `core`, and `domain` files.
+- Added `docs/deferred_decisions.md` to track postponed design branches and seeded it with initial deferred decisions for structured placeholder extraction, richer visual editing, continuous reparsing, and project-file sharing.
+- Added `docs/adr/adr-043-pattern-wizard-draft-overlay-and-directory-mappings.md` to record the draft-overlay, canonical-pattern, and directory-scoped persistence architecture decisions.
+- Renumbered downstream sprint/task roadmap artifacts so the prior Sprint 13+ documents now align to Sprint 14 through Sprint 18 identities, and updated supporting references in `README.md`, `docs/CONNECTIVITY-DESIGN.md`, `docs/tasks/TASKS-SPRINT-8-CONNECTIVITY.md`, and related planning notes.
+
+### Key decisions
+
+- Use a draft-overlay editor rather than mutating the active parser continuously while the user types.
+- Use one canonical internal pattern model with importers for common pasted syntaxes instead of treating Logback or Serilog text as the persistence contract.
+- Keep structured JSON parsing authoritative and limit Serilog `@mt` placeholders to preview-visible treatment in this sprint.
+- Persist approved mappings by normalized directory identity in user settings instead of writing metadata into log directories.
+
+### Gotchas
+
+- Renumbering required both file moves and internal title/reference updates; leaving either half undone would have produced contradictory roadmap docs.
+- Hidden `.junie` planning artifacts intentionally still mention earlier filenames because they preserve the historical planning trail rather than the published roadmap state.
+
+### Test coverage areas
+
+- Not run; this task changed documentation and planning artifacts only.

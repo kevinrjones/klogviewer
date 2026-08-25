@@ -34,8 +34,8 @@
 - [x] 13.2.11. Restore S3 log sources and connection state on application startup
 - [x] 13.2.12. Support adding S3 logs to existing workspace via "+" button dropdown
 
-### 13.3. Network Appenders (Moved to Sprint 16)
-- [ ] The full 13.3 scope is now tracked in `docs/tasks/TASKS-SPRINT-16-NETWORK-LOG-ADAPTERS.md`
+### 13.3. Network Appenders (Moved to Sprint 17)
+- [ ] The full 13.3 scope is now tracked in `docs/tasks/TASKS-SPRINT-17-NETWORK-LOG-ADAPTERS.md`
 
 ### 13.4. Connection Manager
 - [x] 13.4.1. Build a UI for managing saved connections and credentials

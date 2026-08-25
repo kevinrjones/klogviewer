@@ -1,4 +1,4 @@
-# Sprint 14: Serilog Compact Log Event Viewing
+# Sprint 15: Serilog Compact Log Event Viewing
 
 ## 1. Goal
 
@@ -14,7 +14,7 @@ logs.
   `@tr`, `@sp`) are not explicitly first-class in list, filter, and dashboard workflows.
 - Serilog compact logs are newline-delimited JSON events and should be treated as event streams rather than arbitrary
   JSON blobs.
-- The roadmap requires insertion of this sprint immediately after Sprint 13, with downstream renumbering handled
+- The roadmap requires insertion of this sprint immediately after Sprint 14, with downstream renumbering handled
   separately in roadmap consistency work.
 
 ## 3. CLEF Format Summary
@@ -78,7 +78,7 @@ logs.
 
 - Becoming a Seq replacement (ingestion service, server-side query engine, alerts, app ecosystem).
 - Implementing every `clef-tool`/`seqcli` command.
-- Implementing full Serilog query/template language parity in Sprint 14.
+- Implementing full Serilog query/template language parity in Sprint 15.
 - Enabling pretty-printed multi-line JSON streams as default CLEF interpretation.
 
 ## 5. Scope
@@ -283,13 +283,13 @@ F -->|re-evaluate| B
     - `rg -n "Sprint 1[4-7]|TASKS-SPRINT-1[4-7]" README.md docs`
 - Check for prohibited user-facing phrase in new sprint/task artifacts:
     - `rg -n "CLEF mode" docs/sprints docs/tasks`
-- Verify new Sprint 14 docs exist:
-    - `ls docs/sprints/sprint-14-clef-viewing.md docs/tasks/TASKS-SPRINT-14-CLEF-VIEWING.md`
+- Verify new Sprint 15 docs exist:
+    - `ls docs/sprints/sprint-15-clef-viewing.md docs/tasks/TASKS-SPRINT-15-CLEF-VIEWING.md`
 
 ## 23. Documentation Updates
 
-- Add this sprint document as Sprint 14.
-- Add matching tasks document for Sprint 14.
+- Add this sprint document as Sprint 15.
+- Add matching tasks document for Sprint 15.
 - Update roadmap references and downstream numbering in related sprint/task docs and index references.
 - Reflect outcomes in `docs/project_memory.md` when sprint/task completion is finalized.
 
