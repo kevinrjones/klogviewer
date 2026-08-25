@@ -193,6 +193,10 @@ KLogViewer follows a clean, multi-module architecture:
 - `:ui`: Composable components, themes, and MVI state management.
 - `:app`: Application entry point and configuration.
 
+For the full architecture guide, including module-by-module responsibilities, major runtime flows, and sprint-end update rules, see:
+
+- `docs/ARCHITECTURE.md`
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

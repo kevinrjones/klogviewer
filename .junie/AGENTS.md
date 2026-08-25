@@ -77,6 +77,8 @@ to this
 
 ## Architecture Guidelines
 
+- Read `docs/ARCHITECTURE.md` before making large structural changes or when you need a module-by-module overview of the application.
+- Update `docs/ARCHITECTURE.md` at the end of any sprint that changes or extends the architecture.
 - **SOLID** prefer to follow the SOLID principals
 - **Patterns** prefer using GoF or other established patterns in the code
 - GoF patterns are opt-in, never speculative. No pattern without a named reason in an ADR or the sprint Architect
@@ -199,6 +201,7 @@ Avoid
 ### Notes
 
 - ALWAYS IGNORE node_modules folders when evaluating code
+- Use `docs/ARCHITECTURE.md` as the primary architecture map for module boundaries, runtime flows, and contributor entry points.
 - Use the **UBIQUITOUS_LANGUAGE.md*, if it exists, to understand the domain language of the project
 - Use the **docs/RECAP.md* to understand what has happened in project
 - Use the **docs/project_memory.md* to understand what has happened in project
@@ -207,6 +210,9 @@ Avoid
 
 At the end of each phase - either a sprint has completed or a full task has completed (not just subtasks) update a
 `docs/project_memory.md` file. This file should have several sections
+
+If the sprint changed module responsibilities, runtime flows, or major subsystem boundaries, also update
+`docs/ARCHITECTURE.md` and make sure any contributor-navigation guidance here still points to the right files.
 
 Overall (this will be expanded after each sprint/task completion)
 **What was shipped**
