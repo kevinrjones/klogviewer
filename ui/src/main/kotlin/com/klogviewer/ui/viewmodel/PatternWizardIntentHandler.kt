@@ -1,5 +1,7 @@
 package com.klogviewer.ui.viewmodel
 
+import com.klogviewer.core.parser.DefaultPatternPreviewService
+import com.klogviewer.core.parser.PatternPreviewService
 import com.klogviewer.domain.model.PatternDelimiter
 import com.klogviewer.domain.model.PatternDraft
 import com.klogviewer.domain.model.PatternSegment
@@ -7,18 +9,34 @@ import com.klogviewer.domain.model.PatternToken
 import com.klogviewer.domain.model.PatternTokenRole
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 
 class PatternWizardIntentHandler(
-    private val state: MutableStateFlow<KLogViewerState>
+    private val state: MutableStateFlow<KLogViewerState>,
+    private val patternPreviewService: PatternPreviewService = DefaultPatternPreviewService(),
+    private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
+    private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val onResampleLines: ((String) -> List<String>)? = null,
+    private val onApplyDraft: ((windowId: String, draft: PatternDraft) -> Unit)? = null
 ) {
+    private var previewJob: Job? = null
+    private var previewGeneration = 0L
+
     fun handle(intent: KLogViewerIntent.PatternWizardIntent) {
         when (intent) {
             is KLogViewerIntent.OpenPatternWizard -> handleOpen(intent)
             KLogViewerIntent.ClosePatternWizard,
-            KLogViewerIntent.SkipPatternWizard,
-            KLogViewerIntent.ApplyPatternDraft -> handleClose()
+            KLogViewerIntent.SkipPatternWizard -> handleClose()
+            KLogViewerIntent.ApplyPatternDraft -> handleApply()
+            KLogViewerIntent.ResamplePatternLines -> handleResample()
             is KLogViewerIntent.AddPatternToken -> handleAddToken(intent)
             is KLogViewerIntent.RemovePatternSegment -> handleRemoveSegment(intent)
             is KLogViewerIntent.ReorderPatternSegment -> handleReorderSegment(intent)
@@ -41,12 +59,45 @@ class PatternWizardIntentHandler(
             val w = s.patternWizardState
             if (w.canUndo) s.copy(patternWizardState = w.copy(draftHistory = w.draftHistory.undo())) else s
         }
+        schedulePreviewRecompute(debounceMs = 0L)
     }
 
     private fun handleRedo() {
         state.update { s ->
             val w = s.patternWizardState
             if (w.canRedo) s.copy(patternWizardState = w.copy(draftHistory = w.draftHistory.redo())) else s
+        }
+        schedulePreviewRecompute(debounceMs = 0L)
+    }
+
+    private fun handleApply() {
+        val wizard = state.value.patternWizardState
+        val targetWindowId = wizard.targetWindowId
+            ?: state.value.tabs.flatMap { it.windows }.firstOrNull()?.id
+        val draftToApply = wizard.currentDraft
+        handleClose()
+        if (targetWindowId != null) {
+            onApplyDraft?.invoke(targetWindowId, draftToApply)
+        }
+    }
+
+    private fun handleResample() {
+        val wizard = state.value.patternWizardState
+        val targetWindowId = wizard.targetWindowId
+            ?: state.value.tabs.flatMap { it.windows }.firstOrNull()?.id
+        if (targetWindowId != null && onResampleLines != null) {
+            val newSampleLines = onResampleLines.invoke(targetWindowId)
+            if (newSampleLines.isNotEmpty()) {
+                state.update {
+                    it.copy(
+                        patternWizardState = it.patternWizardState.copy(
+                            sampleLines = newSampleLines,
+                            selectedLineIndex = 0
+                        )
+                    )
+                }
+                schedulePreviewRecompute(debounceMs = 0L)
+            }
         }
     }
 
@@ -114,6 +165,7 @@ class PatternWizardIntentHandler(
                 )
             )
         }
+        schedulePreviewRecompute(debounceMs = 0L)
     }
 
     private fun handleClose() {
@@ -195,6 +247,7 @@ class PatternWizardIntentHandler(
                 )
             )
         }
+        schedulePreviewRecompute(debounceMs = 0L)
     }
 
     private inline fun mutateDraft(transform: (PatternDraft) -> PatternDraft) {
@@ -205,6 +258,45 @@ class PatternWizardIntentHandler(
                     draftHistory = wizard.draftHistory.push(transform(wizard.currentDraft))
                 )
             )
+        }
+        schedulePreviewRecompute(debounceMs = 150L)
+    }
+
+    fun schedulePreviewRecompute(debounceMs: Long = 150L) {
+        val currentGeneration = ++previewGeneration
+        val wizard = state.value.patternWizardState
+        val currentDraft = wizard.currentDraft
+        val sampleLines = wizard.sampleLines
+
+        state.update {
+            it.copy(patternWizardState = it.patternWizardState.copy(isComputingPreview = true))
+        }
+
+        previewJob?.cancel()
+        previewJob = scope.launch(computationDispatcher) {
+            if (debounceMs > 0) {
+                delay(debounceMs)
+            }
+            val result = patternPreviewService.computePreview(currentDraft, sampleLines)
+            if (currentGeneration == previewGeneration) {
+                state.update { currentState ->
+                    val currentWizard = currentState.patternWizardState
+                    if (currentWizard.isVisible) {
+                        currentState.copy(
+                            patternWizardState = currentWizard.copy(
+                                previewSpans = result.spansPerLine,
+                                previewRows = result.previewRows,
+                                previewColumns = result.columns,
+                                parseErrors = result.parseErrors,
+                                matchedLineCount = result.matchedLineCount,
+                                totalSampleLineCount = result.totalSampleLineCount,
+                                confidenceScore = result.confidenceScore,
+                                isComputingPreview = false
+                            )
+                        )
+                    } else currentState
+                }
+            }
         }
     }
 
@@ -220,111 +312,139 @@ class PatternWizardIntentHandler(
             PatternSegment.Delimiter(PatternDelimiter(value = " - ")),
             PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
         )
-        return PatternDraft(name = "Default Guess", segments = defaultSegments, originalFormatString = DEFAULT_FORMAT_PATTERN)
-    }
-
-    private fun parsePatternStringToDraft(input: String): PatternDraft {
-        val presetMap = mapOf(
-            "Logback / Log4J Standard" to "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger - %msg",
-            "Serilog Text Layout" to
-                "{Timestamp:yyyy-MM-dd HH:mm:ss.SSS} [{Level}] [{ThreadId}] {SourceContext} - {Message}",
-            "ISO8601 Simple" to "%d{yyyy-MM-ddTHH:mm:ss} %level %logger - %msg",
-            "Custom Draft" to "%d{yyyy-MM-dd HH:mm:ss} %level [%t] %logger - %msg"
+        return PatternDraft(
+            name = "Logback / Log4J Default",
+            segments = defaultSegments
         )
-
-        val formatString = presetMap[input] ?: input
-        val segments = parseFormatStringToSegments(formatString)
-        val draftName = when {
-            presetMap.containsKey(input) -> input
-            else -> if (input.startsWith("%") || input.contains("{")) "Imported Pattern" else "Custom Pattern"
-        }
-        return PatternDraft(name = draftName, originalFormatString = formatString, segments = segments)
     }
 
-    internal fun parseFormatStringToSegments(formatString: String): List<PatternSegment> {
+    private val presetMap = mapOf(
+        "Logback / Log4J Standard" to
+            "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger - %msg",
+        "Serilog Text Layout" to
+            "{Timestamp:yyyy-MM-dd HH:mm:ss.SSS} [{Level}] [{ThreadId}] {SourceContext} - {Message}",
+        "ISO8601 Simple" to
+            "%d{yyyy-MM-ddTHH:mm:ss} %level %logger - %msg",
+        "Custom Draft" to
+            "%d{yyyy-MM-dd HH:mm:ss} %level [%t] %logger - %msg"
+    )
+
+    private fun parsePatternStringToDraft(patternText: String): PatternDraft {
+        val trimmed = patternText.trim()
+        val formatStr = presetMap[trimmed] ?: trimmed
+        val segments = parseFormatStringToSegments(formatStr)
+        val name = when {
+            presetMap.containsKey(trimmed) -> trimmed
+            trimmed.startsWith("{") -> "Serilog Text Layout"
+            trimmed.startsWith("%") -> "Logback / Log4J Standard"
+            else -> "Custom Pattern"
+        }
+        return PatternDraft(
+            name = name,
+            originalFormatString = formatStr,
+            segments = segments
+        )
+    }
+
+    private fun parseFormatStringToSegments(formatStr: String): List<PatternSegment> {
+        if (formatStr.isBlank()) return defaultBestGuessDraft().segments
+        val parsed = when {
+            formatStr.contains("%") -> parseLogbackFormatString(formatStr)
+            formatStr.contains("{") -> parseSerilogFormatString(formatStr)
+            else -> defaultBestGuessDraft().segments
+        }
+        return parsed.ifEmpty { defaultBestGuessDraft().segments }
+    }
+
+    private fun parseLogbackFormatString(formatStr: String): List<PatternSegment> {
         val segments = mutableListOf<PatternSegment>()
-        var lastIdx = 0
-        for (match in FORMAT_SPECIFIER_REGEX.findAll(formatString)) {
-            val start = match.range.first
-            val end = match.range.last + 1
-            if (start > lastIdx) {
-                val delimText = formatString.substring(lastIdx, start)
-                if (delimText.isNotEmpty()) {
-                    segments.add(PatternSegment.Delimiter(PatternDelimiter(value = delimText)))
-                }
-            }
-            segments.add(PatternSegment.Token(mapMatchToToken(match)))
-            lastIdx = end
-        }
+        val regex = Regex(
+            """(%d(?:\{[^}]*})?|%t(?:hread)?|%-?\d*level|%-?\d*p|""" +
+                """%c(?:\{[^}]*})?|%logger(?:\{[^}]*})?|%m(?:sg)?|%n|%ex|%X\{[^}]+}|[^%]+)"""
+        )
+        val matches = regex.findAll(formatStr).map { it.value }.toList()
 
-        if (lastIdx < formatString.length) {
-            val delimText = formatString.substring(lastIdx)
-            if (delimText.isNotEmpty()) {
-                segments.add(PatternSegment.Delimiter(PatternDelimiter(value = delimText)))
+        matches.forEach { tokenStr ->
+            val segment = parseLogbackToken(tokenStr)
+            if (segment != null) {
+                segments.add(segment)
             }
         }
-
-        if (segments.isEmpty()) {
-            segments.add(PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE)))
-        }
-
         return segments
     }
 
-    private fun mapMatchToToken(match: MatchResult): PatternToken {
-        val fullMatch = match.value
+    private fun parseLogbackToken(tokenStr: String): PatternSegment? {
         return when {
-            isTimestampMatch(fullMatch) -> {
-                val pattern = match.groupValues.getOrNull(1)?.takeIf { it.isNotBlank() }
-                    ?: match.groupValues.getOrNull(2)?.takeIf { it.isNotBlank() }
-                    ?: "yyyy-MM-dd HH:mm:ss.SSS"
-                PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = pattern)
+            tokenStr.startsWith("%d") -> {
+                val dateFormat = Regex("""%d(?:\{([^}]*)})?""")
+                    .find(tokenStr)?.groupValues?.get(1) ?: "yyyy-MM-dd HH:mm:ss.SSS"
+                PatternSegment.Token(
+                    PatternToken(
+                        role = PatternTokenRole.TIMESTAMP,
+                        formatPattern = dateFormat.ifBlank { "yyyy-MM-dd HH:mm:ss.SSS" }
+                    )
+                )
             }
-            isThreadMatch(fullMatch) -> PatternToken(role = PatternTokenRole.THREAD)
-            isLevelMatch(fullMatch) -> PatternToken(role = PatternTokenRole.LEVEL)
-            isLoggerMatch(fullMatch) -> PatternToken(role = PatternTokenRole.LOGGER)
-            isMessageMatch(fullMatch) -> PatternToken(role = PatternTokenRole.MESSAGE)
-            isExceptionMatch(fullMatch) -> PatternToken(role = PatternTokenRole.EXCEPTION)
-            fullMatch.startsWith("{") && fullMatch.endsWith("}") -> {
-                val propName = match.groupValues.getOrNull(3)?.takeIf { it.isNotBlank() } ?: "customProp"
-                PatternToken(role = PatternTokenRole.CUSTOM_PROPERTY, customPropertyName = propName)
+            tokenStr.startsWith("%t") ->
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.THREAD))
+            tokenStr.contains("level") || tokenStr.contains("p") ->
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL))
+            tokenStr.startsWith("%c") || tokenStr.startsWith("%logger") ->
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.LOGGER))
+            tokenStr.startsWith("%m") ->
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
+            tokenStr.startsWith("%ex") ->
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.EXCEPTION))
+            tokenStr.startsWith("%X{") -> {
+                val propName = Regex("""%X\{([^}]+)}""").find(tokenStr)?.groupValues?.get(1) ?: "prop"
+                PatternSegment.Token(
+                    PatternToken(
+                        role = PatternTokenRole.CUSTOM_PROPERTY,
+                        customPropertyName = propName
+                    )
+                )
             }
-            else -> PatternToken(role = PatternTokenRole.MESSAGE)
+            tokenStr == "%n" -> null
+            else -> PatternSegment.Delimiter(PatternDelimiter(value = tokenStr))
         }
     }
 
-    private fun isTimestampMatch(match: String) =
-        match.startsWith("%d") || match.contains("Timestamp") || match.contains("@t")
+    private fun parseSerilogFormatString(formatStr: String): List<PatternSegment> {
+        val segments = mutableListOf<PatternSegment>()
+        val regex = Regex("""(\{[^}]+}|[^{]+)""")
+        val matches = regex.findAll(formatStr).map { it.value }.toList()
 
-    private fun isThreadMatch(match: String) =
-        match.contains("thread") || match.contains("%t") || match.contains("Thread")
+        matches.forEach { tokenStr ->
+            segments.add(parseSerilogToken(tokenStr))
+        }
+        return segments
+    }
 
-    private fun isLevelMatch(match: String) =
-        match.contains("level") || match.contains("%le") || match.contains("%p") ||
-            match.contains("Level") || match.contains("@l")
+    private fun parseSerilogToken(tokenStr: String): PatternSegment {
+        if (!tokenStr.startsWith("{") || !tokenStr.endsWith("}")) {
+            return PatternSegment.Delimiter(PatternDelimiter(value = tokenStr))
+        }
 
-    private fun isLoggerMatch(match: String) =
-        match.contains("logger") || match.contains("%c") ||
-            match.contains("SourceContext") || match.contains("Logger")
+        val inner = tokenStr.removeSurrounding("{", "}")
+        val namePart = inner.split(":").first()
+        return when (namePart.lowercase()) {
+            "timestamp", "t" -> {
+                val format = if (inner.contains(":")) inner.substringAfter(":") else "yyyy-MM-dd HH:mm:ss.SSS"
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = format))
+            }
+            "level", "l" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL))
+            "threadid", "thread" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.THREAD))
+            "sourcecontext", "logger" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.LOGGER))
+            "message", "m", "msg" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
+            "exception" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.EXCEPTION))
+            else -> PatternSegment.Token(
+                PatternToken(role = PatternTokenRole.CUSTOM_PROPERTY, customPropertyName = namePart)
+            )
+        }
+    }
 
-    private fun isMessageMatch(match: String) =
-        match.contains("msg") || match.contains("%m") || match.contains("Message") || match.contains("@m")
-
-    private fun isExceptionMatch(match: String) =
-        match.contains("ex") || match.contains("throwable") || match.contains("Exception") || match.contains("@x")
-
-    companion object {
+    private companion object {
         private const val CONFIDENCE_HIGH = 0.95f
-        private const val CONFIDENCE_LOW = 0.5f
-        private const val DEFAULT_FORMAT_PATTERN = "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger - %msg"
-
-        private val FORMAT_SPECIFIER_REGEX = Regex(
-            """%d(?:\{([^}]+)\})?|%-?\d*(?:t|thread)|%-?\d*(?:level|le|p)|""" +
-                """%-?\d*(?:c|logger)(?:\{[^}]*\})?|%-?\d*(?:m|msg|message)|""" +
-                """%-?\d*(?:ex|exception|throwable)|\{(?:Timestamp|@t)(?::([^}]+))?\}|""" +
-                """\{(?:Level|@l)(?::[^}]*)?\}|\{(?:ThreadId|ThreadName)(?::[^}]*)?\}|""" +
-                """\{(?:SourceContext|Logger)(?::[^}]*)?\}|\{(?:Message|@m|@mt)(?::[^}]*)?\}|""" +
-                """\{(?:Exception|@x)(?::[^}]*)?\}|\{([A-Za-z0-9_]+)(?::[^}]*)?\}"""
-        )
+        private const val CONFIDENCE_LOW = 0.6f
     }
 }

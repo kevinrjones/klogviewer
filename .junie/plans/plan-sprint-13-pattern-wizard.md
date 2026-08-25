@@ -203,3 +203,18 @@ Connect heuristic detection and UI state in `WorkspaceLogLoader` / `LogLoadingCo
 
 ### ✓ Step 9: Testing, verification, task checkbox updates, and HITL summary (Task 13.5.17)
 Run tests and check `./gradlew check`, verify UI with `./gradlew :app:run`, update task checkboxes in `docs/tasks/TASKS-SPRINT-13-PATTERN-WIZARD.md`, and summarize deliverables for HITL review.
+
+### ✓ Step 10: Implement PatternPreviewService and Draft Compilation (Tasks 13.6.1, 13.6.5)
+Introduce an injectable `PatternPreviewService` in `:core` / `:ui` and draft-to-`LogTemplate`/`TemplateLogParser` compiler to generate sample spans, preview table rows, and errors from a draft pattern.
+
+### ✓ Step 11: Debounced preview recompute & UI integration in MVI and components (Task 13.6.2)
+Wire draft mutations to schedule debounced (~150 ms) off-UI-thread preview calculations with stale-result discard, updating the state-driven preview in `PatternWizardDialog`.
+
+### ✓ Step 12: Resample control & sample line formatting (Task 13.6.3)
+Add head/middle/tail line sampling with multiline aggregation and soft-wrap expand toggles to `SampleLineInspector`.
+
+### ✓ Step 13: Apply & Load flow in LogLoadingCoordinator (Task 13.6.4)
+Wire `ApplyPatternDraft` in `LogLoadingCoordinator` to compile the approved draft and reload the log window through the existing pipeline.
+
+### ✓ Step 14: Testing, verification, task checkbox updates, and HITL review (Tasks 13.6.5, 13.6.6)
+Add unit/integration tests for preview, alignment, debounce, resample, apply; run `./gradlew check`, verify with `./gradlew :app:run`, update task checkboxes, and provide HITL summary.

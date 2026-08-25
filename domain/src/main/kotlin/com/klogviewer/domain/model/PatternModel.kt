@@ -122,6 +122,16 @@ data class PreviewTableRow(
     val fields: Map<String, String>
 )
 
+data class PatternPreviewResult(
+    val spansPerLine: List<List<SampleLineSpan>> = emptyList(),
+    val previewRows: List<PreviewTableRow> = emptyList(),
+    val columns: List<String> = emptyList(),
+    val parseErrors: List<PatternParseError> = emptyList(),
+    val matchedLineCount: Int = 0,
+    val totalSampleLineCount: Int = 0,
+    val confidenceScore: Float = 1.0f
+)
+
 data class PatternWizardState(
     val isVisible: Boolean = false,
     val isBannerMode: Boolean = false,
@@ -141,9 +151,13 @@ data class PatternWizardState(
     val totalSampleLineCount: Int = 0,
     val parseErrors: List<PatternParseError> = emptyList(),
     val isDiagnosticsDrawerOpen: Boolean = false,
-    val windowWidth: Int = 920,
-    val windowHeight: Int = 680,
-    val splitterRatio: Float = 0.45f
+    val windowWidth: Int = 1840,
+    val windowHeight: Int = 780,
+    val splitterRatio: Float = 0.45f,
+    val previewSpans: List<List<SampleLineSpan>> = emptyList(),
+    val previewRows: List<PreviewTableRow> = emptyList(),
+    val previewColumns: List<String> = emptyList(),
+    val isComputingPreview: Boolean = false
 ) {
     val currentDraft: PatternDraft get() = draftHistory.current
     val canUndo: Boolean get() = draftHistory.canUndo

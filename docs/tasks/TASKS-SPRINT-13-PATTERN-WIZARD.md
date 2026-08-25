@@ -59,12 +59,13 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
   spans, hover sync, undo/redo, keyboard model, live table preview, and reopenability against real sample files before proceeding to deeper parser integration.
 
 ### 13.6. Live Preview and Apply/Reload Flow
-- [ ] 13.6.1. Introduce a sample-based preview state/service boundary that updates as the draft changes without reloading the full table.
-- [ ] 13.6.2. Wire preview refresh into the draft editor flow in `ui` so field mappings and unmatched fragments are visible immediately, with ~150 ms debounce, off-UI-thread parsing, stale-result discard, and a <250 ms visible-update budget.
-- [ ] 13.6.3. Add the `Resample` control drawing sample lines from head, middle, and tail of the file, with multiline entries grouped and long lines soft-wrapped with expand toggles.
-- [ ] 13.6.4. Add `Apply` handling in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogLoadingCoordinator.kt` so approved drafts compile and reload through the existing window-loading path.
-- [ ] 13.6.5. Ensure preview results and applied parser results stay aligned for the same sample lines.
-- [ ] 13.6.6. Human in the Loop review: validate draft-preview responsiveness, resampling, and the apply/reload experience against real sample logs.
+- [x] 13.6.1. Introduce a sample-based preview state/service boundary that updates as the draft changes without reloading the full table.
+- [x] 13.6.2. Wire preview refresh into the draft editor flow in `ui` so field mappings and unmatched fragments are visible immediately, with ~150 ms debounce, off-UI-thread parsing, stale-result discard, and a <250 ms visible-update budget.
+- [x] 13.6.3. Add the `Resample` control drawing sample lines from head, middle, and tail of the file, with multiline entries grouped and long lines soft-wrapped with expand toggles.
+- [x] 13.6.4. Add `Apply` handling in `ui/src/main/kotlin/com/klogviewer/ui/viewmodel/LogLoadingCoordinator.kt` so approved drafts compile and reload through the existing window-loading path.
+- [x] 13.6.5. Ensure preview results and applied parser results stay aligned for the same sample lines.
+- [x] 13.6.6. Human in the Loop review: validate draft-preview responsiveness, resampling, and the apply/reload 
+  experience against real sample logs.
 
 ### 13.7. Canonical Pattern Model and Directory-Scoped Persistence
 - [ ] 13.7.1. Extend `domain/src/main/kotlin/com/klogviewer/domain/model/UserPreferences.kt` with directory-scoped mapping persistence types for canonical pattern definitions.

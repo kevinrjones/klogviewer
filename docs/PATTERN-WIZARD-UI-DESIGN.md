@@ -9,20 +9,25 @@ The goal is to provide a professional-grade, interactive editing surface when op
 
 ## 2. Visual Anatomy & Zone Layout
 
-The Pattern Wizard is presented as an interactive modal dialog (or docked configuration panel) structured into five synchronized zones:
+The Pattern Wizard is presented as a wide interactive modal dialog structured into a two-column, side-by-side layout across five synchronized zones:
 
 ```mermaid
-flowchart TD
-    Header[Zone 1: Header & Format Importer Bar]
-    TokenBar[Zone 2: Interactive Token Bar & Field Pills]
-    SampleInspector[Zone 3: Color-Coded Sample Line Inspector]
-    TablePreview[Zone 4: Live Table Grid Preview]
-    ActionBar[Zone 5: Match Health & Action Bar]
+flowchart LR
+    subgraph LeftPane[Left Pane: Editor & Inspection]
+        Header[Zone 1: Header & Format Importer Bar]
+        TokenBar[Zone 2: Interactive Token Bar & Field Pills]
+        SampleInspector[Zone 3: Color-Coded Sample Line Inspector]
+        MatchSummary[Zone 5: Match Health & Summary]
+        Header --> TokenBar
+        TokenBar --> SampleInspector
+        SampleInspector --> MatchSummary
+    end
 
-    Header --> TokenBar
-    TokenBar --> SampleInspector
-    SampleInspector --> TablePreview
-    TablePreview --> ActionBar
+    subgraph RightPane[Right Pane: Live Output]
+        TablePreview[Zone 4: Live Table Grid Preview]
+    end
+
+    LeftPane --> RightPane
 ```
 
 ### Zone 1: Header & Format Importer Bar

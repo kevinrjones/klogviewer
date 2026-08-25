@@ -190,7 +190,13 @@ class KLogViewerViewModel(
         }
     )
 
-    private val patternWizardIntentHandler = PatternWizardIntentHandler(_state)
+    private val patternWizardIntentHandler = PatternWizardIntentHandler(
+        state = _state,
+        scope = scope,
+        computationDispatcher = Dispatchers.Default,
+        onResampleLines = { windowId -> logLoadingCoordinator.resampleLinesForWindow(windowId) },
+        onApplyDraft = { windowId, draft -> logLoadingCoordinator.applyPatternDraft(windowId, draft) }
+    )
     
     fun clear() {
         savePreferences(currentState = _state.value, debounce = false)

@@ -186,4 +186,5 @@ sealed interface KLogViewerIntent {
     data object TogglePatternDiagnosticsDrawer : PatternWizardIntent
     data class UpdatePatternDialogBounds(val width: Int, val height: Int, val splitterRatio: Float) : PatternWizardIntent
     data object ExpandPatternBannerToFullWizard : PatternWizardIntent
+    data object ResamplePatternLines : PatternWizardIntent
 }

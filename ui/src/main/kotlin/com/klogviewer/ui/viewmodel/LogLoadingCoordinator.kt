@@ -52,6 +52,42 @@ class LogLoadingCoordinator(
         logJobs.remove(windowId)
     }
 
+    fun applyPatternDraft(windowId: String, draft: PatternDraft) {
+        val compiled = PatternDraftCompiler().compile(draft)
+        heuristicProbe.registry.register(compiled.template)
+
+        val window = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }
+        val paths = window?.sourceIds?.ifEmpty { listOfNotNull(window.filePath) } ?: listOfNotNull(window?.filePath)
+
+        state.update { currentState ->
+            currentState.updateWindow(windowId) { w ->
+                val probeResult = ProbeResult(
+                    TemplateLogParser(compiled.template),
+                    compiled.template.name,
+                    compiled.template.columns
+                )
+                w.copy(
+                    parserName = compiled.template.name,
+                    columns = mergeColumnsWithDiscovered(w.columns, listOf(probeResult))
+                )
+            }
+        }
+
+        if (paths.isNotEmpty()) {
+            loadFilesIntoWindow(windowId, paths, overrideParserName = compiled.template.name)
+        }
+    }
+
+    fun resampleLinesForWindow(windowId: String, limitPerSection: Int = 10): List<String> {
+        val window = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }
+        val path = window?.filePath ?: window?.sourceIds?.firstOrNull() ?: return emptyList()
+        return if (!path.startsWith("sftp://") && !path.startsWith("s3://") && localFileSystem.exists(path)) {
+            workspaceLogLoader.readResampledLines(path, limitPerSection)
+        } else {
+            workspaceLogLoader.readSampleLines(path, limit = limitPerSection * 3)
+        }
+    }
+
     fun loadFilesIntoWindow(windowId: String, paths: List<String>, overrideParserName: String? = null) {
         val filteredPaths = workspaceLogLoader.filterRedundantPaths(paths)
         if (handleSingleRemotePath(windowId, filteredPaths, overrideParserName)) return

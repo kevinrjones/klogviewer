@@ -559,6 +559,9 @@ private fun DialogHandler(
             },
             onCloseSelectionPopup = {
                 viewModel.handleIntent(KLogViewerIntent.ClosePatternSelectionPopup)
+            },
+            onResample = {
+                viewModel.handleIntent(KLogViewerIntent.ResamplePatternLines)
             }
         )
     }

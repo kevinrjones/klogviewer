@@ -36,6 +36,7 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.klogviewer.domain.model.PatternDraft
 import com.klogviewer.domain.model.PatternSegment
 import com.klogviewer.domain.model.PatternToken
@@ -72,16 +73,20 @@ fun PatternWizardDialog(
     onExpandBannerToFullWizard: () -> Unit,
     onClosePopover: () -> Unit,
     onCloseSelectionPopup: () -> Unit,
+    onResample: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (!state.isVisible) return
 
-    Dialog(onDismissRequest = onCancel) {
+    Dialog(
+        onDismissRequest = onCancel,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Surface(
             shape = MaterialTheme.shapes.large,
             tonalElevation = 8.dp,
             modifier = modifier
-                .width(state.windowWidth.dp)
+                .width(if (state.isBannerMode) 800.dp else state.windowWidth.dp)
                 .height(if (state.isBannerMode) 130.dp else state.windowHeight.dp)
                 .onKeyEvent { keyEvent ->
                     if (keyEvent.type == KeyEventType.KeyDown) {
@@ -144,68 +149,96 @@ fun PatternWizardDialog(
                         }
                     }
 
-                    Column(
+                    // Two-Pane Content Area (Left: Controls & Sample Line Inspector, Right: Live Table Grid Preview)
+                    Row(
                         modifier = Modifier
                             .weight(1f)
-                            .verticalScroll(rememberScrollState()),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        // Zone 1: Header & Importer Bar
-                        PatternImporterBar(
-                            selectedPresetName = state.currentDraft.name,
-                            onPresetSelected = onPresetSelected,
-                            onImportPattern = onImportPattern,
-                            isDirectoryPersistenceEnabled = state.currentDraft.isDirectoryPersistenceEnabled,
-                            onDirectoryPersistenceToggled = onDirectoryPersistenceToggled
-                        )
+                        // Left Pane: Importer, Token Bar, Sample Line Inspector, Match Summary
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Zone 1: Header & Importer Bar
+                            PatternImporterBar(
+                                selectedPresetName = state.currentDraft.name,
+                                onPresetSelected = onPresetSelected,
+                                onImportPattern = onImportPattern,
+                                isDirectoryPersistenceEnabled = state.currentDraft.isDirectoryPersistenceEnabled,
+                                onDirectoryPersistenceToggled = onDirectoryPersistenceToggled
+                            )
 
-                        // Zone 2: Interactive Token Bar
-                        PatternTokenBar(
-                            segments = state.currentDraft.segments,
-                            hoveredSegmentId = state.hoveredSegmentId,
-                            focusedTokenId = state.focusedTokenId,
-                            isDarkMode = isDarkMode,
-                            onTokenClick = onTokenClick,
-                            onSegmentHovered = onSegmentHovered,
-                            onRemoveSegment = onRemoveSegment,
-                            onReorderSegment = onReorderSegment,
-                            onDelimiterUpdated = onDelimiterUpdated,
-                            onAddToken = onAddToken
-                        )
+                            // Zone 2: Interactive Token Bar
+                            PatternTokenBar(
+                                segments = state.currentDraft.segments,
+                                hoveredSegmentId = state.hoveredSegmentId,
+                                focusedTokenId = state.focusedTokenId,
+                                isDarkMode = isDarkMode,
+                                onTokenClick = onTokenClick,
+                                onSegmentHovered = onSegmentHovered,
+                                onRemoveSegment = onRemoveSegment,
+                                onReorderSegment = onReorderSegment,
+                                onDelimiterUpdated = onDelimiterUpdated,
+                                onAddToken = onAddToken
+                            )
 
-                        // Zone 3: Sample Line Inspector
-                        SampleLineInspector(
-                            sampleLines = state.sampleLines,
-                            selectedLineIndex = state.selectedLineIndex,
-                            getSpansForLine = { line -> mapDraftToSampleSpans(state.currentDraft, line) },
-                            parseErrors = state.parseErrors,
-                            hoveredSegmentId = state.hoveredSegmentId,
-                            isDarkMode = isDarkMode,
-                            onLineIndexChanged = onLineIndexChanged,
-                            onSegmentHovered = onSegmentHovered
-                        )
+                            // Zone 3: Sample Line Inspector
+                            SampleLineInspector(
+                                sampleLines = state.sampleLines,
+                                selectedLineIndex = state.selectedLineIndex,
+                                getSpansForLine = { line ->
+                                    val idx = state.sampleLines.indexOf(line)
+                                    if (idx in state.previewSpans.indices) state.previewSpans[idx] else emptyList()
+                                },
+                                parseErrors = state.parseErrors,
+                                hoveredSegmentId = state.hoveredSegmentId,
+                                isDarkMode = isDarkMode,
+                                onLineIndexChanged = onLineIndexChanged,
+                                onSegmentHovered = onSegmentHovered,
+                                onResample = onResample
+                            )
 
-                        // Zone 4: Live Table Grid Preview
-                        val previewCols = extractPreviewColumns(state.currentDraft)
-                        val previewRows = generatePreviewRows(state.currentDraft, state.sampleLines)
+                            // Zone 5: Match Health & Summary
+                            PatternMatchSummary(
+                                matchedCount = state.matchedLineCount,
+                                totalCount = state.totalSampleLineCount,
+                                confidenceScore = state.confidenceScore,
+                                parseErrors = state.parseErrors,
+                                isDiagnosticsDrawerOpen = state.isDiagnosticsDrawerOpen,
+                                onToggleDiagnosticsDrawer = onToggleDiagnosticsDrawer
+                            )
+                        }
 
-                        PatternTablePreview(
-                            columns = previewCols,
-                            rows = previewRows,
-                            hoveredColumnName = state.hoveredColumnName,
-                            isDarkMode = isDarkMode,
-                            onColumnHovered = onColumnHovered
-                        )
+                        // Right Pane: Live Table Grid Preview
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .verticalScroll(rememberScrollState()),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Zone 4: Live Table Grid Preview
+                            val previewCols = if (state.previewColumns.isNotEmpty()) {
+                                state.previewColumns
+                            } else {
+                                extractPreviewColumns(state.currentDraft)
+                            }
+                            val previewRows = state.previewRows
 
-                        // Zone 5: Match Health & Summary
-                        PatternMatchSummary(
-                            matchedCount = state.matchedLineCount,
-                            totalCount = state.totalSampleLineCount,
-                            confidenceScore = state.confidenceScore,
-                            parseErrors = state.parseErrors,
-                            isDiagnosticsDrawerOpen = state.isDiagnosticsDrawerOpen,
-                            onToggleDiagnosticsDrawer = onToggleDiagnosticsDrawer
-                        )
+                            PatternTablePreview(
+                                columns = previewCols,
+                                rows = previewRows,
+                                hoveredColumnName = state.hoveredColumnName,
+                                isDarkMode = isDarkMode,
+                                onColumnHovered = onColumnHovered,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
 
                     // Footer / Action Bar
@@ -332,68 +365,6 @@ private fun extractPreviewColumns(draft: PatternDraft): List<String> {
     return draft.segments
         .filterIsInstance<PatternSegment.Token>()
         .map { it.token.effectiveName }
-}
-
-private fun generatePreviewRows(draft: PatternDraft, sampleLines: List<String>): List<PreviewTableRow> {
-    val cols = extractPreviewColumns(draft)
-    return sampleLines.mapIndexed { idx, line ->
-        val map = mutableMapOf<String, String>()
-        val tokens = draft.segments.filterIsInstance<PatternSegment.Token>().map { it.token }
-        val parts = line.split(Regex("\\s+"))
-        tokens.forEachIndexed { tokenIdx, token ->
-            val valStr = parts.getOrNull(tokenIdx) ?: ""
-            map[token.effectiveName] = valStr
-        }
-        PreviewTableRow(idx, map)
-    }
-}
-
-private fun mapDraftToSampleSpans(draft: PatternDraft, sampleLine: String): List<SampleLineSpan> {
-    if (sampleLine.isEmpty()) return emptyList()
-    val spans = mutableListOf<SampleLineSpan>()
-    var currentOffset = 0
-
-    draft.segments.forEach { segment ->
-        when (segment) {
-            is PatternSegment.Delimiter -> {
-                val valStr = segment.delimiter.value
-                if (valStr.isNotEmpty()) {
-                    val foundIdx = sampleLine.indexOf(valStr, currentOffset)
-                    if (foundIdx != -1) {
-                        currentOffset = foundIdx + valStr.length
-                    }
-                }
-            }
-            is PatternSegment.Token -> {
-                val nextDelimiter = draft.segments
-                    .dropWhile { it != segment }
-                    .drop(1)
-                    .filterIsInstance<PatternSegment.Delimiter>()
-                    .firstOrNull { it.delimiter.value.isNotEmpty() }
-                    ?.delimiter?.value
-
-                val endIdx = if (nextDelimiter != null) {
-                    val idx = sampleLine.indexOf(nextDelimiter, currentOffset)
-                    if (idx != -1 && idx >= currentOffset) idx else sampleLine.length
-                } else {
-                    sampleLine.length
-                }
-
-                if (currentOffset < endIdx && currentOffset < sampleLine.length) {
-                    val validEnd = endIdx.coerceAtMost(sampleLine.length)
-                    spans.add(
-                        SampleLineSpan(
-                            range = currentOffset until validEnd,
-                            segmentId = segment.id,
-                            role = segment.token.role
-                        )
-                    )
-                    currentOffset = validEnd
-                }
-            }
-        }
-    }
-    return spans
 }
 
 @Preview

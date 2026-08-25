@@ -175,8 +175,55 @@ class WorkspaceLogLoader(
         }
     }
 
+    fun readResampledLines(path: String, limitPerSection: Int = 10): List<String> {
+        return try {
+            val totalLines = localFileSystem.readLines(path, RESAMPLE_LINE_SCAN_LIMIT)
+            if (totalLines.isEmpty()) return emptyList()
+            if (totalLines.size <= limitPerSection * RESAMPLE_SECTION_MULTIPLIER) {
+                aggregateMultilineLines(totalLines)
+            } else {
+                val head = totalLines.take(limitPerSection)
+                val midStart = (totalLines.size / 2 - limitPerSection / 2).coerceAtLeast(limitPerSection)
+                val mid = totalLines.drop(midStart).take(limitPerSection)
+                val tail = totalLines.takeLast(limitPerSection)
+                aggregateMultilineLines((head + mid + tail).distinct())
+            }
+        } catch (e: Exception) {
+            logger.warn { "Failed to resample lines from $path: ${e.message}" }
+            emptyList()
+        }
+    }
+
     private fun String.isRemoteUri(): Boolean =
         startsWith("sftp://") || startsWith("s3://")
+}
 
+private const val RESAMPLE_LINE_SCAN_LIMIT = 1000
+private const val RESAMPLE_SECTION_MULTIPLIER = 3
 
+private fun aggregateMultilineLines(lines: List<String>): List<String> {
+    if (lines.isEmpty()) return emptyList()
+    val aggregated = mutableListOf<String>()
+    var current: StringBuilder? = null
+
+    for (line in lines) {
+        val isContinuation = line.startsWith("\t") ||
+            line.startsWith("   ") ||
+            line.trimStart().startsWith("at ") ||
+            line.trimStart().startsWith("Caused by:") ||
+            line.trimStart().startsWith("...")
+
+        if (isContinuation && current != null) {
+            current.append("\n").append(line)
+        } else {
+            if (current != null) {
+                aggregated.add(current.toString())
+            }
+            current = StringBuilder(line)
+        }
+    }
+    if (current != null) {
+        aggregated.add(current.toString())
+    }
+    return aggregated
 }

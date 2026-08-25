@@ -18,9 +18,15 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,8 +62,11 @@ fun SampleLineInspector(
     isDarkMode: Boolean,
     onLineIndexChanged: (Int) -> Unit,
     onSegmentHovered: (String?) -> Unit,
+    onResample: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    var expandedIndices by remember { mutableStateOf(setOf<Int>()) }
+
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(8.dp),
@@ -74,10 +83,24 @@ fun SampleLineInspector(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 val shownCount = sampleLines.take(MAX_DISPLAY_SAMPLE_LINES).size
-                Text(
-                    text = "Sample Line Inspector ($shownCount of ${sampleLines.size} lines shown)",
-                    style = MaterialTheme.typography.titleSmall
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Sample Line Inspector ($shownCount of ${sampleLines.size} lines shown)",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    if (onResample != null) {
+                        OutlinedButton(
+                            onClick = onResample,
+                            modifier = Modifier.padding(start = 4.dp),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text("Resample (Head/Mid/Tail)", style = MaterialTheme.typography.labelSmall)
+                        }
+                    }
+                }
 
                 if (sampleLines.isNotEmpty()) {
                     Row(
@@ -127,92 +150,161 @@ fun SampleLineInspector(
                         val isSelected = index == selectedLineIndex
                         val parseError = parseErrors.find { it.lineIndex == index }
                         val spans = getSpansForLine(lineText)
+                        val isExpanded = index in expandedIndices
 
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = if (isSelected) {
-                                if (isDarkMode) DARK_SELECTED_BG else LIGHT_SELECTED_BG
-                            } else {
-                                if (isDarkMode) DARK_UNSELECTED_BG else LIGHT_UNSELECTED_BG
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onLineIndexChanged(index) }
-                                .border(
-                                    width = if (parseError != null || isSelected) 1.5.dp else 1.dp,
-                                    color = when {
-                                        parseError != null -> PARSE_ERROR_RED
-                                        isSelected -> MaterialTheme.colorScheme.primary
-                                        else -> Color.Transparent
-                                    },
-                                    shape = RoundedCornerShape(4.dp)
-                                )
-                        ) {
-                            Column(modifier = Modifier.padding(8.dp)) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    // Line Number Badge
-                                    Surface(
-                                        color = if (isSelected) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.surfaceVariant
-                                        },
-                                        shape = RoundedCornerShape(3.dp)
-                                    ) {
-                                        Text(
-                                            text = "#${index + 1}",
-                                            style = TextStyle(
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold,
-                                                color = if (isSelected) {
-                                                    MaterialTheme.colorScheme.onPrimary
-                                                } else {
-                                                    MaterialTheme.colorScheme.onSurfaceVariant
-                                                }
-                                            ),
-                                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-                                        )
-                                    }
-
-                                    // Monospace Highlighted Line Text
-                                    SelectionContainer(modifier = Modifier.weight(1f)) {
-                                        val annotatedString = buildAnnotatedSampleLine(
-                                            lineText = lineText,
-                                            spans = spans,
-                                            hoveredSegmentId = hoveredSegmentId,
-                                            isDarkMode = isDarkMode
-                                        )
-                                        Text(
-                                            text = annotatedString,
-                                            style = TextStyle(
-                                                fontFamily = FontFamily.Monospace,
-                                                fontSize = 12.sp,
-                                                lineHeight = 18.sp
-                                            )
-                                        )
-                                    }
-                                }
-
-                                // Inline Parse Error for this line
-                                if (parseError != null) {
-                                    Text(
-                                        text = "⚠️ Parse Error at offset ${parseError.errorOffset}: " +
-                                            parseError.message,
-                                        style = TextStyle(
-                                            color = PARSE_ERROR_RED,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.SemiBold
-                                        ),
-                                        modifier = Modifier.padding(top = 4.dp, start = 32.dp)
-                                    )
+                        sampleLineCard(
+                            index = index,
+                            lineText = lineText,
+                            isSelected = isSelected,
+                            isExpanded = isExpanded,
+                            parseError = parseError,
+                            spans = spans,
+                            hoveredSegmentId = hoveredSegmentId,
+                            isDarkMode = isDarkMode,
+                            onLineClicked = { onLineIndexChanged(index) },
+                            onToggleExpand = {
+                                expandedIndices = if (isExpanded) {
+                                    expandedIndices - index
+                                } else {
+                                    expandedIndices + index
                                 }
                             }
-                        }
+                        )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun sampleLineCard(
+    index: Int,
+    lineText: String,
+    isSelected: Boolean,
+    isExpanded: Boolean,
+    parseError: PatternParseError?,
+    spans: List<SampleLineSpan>,
+    hoveredSegmentId: String?,
+    isDarkMode: Boolean,
+    onLineClicked: () -> Unit,
+    onToggleExpand: () -> Unit
+) {
+    val bgColor = when {
+        isSelected && isDarkMode -> DARK_SELECTED_BG
+        isSelected -> LIGHT_SELECTED_BG
+        isDarkMode -> DARK_UNSELECTED_BG
+        else -> LIGHT_UNSELECTED_BG
+    }
+    val borderColor = when {
+        parseError != null -> PARSE_ERROR_RED
+        isSelected -> MaterialTheme.colorScheme.primary
+        else -> Color.Transparent
+    }
+
+    Surface(
+        shape = RoundedCornerShape(4.dp),
+        color = bgColor,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onLineClicked)
+            .border(1.dp, borderColor, RoundedCornerShape(4.dp))
+    ) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            sampleLineRow(
+                index = index,
+                lineText = lineText,
+                isSelected = isSelected,
+                isExpanded = isExpanded,
+                spans = spans,
+                hoveredSegmentId = hoveredSegmentId,
+                isDarkMode = isDarkMode,
+                onToggleExpand = onToggleExpand
+            )
+
+            if (parseError != null) {
+                Text(
+                    text = "⚠️ Parse Error at offset ${parseError.errorOffset}: ${parseError.message}",
+                    style = TextStyle(
+                        color = PARSE_ERROR_RED,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    modifier = Modifier.padding(top = 4.dp, start = 32.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun sampleLineRow(
+    index: Int,
+    lineText: String,
+    isSelected: Boolean,
+    isExpanded: Boolean,
+    spans: List<SampleLineSpan>,
+    hoveredSegmentId: String?,
+    isDarkMode: Boolean,
+    onToggleExpand: () -> Unit
+) {
+    val isLongOrMultiline = lineText.contains('\n') || lineText.length > 120
+
+    Row(
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Surface(
+            color = if (isSelected) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            },
+            shape = RoundedCornerShape(3.dp)
+        ) {
+            Text(
+                text = "#${index + 1}",
+                style = TextStyle(
+                    fontSize = 10.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = if (isSelected) {
+                        MaterialTheme.colorScheme.onPrimary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                ),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+            )
+        }
+
+        SelectionContainer(modifier = Modifier.weight(1f)) {
+            val annotatedString = buildAnnotatedSampleLine(
+                lineText = lineText,
+                spans = spans,
+                hoveredSegmentId = hoveredSegmentId,
+                isDarkMode = isDarkMode
+            )
+            Text(
+                text = annotatedString,
+                style = TextStyle(
+                    fontFamily = FontFamily.Monospace,
+                    fontSize = 12.sp,
+                    lineHeight = 18.sp
+                ),
+                maxLines = if (isExpanded) Int.MAX_VALUE else 3,
+                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+            )
+        }
+
+        if (isLongOrMultiline) {
+            TextButton(
+                onClick = onToggleExpand,
+                modifier = Modifier.padding(0.dp)
+            ) {
+                Text(
+                    text = if (isExpanded) "Collapse" else "Expand",
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
         }
     }
