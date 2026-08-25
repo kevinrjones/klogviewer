@@ -25,7 +25,8 @@ class PatternWizardIntentHandler(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val onResampleLines: ((String) -> List<String>)? = null,
-    private val onApplyDraft: ((windowId: String, draft: PatternDraft) -> Unit)? = null
+    private val onApplyDraft: ((windowId: String, draft: PatternDraft) -> Unit)? = null,
+    private val onSavePreferences: (() -> Unit)? = null
 ) {
     private var previewJob: Job? = null
     private var previewGeneration = 0L
@@ -50,8 +51,63 @@ class PatternWizardIntentHandler(
             KLogViewerIntent.ResetPatternToBestGuess -> handleResetToBestGuess()
             KLogViewerIntent.UndoPatternDraft -> handleUndo()
             KLogViewerIntent.RedoPatternDraft -> handleRedo()
+            is KLogViewerIntent.DeleteDirectoryPatternMapping -> handleDeleteDirectoryMapping(intent)
+            is KLogViewerIntent.OpenDirectoryMappingInWizard -> handleOpenDirectoryMappingInWizard(intent)
+            is KLogViewerIntent.SaveCurrentDraftAsDirectoryMapping -> handleSaveCurrentDraftAsDirectoryMapping(intent)
             else -> handleUiState(intent)
         }
+    }
+
+    private fun handleDeleteDirectoryMapping(intent: KLogViewerIntent.DeleteDirectoryPatternMapping) {
+        state.update { currentState ->
+            val updated = currentState.directoryPatternMappings - intent.directoryKey
+            currentState.copy(directoryPatternMappings = updated)
+        }
+        onSavePreferences?.invoke()
+    }
+
+    private fun handleOpenDirectoryMappingInWizard(intent: KLogViewerIntent.OpenDirectoryMappingInWizard) {
+        val mapping = state.value.directoryPatternMappings[intent.directoryKey] ?: return
+        val activeWindow = state.value.activeTab?.activeWindow
+        val targetWindowId = activeWindow?.id
+        val sampleLines = if (targetWindowId != null) {
+            onResampleLines?.invoke(targetWindowId) ?: emptyList()
+        } else emptyList()
+
+        state.update { s ->
+            val wizardState = s.patternWizardState.copy(
+                isVisible = true,
+                isBannerMode = false,
+                targetWindowId = targetWindowId,
+                sampleLines = sampleLines.ifEmpty { s.patternWizardState.sampleLines },
+                selectedLineIndex = 0,
+                draftHistory = com.klogviewer.domain.model.PatternDraftHistory(current = mapping.patternDraft),
+                initialBestGuess = mapping.patternDraft
+            )
+            s.copy(
+                pendingDialog = KLogViewerState.DialogType.PATTERN_WIZARD,
+                patternWizardState = wizardState
+            )
+        }
+        schedulePreviewRecompute(debounceMs = 0L)
+    }
+
+    private fun handleSaveCurrentDraftAsDirectoryMapping(intent: KLogViewerIntent.SaveCurrentDraftAsDirectoryMapping) {
+        val currentDraft = state.value.patternWizardState.currentDraft
+        val sourceType = com.klogviewer.domain.model.DirectoryIdentityNormalizer.extractSourceType(intent.directoryKey)
+        val mapping = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = intent.directoryKey,
+            patternDraft = currentDraft,
+            sourceType = sourceType,
+            createdAt = System.currentTimeMillis(),
+            lastUsedAt = System.currentTimeMillis()
+        )
+        state.update { currentState ->
+            currentState.copy(
+                directoryPatternMappings = currentState.directoryPatternMappings + (intent.directoryKey to mapping)
+            )
+        }
+        onSavePreferences?.invoke()
     }
 
     private fun handleUndo() {
@@ -148,20 +204,28 @@ class PatternWizardIntentHandler(
 
     private fun handleOpen(intent: KLogViewerIntent.OpenPatternWizard) {
         val initialDraft = intent.initialDraft ?: defaultBestGuessDraft()
+        val targetWindowId = intent.targetWindowId ?: state.value.activeTab?.activeWindow?.id
+        val sampleLines = if (intent.sampleLines.isNotEmpty()) {
+            intent.sampleLines
+        } else if (targetWindowId != null && onResampleLines != null) {
+            onResampleLines.invoke(targetWindowId)
+        } else {
+            emptyList()
+        }
         state.update { currentState ->
             currentState.copy(
                 pendingDialog = KLogViewerState.DialogType.PATTERN_WIZARD,
                 patternWizardState = currentState.patternWizardState.copy(
                     isVisible = true,
                     isBannerMode = intent.isBannerMode,
-                    targetWindowId = intent.targetWindowId,
-                    sampleLines = intent.sampleLines,
+                    targetWindowId = targetWindowId,
+                    sampleLines = sampleLines,
                     selectedLineIndex = 0,
                     initialBestGuess = initialDraft,
                     draftHistory = currentState.patternWizardState.draftHistory.reset(initialDraft),
-                    confidenceScore = if (intent.sampleLines.isNotEmpty()) CONFIDENCE_HIGH else CONFIDENCE_LOW,
-                    matchedLineCount = intent.sampleLines.size,
-                    totalSampleLineCount = intent.sampleLines.size
+                    confidenceScore = if (sampleLines.isNotEmpty()) CONFIDENCE_HIGH else CONFIDENCE_LOW,
+                    matchedLineCount = sampleLines.size,
+                    totalSampleLineCount = sampleLines.size
                 )
             )
         }
@@ -425,22 +489,53 @@ class PatternWizardIntentHandler(
             return PatternSegment.Delimiter(PatternDelimiter(value = tokenStr))
         }
 
-        val inner = tokenStr.removeSurrounding("{", "}")
-        val namePart = inner.split(":").first()
-        return when (namePart.lowercase()) {
-            "timestamp", "t" -> {
-                val format = if (inner.contains(":")) inner.substringAfter(":") else "yyyy-MM-dd HH:mm:ss.SSS"
-                PatternSegment.Token(PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = format))
-            }
-            "level", "l" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL))
-            "threadid", "thread" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.THREAD))
-            "sourcecontext", "logger" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.LOGGER))
-            "message", "m", "msg" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
-            "exception" -> PatternSegment.Token(PatternToken(role = PatternTokenRole.EXCEPTION))
-            else -> PatternSegment.Token(
-                PatternToken(role = PatternTokenRole.CUSTOM_PROPERTY, customPropertyName = namePart)
-            )
+        val inner = tokenStr.removeSurrounding("{", "}").trim()
+        val namePart = if (inner.contains(":")) inner.substringBefore(":").trim() else inner
+        val formatPart = if (inner.contains(":")) inner.substringAfter(":").trim() else null
+
+        return if (namePart.equals("newline", ignoreCase = true)) {
+            PatternSegment.Delimiter(PatternDelimiter(value = "\n"))
+        } else {
+            PatternSegment.Token(resolveSerilogToken(inner, namePart, formatPart))
         }
+    }
+
+    private fun resolveSerilogToken(inner: String, namePart: String, formatPart: String?): PatternToken {
+        val lowerName = namePart.lowercase()
+        return when {
+            lowerName in setOf("timestamp", "t", "time", "date", "datetime") -> {
+                val format = formatPart?.ifBlank { "yyyy-MM-dd HH:mm:ss.SSS" } ?: "yyyy-MM-dd HH:mm:ss.SSS"
+                PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = format)
+            }
+            isDateFormat(inner) -> {
+                PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = inner)
+            }
+            lowerName.startsWith("level") || lowerName == "l" -> {
+                PatternToken(role = PatternTokenRole.LEVEL)
+            }
+            lowerName in setOf("threadid", "thread") -> {
+                PatternToken(role = PatternTokenRole.THREAD)
+            }
+            lowerName in setOf("sourcecontext", "logger", "source", "context") -> {
+                PatternToken(role = PatternTokenRole.LOGGER)
+            }
+            lowerName.startsWith("message") || lowerName in setOf("m", "msg") -> {
+                PatternToken(role = PatternTokenRole.MESSAGE)
+            }
+            lowerName.startsWith("exception") || lowerName in setOf("ex") -> {
+                PatternToken(role = PatternTokenRole.EXCEPTION)
+            }
+            else -> {
+                PatternToken(role = PatternTokenRole.CUSTOM_PROPERTY, customPropertyName = namePart)
+            }
+        }
+    }
+
+    private fun isDateFormat(text: String): Boolean {
+        val t = text.lowercase()
+        return t.contains("yyyy") || t.contains("hh:mm") || t.contains("mm:ss") ||
+            (t.contains("dd") && (t.contains("mm") || t.contains("yy"))) ||
+            t.contains("iso8601")
     }
 
     private companion object {

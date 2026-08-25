@@ -68,13 +68,13 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
   experience against real sample logs.
 
 ### 13.7. Canonical Pattern Model and Directory-Scoped Persistence
-- [ ] 13.7.1. Extend `domain/src/main/kotlin/com/klogviewer/domain/model/UserPreferences.kt` with directory-scoped mapping persistence types for canonical pattern definitions.
-- [ ] 13.7.2. Define the canonical pattern segment/token model in `:domain`, including imported-origin metadata and preview-only structured placeholder annotations.
-- [ ] 13.7.3. Implement persistence support in `core/src/main/kotlin/com/klogviewer/core/repository/JsonPreferencesRepository.kt`.
-- [ ] 13.7.4. Define and reuse normalized directory identity rules for local, SFTP, and S3 sources across lookup and save flows.
-- [ ] 13.7.5. Ensure saved mappings are reused automatically when later files open from the same directory identity.
-- [ ] 13.7.6. Detect when a saved mapping falls below a match threshold on a newly opened file and reopen the wizard preloaded with the saved mapping plus diagnostics instead of silently mis-parsing.
-- [ ] 13.7.7. Add a lightweight saved-mapping management surface listing directory key, source type, pattern summary, and last-used time with delete and open-in-wizard actions.
+- [x] 13.7.1. Extend `domain/src/main/kotlin/com/klogviewer/domain/model/UserPreferences.kt` with directory-scoped mapping persistence types for canonical pattern definitions.
+- [x] 13.7.2. Define the canonical pattern segment/token model in `:domain`, including imported-origin metadata and preview-only structured placeholder annotations.
+- [x] 13.7.3. Implement persistence support in `core/src/main/kotlin/com/klogviewer/core/repository/JsonPreferencesRepository.kt`.
+- [x] 13.7.4. Define and reuse normalized directory identity rules for local, SFTP, and S3 sources across lookup and save flows.
+- [x] 13.7.5. Ensure saved mappings are reused automatically when later files open from the same directory identity.
+- [x] 13.7.6. Detect when a saved mapping falls below a match threshold on a newly opened file and reopen the wizard preloaded with the saved mapping plus diagnostics instead of silently mis-parsing.
+- [x] 13.7.7. Add a lightweight saved-mapping management surface listing directory key, source type, pattern summary, and last-used time with delete and open-in-wizard actions.
 - [ ] 13.7.8. Human in the Loop review: validate the saved-mapping behavior, mismatch recovery, management surface, and confirm the directory scope feels correct across source types.
 
 ### 13.8. Importers, Heuristic Drafting, and Runtime Compilation

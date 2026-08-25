@@ -21,6 +21,7 @@ fun StatusBar(
     availableParsers: List<String> = emptyList(),
     onParserSelect: (String) -> Unit = {},
     onReopenPatternWizard: () -> Unit = {},
+    onManageDirectoryMappings: () -> Unit = {},
     isMissing: Boolean = false,
     isConnected: Boolean = true,
     modifier: Modifier = Modifier
@@ -83,6 +84,12 @@ fun StatusBar(
                                 showParserMenu = false
                             }) {
                                 Text("Edit Pattern Mapping...", style = MaterialTheme.typography.caption)
+                            }
+                            DropdownMenuItem(onClick = {
+                                onManageDirectoryMappings()
+                                showParserMenu = false
+                            }) {
+                                Text("Manage Directory Mappings...", style = MaterialTheme.typography.caption)
                             }
                             Divider()
                             availableParsers.forEach { name ->

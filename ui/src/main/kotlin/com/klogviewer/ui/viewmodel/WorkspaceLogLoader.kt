@@ -5,6 +5,7 @@ import arrow.core.left
 import arrow.core.right
 import com.klogviewer.core.parser.*
 import com.klogviewer.core.source.DirectoryLogSource
+import com.klogviewer.core.source.DirectoryScanner
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LocalFileSystem
 import com.klogviewer.domain.repository.LogSource
@@ -67,14 +68,38 @@ class WorkspaceLogLoader(
 
     fun performHeuristicDetection(paths: List<String>, overrideParserName: String?): List<ProbeResult?> {
         return paths.map { path ->
-            if (path.isRemoteUri() || (localFileSystem.exists(path) && localFileSystem.isDirectory(path))) {
+            if (path.isRemoteUri()) {
                 null
             } else {
                 val sampleLines = readSampleLines(path)
-                if (overrideParserName != null) {
+                if (sampleLines.isEmpty()) {
+                    null
+                } else if (overrideParserName != null) {
                     getParserResultByName(overrideParserName, sampleLines)
                 } else {
-                    heuristicProbe.detect(sampleLines)
+                    val isDir = localFileSystem.exists(path) && localFileSystem.isDirectory(path)
+                    val directoryKey = DirectoryIdentityNormalizer.normalize(path, isDirectory = isDir)
+                    val savedMapping = state.value.directoryPatternMappings[directoryKey]
+                    val detected = heuristicProbe.detect(sampleLines)
+
+                    if (savedMapping != null && detected.parser !is JsonLogParser) {
+                        val previewService = DefaultPatternPreviewService()
+                        val previewResult = previewService.computePreview(savedMapping.patternDraft, sampleLines)
+                        if (previewResult.confidenceScore >= MATCH_CONFIDENCE_THRESHOLD) {
+                            val compiler = PatternDraftCompiler()
+                            val compiled = compiler.compile(savedMapping.patternDraft)
+                            heuristicProbe.registry.register(compiled.template)
+                            ProbeResult(
+                                parser = TemplateLogParser(compiled.template),
+                                parserName = compiled.template.name,
+                                columns = compiled.template.columns
+                            )
+                        } else {
+                            detected
+                        }
+                    } else {
+                        detected
+                    }
                 }
             }
         }
@@ -85,7 +110,10 @@ class WorkspaceLogLoader(
             val flow = when {
                 path.startsWith("sftp://") -> createSftpLogFlow(path)
                 path.startsWith("s3://") -> createS3LogFlow(path)
-                localFileSystem.isDirectory(path) -> DirectoryLogSource(logSource, heuristicProbe).observeLogs(LogFilePath(path))
+                localFileSystem.isDirectory(path) -> DirectoryLogSource(logSource, heuristicProbe).observeLogs(
+                    LogFilePath(path),
+                    results.getOrNull(index)?.parser
+                )
                 else -> logSource.observeLogs(LogFilePath(path), results[index]?.parser)
             }
             flow.map { result ->
@@ -168,7 +196,8 @@ class WorkspaceLogLoader(
 
     fun readSampleLines(path: String, limit: Int = 50): List<String> {
         return try {
-            localFileSystem.readLines(path, limit)
+            val targetPath = resolveSampleFile(localFileSystem, path) ?: return emptyList()
+            localFileSystem.readLines(targetPath, limit)
         } catch (e: Exception) {
             logger.warn { "Failed to read sample lines from $path: ${e.message}" }
             emptyList()
@@ -177,16 +206,12 @@ class WorkspaceLogLoader(
 
     fun readResampledLines(path: String, limitPerSection: Int = 10): List<String> {
         return try {
-            val totalLines = localFileSystem.readLines(path, RESAMPLE_LINE_SCAN_LIMIT)
-            if (totalLines.isEmpty()) return emptyList()
-            if (totalLines.size <= limitPerSection * RESAMPLE_SECTION_MULTIPLIER) {
-                aggregateMultilineLines(totalLines)
+            val targetPath = resolveSampleFile(localFileSystem, path)
+            if (targetPath == null) {
+                emptyList()
             } else {
-                val head = totalLines.take(limitPerSection)
-                val midStart = (totalLines.size / 2 - limitPerSection / 2).coerceAtLeast(limitPerSection)
-                val mid = totalLines.drop(midStart).take(limitPerSection)
-                val tail = totalLines.takeLast(limitPerSection)
-                aggregateMultilineLines((head + mid + tail).distinct())
+                val totalLines = localFileSystem.readLines(targetPath, RESAMPLE_LINE_SCAN_LIMIT)
+                sampleResampledSections(totalLines, limitPerSection)
             }
         } catch (e: Exception) {
             logger.warn { "Failed to resample lines from $path: ${e.message}" }
@@ -200,6 +225,32 @@ class WorkspaceLogLoader(
 
 private const val RESAMPLE_LINE_SCAN_LIMIT = 1000
 private const val RESAMPLE_SECTION_MULTIPLIER = 3
+private const val MATCH_CONFIDENCE_THRESHOLD = 0.80f
+
+private fun resolveSampleFile(localFileSystem: LocalFileSystem, path: String): String? {
+    if (!localFileSystem.exists(path)) return null
+    return if (!localFileSystem.isDirectory(path)) {
+        path
+    } else {
+        val files = localFileSystem.listFiles(path, listOf("*.log", "*.txt")).ifEmpty {
+            localFileSystem.listFiles(path, listOf("*"))
+        }.filter { !localFileSystem.isDirectory(it) }
+        files.firstOrNull()
+    }
+}
+
+private fun sampleResampledSections(totalLines: List<String>, limitPerSection: Int): List<String> {
+    if (totalLines.isEmpty()) return emptyList()
+    return if (totalLines.size <= limitPerSection * RESAMPLE_SECTION_MULTIPLIER) {
+        aggregateMultilineLines(totalLines)
+    } else {
+        val head = totalLines.take(limitPerSection)
+        val midStart = (totalLines.size / 2 - limitPerSection / 2).coerceAtLeast(limitPerSection)
+        val mid = totalLines.drop(midStart).take(limitPerSection)
+        val tail = totalLines.takeLast(limitPerSection)
+        aggregateMultilineLines((head + mid + tail).distinct())
+    }
+}
 
 private fun aggregateMultilineLines(lines: List<String>): List<String> {
     if (lines.isEmpty()) return emptyList()

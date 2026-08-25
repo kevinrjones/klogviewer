@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.klogviewer.domain.model.LogLevel
 import com.klogviewer.domain.model.SftpConfig
+import com.klogviewer.ui.components.pattern.DirectoryMappingsDialog
 import com.klogviewer.ui.components.pattern.PatternWizardDialog
 import com.klogviewer.ui.mvi.*
 import com.klogviewer.ui.theme.KLogViewerTheme
@@ -562,7 +563,24 @@ private fun DialogHandler(
             },
             onResample = {
                 viewModel.handleIntent(KLogViewerIntent.ResamplePatternLines)
+            },
+            onManageMappings = {
+                viewModel.handleIntent(KLogViewerIntent.ShowDirectoryMappingsDialog)
             }
+        )
+    }
+
+    if (state.pendingDialog == KLogViewerState.DialogType.DIRECTORY_MAPPINGS) {
+        DirectoryMappingsDialog(
+            mappings = state.directoryPatternMappings,
+            isDarkMode = state.isDarkMode,
+            onOpenInWizard = { directoryKey ->
+                viewModel.handleIntent(KLogViewerIntent.OpenDirectoryMappingInWizard(directoryKey))
+            },
+            onDeleteMapping = { directoryKey ->
+                viewModel.handleIntent(KLogViewerIntent.DeleteDirectoryPatternMapping(directoryKey))
+            },
+            onDismiss = { viewModel.handleIntent(KLogViewerIntent.DismissDialog) }
         )
     }
 }
@@ -607,6 +625,13 @@ private fun LogTopBar(
             onToggleConnection = { viewModel.handleIntent(KLogViewerIntent.ToggleConnection) },
             onRefresh = { viewModel.handleIntent(KLogViewerIntent.RefreshConnection) },
             onSplitClick = { viewModel.handleIntent(KLogViewerIntent.SplitHorizontal) },
+            onEditPatternMapping = {
+                viewModel.handleIntent(
+                    KLogViewerIntent.OpenPatternWizard(
+                        targetWindowId = activeWindow?.id
+                    )
+                )
+            },
             timeFilterFrom = activeWindow?.timeFilterFrom ?: "",
             timeFilterTo = activeWindow?.timeFilterTo ?: "",
             timeFilterPreset = activeWindow?.timeFilterPreset,
@@ -762,13 +787,14 @@ private fun LogBottomBar(
             }
         },
         onReopenPatternWizard = {
-            val sampleLines = activeWindow?.logs?.take(20)?.map { it.content.value } ?: emptyList()
             viewModel.handleIntent(
                 KLogViewerIntent.OpenPatternWizard(
-                    sampleLines = sampleLines,
                     targetWindowId = activeWindow?.id
                 )
             )
+        },
+        onManageDirectoryMappings = {
+            viewModel.handleIntent(KLogViewerIntent.ShowDirectoryMappingsDialog)
         },
         isMissing = activeWindow?.let { it.missingSourceIds.contains(it.filePath) || it.error != null } ?: false,
         isConnected = activeWindow?.isConnected ?: true

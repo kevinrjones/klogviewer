@@ -153,6 +153,19 @@ fun main() {
                     Item("Toggle Dark Mode", onClick = { viewModel.handleIntent(KLogViewerIntent.ToggleTheme) })
                     Item("Toggle Sidebar", onClick = { viewModel.handleIntent(KLogViewerIntent.ToggleSidebar) })
                 }
+                Menu("Tools") {
+                    val activeWindow = state.activeTab?.activeWindow
+                    Item("Edit Pattern Mapping...", enabled = activeWindow != null, onClick = {
+                        viewModel.handleIntent(
+                            KLogViewerIntent.OpenPatternWizard(
+                                targetWindowId = activeWindow?.id
+                            )
+                        )
+                    })
+                    Item("Manage Directory Mappings...", onClick = {
+                        viewModel.handleIntent(KLogViewerIntent.ShowDirectoryMappingsDialog)
+                    })
+                }
             }
             KLogViewerScreen(viewModel)
         }

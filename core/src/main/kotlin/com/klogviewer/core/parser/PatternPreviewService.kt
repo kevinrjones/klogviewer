@@ -14,6 +14,7 @@ interface PatternPreviewService {
 class DefaultPatternPreviewService(
     private val compiler: PatternDraftCompiler = PatternDraftCompiler()
 ) : PatternPreviewService {
+    private val tracer: PatternDiagnosticTracer = PatternDiagnosticTracer(compiler)
 
     @Suppress("TooGenericExceptionCaught")
     override fun computePreview(draft: PatternDraft, sampleLines: List<String>): PatternPreviewResult {
@@ -23,7 +24,7 @@ class DefaultPatternPreviewService(
             else -> {
                 try {
                     val compiled = compiler.compile(draft)
-                    evaluateSampleLines(compiled, sampleLines)
+                    evaluateSampleLines(compiled, draft, sampleLines)
                 } catch (e: Exception) {
                     createCompilationErrorResult(sampleLines, e.message ?: "Invalid pattern")
                 }
@@ -64,6 +65,7 @@ class DefaultPatternPreviewService(
 
     private fun evaluateSampleLines(
         compiled: CompiledPattern,
+        draft: PatternDraft,
         sampleLines: List<String>
     ): PatternPreviewResult {
         val spansPerLine = mutableListOf<List<SampleLineSpan>>()
@@ -78,14 +80,15 @@ class DefaultPatternPreviewService(
                 spansPerLine.add(parsed.spans)
                 previewRows.add(PreviewTableRow(lineIndex, parsed.fields))
             } else {
-                spansPerLine.add(emptyList())
+                val diagnostic = tracer.diagnose(draft, line)
+                spansPerLine.add(diagnostic.spans)
                 previewRows.add(PreviewTableRow(lineIndex, emptyMap()))
                 errors.add(
                     PatternParseError(
                         lineIndex = lineIndex,
                         lineText = line,
-                        errorOffset = 0,
-                        message = "Line does not match pattern structure"
+                        errorOffset = diagnostic.errorOffset,
+                        message = diagnostic.message
                     )
                 )
             }

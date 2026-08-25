@@ -8,6 +8,7 @@ import com.klogviewer.domain.model.PatternToken
 import com.klogviewer.domain.model.PatternTokenRole
 import org.junit.jupiter.api.Test
 import strikt.api.expectThat
+import strikt.assertions.contains
 import strikt.assertions.containsExactly
 import strikt.assertions.isEmpty
 import strikt.assertions.isEqualTo
@@ -95,7 +96,36 @@ class PatternPreviewServiceTest {
         expectThat(result.confidenceScore).isEqualTo(0.5f)
         expectThat(result.parseErrors.size).isEqualTo(1)
         expectThat(result.parseErrors[0].lineIndex).isEqualTo(1)
-        expectThat(result.parseErrors[0].message).isEqualTo("Line does not match pattern structure")
+        expectThat(result.parseErrors[0].errorOffset).isEqualTo(0)
+        expectThat(result.parseErrors[0].message).contains("failed matching Timestamp")
+    }
+
+    @Test
+    fun `should report partial match progress and exact failure offset on mismatched lines`() {
+        val draft = PatternDraft(
+            name = "Test Partial Match",
+            segments = listOf(
+                PatternSegment.Token(
+                    PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = "yyyy-MM-dd HH:mm:ss.SSS")
+                ),
+                PatternSegment.Delimiter(PatternDelimiter(value = " [")),
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.THREAD)),
+                PatternSegment.Delimiter(PatternDelimiter(value = "] ")),
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL)),
+                PatternSegment.Delimiter(PatternDelimiter(value = " - ")),
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
+            )
+        )
+
+        val sampleLine = "2026-08-25 10:00:00.123 MISMATCHED_DELIMITER ERROR - Test message"
+        val result = previewService.computePreview(draft, listOf(sampleLine))
+
+        expectThat(result.matchedLineCount).isEqualTo(0)
+        expectThat(result.parseErrors.size).isEqualTo(1)
+        val error = result.parseErrors[0]
+        expectThat(error.errorOffset).isEqualTo(23)
+        expectThat(error.message).contains("Matched Timestamp")
+        expectThat(error.message).contains("expected delimiter ' ['")
     }
 
     @Test
@@ -203,5 +233,60 @@ class PatternPreviewServiceTest {
             expectThat(entry.content.value).isEqualTo("Logging initialized. Logs directory: /path/to/logs")
             expectThat(entry.fields["logger"]).isEqualTo("")
         }
+    }
+
+    @Test
+    fun `should parse timestamp with timezone offset and json message payload`() {
+        val draft = PatternDraft(
+            name = "Serilog Layout",
+            segments = listOf(
+                PatternSegment.Token(
+                    PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = "yyyy-MM-dd HH:mm:ss.SSS +00:00")
+                ),
+                PatternSegment.Delimiter(PatternDelimiter(value = " [")),
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL)),
+                PatternSegment.Delimiter(PatternDelimiter(value = "] ")),
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
+            )
+        )
+
+        val sampleLine = "2026-08-21 00:13:43.386 +00:00 [INF] Diagnostic data (1 of 2): " +
+            "{\"AssemblyInfo\":{\"DotnetVersion\":\".NET 9.0.18\"}}"
+
+        val result = previewService.computePreview(draft, listOf(sampleLine))
+
+        expectThat(result.matchedLineCount).isEqualTo(1)
+        expectThat(result.parseErrors).isEmpty()
+        expectThat(result.previewRows[0].fields["Timestamp"]).isEqualTo("2026-08-21 00:13:43.386 +00:00")
+        expectThat(result.previewRows[0].fields["Level"]).isEqualTo("INF")
+        val expectedMessage = "Diagnostic data (1 of 2): {\"AssemblyInfo\":{\"DotnetVersion\":\".NET 9.0.18\"}}"
+        expectThat(result.previewRows[0].fields["Message"]).isEqualTo(expectedMessage)
+    }
+
+    @Test
+    fun `should parse uppercase Serilog pattern format strings like YYYY-MM-DD and ZZZZZ`() {
+        val draft = PatternDraft(
+            name = "Serilog Layout Uppercase",
+            segments = listOf(
+                PatternSegment.Token(
+                    PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = "YYYY-MM-DD HH:mm:ss.SSS ZZZZZ")
+                ),
+                PatternSegment.Delimiter(PatternDelimiter(value = " [")),
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL)),
+                PatternSegment.Delimiter(PatternDelimiter(value = "] ")),
+                PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
+            )
+        )
+
+        val sampleLine = "2026-08-21 00:13:43.386 +00:00 [INF] Diagnostic data (1 of 2): " +
+            "{\"AssemblyInfo\":{\"DotnetVersion\":\".NET 9.0.18\"}}"
+
+        val result = previewService.computePreview(draft, listOf(sampleLine))
+
+        expectThat(result.matchedLineCount).isEqualTo(1)
+        expectThat(result.parseErrors).isEmpty()
+        expectThat(result.previewRows[0].fields["Timestamp"]).isEqualTo("2026-08-21 00:13:43.386 +00:00")
+        expectThat(result.previewRows[0].fields["Level"]).isEqualTo("INF")
+        expectThat(result.confidenceScore).isEqualTo(1.0f)
     }
 }

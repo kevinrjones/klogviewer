@@ -256,6 +256,66 @@ class PreferencesRepositoryTest {
     }
 
     @Test
+    fun `should save and load directory pattern mappings`() {
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
+        val draft = PatternDraft(
+            id = "draft-1",
+            name = "Logback Standard",
+            segments = listOf(
+                PatternSegment.Token(
+                    PatternToken(
+                        id = "tok-1",
+                        role = PatternTokenRole.TIMESTAMP,
+                        formatPattern = "yyyy-MM-dd HH:mm:ss.SSS"
+                    )
+                ),
+                PatternSegment.Delimiter(PatternDelimiter(id = "del-1", value = " [")),
+                PatternSegment.Token(PatternToken(id = "tok-2", role = PatternTokenRole.THREAD)),
+                PatternSegment.Delimiter(PatternDelimiter(id = "del-2", value = "] ")),
+                PatternSegment.Token(PatternToken(id = "tok-3", role = PatternTokenRole.LEVEL)),
+                PatternSegment.Delimiter(PatternDelimiter(id = "del-3", value = " - ")),
+                PatternSegment.Token(PatternToken(id = "tok-4", role = PatternTokenRole.MESSAGE))
+            ),
+            originalFormatString = "%d [%t] %level - %msg",
+            originalFormatSyntax = "LOGBACK",
+            placeholderAnnotations = mapOf("{version}" to "version")
+        )
+        val mapping = DirectoryPatternMapping(
+            directoryKey = "local:/var/log/app",
+            patternDraft = draft,
+            sourceType = "LOCAL",
+            createdAt = 1000L,
+            lastUsedAt = 2000L
+        )
+        val prefs = UserPreferences(
+            directoryPatternMappings = mapOf("local:/var/log/app" to mapping)
+        )
+
+        val saveResult = repository.save(prefs)
+        expectThat(saveResult).isEqualTo(PreferencesSaveResult.Saved)
+
+        val loaded = repository.load()
+        expectThat(loaded.directoryPatternMappings).isEqualTo(mapOf("local:/var/log/app" to mapping))
+    }
+
+    @Test
+    fun `should load legacy preferences without directoryPatternMappings with empty default`() {
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
+        val legacyJson = """
+            {
+              "isDarkMode": false,
+              "recentFiles": ["/path/to/log.log"]
+            }
+        """.trimIndent()
+        File(tempDir, "preferences.json").writeText(legacyJson)
+
+        val loaded = repository.load()
+        expectThat(loaded.isDarkMode).isEqualTo(false)
+        expectThat(loaded.recentFiles).isEqualTo(listOf("/path/to/log.log"))
+        expectThat(loaded.directoryPatternMappings).isEqualTo(emptyMap())
+    }
+
+    @Test
     fun `should migrate mac legacy preferences if target does not exist`() {
         val originalUserHome = System.getProperty("user.home")
         val fakeHome = File(tempDir, "fakeHome").apply { mkdirs() }

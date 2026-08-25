@@ -12,7 +12,29 @@ import java.util.*
 private val logger = KotlinLogging.logger {}
 
 class TimestampParser(private val pattern: String) {
-    private val formatter = DateTimeFormatter.ofPattern(pattern).withLocale(Locale.US)
+    private val formatter: DateTimeFormatter = try {
+        DateTimeFormatter.ofPattern(normalizePattern(pattern)).withLocale(Locale.US)
+    } catch (_: Exception) {
+        DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss[.SSS][ XXX]").withLocale(Locale.US)
+    }
+
+    private companion object {
+        private fun normalizePattern(raw: String): String {
+            val p = raw.trim()
+            return when {
+                p.equals("o", ignoreCase = true) -> "yyyy-MM-dd'T'HH:mm:ss[.SSSSSSS][XXX]"
+                p.equals("u", ignoreCase = true) -> "yyyy-MM-dd HH:mm:ss['Z']"
+                else -> p.replace("YYYY", "yyyy")
+                    .replace("YY", "yy")
+                    .replace("DD", "dd")
+                    .replace(Regex("Z{2,5}"), "XXX")
+                    .replace("zzz", "XXX")
+                    .replace("zz", "XX")
+                    .replace(Regex("""\+00:?00"""), "XXX")
+                    .replace(Regex("""\+[Hh]{2}:?[Mm]{2}"""), "XXX")
+            }
+        }
+    }
 
     fun parse(input: String): Instant? {
         if (input.isBlank()) return null

@@ -24,6 +24,7 @@ object PreferencesStateMapper {
             recentDirectories = state.recentDirectories,
             sftpConnections = state.sftpConnections,
             s3Connections = state.s3Connections,
+            directoryPatternMappings = state.directoryPatternMappings,
             tabs = state.tabs.map(::toTabPreference),
             activeTabId = state.activeTabId
         )
@@ -41,7 +42,8 @@ object PreferencesStateMapper {
                 recentFiles = prefs.recentFiles,
                 recentDirectories = prefs.recentDirectories,
                 sftpConnections = prefs.sftpConnections,
-                s3Connections = prefs.s3Connections
+                s3Connections = prefs.s3Connections,
+                directoryPatternMappings = prefs.directoryPatternMappings
             )
         } else {
             KLogViewerState(
@@ -52,7 +54,8 @@ object PreferencesStateMapper {
                 recentFiles = prefs.recentFiles,
                 recentDirectories = prefs.recentDirectories,
                 sftpConnections = prefs.sftpConnections,
-                s3Connections = prefs.s3Connections
+                s3Connections = prefs.s3Connections,
+                directoryPatternMappings = prefs.directoryPatternMappings
             )
         }
     }

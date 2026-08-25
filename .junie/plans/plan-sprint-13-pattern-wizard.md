@@ -218,3 +218,21 @@ Wire `ApplyPatternDraft` in `LogLoadingCoordinator` to compile the approved draf
 
 ### ✓ Step 14: Testing, verification, task checkbox updates, and HITL review (Tasks 13.6.5, 13.6.6)
 Add unit/integration tests for preview, alignment, debounce, resample, apply; run `./gradlew check`, verify with `./gradlew :app:run`, update task checkboxes, and provide HITL summary.
+
+### ✓ Step 15: Canonical Pattern Model and UserPreferences Persistence (Tasks 13.7.1, 13.7.2, 13.7.3)
+Extend `domain/model/UserPreferences.kt` with directory-scoped mapping types, make `PatternDraft` serializable in `:domain` with imported-origin and placeholder metadata, and implement persistence support in `core/repository/JsonPreferencesRepository.kt`.
+
+### ✓ Step 16: Normalized Directory Identity Rules (Task 13.7.4)
+Define and reuse normalized directory identity rules for local, SFTP, and S3 sources across lookup and save flows in a shared domain/core component.
+
+### ✓ Step 17: Automatic Saved-Mapping Lookup, Reuse, and Save on Apply (Task 13.7.5)
+Wire automatic directory mapping lookup in `WorkspaceLogLoader` / `LogLoadingCoordinator` before heuristic prompting, and persist approved drafts when the directory persistence toggle is enabled on Apply.
+
+### ✓ Step 18: Mismatch Recovery with Diagnostics Reopening (Task 13.7.6)
+Evaluate sample lines against saved mappings; when confidence is below threshold (<80%), reopen wizard preloaded with saved mapping and failure diagnostics.
+
+### ✓ Step 19: Saved-Mapping Management UI Surface (Task 13.7.7)
+Add a lightweight dialog/surface listing saved directory mappings with delete and open-in-wizard actions, accessible from the UI.
+
+### ✓ Step 20: Testing, Verification, Task Checkboxes, and HITL Review (Task 13.7.8)
+Add tests for serialization, normalization, lookup/save, mismatch threshold, and management UI; verify `./gradlew check` and `./gradlew :app:run`, update task checkboxes, and prepare HITL review summary.

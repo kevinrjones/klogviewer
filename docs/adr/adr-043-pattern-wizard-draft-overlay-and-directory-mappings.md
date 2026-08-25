@@ -22,8 +22,12 @@ We will implement Sprint 13 around a draft-overlay pattern wizard backed by a ca
 
 ### 3. Directory-Scoped Storage
 - Approved mappings will be stored in user preferences, outside the source log directory.
-- Mapping keys will be normalized by directory identity for local, SFTP, and S3 sources.
-- The same directory identity rules must be used for lookup, persistence, and reuse.
+- Mapping keys will be normalized by directory identity for local, SFTP, and S3 sources via `DirectoryIdentityNormalizer`:
+  - Local: `local:/absolute/dir/path` (e.g. `local:/var/log`)
+  - SFTP: `sftp:username@host:port/directory/path` (e.g. `sftp:admin@10.0.0.1:22/var/log`)
+  - S3: `s3:bucket/prefix` (e.g. `s3:prod-logs/2026/08`)
+- The same directory identity rules are used for lookup, persistence, and reuse.
+- Mismatch threshold: when a saved mapping's match confidence on newly opened sample lines falls below 80% (`0.80f`), the wizard automatically reopens with the saved pattern and diagnostics drawer visible rather than silently mis-parsing.
 
 ### 4. Structured Placeholder Scope
 - Structured JSON detection remains authoritative.

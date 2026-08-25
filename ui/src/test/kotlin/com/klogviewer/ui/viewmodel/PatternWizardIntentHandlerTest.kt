@@ -91,6 +91,14 @@ class PatternWizardIntentHandlerTest {
         val customDraft = state.value.patternWizardState.currentDraft
         expectThat(customDraft.name).isEqualTo("Custom Draft")
         expectThat(customDraft.segments.isEmpty()).isFalse()
+
+        handler.handle(KLogViewerIntent.ImportPatternString("{yyyy-MM-dd HH:mm:ss.SSS +00:00} [{Level}] {Message}"))
+        val pastedDraft = state.value.patternWizardState.currentDraft
+        expectThat(pastedDraft.segments.size).isEqualTo(5)
+        val firstToken = (pastedDraft.segments[0] as com.klogviewer.domain.model.PatternSegment.Token).token
+        expectThat(firstToken.role).isEqualTo(PatternTokenRole.TIMESTAMP)
+        expectThat(firstToken.formatPattern).isEqualTo("yyyy-MM-dd HH:mm:ss.SSS +00:00")
+        expectThat(firstToken.effectiveName).isEqualTo("timestamp")
     }
 
     @Test
@@ -157,5 +165,91 @@ class PatternWizardIntentHandlerTest {
         expectThat(state.value.patternWizardState.isVisible).isFalse()
         expectThat(appliedWindowId).isEqualTo("window-123")
         expectThat(appliedDraft).isEqualTo(state.value.patternWizardState.currentDraft)
+    }
+
+    @Test
+    fun `given delete directory mapping intent when handled then mapping is removed and preferences saved`() {
+        val mapping = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = "local:/var/log",
+            patternDraft = PatternDraft(name = "Saved Pattern")
+        )
+        val state = MutableStateFlow(
+            KLogViewerState(
+                directoryPatternMappings = mapOf("local:/var/log" to mapping)
+            )
+        )
+        var savedPrefs = false
+        val handler = PatternWizardIntentHandler(
+            state = state,
+            onSavePreferences = { savedPrefs = true }
+        )
+
+        handler.handle(KLogViewerIntent.DeleteDirectoryPatternMapping("local:/var/log"))
+
+        expectThat(state.value.directoryPatternMappings).isEqualTo(emptyMap())
+        expectThat(savedPrefs).isTrue()
+    }
+
+    @Test
+    fun `given save current draft as directory mapping intent when handled then mapping is stored`() {
+        val state = MutableStateFlow(KLogViewerState())
+        var savedPrefs = false
+        val handler = PatternWizardIntentHandler(
+            state = state,
+            onSavePreferences = { savedPrefs = true }
+        )
+
+        handler.handle(KLogViewerIntent.OpenPatternWizard(sampleLines = listOf("Line")))
+        handler.handle(KLogViewerIntent.SaveCurrentDraftAsDirectoryMapping("local:/var/log/app"))
+
+        expectThat(state.value.directoryPatternMappings.containsKey("local:/var/log/app")).isTrue()
+        expectThat(savedPrefs).isTrue()
+    }
+
+    @Test
+    fun `given open directory mapping in wizard when handled then wizard opens with saved draft`() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        val testScope = TestScope(testDispatcher)
+        val draft = PatternDraft(name = "Saved Custom Pattern")
+        val mapping = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = "local:/var/log/app",
+            patternDraft = draft
+        )
+        val state = MutableStateFlow(
+            KLogViewerState(
+                directoryPatternMappings = mapOf("local:/var/log/app" to mapping)
+            )
+        )
+        val handler = PatternWizardIntentHandler(
+            state = state,
+            scope = testScope,
+            computationDispatcher = testDispatcher
+        )
+
+        handler.handle(KLogViewerIntent.OpenDirectoryMappingInWizard("local:/var/log/app"))
+        testScope.advanceTimeBy(1)
+
+        expectThat(state.value.patternWizardState.isVisible).isTrue()
+        expectThat(state.value.patternWizardState.currentDraft.name).isEqualTo("Saved Custom Pattern")
+    }
+
+    @Test
+    fun `given open wizard intent without sample lines when target window set then samples fetched`() = runTest {
+        val testDispatcher = StandardTestDispatcher(testScheduler)
+        val testScope = TestScope(testDispatcher)
+        val state = MutableStateFlow(KLogViewerState())
+        val rawLines = listOf("2026-08-25 10:00:00.123 [main] INFO RawService - Full line")
+        val handler = PatternWizardIntentHandler(
+            state = state,
+            scope = testScope,
+            computationDispatcher = testDispatcher,
+            onResampleLines = { rawLines }
+        )
+
+        handler.handle(KLogViewerIntent.OpenPatternWizard(targetWindowId = "window-1"))
+        testScope.advanceTimeBy(1)
+
+        expectThat(state.value.patternWizardState.isVisible).isTrue()
+        expectThat(state.value.patternWizardState.sampleLines).isEqualTo(rawLines)
     }
 }

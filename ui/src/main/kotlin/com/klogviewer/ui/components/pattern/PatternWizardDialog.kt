@@ -74,6 +74,7 @@ fun PatternWizardDialog(
     onClosePopover: () -> Unit,
     onCloseSelectionPopup: () -> Unit,
     onResample: (() -> Unit)? = null,
+    onManageMappings: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (!state.isVisible) return
@@ -170,7 +171,8 @@ fun PatternWizardDialog(
                                 onPresetSelected = onPresetSelected,
                                 onImportPattern = onImportPattern,
                                 isDirectoryPersistenceEnabled = state.currentDraft.isDirectoryPersistenceEnabled,
-                                onDirectoryPersistenceToggled = onDirectoryPersistenceToggled
+                                onDirectoryPersistenceToggled = onDirectoryPersistenceToggled,
+                                onManageMappings = onManageMappings
                             )
 
                             // Zone 2: Interactive Token Bar

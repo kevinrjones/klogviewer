@@ -111,4 +111,183 @@ class WorkspaceLogLoaderTest {
 
         expectThat(selections.size).isEqualTo(1)
     }
+
+    @Test
+    fun `given saved directory mapping when text log opened then saved mapping is used directly`() {
+        val path = "/var/log/app.log"
+        val sampleLines = listOf("2026-08-25 10:00:00.123 [main] INFO MyService - Hello world")
+        val draft = createSampleDraft()
+        val directoryKey = "local:/var/log"
+        val mapping = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = directoryKey,
+            patternDraft = draft
+        )
+        val testProbe = HeuristicProbe(ParserRegistry())
+        val customState = MutableStateFlow(
+            KLogViewerState(directoryPatternMappings = mapOf(directoryKey to mapping))
+        )
+
+        every { localFileSystem.exists(path) } returns true
+        every { localFileSystem.isDirectory(path) } returns false
+        every { localFileSystem.readLines(path, any()) } returns sampleLines
+
+        val loader = WorkspaceLogLoader(
+            localFileSystem = localFileSystem,
+            remoteFileSystem = remoteFileSystem,
+            logSource = logSource,
+            heuristicProbe = testProbe,
+            logSourceFactory = logSourceFactory,
+            state = customState
+        )
+
+        val result = loader.performHeuristicDetection(paths = listOf(path), overrideParserName = null).single()
+
+        expectThat(result).isNotNull()
+        expectThat(result?.parserName).isEqualTo("Custom Saved Logback")
+    }
+
+    private fun createSampleDraft(): com.klogviewer.domain.model.PatternDraft {
+        return com.klogviewer.domain.model.PatternDraft(
+            name = "Custom Saved Logback",
+            segments = listOf(
+                com.klogviewer.domain.model.PatternSegment.Token(
+                    com.klogviewer.domain.model.PatternToken(
+                        role = com.klogviewer.domain.model.PatternTokenRole.TIMESTAMP,
+                        formatPattern = "yyyy-MM-dd HH:mm:ss.SSS"
+                    )
+                ),
+                com.klogviewer.domain.model.PatternSegment.Delimiter(
+                    com.klogviewer.domain.model.PatternDelimiter(value = " [")
+                ),
+                com.klogviewer.domain.model.PatternSegment.Token(
+                    com.klogviewer.domain.model.PatternToken(role = com.klogviewer.domain.model.PatternTokenRole.THREAD)
+                ),
+                com.klogviewer.domain.model.PatternSegment.Delimiter(
+                    com.klogviewer.domain.model.PatternDelimiter(value = "] ")
+                ),
+                com.klogviewer.domain.model.PatternSegment.Token(
+                    com.klogviewer.domain.model.PatternToken(role = com.klogviewer.domain.model.PatternTokenRole.LEVEL)
+                ),
+                com.klogviewer.domain.model.PatternSegment.Delimiter(
+                    com.klogviewer.domain.model.PatternDelimiter(value = " ")
+                ),
+                com.klogviewer.domain.model.PatternSegment.Token(
+                    com.klogviewer.domain.model.PatternToken(role = com.klogviewer.domain.model.PatternTokenRole.LOGGER)
+                ),
+                com.klogviewer.domain.model.PatternSegment.Delimiter(
+                    com.klogviewer.domain.model.PatternDelimiter(value = " - ")
+                ),
+                com.klogviewer.domain.model.PatternSegment.Token(
+                    com.klogviewer.domain.model.PatternToken(
+                        role = com.klogviewer.domain.model.PatternTokenRole.MESSAGE
+                    )
+                )
+            )
+        )
+    }
+
+    @Test
+    fun `given saved directory mapping when structured json log opened then json parser remains authoritative`() {
+        val path = "/var/log/events.json"
+        val sampleLines = listOf(
+            """{"timestamp":"2026-08-25T10:00:00Z","level":"INFO","message":"Structured event"}"""
+        )
+        val draft = com.klogviewer.domain.model.PatternDraft(name = "Custom Text Pattern")
+        val directoryKey = "local:/var/log"
+        val mapping = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = directoryKey,
+            patternDraft = draft
+        )
+        val testProbe = HeuristicProbe(ParserRegistry())
+        val customState = MutableStateFlow(
+            KLogViewerState(
+                directoryPatternMappings = mapOf(directoryKey to mapping)
+            )
+        )
+
+        every { localFileSystem.exists(path) } returns true
+        every { localFileSystem.isDirectory(path) } returns false
+        every { localFileSystem.readLines(path, any()) } returns sampleLines
+
+        val loader = WorkspaceLogLoader(
+            localFileSystem = localFileSystem,
+            remoteFileSystem = remoteFileSystem,
+            logSource = logSource,
+            heuristicProbe = testProbe,
+            logSourceFactory = logSourceFactory,
+            state = customState
+        )
+
+        val result = loader.performHeuristicDetection(paths = listOf(path), overrideParserName = null).single()
+
+        expectThat(result).isNotNull()
+        expectThat(result?.parserName).isEqualTo("JSON")
+    }
+
+    @Test
+    fun `given directory path when opened without saved mapping then detects pattern from directory sample files`() {
+        val dirPath = "/var/log"
+        val sampleFilePath = "/var/log/app.log"
+        val sampleLines = listOf("2026-08-25 10:00:00.123 [main] INFO MyService - Hello world")
+
+        every { localFileSystem.exists(dirPath) } returns true
+        every { localFileSystem.isDirectory(dirPath) } returns true
+        every { localFileSystem.listFiles(dirPath, any()) } returns listOf(sampleFilePath)
+        every { localFileSystem.exists(sampleFilePath) } returns true
+        every { localFileSystem.isDirectory(sampleFilePath) } returns false
+        every { localFileSystem.readLines(sampleFilePath, any()) } returns sampleLines
+
+        val testProbe = HeuristicProbe(ParserRegistry())
+        val loader = WorkspaceLogLoader(
+            localFileSystem = localFileSystem,
+            remoteFileSystem = remoteFileSystem,
+            logSource = logSource,
+            heuristicProbe = testProbe,
+            logSourceFactory = logSourceFactory,
+            state = MutableStateFlow(KLogViewerState())
+        )
+
+        val result = loader.performHeuristicDetection(paths = listOf(dirPath), overrideParserName = null).single()
+
+        expectThat(result).isNotNull()
+        expectThat(result?.parserName).isEqualTo("Standard")
+    }
+
+    @Test
+    fun `given saved directory mapping when directory path opened then saved mapping is used directly`() {
+        val dirPath = "/var/log"
+        val sampleFilePath = "/var/log/app.log"
+        val sampleLines = listOf("2026-08-25 10:00:00.123 [main] INFO MyService - Hello world")
+        val draft = createSampleDraft()
+        val directoryKey = "local:/var/log"
+        val mapping = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = directoryKey,
+            patternDraft = draft
+        )
+        val testProbe = HeuristicProbe(ParserRegistry())
+        val customState = MutableStateFlow(
+            KLogViewerState(directoryPatternMappings = mapOf(directoryKey to mapping))
+        )
+
+        every { localFileSystem.exists(dirPath) } returns true
+        every { localFileSystem.isDirectory(dirPath) } returns true
+        every { localFileSystem.listFiles(dirPath, any()) } returns listOf(sampleFilePath)
+        every { localFileSystem.exists(sampleFilePath) } returns true
+        every { localFileSystem.isDirectory(sampleFilePath) } returns false
+        every { localFileSystem.readLines(sampleFilePath, any()) } returns sampleLines
+
+        val loader = WorkspaceLogLoader(
+            localFileSystem = localFileSystem,
+            remoteFileSystem = remoteFileSystem,
+            logSource = logSource,
+            heuristicProbe = testProbe,
+            logSourceFactory = logSourceFactory,
+            state = customState
+        )
+
+        val result = loader.performHeuristicDetection(paths = listOf(dirPath), overrideParserName = null).single()
+
+        expectThat(result).isNotNull()
+        expectThat(result?.parserName).isEqualTo("Custom Saved Logback")
+    }
 }

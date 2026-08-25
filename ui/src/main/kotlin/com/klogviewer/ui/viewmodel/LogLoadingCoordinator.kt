@@ -42,6 +42,13 @@ class LogLoadingCoordinator(
         state = state
     )
 
+    private val directoryMappingCoordinator = DirectoryMappingCoordinator(
+        state = state,
+        heuristicProbe = heuristicProbe,
+        workspaceLogLoader = workspaceLogLoader,
+        onSavePreferences = onSavePreferences
+    )
+
     fun cancelAll() {
         logJobs.values.forEach { it.cancel() }
         logJobs.clear()
@@ -53,29 +60,19 @@ class LogLoadingCoordinator(
     }
 
     fun applyPatternDraft(windowId: String, draft: PatternDraft) {
-        val compiled = PatternDraftCompiler().compile(draft)
-        heuristicProbe.registry.register(compiled.template)
-
         val window = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }
         val paths = window?.sourceIds?.ifEmpty { listOfNotNull(window.filePath) } ?: listOfNotNull(window?.filePath)
+        val isDir = window?.isDirectory == true
 
-        state.update { currentState ->
-            currentState.updateWindow(windowId) { w ->
-                val probeResult = ProbeResult(
-                    TemplateLogParser(compiled.template),
-                    compiled.template.name,
-                    compiled.template.columns
-                )
-                w.copy(
-                    parserName = compiled.template.name,
-                    columns = mergeColumnsWithDiscovered(w.columns, listOf(probeResult))
-                )
+        directoryMappingCoordinator.applyPatternDraft(
+            windowId = windowId,
+            draft = draft,
+            paths = paths,
+            isDirectory = isDir,
+            onReload = { wId, filePaths, parserName ->
+                loadFilesIntoWindow(wId, filePaths, overrideParserName = parserName)
             }
-        }
-
-        if (paths.isNotEmpty()) {
-            loadFilesIntoWindow(windowId, paths, overrideParserName = compiled.template.name)
-        }
+        )
     }
 
     fun resampleLinesForWindow(windowId: String, limitPerSection: Int = 10): List<String> {
@@ -548,6 +545,35 @@ class LogLoadingCoordinator(
             !isRemote &&
             localFileSystem.exists(path)
 
+        val directoryKey = path?.let {
+            val isDir = localFileSystem.isDirectory(it)
+            DirectoryIdentityNormalizer.normalize(it, isDirectory = isDir)
+        }
+
+        val savedMapping = if (isTextLogDetected && directoryKey != null) {
+            state.value.directoryPatternMappings[directoryKey]
+        } else null
+
+        if (savedMapping != null && path != null && directoryKey != null) {
+            if (directoryMappingCoordinator.handleSavedDirectoryMapping(
+                    windowId, path, directoryKey, savedMapping, results, overrideParserName
+                )
+            ) {
+                return
+            }
+        }
+
+        applyDefaultParserResults(windowId, results, overrideParserName, isTextLogDetected, path, firstResult)
+    }
+
+    private fun applyDefaultParserResults(
+        windowId: String,
+        results: List<ProbeResult?>,
+        overrideParserName: String?,
+        isTextLogDetected: Boolean,
+        path: String?,
+        firstResult: ProbeResult?
+    ) {
         state.update { currentState ->
             val updatedState = currentState.updateWindow(windowId) { window ->
                 window.copy(
@@ -555,14 +581,18 @@ class LogLoadingCoordinator(
                         persistedColumns = window.columns,
                         results = results
                     ),
-                    parserName = if (results.size > 1 && overrideParserName == null) "Multiple" else (overrideParserName ?: firstResult?.parserName ?: "Auto")
+                    parserName = if (results.size > 1 && overrideParserName == null) {
+                        "Multiple"
+                    } else {
+                        overrideParserName ?: firstResult?.parserName ?: "Auto"
+                    }
                 )
             }
 
-            if (isTextLogDetected) {
+            if (isTextLogDetected && path != null) {
                 val sampleLines = workspaceLogLoader.readSampleLines(path, limit = 20)
                 if (sampleLines.isNotEmpty()) {
-                    val isHighConfidence = firstResult.parserName != "Simple" && firstResult.parserName != "Auto"
+                    val isHighConfidence = firstResult?.parserName != "Simple" && firstResult?.parserName != "Auto"
                     val wizardState = updatedState.patternWizardState.copy(
                         isVisible = true,
                         isBannerMode = isHighConfidence,
@@ -583,27 +613,7 @@ class LogLoadingCoordinator(
     }
 
     internal fun mergeColumnsWithDiscovered(persistedColumns: List<String>, results: List<ProbeResult?>): List<String> {
-        val stableColumns = persistedColumns
-            .asSequence()
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .toList()
-            .ifEmpty { CANONICAL_COLUMNS }
-
-        val stableColumnKeys = stableColumns.map { it.normalizedColumnKey() }.toSet()
-        val discoveredColumns = results.asSequence()
-            .filterNotNull()
-            .flatMap { it.columns.asSequence() }
-            .map { it.trim() }
-            .filter { it.isNotEmpty() }
-            .filterNot { it.normalizedColumnKey() in CANONICAL_COLUMN_KEYS }
-            .filterNot { it.normalizedColumnKey() in stableColumnKeys }
-            .distinctBy { it.normalizedColumnKey() }
-            .take(DISCOVERED_AUTO_COLUMN_LIMIT)
-            .toList()
-
-        return (CANONICAL_COLUMNS + stableColumns + discoveredColumns)
-            .distinctBy { it.normalizedColumnKey() }
+        return mergeColumnsWithDiscoveredStatic(persistedColumns, results)
     }
 
     private fun String.normalizedColumnKey(): String = trim().lowercase()
@@ -636,9 +646,36 @@ class LogLoadingCoordinator(
         }
     }
 
-    private companion object {
+    companion object {
         private val CANONICAL_COLUMNS = listOf("Timestamp", "Level", "Content")
         private val CANONICAL_COLUMN_KEYS = setOf("timestamp", "level", "content", "message")
         private const val DISCOVERED_AUTO_COLUMN_LIMIT = 8
+
+        fun mergeColumnsWithDiscoveredStatic(
+            persistedColumns: List<String>,
+            results: List<ProbeResult?>
+        ): List<String> {
+            val stableColumns = persistedColumns
+                .asSequence()
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .toList()
+                .ifEmpty { CANONICAL_COLUMNS }
+
+            val stableColumnKeys = stableColumns.map { it.trim().lowercase() }.toSet()
+            val discoveredColumns = results.asSequence()
+                .filterNotNull()
+                .flatMap { it.columns.asSequence() }
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .filterNot { it.trim().lowercase() in CANONICAL_COLUMN_KEYS }
+                .filterNot { it.trim().lowercase() in stableColumnKeys }
+                .distinctBy { it.trim().lowercase() }
+                .take(DISCOVERED_AUTO_COLUMN_LIMIT)
+                .toList()
+
+            return (CANONICAL_COLUMNS + stableColumns + discoveredColumns)
+                .distinctBy { it.trim().lowercase() }
+        }
     }
 }

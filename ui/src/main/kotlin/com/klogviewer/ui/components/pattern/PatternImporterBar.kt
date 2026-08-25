@@ -24,6 +24,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.TextButton
+
 @Composable
 fun PatternImporterBar(
     selectedPresetName: String,
@@ -31,6 +35,7 @@ fun PatternImporterBar(
     onImportPattern: (String) -> Unit,
     isDirectoryPersistenceEnabled: Boolean,
     onDirectoryPersistenceToggled: (Boolean) -> Unit,
+    onManageMappings: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     var pasteText by remember { mutableStateOf("") }
@@ -79,7 +84,7 @@ fun PatternImporterBar(
                 }
             }
 
-            // Persistence Toggle
+            // Persistence Toggle & Manage Link
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f),
@@ -93,6 +98,12 @@ fun PatternImporterBar(
                     text = "Save mapping for directory",
                     style = MaterialTheme.typography.bodySmall
                 )
+                if (onManageMappings != null) {
+                    Spacer(Modifier.width(4.dp))
+                    TextButton(onClick = onManageMappings) {
+                        Text("Manage...", style = MaterialTheme.typography.labelSmall)
+                    }
+                }
             }
         }
 

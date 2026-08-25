@@ -12,7 +12,17 @@ data class UserPreferences(
     val tabs: List<TabPreference> = emptyList(),
     val activeTabId: String? = null,
     val sftpConnections: List<SftpConfig> = emptyList(),
-    val s3Connections: List<S3Config> = emptyList()
+    val s3Connections: List<S3Config> = emptyList(),
+    val directoryPatternMappings: Map<String, DirectoryPatternMapping> = emptyMap()
+)
+
+@Serializable
+data class DirectoryPatternMapping(
+    val directoryKey: String,
+    val patternDraft: PatternDraft,
+    val sourceType: String = "LOCAL",
+    val createdAt: Long = System.currentTimeMillis(),
+    val lastUsedAt: Long = System.currentTimeMillis()
 )
 
 @Serializable

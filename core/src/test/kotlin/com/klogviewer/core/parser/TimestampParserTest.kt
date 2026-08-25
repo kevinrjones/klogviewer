@@ -62,6 +62,15 @@ class TimestampParserTest {
     }
 
     @Test
+    fun `should parse timestamp with literal or normalized offset pattern`() {
+        val parser = TimestampParser("yyyy-MM-dd HH:mm:ss.SSS +00:00")
+        val result = parser.parse("2026-08-21 00:13:43.386 +00:00")
+        expectThat(result).isNotNull()
+        val expected = LocalDateTime.of(2026, 8, 21, 0, 13, 43, 386_000_000).toInstant(ZoneOffset.UTC)
+        expectThat(result).isEqualTo(expected)
+    }
+
+    @Test
     fun `should return null for invalid timestamp`() {
         val parser = TimestampParser("yyyy-MM-dd")
         expectThat(parser.parse("invalid")).isEqualTo(null)

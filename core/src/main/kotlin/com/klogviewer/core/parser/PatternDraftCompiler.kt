@@ -79,7 +79,7 @@ class PatternDraftCompiler {
         )
     }
 
-    private fun isTokenOptional(token: PatternToken): Boolean {
+    internal fun isTokenOptional(token: PatternToken): Boolean {
         return token.isOptional || token.role in setOf(
             PatternTokenRole.LOGGER,
             PatternTokenRole.EXCEPTION,
@@ -104,16 +104,16 @@ class PatternDraftCompiler {
         }
     }
 
-    private fun defaultTokenRegex(token: PatternToken): String {
+    internal fun defaultTokenRegex(token: PatternToken): String {
         return when (token.role) {
             PatternTokenRole.TIMESTAMP -> {
-                val fp = token.formatPattern
+                val fp = token.formatPattern.lowercase()
                 when {
-                    fp.contains("yyyy") || fp.contains("yyyy-MM-dd") ->
+                    fp.contains("yyyy") || fp.contains("yy") || fp.contains("iso8601") ->
                         """\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\d{1,2}:\d{2}:\d{2}(?:[.,]\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?"""
-                    fp.contains("HH:mm:ss") ->
+                    fp.contains("hh:mm:ss") ->
                         """\d{1,2}:\d{2}:\d{2}(?:[.,]\d+)?"""
-                    fp.contains("MMM") ->
+                    fp.contains("mmm") ->
                         """[A-Za-z]{3}\s+\d{1,2}\s+\d{1,2}:\d{2}:\d{2}"""
                     else ->
                         """\d{4}[-/]\d{1,2}[-/]\d{1,2}[\sT]\d{1,2}:\d{2}:\d{2}(?:[.,]\d+)?(?:\s*[+-]\d{2}:?\d{2}|Z)?|\S+(?:\s+\S+)?"""
@@ -128,7 +128,7 @@ class PatternDraftCompiler {
         }
     }
 
-    private fun escapeDelimiter(value: String): String {
+    internal fun escapeDelimiter(value: String): String {
         if (value.isBlank()) return """\s+"""
         val trimmed = value.trim()
         val escaped = Regex.escape(trimmed)

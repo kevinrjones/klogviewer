@@ -42,6 +42,7 @@ fun FilterBar(
     onToggleConnection: () -> Unit,
     onRefresh: () -> Unit,
     onSplitClick: () -> Unit,
+    onEditPatternMapping: (() -> Unit)? = null,
     timeFilterFrom: String,
     timeFilterTo: String,
     timeFilterPreset: TimeRangePreset?,
@@ -98,7 +99,8 @@ fun FilterBar(
                 onToggleAnsiColors = onToggleAnsiColors,
                 isConnected = isConnected,
                 onToggleConnection = onToggleConnection,
-                onRefresh = onRefresh
+                onRefresh = onRefresh,
+                onEditPatternMapping = onEditPatternMapping
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
@@ -184,7 +186,8 @@ private fun viewActions(
     onToggleAnsiColors: () -> Unit,
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onEditPatternMapping: (() -> Unit)? = null
 ) {
     filterBarIcon(icon = Icons.Default.Brightness4, tooltip = "Toggle Theme", onClick = onToggleTheme)
     filterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)
@@ -218,6 +221,14 @@ private fun viewActions(
         onClick = onRefresh,
         testTag = "toolbar_refresh"
     )
+    if (onEditPatternMapping != null) {
+        filterBarIcon(
+            icon = Icons.Default.Pattern,
+            tooltip = "Edit Pattern Mapping",
+            onClick = onEditPatternMapping,
+            testTag = "toolbar_edit_pattern_mapping"
+        )
+    }
 }
 
 @Composable

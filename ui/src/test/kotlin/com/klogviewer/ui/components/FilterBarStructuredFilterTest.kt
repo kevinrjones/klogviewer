@@ -87,6 +87,50 @@ class FilterBarStructuredFilterTest {
         onNodeWithTag("structured_filter_field_input").assertDoesNotExist()
     }
 
+    @Test
+    fun `edit pattern mapping toolbar button triggers callback`() = runComposeUiTest {
+        var triggered = false
+        setContent {
+            FilterBar(
+                filterQueries = emptyList(),
+                onAddQuery = {},
+                onRemoveQuery = {},
+                onClearQueries = {},
+                onOpenFileClick = {},
+                onSftpClick = {},
+                onS3Click = {},
+                onAddFileClick = {},
+                onAddDirectoryClick = {},
+                onAddSftpClick = {},
+                onAddS3Click = {},
+                onToggleTheme = {},
+                onToggleSidebar = {},
+                isReversed = false,
+                onToggleSortOrder = {},
+                isAutoScrollEnabled = true,
+                onToggleAutoScroll = {},
+                showAnsiColors = true,
+                onToggleAnsiColors = {},
+                isConnected = true,
+                onToggleConnection = {},
+                onRefresh = {},
+                onSplitClick = {},
+                onEditPatternMapping = { triggered = true },
+                timeFilterFrom = "",
+                timeFilterTo = "",
+                timeFilterPreset = TimeRangePreset.LAST_5_MINUTES,
+                timeFilterValidationMessage = null,
+                onApplyTimeFilterPreset = {},
+                onClearTimeFilter = {},
+                matchesCount = 0,
+                totalCount = 0
+            )
+        }
+
+        onNodeWithTag("toolbar_edit_pattern_mapping").assertIsDisplayed().performClick()
+        assertEquals(true, triggered)
+    }
+
     private fun ComposeUiTest.setFilterBarContent(onAddQuery: (String) -> Unit = {}) {
         setContent {
             FilterBar(

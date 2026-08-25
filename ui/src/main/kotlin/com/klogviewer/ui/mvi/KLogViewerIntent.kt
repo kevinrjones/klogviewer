@@ -84,6 +84,7 @@ sealed interface KLogViewerIntent {
     data object ShowSftpDialog : DialogIntent
     data object ShowS3Dialog : DialogIntent
     data object ShowFontDialog : DialogIntent
+    data object ShowDirectoryMappingsDialog : DialogIntent
     data class ApplyLogFont(val family: String, val sizeSp: Int) : DialogIntent
     data object ConfirmPlaintextSecretSave : DialogIntent
     data object DeclinePlaintextSecretSave : DialogIntent
@@ -152,7 +153,7 @@ sealed interface KLogViewerIntent {
 
     // Pattern Wizard
     data class OpenPatternWizard(
-        val sampleLines: List<String>,
+        val sampleLines: List<String> = emptyList(),
         val initialDraft: com.klogviewer.domain.model.PatternDraft? = null,
         val isBannerMode: Boolean = false,
         val targetWindowId: String? = null
@@ -187,4 +188,7 @@ sealed interface KLogViewerIntent {
     data class UpdatePatternDialogBounds(val width: Int, val height: Int, val splitterRatio: Float) : PatternWizardIntent
     data object ExpandPatternBannerToFullWizard : PatternWizardIntent
     data object ResamplePatternLines : PatternWizardIntent
+    data class DeleteDirectoryPatternMapping(val directoryKey: String) : PatternWizardIntent
+    data class OpenDirectoryMappingInWizard(val directoryKey: String) : PatternWizardIntent
+    data class SaveCurrentDraftAsDirectoryMapping(val directoryKey: String) : PatternWizardIntent
 }

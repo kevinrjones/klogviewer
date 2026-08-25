@@ -1,7 +1,9 @@
 package com.klogviewer.domain.model
 
+import kotlinx.serialization.Serializable
 import java.util.UUID
 
+@Serializable
 enum class PatternTokenRole(val displayName: String) {
     TIMESTAMP("Timestamp"),
     LEVEL("Level"),
@@ -18,6 +20,7 @@ enum class PatternTokenRole(val displayName: String) {
     }
 }
 
+@Serializable
 data class PatternToken(
     val id: String = UUID.randomUUID().toString(),
     val role: PatternTokenRole,
@@ -33,28 +36,35 @@ data class PatternToken(
         }
 }
 
+@Serializable
 data class PatternDelimiter(
     val id: String = UUID.randomUUID().toString(),
     val value: String
 )
 
+@Serializable
 sealed interface PatternSegment {
     val id: String
 
+    @Serializable
     data class Token(val token: PatternToken) : PatternSegment {
         override val id: String get() = token.id
     }
 
+    @Serializable
     data class Delimiter(val delimiter: PatternDelimiter) : PatternSegment {
         override val id: String get() = delimiter.id
     }
 }
 
+@Serializable
 data class PatternDraft(
     val id: String = UUID.randomUUID().toString(),
     val segments: List<PatternSegment> = emptyList(),
     val name: String = "Custom Pattern",
     val originalFormatString: String? = null,
+    val originalFormatSyntax: String? = null,
+    val placeholderAnnotations: Map<String, String> = emptyMap(),
     val isDirectoryPersistenceEnabled: Boolean = true
 )
 
