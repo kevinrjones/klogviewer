@@ -20,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -28,6 +29,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -51,6 +53,7 @@ import com.klogviewer.domain.model.SampleLineSpan
 import com.klogviewer.domain.model.SourceWizardEntry
 import com.klogviewer.domain.model.SourceWizardStatus
 import com.klogviewer.ui.mvi.KLogViewerIntent
+import com.klogviewer.ui.theme.KLogViewerColors
 
 @Composable
 fun PatternWizardDialog(
@@ -66,7 +69,8 @@ fun PatternWizardDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
-            shape = MaterialTheme.shapes.large,
+            shape = RoundedCornerShape(4.dp),
+            color = MaterialTheme.colorScheme.surfaceVariant,
             tonalElevation = 8.dp,
             modifier = modifier
                 .width(if (state.isBannerMode) 800.dp else state.windowWidth.dp)
@@ -101,6 +105,7 @@ fun PatternWizardDialog(
                 PatternConfirmationBanner(
                     draftName = state.currentDraft.name,
                     confidenceScore = state.confidenceScore,
+                    isDarkMode = isDarkMode,
                     onApply = { onIntent(KLogViewerIntent.ApplyPatternDraft) },
                     onReview = { onIntent(KLogViewerIntent.ExpandPatternBannerToFullWizard) },
                     onSkip = { onIntent(KLogViewerIntent.SkipPatternWizard) }
@@ -271,7 +276,7 @@ fun PatternWizardDialog(
                     // Footer / Action Bar
                     Surface(
                         tonalElevation = 2.dp,
-                        shape = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp),
+                        shape = RoundedCornerShape(0.dp),
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp)
                     ) {
                         Row(
@@ -295,7 +300,15 @@ fun PatternWizardDialog(
                                 }
                                 Button(
                                     onClick = { onIntent(KLogViewerIntent.ApplyPatternDraft) },
-                                    shape = RoundedCornerShape(8.dp)
+                                    shape = RoundedCornerShape(4.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isDarkMode) {
+                                            KLogViewerColors.DarkPrimary
+                                        } else {
+                                            KLogViewerColors.LightPrimary
+                                        },
+                                        contentColor = Color.White
+                                    )
                                 ) {
                                     Text("Apply & Load (⌘↵)")
                                 }
@@ -345,6 +358,7 @@ fun PatternWizardDialog(
 fun PatternConfirmationBanner(
     draftName: String,
     confidenceScore: Float,
+    isDarkMode: Boolean = true,
     onApply: () -> Unit,
     onReview: () -> Unit,
     onSkip: () -> Unit
@@ -383,7 +397,18 @@ fun PatternConfirmationBanner(
             OutlinedButton(onClick = onReview) {
                 Text("Review", maxLines = 1)
             }
-            Button(onClick = onApply) {
+            Button(
+                onClick = onApply,
+                shape = RoundedCornerShape(4.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isDarkMode) {
+                        KLogViewerColors.DarkPrimary
+                    } else {
+                        KLogViewerColors.LightPrimary
+                    },
+                    contentColor = Color.White
+                )
+            ) {
                 Text("Apply", maxLines = 1)
             }
         }

@@ -64,22 +64,22 @@ Deliver targeted desktop UI polish for the main log table and Pattern Wizard, fo
 - [x] 14.6.10. Add snapshot or visual tests for grid lines across selected, hovered, and alternating row states.
 
 ### 14.7. Pattern Wizard Color Refinement
-- [ ] 14.7.1. Audit the Pattern Wizard palette for all purple color references (`0xFF9B59B6` and similar).
-- [ ] 14.7.2. Update `PatternTheme.kt` `roleColor` for THREAD: replace `Color(0xFF9B59B6)` with `Color(0xFF607D8B)` (blue-gray).
-- [ ] 14.7.3. Update `PatternWizardDialog.kt` background: use `surfaceVariant` with a cool-gray/slate shift.
-- [ ] 14.7.4. Update `PatternWizardDialog.kt` button colors: use primary blue (`0xFF00A3E0` dark / `0xFF007ACC` light) for button backgrounds.
-- [ ] 14.7.5. Verify `PatternTokenBar.kt` token pill backgrounds are consistent with the new palette.
-- [ ] 14.7.6. Verify pattern-description pills are NOT changed (they keep their current color and structure).
-- [ ] 14.7.7. Add Compose UI tests verifying the new palette renders correctly in the wizard.
-- [ ] 14.7.8. Add visual regression tests for the wizard with the new palette (light and dark mode).
+- [x] 14.7.1. Audit the Pattern Wizard palette for all purple color references (`0xFF9B59B6` and similar).
+- [x] 14.7.2. Update `PatternTheme.kt` `roleColor` for THREAD: replace `Color(0xFF9B59B6)` with `Color(0xFF607D8B)` (blue-gray).
+- [x] 14.7.3. Update `PatternWizardDialog.kt` background: use `surfaceVariant` with a cool-gray/slate shift.
+- [x] 14.7.4. Update `PatternWizardDialog.kt` button colors: use primary blue (`0xFF00A3E0` dark / `0xFF007ACC` light) for button backgrounds.
+- [x] 14.7.5. Verify `PatternTokenBar.kt` token pill backgrounds are consistent with the new palette.
+- [x] 14.7.6. Verify pattern-description pills are NOT changed (they keep their current color and structure).
+- [x] 14.7.7. Add Compose UI tests verifying the new palette renders correctly in the wizard.
+- [x] 14.7.8. Add visual regression tests for the wizard with the new palette (light and dark mode).
 
 ### 14.8. Pattern Wizard Shape Refinement
-- [ ] 14.8.1. Update `PatternWizardDialog.kt` main Surface: change `MaterialTheme.shapes.large` to `RoundedCornerShape(4.dp)`.
-- [ ] 14.8.2. Update `PatternWizardDialog.kt` Apply button: change `RoundedCornerShape(8.dp)` to `RoundedCornerShape(4.dp)`.
-- [ ] 14.8.3. Update `PatternWizardDialog.kt` footer Surface: change `RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)` to `RoundedCornerShape(0.dp)`.
-- [ ] 14.8.4. Verify pattern-description pills are NOT changed (they keep their current shape and structure).
-- [ ] 14.8.5. Add Compose UI tests verifying the new corner radii render correctly.
-- [ ] 14.8.6. Add visual regression tests for the wizard with the new shapes.
+- [x] 14.8.1. Update `PatternWizardDialog.kt` main Surface: change `MaterialTheme.shapes.large` to `RoundedCornerShape(4.dp)`.
+- [x] 14.8.2. Update `PatternWizardDialog.kt` Apply button: change `RoundedCornerShape(8.dp)` to `RoundedCornerShape(4.dp)`.
+- [x] 14.8.3. Update `PatternWizardDialog.kt` footer Surface: change `RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp)` to `RoundedCornerShape(0.dp)`.
+- [x] 14.8.4. Verify pattern-description pills are NOT changed (they keep their current shape and structure).
+- [x] 14.8.5. Add Compose UI tests verifying the new corner radii render correctly.
+- [x] 14.8.6. Add visual regression tests for the wizard with the new shapes.
 
 ### 14.9. Visual Regression and Usability Verification
 - [ ] 14.9.1. Run `./gradlew :ui:test` to verify all UI tests pass.
