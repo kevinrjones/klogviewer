@@ -33,7 +33,7 @@ internal fun SourceCell(
                 fontFamily = logFontStyle.fontFamily,
                 fontSize = logFontStyle.fontSize
             ),
-            modifier = columnModifier.padding(horizontal = 4.dp)
+            modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
         )
     }
 }

@@ -19,6 +19,7 @@ import androidx.compose.material.ripple
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.*
@@ -459,6 +460,12 @@ fun LogEntryRow(
 
     var rowCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
 
+    val gridLineColor = if (isDarkMode) {
+        MaterialTheme.colors.onSurface.copy(alpha = 0.12f)
+    } else {
+        MaterialTheme.colors.onSurface.copy(alpha = 0.18f)
+    }
+
     Box(
         modifier = modifier
             .width(contentWidth)
@@ -521,6 +528,41 @@ fun LogEntryRow(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = ripple()
             )
+            .drawBehind {
+                val strokeWidth = 1f
+
+                // Horizontal line at the bottom of the row
+                drawLine(
+                    color = gridLineColor,
+                    start = Offset(0f, size.height - strokeWidth),
+                    end = Offset(size.width, size.height - strokeWidth),
+                    strokeWidth = strokeWidth
+                )
+
+                // Vertical line after the gutter
+                val gutterWidthPx = gutterWidth.toPx()
+                drawLine(
+                    color = gridLineColor,
+                    start = Offset(gutterWidthPx, 0f),
+                    end = Offset(gutterWidthPx, size.height),
+                    strokeWidth = strokeWidth
+                )
+
+                // Vertical lines at column boundaries (including the last column's right edge)
+                var cumulativeX = gutterWidthPx
+                columns.forEach { column ->
+                    val colWidthDp = getColumnWidth(column, columnWidths)
+                    cumulativeX += colWidthDp.toPx()
+                    if (cumulativeX <= size.width) {
+                        drawLine(
+                            color = gridLineColor,
+                            start = Offset(cumulativeX, 0f),
+                            end = Offset(cumulativeX, size.height),
+                            strokeWidth = strokeWidth
+                        )
+                    }
+                }
+            }
     ) {
         Row(
             modifier = Modifier
@@ -554,6 +596,7 @@ fun LogEntryRow(
                 )
             }
         }
+        
     }
 }
 
@@ -639,7 +682,7 @@ private fun LogEntryCell(
                     fontFamily = logFontStyle.fontFamily,
                     fontSize = logFontStyle.fontSize
                 ),
-                modifier = columnModifier.padding(horizontal = 4.dp)
+                modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
             )
         }
         "Level" -> {
@@ -659,7 +702,7 @@ private fun LogEntryCell(
                     fontFamily = logFontStyle.fontFamily,
                     fontSize = logFontStyle.fontSize
                 ),
-                modifier = columnModifier.padding(horizontal = 4.dp)
+                modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
             )
         }
         "Message", "Content" -> {
@@ -673,7 +716,7 @@ private fun LogEntryCell(
                     fontSize = logFontStyle.fontSize,
                     textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
                 ),
-                modifier = columnModifier.padding(horizontal = 4.dp)
+                modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
             )
         }
         else -> {
@@ -685,7 +728,7 @@ private fun LogEntryCell(
                     fontFamily = logFontStyle.fontFamily,
                     fontSize = logFontStyle.fontSize
                 ),
-                modifier = columnModifier.padding(horizontal = 4.dp)
+                modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
             )
         }
     }

@@ -52,16 +52,16 @@ Deliver targeted desktop UI polish for the main log table and Pattern Wizard, fo
 - [ ] 14.5.14. Add interaction tests for the toggle state persistence across sessions.
 
 ### 14.6. Table Grid Lines
-- [ ] 14.6.1. Add horizontal grid line rendering in `LogEntryRow` composable in `LogList.kt` using `Canvas.drawLine` at the bottom of each row.
-- [ ] 14.6.2. Add vertical grid line rendering at column boundaries, using column widths from the existing layout system.
-- [ ] 14.6.3. Define grid line color constants: `onSurface` at ~10–12% alpha (dark mode), ~15–18% alpha (light mode), in the theme.
-- [ ] 14.6.4. Ensure selected rows draw grid lines on top of the primary-tinted background.
-- [ ] 14.6.5. Ensure hovered rows draw grid lines on top of the slightly lighter tinted background.
-- [ ] 14.6.6. Ensure alternating rows keep their subtle shade differences with grid lines on top.
-- [ ] 14.6.7. Verify grid lines are consistent with the existing visual theme (no visual conflicts).
-- [ ] 14.6.8. Verify grid line rendering performance is acceptable for large tables (use `drawLine` in `Canvas`).
-- [ ] 14.6.9. Add Compose UI tests verifying grid line visibility and color in dark/light theme.
-- [ ] 14.6.10. Add snapshot or visual tests for grid lines across selected, hovered, and alternating row states.
+- [x] 14.6.1. Add horizontal grid line rendering in `LogEntryRow` composable in `LogList.kt` using `Canvas.drawLine` at the bottom of each row.
+- [x] 14.6.2. Add vertical grid line rendering at column boundaries, using column widths from the existing layout system.
+- [x] 14.6.3. Define grid line color constants: `onSurface` at ~10–12% alpha (dark mode), ~15–18% alpha (light mode), in the theme.
+- [x] 14.6.4. Ensure selected rows draw grid lines on top of the primary-tinted background.
+- [x] 14.6.5. Ensure hovered rows draw grid lines on top of the slightly lighter tinted background.
+- [x] 14.6.6. Ensure alternating rows keep their subtle shade differences with grid lines on top.
+- [x] 14.6.7. Verify grid lines are consistent with the existing visual theme (no visual conflicts).
+- [x] 14.6.8. Verify grid line rendering performance is acceptable for large tables (use `drawLine` in `Canvas`).
+- [x] 14.6.9. Add Compose UI tests verifying grid line visibility and color in dark/light theme.
+- [x] 14.6.10. Add snapshot or visual tests for grid lines across selected, hovered, and alternating row states.
 
 ### 14.7. Pattern Wizard Color Refinement
 - [ ] 14.7.1. Audit the Pattern Wizard palette for all purple color references (`0xFF9B59B6` and similar).
