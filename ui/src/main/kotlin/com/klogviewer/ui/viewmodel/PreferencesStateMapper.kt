@@ -25,6 +25,7 @@ object PreferencesStateMapper {
             sftpConnections = state.sftpConnections,
             s3Connections = state.s3Connections,
             directoryPatternMappings = state.directoryPatternMappings,
+            filePatternOverrides = state.filePatternOverrides,
             tabs = state.tabs.map(::toTabPreference),
             activeTabId = state.activeTabId
         )
@@ -43,7 +44,8 @@ object PreferencesStateMapper {
                 recentDirectories = prefs.recentDirectories,
                 sftpConnections = prefs.sftpConnections,
                 s3Connections = prefs.s3Connections,
-                directoryPatternMappings = prefs.directoryPatternMappings
+                directoryPatternMappings = prefs.directoryPatternMappings,
+                filePatternOverrides = prefs.filePatternOverrides
             )
         } else {
             KLogViewerState(
@@ -55,7 +57,8 @@ object PreferencesStateMapper {
                 recentDirectories = prefs.recentDirectories,
                 sftpConnections = prefs.sftpConnections,
                 s3Connections = prefs.s3Connections,
-                directoryPatternMappings = prefs.directoryPatternMappings
+                directoryPatternMappings = prefs.directoryPatternMappings,
+                filePatternOverrides = prefs.filePatternOverrides
             )
         }
     }
@@ -96,6 +99,7 @@ object PreferencesStateMapper {
             showAnsiColors = windowPreference.showAnsiColors,
             parserName = windowPreference.parserName,
             patternDraft = windowPreference.patternDraft,
+            sourcePatterns = windowPreference.sourcePatterns,
             columns = windowPreference.columns,
             columnWidths = windowPreference.columnWidths,
             isConnected = windowPreference.isConnected,
@@ -138,6 +142,7 @@ object PreferencesStateMapper {
             showAnsiColors = window.showAnsiColors,
             parserName = window.parserName,
             patternDraft = window.patternDraft,
+            sourcePatterns = window.sourcePatterns,
             columns = window.columns,
             columnWidths = window.columnWidths,
             isConnected = window.isConnected,

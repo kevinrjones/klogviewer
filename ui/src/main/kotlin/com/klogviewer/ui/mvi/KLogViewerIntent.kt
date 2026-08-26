@@ -161,6 +161,7 @@ sealed interface KLogViewerIntent {
     data object ClosePatternWizard : PatternWizardIntent
     data object SkipPatternWizard : PatternWizardIntent
     data object ApplyPatternDraft : PatternWizardIntent
+    data class SelectPatternWizardSource(val sourceId: String) : PatternWizardIntent
     data class AddPatternToken(val segmentIndex: Int, val role: com.klogviewer.domain.model.PatternTokenRole) : PatternWizardIntent
     data class RemovePatternSegment(val segmentId: String) : PatternWizardIntent
     data class ReorderPatternSegment(val segmentId: String, val moveLeft: Boolean) : PatternWizardIntent

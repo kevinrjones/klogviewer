@@ -70,4 +70,50 @@ class LogListSourceShadeIndexTest {
 
         expectThat(observedShadeIndexes.size).isEqualTo(50)
     }
+
+    @Test
+    fun `given subtle gray shade generation when requesting light and dark shades then soft bounds are maintained`() {
+        val lightShades = generateSubtleGrayShades(
+            baseArgb = 0xFFFAFAFA,
+            count = 50,
+            maxOffset = 12,
+            isDarkening = true
+        )
+        expectThat(lightShades.size).isEqualTo(50)
+        expectThat((lightShades.first().red * 255).toInt()).isEqualTo(250)
+        expectThat((lightShades.last().red * 255).toInt()).isEqualTo(238)
+
+        val darkShades = generateSubtleGrayShades(
+            baseArgb = 0xFF1E1E1E,
+            count = 50,
+            maxOffset = 12,
+            isDarkening = false
+        )
+        expectThat(darkShades.size).isEqualTo(50)
+        expectThat((darkShades.first().red * 255).toInt()).isEqualTo(30)
+        expectThat((darkShades.last().red * 255).toInt()).isEqualTo(42)
+    }
+
+    @Test
+    fun `given directory source with entries when resolving effective source ids then all discovered sources returned`() {
+        val directorySource = listOf("/var/log/app")
+        val entries = listOf(
+            com.klogviewer.domain.model.LogEntry(
+                timestamp = com.klogviewer.domain.model.LogTimestamp("2024-01-01 10:00:00"),
+                level = com.klogviewer.domain.model.LogLevel.INFO,
+                content = com.klogviewer.domain.model.LogContent("entry 1"),
+                sourceId = "/var/log/app/service-a.log"
+            ),
+            com.klogviewer.domain.model.LogEntry(
+                timestamp = com.klogviewer.domain.model.LogTimestamp("2024-01-01 10:00:01"),
+                level = com.klogviewer.domain.model.LogLevel.INFO,
+                content = com.klogviewer.domain.model.LogContent("entry 2"),
+                sourceId = "/var/log/app/service-b.log"
+            )
+        )
+
+        val effectiveSources = getEffectiveSourceIds(directorySource, entries)
+
+        expectThat(effectiveSources).isEqualTo(listOf("/var/log/app/service-a.log", "/var/log/app/service-b.log"))
+    }
 }

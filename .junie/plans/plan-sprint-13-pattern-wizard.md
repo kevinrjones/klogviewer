@@ -34,6 +34,17 @@ Create a new **UI-first** Sprint 13 focused on editable log-pattern detection an
 - Deferred items are captured in `deferred_decisions.md` with enough context to revisit them later.
 - Sprint and task docs are renumbered and the new Sprint 13 is broken into UI-led sections with HITL reviews.
 
+### Multi-Source Mixed-Pattern Windows (new scope from grilling session)
+A window can load files from multiple locations; some share a pattern, some don't, but all should share a timestamp for interleaving. Decisions locked with the user:
+- **Per-source parsers**: each file/directory source in a window resolves its own pattern (saved mapping → heuristic → wizard); the window merges already-parsed entries by timestamp.
+- **Soft timestamp enforcement**: sources whose pattern lacks a parseable timestamp load anyway with a visible "interleaving will be approximate" warning; their entries keep file order anchored to the last timestamped entry.
+- **Union-of-columns display**: the table header is the union of all sources' columns (shared core fields first: Timestamp, Level, Message); missing fields render as blank cells.
+- **Source identification**: a filterable/sortable `Source` column with short deduped display names (full path in tooltip) plus a per-source colour accent (left-edge stripe/badge) and a source-visibility affordance.
+- **Single wizard with source selector**: when at least one source is unresolved the Pattern Wizard opens once, listing all window sources with per-source status (✓ saved / ⚠ needs review), each with its own sample lines, draft, and preview; `Edit Pattern Mapping...` reopens the same dialog.
+- **Directory default + file override persistence**: directory mappings remain primary; an optional per-file (or filename-glob) override handles same-directory pattern conflicts; window preferences store a `sourceId → mapping reference` map so session restore is exact.
+- **Timestamp-ordered insertion for live tail**: entries arriving out of order across tailed sources are inserted at their timestamp position (near-tail binary search), keeping the interleaved view truthful.
+- Update `docs/sprints/sprint-13-pattern-wizard.md` and `docs/tasks/TASKS-SPRINT-13-PATTERN-WIZARD.md` with these findings as a new section (13.9) with a HITL checkpoint.
+
 # Technical Design
 
 ### Current Implementation
@@ -116,6 +127,37 @@ graph TD
 - Multiline behavior must stay aligned with `TemplateLogParser` + `MultilineProcessor` so preview and final parsing agree.
 - Deferred items can get lost unless `deferred_decisions.md` is kept current as part of the sprint workflow.
 
+### Multi-Source Design (Section 13.9)
+
+#### Current gaps
+- `LogWindow` / `WindowPreference` hold a single `parserName` + `patternDraft`, so a window cannot represent two sources with different patterns.
+- `WorkspaceLogLoader.performHeuristicDetection` resolves one parser per window; `LogLoadingCoordinator.applyDefaultParserResults` applies the first result to the whole window.
+- The wizard (`PatternWizardState`) is window-scoped: one draft, one sample-line set, one `targetWindowId`.
+- Directory mappings can't distinguish two files in the same directory that need different patterns.
+
+#### Proposed changes
+1. **Per-source parser resolution** — change the detection path to return `sourceId → ProbeResult`; `createLogFlows` gives each source its own compiled parser; JSON sources still route to `JsonLogParser` unchanged.
+2. **Window state** — replace single `parserName`/`patternDraft` on `LogWindow` and `WindowPreference` with a `sourcePatterns: Map<SourceId, SourcePatternRef>` (mapping reference or inline draft), keeping legacy single-value fields deserializable for backward compatibility.
+3. **Persistence** — extend `UserPreferences` with optional file-level overrides (`filePatternOverrides` keyed by normalized file identity or glob) layered over `directoryPatternMappings`; lookup order per source: file override → directory mapping → heuristic.
+4. **Merge & live ordering** — merge parsed streams by timestamp; live-tail entries are inserted at their timestamp position via near-tail binary search in the window entry list; timestamp-less entries anchor to the previous timestamped entry in file order.
+5. **Display** — union columns via `mergeColumnsWithDiscoveredStatic` across all source results; add a `Source` column and per-source colour accent in `LogList.kt`; source short-name dedup + tooltip; source visibility toggle in filter bar or legend.
+6. **Wizard multi-source mode** — add a source list (left rail or dropdown) to `PatternWizardDialog` with per-source status, sample lines, draft, and preview; `PatternWizardState` gains `sources: List<SourceWizardEntry>` and an active source id; timestamp-missing warning surfaced in `PatternMatchSummary`.
+7. **Docs** — add Section 13.9 (multi-source mixed-pattern windows) to the sprint and tasks documents with the seven locked decisions, concrete file targets, and a closing HITL review; record any deferred variants (e.g. windowed re-sort buffer, per-source column sets) in `docs/deferred_decisions.md`; extend `docs/adr/adr-043-...` or add a new ADR for per-source resolution and file overrides.
+
+#### Multi-source data flow
+```mermaid
+graph TD
+    S1[Source A file] --> R1[Resolve: file override > dir mapping > heuristic]
+    S2[Source B file] --> R2[Resolve: file override > dir mapping > heuristic]
+    R1 --> P1[Parser A]
+    R2 --> P2[Parser B]
+    P1 --> M[Timestamp merge + live insert]
+    P2 --> M
+    M --> T[Window table: union columns + Source column]
+    R2 -->|unresolved| W[Wizard with source selector]
+    W -->|apply + save| Prefs[Directory mapping / file override]
+```
+
 # Testing
 
 ### Validation Approach
@@ -137,6 +179,15 @@ graph TD
 - Extend `core` parser tests near `HeuristicProbeTest`, `TemplateLogParserTest`, and related parser coverage.
 - Extend `ui` tests around `WorkspaceLogLoader`, `LogLoadingCoordinator`, and Compose components for the wizard/editor.
 - Include doc-task acceptance items for `./gradlew test`, touched-module checks, and `./gradlew check` in the implementation sprint.
+
+### Multi-Source Scenarios (13.9)
+- Load two files with different patterns into one window; verify each parses with its own pattern and rows interleave by timestamp.
+- Verify union columns render with blank cells where a source lacks a field, and the `Source` column + colour accent identify origins.
+- Two files in the same directory with different patterns: verify file override wins over directory mapping and both persist/restore correctly.
+- Source with no parseable timestamp: verify the warning appears and entries keep anchored file order.
+- Live tail two sources with out-of-order arrivals: verify timestamp-ordered insertion keeps correct interleaving.
+- Wizard with multiple sources: verify the source selector shows per-source status and applying updates only the selected source's mapping.
+- Regression: single-source windows and structured JSON behaviour unchanged.
 
 # Delivery Steps
 
@@ -236,3 +287,33 @@ Add a lightweight dialog/surface listing saved directory mappings with delete an
 
 ### ✓ Step 20: Testing, Verification, Task Checkboxes, and HITL Review (Task 13.7.8)
 Add tests for serialization, normalization, lookup/save, mismatch threshold, and management UI; verify `./gradlew check` and `./gradlew :app:run`, update task checkboxes, and prepare HITL review summary.
+
+### ✓ Step 21: Document the multi-source design in the sprint and task docs (Section 13.9)
+Sprint and task documents capture the seven locked multi-source decisions as a new section 13.9.
+- Add a "Multi-Source Mixed-Pattern Windows" section to `docs/sprints/sprint-13-pattern-wizard.md` covering per-source parsers, soft timestamp enforcement, union columns, Source column + colour accent, single wizard with source selector, directory-default + file-override persistence, and timestamp-ordered live insertion.
+- Add tasks 13.9.1–13.9.x to `docs/tasks/TASKS-SPRINT-13-PATTERN-WIZARD.md` mapped to concrete files, ending with a HITL review task.
+- Record deferred alternatives (windowed re-sort buffer, per-source column sets, colour-only identification) in `docs/deferred_decisions.md`; extend adr-043 or add a new ADR for per-source resolution and file overrides.
+
+### ✓ Step 22: Per-source pattern model and persistence schema
+Domain and preferences support per-source patterns with file overrides.
+- Add `sourcePatterns` map to `LogWindow` / `WindowPreference` (backward compatible with the legacy single `parserName`/`patternDraft`).
+- Add `filePatternOverrides` to `UserPreferences` keyed by normalized file identity/glob; lookup order: file override → directory mapping → heuristic.
+- Update `PreferencesStateMapper`, `JsonPreferencesRepository` round-trip, and session restore; add serialization + backward-compat tests.
+
+### ✓ Step 23: Per-source resolution and timestamp-merged loading
+Each source parses with its own pattern and the window interleaves correctly.
+- Change `WorkspaceLogLoader` detection to resolve per source ID and `createLogFlows` to attach per-source parsers (JSON path untouched).
+- Merge parsed streams by timestamp; implement near-tail binary-search insertion for live-tail out-of-order arrivals; anchor timestamp-less entries to file order.
+- Union columns across source results via `mergeColumnsWithDiscoveredStatic`; unit tests for merge ordering and anchoring.
+
+### ✓ Step 24: Source-aware table display
+The table shows origin at a glance.
+- Add a filterable `Source` column with short deduped names and full-path tooltip in `LogList.kt`.
+- Add per-source colour accent (left-edge stripe/badge) and a source-visibility toggle/legend.
+- UI tests for column rendering, blank cells, and source filtering.
+
+### ✓ Step 25: Multi-source Pattern Wizard with source selector
+One wizard manages all window sources.
+- Extend `PatternWizardState` with per-source entries (status, sample lines, draft, preview) and an active-source selector in `PatternWizardDialog`.
+- Auto-open only when ≥1 source is unresolved; per-source Apply saves to directory mapping or file override per the persistence toggle; surface the missing-timestamp warning in `PatternMatchSummary`.
+- Extend `PatternWizardIntentHandler` + tests; run `./gradlew check`, verify with `./gradlew :app:run`, tick 13.9 checkboxes, and stop for HITL review.

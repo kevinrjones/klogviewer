@@ -69,6 +69,20 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
 - Confirm structured JSON logs still open correctly without being forced through the text-pattern wizard unnecessarily.
 - Confirm preview-only placeholder visibility is sufficient for Sprint 13 and that deeper extraction can remain deferred.
 
+### 2.6. Multi-Source Mixed-Pattern Windows
+A window can load files from multiple locations; some share a pattern, some don't, but interleaving requires a common timestamp. The following decisions are locked:
+- **Per-source parsers**: each file/directory source in a window resolves its own pattern (saved mapping → heuristic → wizard); the window merges already-parsed entries by timestamp.
+- **Soft timestamp enforcement**: sources whose pattern lacks a parseable timestamp load anyway with a visible "interleaving will be approximate" warning; their entries keep file order anchored to the last timestamped entry.
+- **Union-of-columns display**: the table header is the union of all sources' columns (shared core fields first: Timestamp, Level, Message); missing fields render as blank cells.
+- **Source identification**: a filterable/sortable `Source` column with short deduped display names (full path in tooltip), plus a per-source colour accent (left-edge stripe/badge) and a source-visibility affordance.
+- **Single wizard with source selector**: when at least one source is unresolved the Pattern Wizard opens once, listing all window sources with per-source status (✓ saved / ⚠ needs review), each with its own sample lines, draft, and preview; `Edit Pattern Mapping...` reopens the same dialog.
+- **Directory default + file override persistence**: directory mappings remain primary; an optional per-file (or filename-glob) override handles same-directory pattern conflicts; window preferences store a `sourceId → mapping reference` map so session restore is exact.
+- **Timestamp-ordered insertion for live tail**: entries arriving out of order across tailed sources are inserted at their timestamp position (near-tail binary search), keeping the interleaved view truthful.
+
+#### HITL Review Checkpoint
+- Confirm mixed-pattern windows interleave correctly, the union column layout is readable, and the `Source` column + colour accents make row origin obvious.
+- Confirm the multi-source wizard flow (source selector, per-source apply, missing-timestamp warning) feels manageable and per-file overrides persist/restore correctly.
+
 ## 3. Dependencies and Ownership Boundaries
 - `:domain` owns the canonical persisted pattern definition and directory-scoped preference schema.
 - `:core` owns heuristic enrichment, canonical-pattern compilation, importer behavior, preview compilation, and persistence implementation.
@@ -116,7 +130,15 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
 - S3 mappings key by bucket identity plus normalized prefix/directory path.
 - The same directory key rules must be used in first-open lookup, apply-time persistence, and later reuse.
 
-### 4.6. Structured Placeholder Handling
+### 4.6. Multi-Source Resolution and Merge
+- Detection returns `sourceId → ProbeResult`; each source in a window gets its own compiled parser (structured JSON sources continue to route to `JsonLogParser` unchanged).
+- `LogWindow` / `WindowPreference` carry a `sourcePatterns: Map<SourceId, SourcePatternRef>` (mapping reference or inline draft); legacy single `parserName`/`patternDraft` fields stay deserializable for backward compatibility.
+- `UserPreferences` gains optional `filePatternOverrides` keyed by normalized file identity or glob, layered over `directoryPatternMappings`; lookup order per source: file override → directory mapping → heuristic.
+- Parsed streams merge by timestamp; live-tail entries are inserted at their timestamp position via near-tail binary search; timestamp-less entries anchor to the previous timestamped entry in file order.
+- Table columns are the union across all source results via the existing column-merge helper; a `Source` column and per-source colour accent identify origin.
+- `PatternWizardState` gains per-source entries (status, sample lines, draft, preview) and an active-source selector; the missing-timestamp warning surfaces in `PatternMatchSummary`.
+
+### 4.7. Structured Placeholder Handling
 - Structured JSON detection remains authoritative and happens before any text-pattern wizard path is forced onto a file.
 - When a structured entry exposes a message template such as `"@mt":"Starting ... {version}"`, placeholder tokens are surfaced in preview only.
 - Sprint 13 does not reinterpret those placeholders into a second set of parsed columns during normal log loading.
@@ -136,6 +158,8 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
 - **Structured compatibility first**: JSON parsing remains authoritative and nested placeholder support is preview-only in this sprint.
 - **Deferred decisions tracked explicitly**: postponed design or implementation branches must be recorded in `docs/deferred_decisions.md`.
 - **Professional interaction polish is in scope**: hover sync, undo/redo, keyboard model, resampling, escape hatches, mapping mismatch recovery, and dialog ergonomics are defined in `docs/PATTERN-WIZARD-UI-DESIGN.md` §6 and treated as sprint scope, not stretch goals.
+- **Per-source pattern resolution**: multi-source windows resolve one pattern per source and merge parsed entries by timestamp; timestamp enforcement is soft (warn, load anyway) and live-tail arrivals are inserted timestamp-ordered.
+- **Directory default + file override persistence**: directory mappings stay primary with optional per-file/glob overrides for same-directory conflicts; window preferences store per-source mapping references for exact session restore.
 
 ## 7. Definition of Done
 - [ ] Opening an unrecognized or heuristically detected text log shows a best-guess pattern wizard before final mapping is committed.
@@ -149,3 +173,6 @@ Deliver a UI-first workflow that shows a best-guess log pattern as soon as a log
 - [ ] A saved mapping that stops matching triggers wizard re-entry with diagnostics rather than silent mis-parsing.
 - [ ] Saved directory mappings can be listed and deleted from a management surface.
 - [ ] Deferred items are captured in `docs/deferred_decisions.md` with revisit triggers.
+- [ ] Two files with different patterns load into one window, each parsed with its own pattern, interleaved by timestamp with union columns and a `Source` column + colour accent.
+- [ ] Same-directory pattern conflicts are handled by file overrides that persist and restore correctly; sources without parseable timestamps show the approximate-interleaving warning.
+- [ ] The multi-source wizard shows per-source status and applying updates only the selected source's mapping.

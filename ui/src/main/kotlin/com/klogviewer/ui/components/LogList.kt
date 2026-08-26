@@ -52,19 +52,18 @@ internal const val NO_SOURCE_SHADE_INDEX = -1
 internal val SourceShadeIndexSemanticsKey = SemanticsPropertyKey<Int>("sourceShadeIndex")
 internal var SemanticsPropertyReceiver.sourceShadeIndex by SourceShadeIndexSemanticsKey
 
-private val sourceBackgroundLightShades = generateDarkerGrayShades(
-    argb = 0xFFFAFAFA,
+private val sourceBackgroundLightShades = generateSubtleGrayShades(
+    baseArgb = 0xFFFAFAFA,
     count = 50,
-    step = 1
+    maxOffset = 12,
+    isDarkening = true
 )
 
-private val sourceBackgroundDarkShades = listOf(
-    Color(0xFF1E1E1E),
-    Color(0xFF242424),
-    Color(0xFF2A2A2A),
-    Color(0xFF303030),
-    Color(0xFF363636),
-    Color(0xFF3C3C3C)
+private val sourceBackgroundDarkShades = generateSubtleGrayShades(
+    baseArgb = 0xFF1E1E1E,
+    count = 50,
+    maxOffset = 12,
+    isDarkening = false
 )
 
 @Composable
@@ -134,10 +133,14 @@ fun LogList(
         }
     }
 
+    val effectiveSourceIds = remember(sourceIds, logs) {
+        getEffectiveSourceIds(sourceIds, logs)
+    }
+
     val displayColumns = if (columns.isEmpty()) listOf("Timestamp", "Level", "Message") else columns
     val logFontStyle = createLogFontStyle(logFontFamily, logFontSizeSp)
 
-    val gutterWidth = getColumnWidth("Line #", columnWidths, sourceIds)
+    val gutterWidth = getColumnWidth("Line #", columnWidths, effectiveSourceIds)
     val contentWidth = getLogListContentWidth(displayColumns, columnWidths, gutterWidth)
     val logListTag = if (windowId != null) "log_list_$windowId" else "log_list"
 
@@ -190,7 +193,7 @@ fun LogList(
                                     contentWidth = contentWidth,
                                     gutterWidth = gutterWidth,
                                     showAnsiColors = showAnsiColors,
-                                    sourceIds = sourceIds,
+                                    sourceIds = effectiveSourceIds,
                                     missingSourceIds = missingSourceIds,
                                     columns = displayColumns,
                                     columnWidths = columnWidths,
@@ -520,6 +523,7 @@ fun LogEntryRow(
                     filterQueries = filterQueries,
                     isDarkMode = isDarkMode,
                     showAnsiColors = showAnsiColors,
+                    sourceIds = sourceIds,
                     missingSourceIds = missingSourceIds,
                     logColors = logColors,
                     logFontStyle = logFontStyle
@@ -541,7 +545,7 @@ private fun LogGutter(
     val rowIndex = lineNumber - 1
     Row(
         modifier = Modifier.width(gutterWidth).padding(horizontal = 4.dp),
-        verticalAlignment = Alignment.Top
+        verticalAlignment = Alignment.CenterVertically
     ) {
         if (sourceIds.size > 1) {
             val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
@@ -553,6 +557,7 @@ private fun LogGutter(
             ) {
                 Box(
                     modifier = Modifier
+                        .align(Alignment.CenterVertically)
                         .size(8.dp)
                         .testTag("log_source_badge_$rowIndex")
                         .background(badgeColor, CircleShape)
@@ -567,6 +572,7 @@ private fun LogGutter(
             ) {
                 Box(
                     modifier = Modifier
+                        .align(Alignment.CenterVertically)
                         .size(8.dp)
                         .testTag("log_structured_badge_$rowIndex")
                         .background(MaterialTheme.colors.primary.copy(alpha = 0.7f), CircleShape)
@@ -594,11 +600,13 @@ private fun LogEntryCell(
     filterQueries: List<String>,
     isDarkMode: Boolean,
     showAnsiColors: Boolean,
+    sourceIds: List<String>,
     missingSourceIds: Set<String>,
     logColors: LogLevelColors,
     logFontStyle: TextStyle
 ) {
     when (column) {
+        "Source" -> SourceCell(entry, sourceIds, columnModifier, logFontStyle)
         "Timestamp" -> {
             Text(
                 text = entry.timestamp.value,
@@ -659,6 +667,33 @@ private fun LogEntryCell(
     }
 }
 
+@Composable
+private fun SourceCell(
+    entry: LogEntry,
+    sourceIds: List<String>,
+    columnModifier: Modifier,
+    logFontStyle: TextStyle
+) {
+    val displayNames = remember(sourceIds) { buildSourceDisplayNames(sourceIds) }
+    val displayName = entry.sourceId?.let { displayNames[it] ?: it.extractSourceFileName() } ?: ""
+    TooltipWrapper(
+        tooltip = entry.sourceId ?: "",
+        tooltipTestTag = "log_source_cell_tooltip"
+    ) {
+        Text(
+            text = displayName,
+            color = getSourceBadgeColor(entry.sourceId, sourceIds).takeIf { it != Color.Transparent }
+                ?: MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
+            maxLines = 1,
+            style = MaterialTheme.typography.caption.copy(
+                fontFamily = logFontStyle.fontFamily,
+                fontSize = logFontStyle.fontSize
+            ),
+            modifier = columnModifier.padding(horizontal = 4.dp)
+        )
+    }
+}
+
 internal fun resolveCustomColumnValue(column: String, entry: LogEntry): String {
     val fields = entry.compatibilityFields()
     val normalizedColumn = column.normalizedFieldLookupKey()
@@ -707,9 +742,10 @@ internal fun getColumnWidth(column: String, columnWidths: Map<String, Int>, sour
     if (width != null) return width.dp
 
     val defaultWidth = when (column) {
-        "Line #", "#" -> if (sourceIds.size > 1) 60.dp else 50.dp
+        "Line #", "#" -> if (sourceIds.size > 1) 68.dp else 50.dp
         "Timestamp" -> 180.dp
         "Level" -> 80.dp
+        "Source" -> 140.dp
         "Message", "Content" -> DEFAULT_MESSAGE_COLUMN_WIDTH.dp
         else -> 120.dp
     }
@@ -742,10 +778,47 @@ private fun String?.extractSourceFileName(): String {
     return fileName.ifBlank { normalized.ifBlank { "Unknown Source" } }
 }
 
+/**
+ * Builds short display names for the `Source` column: file names by default,
+ * disambiguated with the parent directory when two sources share a file name.
+ */
+internal fun buildSourceDisplayNames(sourceIds: List<String>): Map<String, String> {
+    val fileNames = sourceIds.associateWith { it.extractSourceFileName() }
+    val duplicated = fileNames.values.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+    return fileNames.mapValues { (sourceId, fileName) ->
+        if (fileName in duplicated) {
+            val normalized = sourceId.removeSuffix("/").removeSuffix("\\")
+            val parent = normalized.substringBeforeLast('/', "").substringAfterLast('/').substringAfterLast('\\')
+            if (parent.isBlank()) fileName else "$parent/$fileName"
+        } else {
+            fileName
+        }
+    }
+}
+
+internal fun matchSourceIndex(sourceId: String?, sourceIds: List<String>): Int {
+    if (sourceId.isNullOrBlank() || sourceIds.isEmpty()) return -1
+
+    val exactIndex = sourceIds.indexOf(sourceId)
+    val index = if (exactIndex >= 0) {
+        exactIndex
+    } else {
+        val normalizedSource = sourceId.removePrefix("local:").removeSuffix("/").removeSuffix("\\")
+        sourceIds.indexOfFirst { candidate ->
+            val normalizedCandidate = candidate.removePrefix("local:").removeSuffix("/").removeSuffix("\\")
+            normalizedCandidate == normalizedSource ||
+                normalizedCandidate.endsWith(normalizedSource) ||
+                normalizedSource.endsWith(normalizedCandidate)
+        }.coerceAtLeast(0)
+    }
+    return index
+}
+
 private fun getSourceBadgeColor(sourceId: String?, sourceIds: List<String>, isMissing: Boolean = false): Color {
     if (sourceId == null || sourceIds.size <= 1) return Color.Transparent
     if (isMissing) return Color.Red
-    val index = sourceIds.indexOf(sourceId).coerceAtLeast(0)
+    val index = matchSourceIndex(sourceId, sourceIds)
+    if (index < 0) return Color.Transparent
     val colors = listOf(
         Color(0xFFE57373), // Red
         Color(0xFF81C784), // Green
@@ -764,6 +837,46 @@ internal fun getSourceShadeIndex(sourceId: String?, sourceIds: List<String>): In
         return NO_SOURCE_SHADE_INDEX
     }
     return stableSourceShadeIndex(sourceId, sourceBackgroundLightShades.size)
+}
+
+internal fun getEffectiveSourceIds(sourceIds: List<String>, logs: List<LogEntry>): List<String> {
+    val entrySources = logs.mapNotNull { it.sourceId }.distinct().filter { it.isNotEmpty() }
+    return when {
+        entrySources.size > 1 -> entrySources
+        sourceIds.size > 1 -> sourceIds
+        else -> entrySources.ifEmpty { sourceIds }
+    }
+}
+
+internal fun generateSubtleGrayShades(
+    baseArgb: Long,
+    count: Int,
+    maxOffset: Int = 12,
+    isDarkening: Boolean = true
+): List<Color> {
+    if (count <= 0) return emptyList()
+
+    val alpha = ((baseArgb ushr 24) and 0xFF).toInt()
+    val red = ((baseArgb ushr 16) and 0xFF).toInt()
+    val green = ((baseArgb ushr 8) and 0xFF).toInt()
+    val blue = (baseArgb and 0xFF).toInt()
+    val baseGray = ((red + green + blue) / 3).coerceIn(0, 255)
+
+    return (0 until count).map { index ->
+        val offset = if (count > 1) (index * maxOffset) / (count - 1) else 0
+        val channel = if (isDarkening) {
+            (baseGray - offset).coerceIn(0, 255)
+        } else {
+            (baseGray + offset).coerceIn(0, 255)
+        }
+
+        val shadeArgb = (alpha.toLong() shl 24) or
+            (channel.toLong() shl 16) or
+            (channel.toLong() shl 8) or
+            channel.toLong()
+
+        Color(shadeArgb)
+    }
 }
 
 internal fun generateDarkerGrayShades(argb: Long, count: Int, step: Int): List<Color> {

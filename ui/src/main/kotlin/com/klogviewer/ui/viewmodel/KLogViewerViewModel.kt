@@ -197,7 +197,10 @@ class KLogViewerViewModel(
         scope = scope,
         computationDispatcher = Dispatchers.Default,
         onResampleLines = { windowId -> logLoadingCoordinator.resampleLinesForWindow(windowId) },
-        onApplyDraft = { windowId, draft -> logLoadingCoordinator.applyPatternDraft(windowId, draft) },
+        onSampleSourceLines = { sourceId -> logLoadingCoordinator.resampleLinesForSource(sourceId) },
+        onApplyDraft = { windowId, draft, sourceId ->
+            logLoadingCoordinator.applyPatternDraft(windowId, draft, sourceId)
+        },
         onSavePreferences = { savePreferences() }
     )
     

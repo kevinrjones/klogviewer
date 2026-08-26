@@ -7,6 +7,9 @@ import com.klogviewer.domain.model.PatternDraft
 import com.klogviewer.domain.model.PatternSegment
 import com.klogviewer.domain.model.PatternToken
 import com.klogviewer.domain.model.PatternTokenRole
+import com.klogviewer.domain.model.SourceWizardEntry
+import com.klogviewer.domain.model.SourceWizardStatus
+import com.klogviewer.ui.mvi.LogWindow
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
 import kotlinx.coroutines.CoroutineDispatcher
@@ -25,7 +28,8 @@ class PatternWizardIntentHandler(
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val computationDispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val onResampleLines: ((String) -> List<String>)? = null,
-    private val onApplyDraft: ((windowId: String, draft: PatternDraft) -> Unit)? = null,
+    private val onSampleSourceLines: ((sourceId: String) -> List<String>)? = null,
+    private val onApplyDraft: ((windowId: String, draft: PatternDraft, sourceId: String?) -> Unit)? = null,
     private val onSavePreferences: (() -> Unit)? = null
 ) {
     private var previewJob: Job? = null
@@ -37,6 +41,7 @@ class PatternWizardIntentHandler(
             KLogViewerIntent.ClosePatternWizard,
             KLogViewerIntent.SkipPatternWizard -> handleClose()
             KLogViewerIntent.ApplyPatternDraft -> handleApply()
+            is KLogViewerIntent.SelectPatternWizardSource -> handleSelectSource(intent)
             KLogViewerIntent.ResamplePatternLines -> handleResample()
             is KLogViewerIntent.AddPatternToken -> handleAddToken(intent)
             is KLogViewerIntent.RemovePatternSegment -> handleRemoveSegment(intent)
@@ -131,9 +136,59 @@ class PatternWizardIntentHandler(
         val targetWindowId = wizard.targetWindowId
             ?: state.value.tabs.flatMap { it.windows }.firstOrNull()?.id
         val draftToApply = wizard.currentDraft
+        val activeSourceId = wizard.activeSourceId.takeIf { wizard.sources.size > 1 }
         handleClose()
         if (targetWindowId != null) {
-            onApplyDraft?.invoke(targetWindowId, draftToApply)
+            onApplyDraft?.invoke(targetWindowId, draftToApply, activeSourceId)
+        }
+    }
+
+    private fun handleSelectSource(intent: KLogViewerIntent.SelectPatternWizardSource) {
+        val wizard = state.value.patternWizardState
+        if (intent.sourceId == wizard.activeSourceId) return
+        if (wizard.sources.none { it.sourceId == intent.sourceId }) return
+
+        val stashedDrafts = wizard.activeSourceId?.let {
+            wizard.sourceDrafts + (it to wizard.currentDraft)
+        } ?: wizard.sourceDrafts
+        val nextDraft = stashedDrafts[intent.sourceId]
+            ?: resolveSavedDraftForSource(intent.sourceId)
+            ?: wizard.initialBestGuess
+            ?: defaultBestGuessDraft()
+        val newSampleLines = onSampleSourceLines?.invoke(intent.sourceId).orEmpty()
+
+        state.update { currentState ->
+            currentState.copy(
+                patternWizardState = currentState.patternWizardState.copy(
+                    activeSourceId = intent.sourceId,
+                    sourceDrafts = stashedDrafts,
+                    draftHistory = currentState.patternWizardState.draftHistory.reset(nextDraft),
+                    sampleLines = newSampleLines.ifEmpty { currentState.patternWizardState.sampleLines },
+                    selectedLineIndex = 0
+                )
+            )
+        }
+        schedulePreviewRecompute(debounceMs = 0L)
+    }
+
+    private fun resolveSavedDraftForSource(sourceId: String): PatternDraft? {
+        val window = state.value.tabs.flatMap { it.windows }.firstOrNull { sourceId in it.sourcePatterns }
+        val ref = window?.sourcePatterns?.get(sourceId) ?: return null
+        return ref.fileOverrideKey?.let { state.value.filePatternOverrides[it]?.patternDraft }
+            ?: ref.directoryMappingKey?.let { state.value.directoryPatternMappings[it]?.patternDraft }
+            ?: ref.patternDraft
+    }
+
+    private fun buildSourceEntries(window: LogWindow?): List<SourceWizardEntry> {
+        if (window == null || window.sourceIds.size <= 1) return emptyList()
+        return window.sourceIds.map { sourceId ->
+            val ref = window.sourcePatterns[sourceId]
+            val isResolved = ref != null && (ref.directoryMappingKey != null || ref.fileOverrideKey != null)
+            SourceWizardEntry(
+                sourceId = sourceId,
+                displayName = sourceId.removeSuffix("/").substringAfterLast('/').ifBlank { sourceId },
+                status = if (isResolved) SourceWizardStatus.SAVED else SourceWizardStatus.NEEDS_REVIEW
+            )
         }
     }
 
@@ -205,8 +260,14 @@ class PatternWizardIntentHandler(
     private fun handleOpen(intent: KLogViewerIntent.OpenPatternWizard) {
         val initialDraft = intent.initialDraft ?: defaultBestGuessDraft()
         val targetWindowId = intent.targetWindowId ?: state.value.activeTab?.activeWindow?.id
+        val targetWindow = state.value.tabs.flatMap { it.windows }.firstOrNull { it.id == targetWindowId }
+        val sources = buildSourceEntries(targetWindow)
+        val activeSourceId = sources.firstOrNull { it.status == SourceWizardStatus.NEEDS_REVIEW }?.sourceId
+            ?: sources.firstOrNull()?.sourceId
         val sampleLines = if (intent.sampleLines.isNotEmpty()) {
             intent.sampleLines
+        } else if (activeSourceId != null && onSampleSourceLines != null) {
+            onSampleSourceLines.invoke(activeSourceId)
         } else if (targetWindowId != null && onResampleLines != null) {
             onResampleLines.invoke(targetWindowId)
         } else {
@@ -225,7 +286,10 @@ class PatternWizardIntentHandler(
                     draftHistory = currentState.patternWizardState.draftHistory.reset(initialDraft),
                     confidenceScore = if (sampleLines.isNotEmpty()) CONFIDENCE_HIGH else CONFIDENCE_LOW,
                     matchedLineCount = sampleLines.size,
-                    totalSampleLineCount = sampleLines.size
+                    totalSampleLineCount = sampleLines.size,
+                    sources = sources,
+                    activeSourceId = activeSourceId,
+                    sourceDrafts = emptyMap()
                 )
             )
         }

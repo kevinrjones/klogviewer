@@ -566,6 +566,9 @@ private fun DialogHandler(
             },
             onManageMappings = {
                 viewModel.handleIntent(KLogViewerIntent.ShowDirectoryMappingsDialog)
+            },
+            onSelectSource = { sourceId ->
+                viewModel.handleIntent(KLogViewerIntent.SelectPatternWizardSource(sourceId))
             }
         )
     }

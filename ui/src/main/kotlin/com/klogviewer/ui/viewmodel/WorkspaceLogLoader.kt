@@ -24,6 +24,7 @@ class WorkspaceLogLoader(
     private val state: StateFlow<KLogViewerState>
 ) {
     private val logger = KotlinLogging.logger {}
+    val sourcePatternResolver = SourcePatternResolver(localFileSystem, heuristicProbe, state)
 
     fun filterRedundantPaths(paths: List<String>): List<String> {
         val directories = paths.filter { path ->
@@ -75,45 +76,12 @@ class WorkspaceLogLoader(
                 if (sampleLines.isEmpty()) {
                     null
                 } else {
-                    val isDir = localFileSystem.exists(path) && localFileSystem.isDirectory(path)
-                    val directoryKey = DirectoryIdentityNormalizer.normalize(path, isDirectory = isDir)
-                    val savedMapping = state.value.directoryPatternMappings[directoryKey]
-
-                    if (overrideParserName != null && overrideParserName != "Auto") {
-                        val result = getParserResultByName(overrideParserName, sampleLines)
-                        if (result.parser is SimpleLogParser &&
-                            overrideParserName != "Simple" &&
-                            savedMapping != null
-                        ) {
-                            val compiler = PatternDraftCompiler()
-                            val compiled = compiler.compile(savedMapping.patternDraft)
-                            heuristicProbe.registry.register(compiled.template)
-                            ProbeResult(
-                                parser = TemplateLogParser(compiled.template),
-                                parserName = compiled.template.name,
-                                columns = compiled.template.columns
-                            )
-                        } else {
-                            result
-                        }
-                    } else if (savedMapping != null) {
-                        val previewService = DefaultPatternPreviewService()
-                        val previewResult = previewService.computePreview(savedMapping.patternDraft, sampleLines)
-                        if (previewResult.confidenceScore >= MATCH_CONFIDENCE_THRESHOLD) {
-                            val compiler = PatternDraftCompiler()
-                            val compiled = compiler.compile(savedMapping.patternDraft)
-                            heuristicProbe.registry.register(compiled.template)
-                            ProbeResult(
-                                parser = TemplateLogParser(compiled.template),
-                                parserName = compiled.template.name,
-                                columns = compiled.template.columns
-                            )
-                        } else {
-                            heuristicProbe.detect(sampleLines)
-                        }
-                    } else {
-                        heuristicProbe.detect(sampleLines)
-                    }
+                    sourcePatternResolver.resolveParserForSource(
+                        path,
+                        sampleLines,
+                        overrideParserName,
+                        ::getParserResultByName
+                    )
                 }
             }
         }
@@ -256,7 +224,6 @@ class WorkspaceLogLoader(
 
 private const val RESAMPLE_LINE_SCAN_LIMIT = 1000
 private const val RESAMPLE_SECTION_MULTIPLIER = 3
-private const val MATCH_CONFIDENCE_THRESHOLD = 0.80f
 
 private fun resolveSampleFile(localFileSystem: LocalFileSystem, path: String): String? {
     if (!localFileSystem.exists(path)) return null

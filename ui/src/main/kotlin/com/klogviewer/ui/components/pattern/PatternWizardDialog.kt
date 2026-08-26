@@ -1,7 +1,10 @@
 package com.klogviewer.ui.components.pattern
 
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,6 +36,7 @@ import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -44,6 +48,8 @@ import com.klogviewer.domain.model.PatternTokenRole
 import com.klogviewer.domain.model.PatternWizardState
 import com.klogviewer.domain.model.PreviewTableRow
 import com.klogviewer.domain.model.SampleLineSpan
+import com.klogviewer.domain.model.SourceWizardEntry
+import com.klogviewer.domain.model.SourceWizardStatus
 
 @Composable
 fun PatternWizardDialog(
@@ -75,6 +81,7 @@ fun PatternWizardDialog(
     onCloseSelectionPopup: () -> Unit,
     onResample: (() -> Unit)? = null,
     onManageMappings: (() -> Unit)? = null,
+    onSelectSource: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     if (!state.isVisible) return
@@ -150,6 +157,14 @@ fun PatternWizardDialog(
                         }
                     }
 
+                    if (state.sources.size > 1) {
+                        WizardSourceSelector(
+                            sources = state.sources,
+                            activeSourceId = state.activeSourceId,
+                            onSelectSource = { onSelectSource?.invoke(it) }
+                        )
+                    }
+
                     // Two-Pane Content Area (Left: Controls & Sample Line Inspector, Right: Live Table Grid Preview)
                     Row(
                         modifier = Modifier
@@ -212,7 +227,8 @@ fun PatternWizardDialog(
                                 confidenceScore = state.confidenceScore,
                                 parseErrors = state.parseErrors,
                                 isDiagnosticsDrawerOpen = state.isDiagnosticsDrawerOpen,
-                                onToggleDiagnosticsDrawer = onToggleDiagnosticsDrawer
+                                onToggleDiagnosticsDrawer = onToggleDiagnosticsDrawer,
+                                showMissingTimestampWarning = !state.currentDraft.hasTimestampToken
                             )
                         }
 
@@ -358,6 +374,48 @@ fun PatternConfirmationBanner(
             }
             Button(onClick = onApply) {
                 Text("Apply", maxLines = 1)
+            }
+        }
+    }
+}
+
+@Composable
+private fun WizardSourceSelector(
+    sources: List<SourceWizardEntry>,
+    activeSourceId: String?,
+    onSelectSource: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "Sources:",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        sources.forEach { source ->
+            val isActive = source.sourceId == activeSourceId
+            val statusIcon = if (source.status == SourceWizardStatus.SAVED) "✓" else "⚠"
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = if (isActive) {
+                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant
+                },
+                border = if (isActive) BorderStroke(1.dp, MaterialTheme.colorScheme.primary) else null,
+                modifier = Modifier
+                    .clickable { onSelectSource(source.sourceId) }
+                    .testTag("wizard_source_${source.displayName}")
+            ) {
+                Text(
+                    text = "$statusIcon ${source.displayName}",
+                    style = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                )
             }
         }
     }

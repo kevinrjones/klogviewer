@@ -102,6 +102,123 @@ class PatternWizardIntentHandlerTest {
     }
 
     @Test
+    fun `given multi source window when wizard opened then sources listed and unresolved source active`() {
+        val windowState = KLogViewerState(
+            tabs = listOf(
+                com.klogviewer.ui.mvi.TabState(
+                    id = "tab1",
+                    title = "Mixed",
+                    activeWindowId = "win1",
+                    windows = listOf(
+                        com.klogviewer.ui.mvi.LogWindow(
+                            id = "win1",
+                            filePath = "/logs/a.log, /logs/b.log",
+                            sourceIds = listOf("/logs/a.log", "/logs/b.log"),
+                            sourcePatterns = mapOf(
+                                "/logs/a.log" to com.klogviewer.domain.model.SourcePatternRef(
+                                    parserName = "Saved Pattern",
+                                    directoryMappingKey = "local:/logs"
+                                )
+                            )
+                        )
+                    )
+                )
+            ),
+            activeTabId = "tab1"
+        )
+        val state = MutableStateFlow(windowState)
+        val handler = PatternWizardIntentHandler(
+            state = state,
+            onSampleSourceLines = { listOf("line from $it") }
+        )
+
+        handler.handle(KLogViewerIntent.OpenPatternWizard(targetWindowId = "win1"))
+
+        val wizard = state.value.patternWizardState
+        expectThat(wizard.sources.size).isEqualTo(2)
+        expectThat(wizard.sources[0].status).isEqualTo(com.klogviewer.domain.model.SourceWizardStatus.SAVED)
+        expectThat(wizard.sources[1].status).isEqualTo(com.klogviewer.domain.model.SourceWizardStatus.NEEDS_REVIEW)
+        expectThat(wizard.activeSourceId).isEqualTo("/logs/b.log")
+        expectThat(wizard.sampleLines).isEqualTo(listOf("line from /logs/b.log"))
+    }
+
+    @Test
+    fun `given multi source wizard when source selected then draft stashed and samples switch`() {
+        val windowState = KLogViewerState(
+            tabs = listOf(
+                com.klogviewer.ui.mvi.TabState(
+                    id = "tab1",
+                    title = "Mixed",
+                    activeWindowId = "win1",
+                    windows = listOf(
+                        com.klogviewer.ui.mvi.LogWindow(
+                            id = "win1",
+                            filePath = "/logs/a.log, /logs/b.log",
+                            sourceIds = listOf("/logs/a.log", "/logs/b.log")
+                        )
+                    )
+                )
+            ),
+            activeTabId = "tab1"
+        )
+        val state = MutableStateFlow(windowState)
+        val handler = PatternWizardIntentHandler(
+            state = state,
+            onSampleSourceLines = { listOf("line from $it") }
+        )
+
+        handler.handle(KLogViewerIntent.OpenPatternWizard(targetWindowId = "win1"))
+        val firstActive = state.value.patternWizardState.activeSourceId
+        handler.handle(KLogViewerIntent.AddPatternToken(0, PatternTokenRole.CUSTOM_PROPERTY))
+        val editedDraft = state.value.patternWizardState.currentDraft
+
+        handler.handle(KLogViewerIntent.SelectPatternWizardSource("/logs/b.log"))
+
+        val wizard = state.value.patternWizardState
+        expectThat(wizard.activeSourceId).isEqualTo("/logs/b.log")
+        expectThat(wizard.sampleLines).isEqualTo(listOf("line from /logs/b.log"))
+        expectThat(wizard.sourceDrafts[firstActive]).isEqualTo(editedDraft)
+    }
+
+    @Test
+    fun `given multi source wizard when applied then active source id passed to apply callback`() {
+        val windowState = KLogViewerState(
+            tabs = listOf(
+                com.klogviewer.ui.mvi.TabState(
+                    id = "tab1",
+                    title = "Mixed",
+                    activeWindowId = "win1",
+                    windows = listOf(
+                        com.klogviewer.ui.mvi.LogWindow(
+                            id = "win1",
+                            filePath = "/logs/a.log, /logs/b.log",
+                            sourceIds = listOf("/logs/a.log", "/logs/b.log")
+                        )
+                    )
+                )
+            ),
+            activeTabId = "tab1"
+        )
+        val state = MutableStateFlow(windowState)
+        var appliedSourceId: String? = null
+        var appliedWindowId: String? = null
+        val handler = PatternWizardIntentHandler(
+            state = state,
+            onSampleSourceLines = { listOf("line from $it") },
+            onApplyDraft = { windowId, _, sourceId ->
+                appliedWindowId = windowId
+                appliedSourceId = sourceId
+            }
+        )
+
+        handler.handle(KLogViewerIntent.OpenPatternWizard(targetWindowId = "win1"))
+        handler.handle(KLogViewerIntent.ApplyPatternDraft)
+
+        expectThat(appliedWindowId).isEqualTo("win1")
+        expectThat(appliedSourceId).isEqualTo("/logs/a.log")
+    }
+
+    @Test
     fun `given draft mutation when debounced preview finishes then preview rows and spans are updated`() = runTest {
         val testDispatcher = StandardTestDispatcher(testScheduler)
         val testScope = TestScope(testDispatcher)
@@ -153,7 +270,7 @@ class PatternWizardIntentHandlerTest {
 
         val handler = PatternWizardIntentHandler(
             state = state,
-            onApplyDraft = { wId, draft ->
+            onApplyDraft = { wId, draft, _ ->
                 appliedWindowId = wId
                 appliedDraft = draft
             }

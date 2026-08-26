@@ -8,8 +8,10 @@ import com.klogviewer.core.parser.ProbeResult
 import com.klogviewer.core.parser.TemplateLogParser
 import com.klogviewer.domain.model.DirectoryIdentityNormalizer
 import com.klogviewer.domain.model.DirectoryPatternMapping
+import com.klogviewer.domain.model.FilePatternOverride
 import com.klogviewer.domain.model.PatternDraft
 import com.klogviewer.domain.model.PatternPreviewResult
+import com.klogviewer.domain.model.SourcePatternRef
 import com.klogviewer.ui.mvi.KLogViewerState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -26,30 +28,17 @@ class DirectoryMappingCoordinator(
         draft: PatternDraft,
         paths: List<String>,
         isDirectory: Boolean,
+        activeSourceId: String? = null,
         onReload: (String, List<String>, String) -> Unit
     ) {
         val compiled = PatternDraftCompiler().compile(draft)
         heuristicProbe.registry.register(compiled.template)
 
-        if (draft.isDirectoryPersistenceEnabled) {
-            val path = paths.firstOrNull() ?: ""
-            if (path.isNotEmpty()) {
-                val directoryKey = DirectoryIdentityNormalizer.normalize(path, isDirectory = isDirectory)
-                val sourceType = DirectoryIdentityNormalizer.extractSourceType(directoryKey)
-                val mapping = DirectoryPatternMapping(
-                    directoryKey = directoryKey,
-                    patternDraft = draft,
-                    sourceType = sourceType,
-                    createdAt = System.currentTimeMillis(),
-                    lastUsedAt = System.currentTimeMillis()
-                )
-                state.update { currentState ->
-                    currentState.copy(
-                        directoryPatternMappings = currentState.directoryPatternMappings + (directoryKey to mapping)
-                    )
-                }
-                onSavePreferences()
-            }
+        val targetPath = activeSourceId ?: paths.firstOrNull() ?: ""
+        val savedRef = if (draft.isDirectoryPersistenceEnabled && targetPath.isNotEmpty()) {
+            persistDraftForPath(draft, targetPath, isDirectory, activeSourceId, paths)
+        } else {
+            SourcePatternRef(parserName = compiled.template.name, patternDraft = draft)
         }
 
         state.update { currentState ->
@@ -60,15 +49,71 @@ class DirectoryMappingCoordinator(
                     compiled.template.columns
                 )
                 w.copy(
-                    parserName = compiled.template.name,
-                    patternDraft = draft,
+                    parserName = if (activeSourceId != null && paths.size > 1) w.parserName else compiled.template.name,
+                    patternDraft = if (activeSourceId != null && paths.size > 1) w.patternDraft else draft,
+                    sourcePatterns = if (targetPath.isNotEmpty()) {
+                        w.sourcePatterns + (targetPath to savedRef)
+                    } else {
+                        w.sourcePatterns
+                    },
                     columns = LogLoadingCoordinator.mergeColumnsWithDiscoveredStatic(w.columns, listOf(probeResult))
                 )
             }
         }
 
         if (paths.isNotEmpty()) {
-            onReload(windowId, paths, compiled.template.name)
+            val reloadParserName = if (activeSourceId != null && paths.size > 1) "Auto" else compiled.template.name
+            onReload(windowId, paths, reloadParserName)
+        }
+    }
+
+    private fun persistDraftForPath(
+        draft: PatternDraft,
+        targetPath: String,
+        isDirectory: Boolean,
+        activeSourceId: String?,
+        allPaths: List<String>
+    ): SourcePatternRef {
+        val directoryKey = DirectoryIdentityNormalizer.normalize(targetPath, isDirectory = isDirectory)
+        val sourceType = DirectoryIdentityNormalizer.extractSourceType(directoryKey)
+        val hasSameDirectoryConflict = activeSourceId != null && !isDirectory && allPaths.any { other ->
+            other != targetPath &&
+                DirectoryIdentityNormalizer.normalize(other) == directoryKey &&
+                state.value.directoryPatternMappings[directoryKey]?.patternDraft?.name != draft.name &&
+                state.value.directoryPatternMappings.containsKey(directoryKey)
+        }
+
+        return if (hasSameDirectoryConflict) {
+            val fileKey = DirectoryIdentityNormalizer.normalizeFile(targetPath)
+            val override = FilePatternOverride(
+                fileKey = fileKey,
+                patternDraft = draft,
+                sourceType = sourceType,
+                createdAt = System.currentTimeMillis(),
+                lastUsedAt = System.currentTimeMillis()
+            )
+            state.update { currentState ->
+                currentState.copy(
+                    filePatternOverrides = currentState.filePatternOverrides + (fileKey to override)
+                )
+            }
+            onSavePreferences()
+            SourcePatternRef(parserName = draft.name, fileOverrideKey = fileKey)
+        } else {
+            val mapping = DirectoryPatternMapping(
+                directoryKey = directoryKey,
+                patternDraft = draft,
+                sourceType = sourceType,
+                createdAt = System.currentTimeMillis(),
+                lastUsedAt = System.currentTimeMillis()
+            )
+            state.update { currentState ->
+                currentState.copy(
+                    directoryPatternMappings = currentState.directoryPatternMappings + (directoryKey to mapping)
+                )
+            }
+            onSavePreferences()
+            SourcePatternRef(parserName = draft.name, directoryMappingKey = directoryKey)
         }
     }
 

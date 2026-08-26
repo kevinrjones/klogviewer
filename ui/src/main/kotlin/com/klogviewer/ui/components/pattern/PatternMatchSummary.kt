@@ -29,6 +29,7 @@ fun PatternMatchSummary(
     parseErrors: List<PatternParseError>,
     isDiagnosticsDrawerOpen: Boolean,
     onToggleDiagnosticsDrawer: () -> Unit,
+    showMissingTimestampWarning: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val isAllMatched = totalCount > 0 && matchedCount == totalCount
@@ -73,6 +74,23 @@ fun PatternMatchSummary(
                 }
             }
 
+            if (showMissingTimestampWarning) {
+                Surface(
+                    color = WARNING_COLOR.copy(alpha = WARNING_BACKGROUND_ALPHA),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "⚠️ No timestamp field mapped — interleaving with other sources will be approximate.",
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            color = WARNING_COLOR,
+                            fontSize = WARNING_FONT_SIZE
+                        ),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                    )
+                }
+            }
+
             // Diagnostics Drawer
             if (isDiagnosticsDrawerOpen && parseErrors.isNotEmpty()) {
                 Surface(
@@ -104,6 +122,10 @@ fun PatternMatchSummary(
         }
     }
 }
+
+private val WARNING_COLOR = Color(0xFFF39C12)
+private const val WARNING_BACKGROUND_ALPHA = 0.15f
+private val WARNING_FONT_SIZE = 11.sp
 
 @Preview
 @Composable

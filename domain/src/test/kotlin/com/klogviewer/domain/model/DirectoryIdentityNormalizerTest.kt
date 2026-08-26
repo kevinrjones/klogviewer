@@ -63,6 +63,16 @@ class DirectoryIdentityNormalizerTest {
     }
 
     @Test
+    fun `should normalize file identity keys keeping the full file path`() {
+        expectThat(DirectoryIdentityNormalizer.normalizeFile("/var/log/app.log"))
+            .isEqualTo("local:/var/log/app.log")
+        expectThat(DirectoryIdentityNormalizer.normalizeFile("sftp://admin@192.168.1.50:22/var/log/syslog.log"))
+            .isEqualTo("sftp:admin@192.168.1.50:22/var/log/syslog.log")
+        expectThat(DirectoryIdentityNormalizer.normalizeFile("s3://my-prod-bucket/logs/app.log"))
+            .isEqualTo("s3:my-prod-bucket/logs/app.log")
+    }
+
+    @Test
     fun `should extract source type correctly`() {
         expectThat(DirectoryIdentityNormalizer.extractSourceType("local:/var/log")).isEqualTo("LOCAL")
         expectThat(DirectoryIdentityNormalizer.extractSourceType("sftp:admin@host:22/var/log")).isEqualTo("SFTP")

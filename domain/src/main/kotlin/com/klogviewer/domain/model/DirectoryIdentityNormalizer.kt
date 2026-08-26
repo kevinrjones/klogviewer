@@ -25,6 +25,13 @@ object DirectoryIdentityNormalizer {
     }
 
     /**
+     * Normalizes a file path or URI into a canonical file identity key used for
+     * per-file pattern overrides. Uses the same scheme-qualified format as
+     * directory keys but keeps the full file path (no parent extraction).
+     */
+    fun normalizeFile(pathOrUri: String): String = normalize(pathOrUri, isDirectory = true)
+
+    /**
      * Extracts the source type string: "LOCAL", "SFTP", or "S3".
      */
     fun extractSourceType(directoryKey: String): String {

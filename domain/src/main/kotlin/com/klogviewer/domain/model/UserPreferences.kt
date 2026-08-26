@@ -13,7 +13,8 @@ data class UserPreferences(
     val activeTabId: String? = null,
     val sftpConnections: List<SftpConfig> = emptyList(),
     val s3Connections: List<S3Config> = emptyList(),
-    val directoryPatternMappings: Map<String, DirectoryPatternMapping> = emptyMap()
+    val directoryPatternMappings: Map<String, DirectoryPatternMapping> = emptyMap(),
+    val filePatternOverrides: Map<String, FilePatternOverride> = emptyMap()
 )
 
 @Serializable
@@ -23,6 +24,23 @@ data class DirectoryPatternMapping(
     val sourceType: String = "LOCAL",
     val createdAt: Long = System.currentTimeMillis(),
     val lastUsedAt: Long = System.currentTimeMillis()
+)
+
+@Serializable
+data class FilePatternOverride(
+    val fileKey: String,
+    val patternDraft: PatternDraft,
+    val sourceType: String = "LOCAL",
+    val createdAt: Long = System.currentTimeMillis(),
+    val lastUsedAt: Long = System.currentTimeMillis()
+)
+
+@Serializable
+data class SourcePatternRef(
+    val parserName: String? = null,
+    val directoryMappingKey: String? = null,
+    val fileOverrideKey: String? = null,
+    val patternDraft: PatternDraft? = null
 )
 
 @Serializable
@@ -49,6 +67,7 @@ data class WindowPreference(
     val showAnsiColors: Boolean = true,
     val parserName: String? = null,
     val patternDraft: PatternDraft? = null,
+    val sourcePatterns: Map<String, SourcePatternRef> = emptyMap(),
     val columns: List<String> = emptyList(),
     val columnWidths: Map<String, Int> = emptyMap(),
     val isConnected: Boolean = true,

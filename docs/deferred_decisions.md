@@ -57,3 +57,24 @@ This file tracks design and implementation choices that were intentionally postp
 - **Why deferred**: Exposing raw regex creates a two-way sync problem between free-form regex and the canonical token model.
 - **Impact / risk**: Power users with exotic formats may hit limits of the token model; custom-span extraction is the workaround.
 - **Revisit trigger**: Revisit if HITL testing surfaces real log formats the token model plus span extraction cannot express.
+
+## 8. Windowed Re-Sort Buffer for Live Tail
+- **Title**: Buffered N-second re-sort batches for multi-source live tail ordering
+- **Current choice**: Sprint 13 inserts arriving entries at their timestamp position via near-tail binary search instead of buffering and emitting sorted batches.
+- **Why deferred**: A re-sort buffer adds display latency and tuning knobs while still leaving edge cases; direct timestamp-ordered insertion keeps the interleaved view truthful with a small implementation cost.
+- **Impact / risk**: Extremely late arrivals far from the tail may cause an insertion deep in the list; if that proves expensive it can be revisited.
+- **Revisit trigger**: Revisit if profiling shows near-tail insertion causing UI jank on high-volume multi-source tails.
+
+## 9. Per-Source Column Sets
+- **Title**: Table layouts that swap columns per row's source instead of union-of-columns
+- **Current choice**: Sprint 13 shows the union of all sources' columns with blank cells where a source lacks a field, core fields first.
+- **Why deferred**: Per-source column layouts are maximally faithful but visually chaotic and hard to scan/sort; union with blanks is predictable and reuses existing column machinery.
+- **Impact / risk**: Windows mixing many disparate sources may show wide, sparse tables; users can hide columns via existing controls.
+- **Revisit trigger**: Revisit if HITL feedback shows union tables become unusable for windows with many heterogeneous sources.
+
+## 10. Colour-Only Source Identification
+- **Title**: Identifying row origin with only a colour stripe/legend and no `Source` column
+- **Current choice**: Sprint 13 ships a filterable `Source` column plus a per-source colour accent.
+- **Why deferred**: Colour-only identification keeps the table clean but removes text filtering/sorting on origin, which existing table machinery gives for free with a column.
+- **Impact / risk**: The extra column consumes horizontal space in single-source windows; it can be hidden there.
+- **Revisit trigger**: Revisit if users ask for a denser layout once source filtering is available through other affordances.

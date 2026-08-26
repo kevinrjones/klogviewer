@@ -290,4 +290,94 @@ class WorkspaceLogLoaderTest {
         expectThat(result).isNotNull()
         expectThat(result?.parserName).isEqualTo("Custom Saved Logback")
     }
+
+    @Test
+    fun `given file override and directory mapping when file opened then file override wins`() {
+        val path = "/var/log/app.log"
+        val sampleLines = listOf("2026-08-25 10:00:00.123 [main] INFO MyService - Hello world")
+        val directoryKey = "local:/var/log"
+        val fileKey = "local:/var/log/app.log"
+        val directoryMapping = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = directoryKey,
+            patternDraft = createSampleDraft()
+        )
+        val overrideDraft = createSampleDraft().copy(name = "Override Pattern")
+        val fileOverride = com.klogviewer.domain.model.FilePatternOverride(
+            fileKey = fileKey,
+            patternDraft = overrideDraft
+        )
+        val testProbe = HeuristicProbe(ParserRegistry())
+        val customState = MutableStateFlow(
+            KLogViewerState(
+                directoryPatternMappings = mapOf(directoryKey to directoryMapping),
+                filePatternOverrides = mapOf(fileKey to fileOverride)
+            )
+        )
+
+        every { localFileSystem.exists(path) } returns true
+        every { localFileSystem.isDirectory(path) } returns false
+        every { localFileSystem.readLines(path, any()) } returns sampleLines
+
+        val loader = WorkspaceLogLoader(
+            localFileSystem = localFileSystem,
+            remoteFileSystem = remoteFileSystem,
+            logSource = logSource,
+            heuristicProbe = testProbe,
+            logSourceFactory = logSourceFactory,
+            state = customState
+        )
+
+        val result = loader.performHeuristicDetection(paths = listOf(path), overrideParserName = null).single()
+
+        expectThat(result).isNotNull()
+        expectThat(result?.parserName).isEqualTo("Override Pattern")
+    }
+
+    @Test
+    fun `given two files with different saved patterns when opened together then each resolves its own parser`() {
+        val pathA = "/var/log/app/app.log"
+        val pathB = "/var/log/access/access.log"
+        val sampleLines = listOf("2026-08-25 10:00:00.123 [main] INFO MyService - Hello world")
+        val mappingA = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = "local:/var/log/app",
+            patternDraft = createSampleDraft().copy(name = "App Pattern")
+        )
+        val mappingB = com.klogviewer.domain.model.DirectoryPatternMapping(
+            directoryKey = "local:/var/log/access",
+            patternDraft = createSampleDraft().copy(name = "Access Pattern")
+        )
+        val testProbe = HeuristicProbe(ParserRegistry())
+        val customState = MutableStateFlow(
+            KLogViewerState(
+                directoryPatternMappings = mapOf(
+                    mappingA.directoryKey to mappingA,
+                    mappingB.directoryKey to mappingB
+                )
+            )
+        )
+
+        listOf(pathA, pathB).forEach { p ->
+            every { localFileSystem.exists(p) } returns true
+            every { localFileSystem.isDirectory(p) } returns false
+            every { localFileSystem.readLines(p, any()) } returns sampleLines
+        }
+
+        val loader = WorkspaceLogLoader(
+            localFileSystem = localFileSystem,
+            remoteFileSystem = remoteFileSystem,
+            logSource = logSource,
+            heuristicProbe = testProbe,
+            logSourceFactory = logSourceFactory,
+            state = customState
+        )
+
+        val results = loader.performHeuristicDetection(paths = listOf(pathA, pathB), overrideParserName = null)
+
+        expectThat(results[0]?.parserName).isEqualTo("App Pattern")
+        expectThat(results[1]?.parserName).isEqualTo("Access Pattern")
+
+        val refs = loader.sourcePatternResolver.resolveSourcePatternRefs(listOf(pathA, pathB), results)
+        expectThat(refs[pathA]?.directoryMappingKey).isEqualTo("local:/var/log/app")
+        expectThat(refs[pathB]?.directoryMappingKey).isEqualTo("local:/var/log/access")
+    }
 }

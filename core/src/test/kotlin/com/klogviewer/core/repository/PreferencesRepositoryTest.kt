@@ -316,6 +316,96 @@ class PreferencesRepositoryTest {
     }
 
     @Test
+    fun `should save and load file pattern overrides and per-source window patterns`() {
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
+        val draft = PatternDraft(
+            id = "draft-override",
+            name = "Access Log Pattern",
+            segments = listOf(
+                PatternSegment.Token(
+                    PatternToken(
+                        id = "tok-ts",
+                        role = PatternTokenRole.TIMESTAMP,
+                        formatPattern = "yyyy-MM-dd HH:mm:ss.SSS"
+                    )
+                ),
+                PatternSegment.Delimiter(PatternDelimiter(id = "del-1", value = " ")),
+                PatternSegment.Token(PatternToken(id = "tok-msg", role = PatternTokenRole.MESSAGE))
+            )
+        )
+        val override = FilePatternOverride(
+            fileKey = "local:/var/log/app/access.log",
+            patternDraft = draft,
+            sourceType = "LOCAL",
+            createdAt = 100L,
+            lastUsedAt = 200L
+        )
+        val prefs = UserPreferences(
+            filePatternOverrides = mapOf(override.fileKey to override),
+            tabs = listOf(
+                TabPreference(
+                    id = "tab1",
+                    title = "Mixed",
+                    activeWindowId = "win1",
+                    windows = listOf(
+                        WindowPreference(
+                            id = "win1",
+                            filePath = "/var/log/app/access.log",
+                            sourceIds = listOf("/var/log/app/access.log", "/var/log/app/app.log"),
+                            sourcePatterns = mapOf(
+                                "/var/log/app/access.log" to SourcePatternRef(
+                                    parserName = "Access Log Pattern",
+                                    fileOverrideKey = override.fileKey
+                                ),
+                                "/var/log/app/app.log" to SourcePatternRef(
+                                    parserName = "Logback Standard",
+                                    directoryMappingKey = "local:/var/log/app"
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        val saveResult = repository.save(prefs)
+        expectThat(saveResult).isEqualTo(PreferencesSaveResult.Saved)
+
+        val loaded = repository.load()
+        expectThat(loaded).isEqualTo(prefs)
+    }
+
+    @Test
+    fun `should load legacy preferences without sourcePatterns or filePatternOverrides with empty defaults`() {
+        val repository = JsonPreferencesRepository(tempDir, InMemorySecureCredentialStore())
+        val legacyJson = """
+            {
+              "tabs": [
+                {
+                  "id": "tab1",
+                  "title": "Legacy",
+                  "activeWindowId": "win1",
+                  "windows": [
+                    {
+                      "id": "win1",
+                      "filePath": "/var/log/app.log",
+                      "parserName": "Logback Standard"
+                    }
+                  ]
+                }
+              ]
+            }
+        """.trimIndent()
+        File(tempDir, "preferences.json").writeText(legacyJson)
+
+        val loaded = repository.load()
+        val window = loaded.tabs.first().windows.first()
+        expectThat(window.parserName).isEqualTo("Logback Standard")
+        expectThat(window.sourcePatterns).isEqualTo(emptyMap())
+        expectThat(loaded.filePatternOverrides).isEqualTo(emptyMap())
+    }
+
+    @Test
     fun `should migrate mac legacy preferences if target does not exist`() {
         val originalUserHome = System.getProperty("user.home")
         val fakeHome = File(tempDir, "fakeHome").apply { mkdirs() }

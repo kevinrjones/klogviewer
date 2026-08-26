@@ -66,7 +66,10 @@ data class PatternDraft(
     val originalFormatSyntax: String? = null,
     val placeholderAnnotations: Map<String, String> = emptyMap(),
     val isDirectoryPersistenceEnabled: Boolean = true
-)
+) {
+    val hasTimestampToken: Boolean
+        get() = segments.any { it is PatternSegment.Token && it.token.role == PatternTokenRole.TIMESTAMP }
+}
 
 data class PatternDraftHistory(
     val past: List<PatternDraft> = emptyList(),
@@ -142,6 +145,14 @@ data class PatternPreviewResult(
     val confidenceScore: Float = 1.0f
 )
 
+enum class SourceWizardStatus { SAVED, NEEDS_REVIEW }
+
+data class SourceWizardEntry(
+    val sourceId: String,
+    val displayName: String,
+    val status: SourceWizardStatus = SourceWizardStatus.NEEDS_REVIEW
+)
+
 data class PatternWizardState(
     val isVisible: Boolean = false,
     val isBannerMode: Boolean = false,
@@ -167,7 +178,10 @@ data class PatternWizardState(
     val previewSpans: List<List<SampleLineSpan>> = emptyList(),
     val previewRows: List<PreviewTableRow> = emptyList(),
     val previewColumns: List<String> = emptyList(),
-    val isComputingPreview: Boolean = false
+    val isComputingPreview: Boolean = false,
+    val sources: List<SourceWizardEntry> = emptyList(),
+    val activeSourceId: String? = null,
+    val sourceDrafts: Map<String, PatternDraft> = emptyMap()
 ) {
     val currentDraft: PatternDraft get() = draftHistory.current
     val canUndo: Boolean get() = draftHistory.canUndo

@@ -59,7 +59,7 @@ class LogLoadingCoordinator(
         logJobs.remove(windowId)
     }
 
-    fun applyPatternDraft(windowId: String, draft: PatternDraft) {
+    fun applyPatternDraft(windowId: String, draft: PatternDraft, activeSourceId: String? = null) {
         val window = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }
         val paths = window?.sourceIds?.ifEmpty { listOfNotNull(window.filePath) } ?: listOfNotNull(window?.filePath)
         val isDir = window?.isDirectory == true
@@ -69,10 +69,20 @@ class LogLoadingCoordinator(
             draft = draft,
             paths = paths,
             isDirectory = isDir,
+            activeSourceId = activeSourceId,
             onReload = { wId, filePaths, parserName ->
                 loadFilesIntoWindow(wId, filePaths, overrideParserName = parserName)
             }
         )
+    }
+
+    fun resampleLinesForSource(sourceId: String, limitPerSection: Int = 10): List<String> {
+        val isRemote = sourceId.startsWith("sftp://") || sourceId.startsWith("s3://")
+        return if (!isRemote && localFileSystem.exists(sourceId)) {
+            workspaceLogLoader.readResampledLines(sourceId, limitPerSection)
+        } else {
+            workspaceLogLoader.readSampleLines(sourceId, limit = limitPerSection * 3)
+        }
     }
 
     fun resampleLinesForWindow(windowId: String, limitPerSection: Int = 10): List<String> {
@@ -562,8 +572,17 @@ class LogLoadingCoordinator(
             }
         }
 
-        val shouldPromptWizard = (overrideParserName == null || overrideParserName == "Auto") && isTextLog
-        applyDefaultParserResults(windowId, results, overrideParserName, shouldPromptWizard, path, firstResult)
+        val sourcePatternRefs = workspaceLogLoader.sourcePatternResolver
+            .resolveSourcePatternRefs(filteredPaths, results)
+        val hasUnresolvedSource = sourcePatternRefs.isEmpty() || sourcePatternRefs.values.any {
+            it.directoryMappingKey == null && it.fileOverrideKey == null
+        }
+        val shouldPromptWizard = (overrideParserName == null || overrideParserName == "Auto") &&
+            isTextLog &&
+            hasUnresolvedSource
+        applyDefaultParserResults(
+            windowId, results, overrideParserName, shouldPromptWizard, path, firstResult, sourcePatternRefs
+        )
     }
 
     private fun applyDefaultParserResults(
@@ -572,20 +591,27 @@ class LogLoadingCoordinator(
         overrideParserName: String?,
         isTextLogDetected: Boolean,
         path: String?,
-        firstResult: ProbeResult?
+        firstResult: ProbeResult?,
+        sourcePatternRefs: Map<String, SourcePatternRef> = emptyMap()
     ) {
         state.update { currentState ->
             val updatedState = currentState.updateWindow(windowId) { window ->
+                val mergedColumns = mergeColumnsWithDiscovered(
+                    persistedColumns = window.columns,
+                    results = results
+                )
                 window.copy(
-                    columns = mergeColumnsWithDiscovered(
-                        persistedColumns = window.columns,
-                        results = results
-                    ),
+                    columns = if (results.size > 1 && mergedColumns.none { it.equals("Source", ignoreCase = true) }) {
+                        mergedColumns + "Source"
+                    } else {
+                        mergedColumns
+                    },
                     parserName = if (results.size > 1 && overrideParserName == null) {
                         "Multiple"
                     } else {
                         overrideParserName ?: firstResult?.parserName ?: "Auto"
-                    }
+                    },
+                    sourcePatterns = window.sourcePatterns + sourcePatternRefs
                 )
             }
 

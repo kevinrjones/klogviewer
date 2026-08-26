@@ -29,7 +29,16 @@ We will implement Sprint 13 around a draft-overlay pattern wizard backed by a ca
 - The same directory identity rules are used for lookup, persistence, and reuse.
 - Mismatch threshold: when a saved mapping's match confidence on newly opened sample lines falls below 80% (`0.80f`), the wizard automatically reopens with the saved pattern and diagnostics drawer visible rather than silently mis-parsing.
 
-### 4. Structured Placeholder Scope
+### 4. Per-Source Resolution and File Overrides (Multi-Source Windows)
+- Each file/directory source in a window resolves its own pattern independently (file override → directory mapping → heuristic → wizard); the window merges already-parsed entries by timestamp.
+- Timestamp enforcement is soft: a source whose pattern lacks a parseable timestamp still loads, with a visible "interleaving will be approximate" warning; its entries keep file order anchored to the last timestamped entry.
+- Live-tail entries arriving out of order across sources are inserted at their timestamp position via near-tail binary search.
+- Directory mappings remain the primary persistence unit; an optional per-file (or filename-glob) override in `UserPreferences.filePatternOverrides` handles same-directory pattern conflicts.
+- Window preferences store a `sourceId → mapping reference` map (`sourcePatterns`) so session restore is exact; legacy single `parserName`/`patternDraft` fields remain deserializable.
+- The table shows the union of all sources' columns (core fields first, blank cells for missing fields) plus a filterable `Source` column with a per-source colour accent.
+- One Pattern Wizard instance serves all window sources via a source selector with per-source status, sample lines, draft, and preview.
+
+### 5. Structured Placeholder Scope
 - Structured JSON detection remains authoritative.
 - Serilog `@mt` placeholders are visible in preview only during Sprint 13.
 - Sprint 13 does not add a second-pass structured placeholder extraction pipeline.
@@ -42,3 +51,5 @@ We will implement Sprint 13 around a draft-overlay pattern wizard backed by a ca
 - **Negative**: Preview and main-table output can temporarily differ until the user applies the draft.
 - **Negative**: Importers add conversion complexity and will need coverage across common pasted formats.
 - **Negative**: Shared project-file portability for mappings remains future work.
+- **Positive**: Multi-source windows can mix patterns truthfully interleaved by timestamp, with exact per-source restore.
+- **Negative**: File overrides add a second persistence layer whose precedence over directory mappings must stay well-tested.
