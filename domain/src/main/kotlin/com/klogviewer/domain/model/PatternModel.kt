@@ -142,7 +142,8 @@ data class PatternPreviewResult(
     val parseErrors: List<PatternParseError> = emptyList(),
     val matchedLineCount: Int = 0,
     val totalSampleLineCount: Int = 0,
-    val confidenceScore: Float = 1.0f
+    val confidenceScore: Float = 1.0f,
+    val placeholderAnnotations: Map<String, String> = emptyMap()
 )
 
 enum class SourceWizardStatus { SAVED, NEEDS_REVIEW }

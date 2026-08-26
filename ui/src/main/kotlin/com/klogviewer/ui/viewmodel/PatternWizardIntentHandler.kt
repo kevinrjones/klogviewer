@@ -1,6 +1,7 @@
 package com.klogviewer.ui.viewmodel
 
 import com.klogviewer.core.parser.DefaultPatternPreviewService
+import com.klogviewer.core.parser.PatternImporter
 import com.klogviewer.core.parser.PatternPreviewService
 import com.klogviewer.domain.model.PatternDelimiter
 import com.klogviewer.domain.model.PatternDraft
@@ -446,160 +447,8 @@ class PatternWizardIntentHandler(
         )
     }
 
-    private val presetMap = mapOf(
-        "Logback / Log4J Standard" to
-            "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger - %msg",
-        "Serilog Text Layout" to
-            "{Timestamp:yyyy-MM-dd HH:mm:ss.SSS} [{Level}] [{ThreadId}] {SourceContext} - {Message}",
-        "ISO8601 Simple" to
-            "%d{yyyy-MM-ddTHH:mm:ss} %level %logger - %msg",
-        "Custom Draft" to
-            "%d{yyyy-MM-dd HH:mm:ss} %level [%t] %logger - %msg"
-    )
-
     private fun parsePatternStringToDraft(patternText: String): PatternDraft {
-        val trimmed = patternText.trim()
-        val formatStr = presetMap[trimmed] ?: trimmed
-        val segments = parseFormatStringToSegments(formatStr)
-        val name = when {
-            presetMap.containsKey(trimmed) -> trimmed
-            trimmed.startsWith("{") -> "Serilog Text Layout"
-            trimmed.startsWith("%") -> "Logback / Log4J Standard"
-            else -> "Custom Pattern"
-        }
-        return PatternDraft(
-            name = name,
-            originalFormatString = formatStr,
-            segments = segments
-        )
-    }
-
-    private fun parseFormatStringToSegments(formatStr: String): List<PatternSegment> {
-        if (formatStr.isBlank()) return defaultBestGuessDraft().segments
-        val parsed = when {
-            formatStr.contains("%") -> parseLogbackFormatString(formatStr)
-            formatStr.contains("{") -> parseSerilogFormatString(formatStr)
-            else -> defaultBestGuessDraft().segments
-        }
-        return parsed.ifEmpty { defaultBestGuessDraft().segments }
-    }
-
-    private fun parseLogbackFormatString(formatStr: String): List<PatternSegment> {
-        val segments = mutableListOf<PatternSegment>()
-        val regex = Regex(
-            """(%d(?:\{[^}]*})?|%t(?:hread)?|%-?\d*level|%-?\d*p|""" +
-                """%c(?:\{[^}]*})?|%logger(?:\{[^}]*})?|%m(?:sg)?|%n|%ex|%X\{[^}]+}|[^%]+)"""
-        )
-        val matches = regex.findAll(formatStr).map { it.value }.toList()
-
-        matches.forEach { tokenStr ->
-            val segment = parseLogbackToken(tokenStr)
-            if (segment != null) {
-                segments.add(segment)
-            }
-        }
-        return segments
-    }
-
-    private fun parseLogbackToken(tokenStr: String): PatternSegment? {
-        return when {
-            tokenStr.startsWith("%d") -> {
-                val dateFormat = Regex("""%d(?:\{([^}]*)})?""")
-                    .find(tokenStr)?.groupValues?.get(1) ?: "yyyy-MM-dd HH:mm:ss.SSS"
-                PatternSegment.Token(
-                    PatternToken(
-                        role = PatternTokenRole.TIMESTAMP,
-                        formatPattern = dateFormat.ifBlank { "yyyy-MM-dd HH:mm:ss.SSS" }
-                    )
-                )
-            }
-            tokenStr.startsWith("%t") ->
-                PatternSegment.Token(PatternToken(role = PatternTokenRole.THREAD))
-            tokenStr.contains("level") || tokenStr.contains("p") ->
-                PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL))
-            tokenStr.startsWith("%c") || tokenStr.startsWith("%logger") ->
-                PatternSegment.Token(PatternToken(role = PatternTokenRole.LOGGER))
-            tokenStr.startsWith("%m") ->
-                PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
-            tokenStr.startsWith("%ex") ->
-                PatternSegment.Token(PatternToken(role = PatternTokenRole.EXCEPTION))
-            tokenStr.startsWith("%X{") -> {
-                val propName = Regex("""%X\{([^}]+)}""").find(tokenStr)?.groupValues?.get(1) ?: "prop"
-                PatternSegment.Token(
-                    PatternToken(
-                        role = PatternTokenRole.CUSTOM_PROPERTY,
-                        customPropertyName = propName
-                    )
-                )
-            }
-            tokenStr == "%n" -> null
-            else -> PatternSegment.Delimiter(PatternDelimiter(value = tokenStr))
-        }
-    }
-
-    private fun parseSerilogFormatString(formatStr: String): List<PatternSegment> {
-        val segments = mutableListOf<PatternSegment>()
-        val regex = Regex("""(\{[^}]+}|[^{]+)""")
-        val matches = regex.findAll(formatStr).map { it.value }.toList()
-
-        matches.forEach { tokenStr ->
-            segments.add(parseSerilogToken(tokenStr))
-        }
-        return segments
-    }
-
-    private fun parseSerilogToken(tokenStr: String): PatternSegment {
-        if (!tokenStr.startsWith("{") || !tokenStr.endsWith("}")) {
-            return PatternSegment.Delimiter(PatternDelimiter(value = tokenStr))
-        }
-
-        val inner = tokenStr.removeSurrounding("{", "}").trim()
-        val namePart = if (inner.contains(":")) inner.substringBefore(":").trim() else inner
-        val formatPart = if (inner.contains(":")) inner.substringAfter(":").trim() else null
-
-        return if (namePart.equals("newline", ignoreCase = true)) {
-            PatternSegment.Delimiter(PatternDelimiter(value = "\n"))
-        } else {
-            PatternSegment.Token(resolveSerilogToken(inner, namePart, formatPart))
-        }
-    }
-
-    private fun resolveSerilogToken(inner: String, namePart: String, formatPart: String?): PatternToken {
-        val lowerName = namePart.lowercase()
-        return when {
-            lowerName in setOf("timestamp", "t", "time", "date", "datetime") -> {
-                val format = formatPart?.ifBlank { "yyyy-MM-dd HH:mm:ss.SSS" } ?: "yyyy-MM-dd HH:mm:ss.SSS"
-                PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = format)
-            }
-            isDateFormat(inner) -> {
-                PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = inner)
-            }
-            lowerName.startsWith("level") || lowerName == "l" -> {
-                PatternToken(role = PatternTokenRole.LEVEL)
-            }
-            lowerName in setOf("threadid", "thread") -> {
-                PatternToken(role = PatternTokenRole.THREAD)
-            }
-            lowerName in setOf("sourcecontext", "logger", "source", "context") -> {
-                PatternToken(role = PatternTokenRole.LOGGER)
-            }
-            lowerName.startsWith("message") || lowerName in setOf("m", "msg") -> {
-                PatternToken(role = PatternTokenRole.MESSAGE)
-            }
-            lowerName.startsWith("exception") || lowerName in setOf("ex") -> {
-                PatternToken(role = PatternTokenRole.EXCEPTION)
-            }
-            else -> {
-                PatternToken(role = PatternTokenRole.CUSTOM_PROPERTY, customPropertyName = namePart)
-            }
-        }
-    }
-
-    private fun isDateFormat(text: String): Boolean {
-        val t = text.lowercase()
-        return t.contains("yyyy") || t.contains("hh:mm") || t.contains("mm:ss") ||
-            (t.contains("dd") && (t.contains("mm") || t.contains("yy"))) ||
-            t.contains("iso8601")
+        return PatternImporter.importPattern(patternText).draft
     }
 
     private companion object {

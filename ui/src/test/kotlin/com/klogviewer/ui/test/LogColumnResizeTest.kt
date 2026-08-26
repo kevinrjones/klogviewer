@@ -24,11 +24,16 @@ import com.klogviewer.domain.repository.LogSource
 import com.klogviewer.ui.components.DialogProvider
 import com.klogviewer.ui.components.KLogViewerScreen
 import com.klogviewer.ui.components.LogList
+import com.klogviewer.ui.components.calculateColumnWidthToContent
 import com.klogviewer.ui.robot.logList
 import com.klogviewer.ui.viewmodel.KLogViewerViewModel
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.Test
+import strikt.api.expectThat
+import strikt.assertions.isEqualTo
+import strikt.assertions.isGreaterThan
+import strikt.assertions.isNotNull
 import kotlin.math.abs
 
 @OptIn(ExperimentalTestApi::class)
@@ -333,5 +338,65 @@ class LogColumnResizeTest {
         assert(shrunkWidthPx < expandedWidthPx) {
             "Log list content width should shrink after reducing message column width, but expanded=$expandedWidthPx shrunk=$shrunkWidthPx"
         }
+    }
+
+    @Test
+    fun givenLogEntries_whenCalculateColumnWidthToContent_thenWidthScalesWithContentLength() {
+        val entry1 = LogEntry(
+            timestamp = LogTimestamp("2026-08-26 10:15:30.123"),
+            level = LogLevel.WARN,
+            content = LogContent("Short message")
+        )
+        val entry2 = LogEntry(
+            timestamp = LogTimestamp("2026-08-26 10:15:31.456"),
+            level = LogLevel.ERROR,
+            content = LogContent("A much longer log message that extends well beyond a typical short line length")
+        )
+        val logs = listOf(entry1, entry2)
+
+        val timestampWidth = calculateColumnWidthToContent("Timestamp", logs)
+        val levelWidth = calculateColumnWidthToContent("Level", logs)
+        val messageWidth = calculateColumnWidthToContent("Message", logs)
+
+        expectThat(timestampWidth).isGreaterThan(100)
+        expectThat(levelWidth).isGreaterThan(50)
+        expectThat(messageWidth).isGreaterThan(timestampWidth)
+    }
+
+    @Test
+    fun givenColumn_whenResizeHandleIsDoubleClicked_thenColumnResizesToContent() = runComposeUiTest {
+        val longMsgEntry = LogEntry(
+            timestamp = LogTimestamp("2026-08-26T10:00:00Z"),
+            level = LogLevel.INFO,
+            content = LogContent("This is a moderately long log message content line that requires auto sizing")
+        )
+        var resizedColumn: String? = null
+        var resizedWidth: Int? = null
+
+        setContent {
+            LogList(
+                logs = listOf(longMsgEntry),
+                filterQueries = emptyList(),
+                isDarkMode = false,
+                columns = listOf("Message"),
+                columnWidths = mapOf("Message" to 80),
+                onColumnResize = { col, width ->
+                    resizedColumn = col
+                    resizedWidth = width
+                },
+                windowId = "auto-resize-test"
+            )
+        }
+
+        waitForIdle()
+
+        onNode(hasTestTag("resize_handle_Message"), useUnmergedTree = true).performMouseInput {
+            doubleClick()
+        }
+        waitForIdle()
+
+        expectThat(resizedColumn).isEqualTo("Message")
+        expectThat(resizedWidth).isNotNull()
+        expectThat(resizedWidth!!).isGreaterThan(300)
     }
 }

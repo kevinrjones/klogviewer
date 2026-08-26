@@ -20,7 +20,7 @@ class DefaultPatternPreviewService(
     override fun computePreview(draft: PatternDraft, sampleLines: List<String>): PatternPreviewResult {
         return when {
             sampleLines.isEmpty() -> PatternPreviewResult()
-            draft.segments.none { it is PatternSegment.Token } -> createEmptyTokenResult(sampleLines)
+            draft.segments.none { it is PatternSegment.Token } -> createEmptyTokenResult(draft, sampleLines)
             else -> {
                 try {
                     val compiled = compiler.compile(draft)
@@ -32,7 +32,13 @@ class DefaultPatternPreviewService(
         }
     }
 
-    private fun createEmptyTokenResult(sampleLines: List<String>): PatternPreviewResult {
+    private fun createEmptyTokenResult(draft: PatternDraft, sampleLines: List<String>): PatternPreviewResult {
+        val extractedPlaceholders = draft.placeholderAnnotations.toMutableMap()
+        sampleLines.forEach { line ->
+            if (line.contains("@mt")) {
+                extractedPlaceholders.putAll(PatternImporter.extractSerilogPlaceholders(line))
+            }
+        }
         return PatternPreviewResult(
             spansPerLine = sampleLines.map { emptyList() },
             previewRows = sampleLines.mapIndexed { idx, _ -> PreviewTableRow(idx, emptyMap()) },
@@ -40,7 +46,8 @@ class DefaultPatternPreviewService(
             parseErrors = emptyList(),
             matchedLineCount = 0,
             totalSampleLineCount = sampleLines.size,
-            confidenceScore = 0f
+            confidenceScore = 0f,
+            placeholderAnnotations = extractedPlaceholders
         )
     }
 
@@ -100,6 +107,13 @@ class DefaultPatternPreviewService(
             1.0f
         }
 
+        val extractedPlaceholders = draft.placeholderAnnotations.toMutableMap()
+        sampleLines.forEach { line ->
+            if (line.contains("@mt")) {
+                extractedPlaceholders.putAll(PatternImporter.extractSerilogPlaceholders(line))
+            }
+        }
+
         return PatternPreviewResult(
             spansPerLine = spansPerLine,
             previewRows = previewRows,
@@ -107,7 +121,8 @@ class DefaultPatternPreviewService(
             parseErrors = errors,
             matchedLineCount = matchedCount,
             totalSampleLineCount = sampleLines.size,
-            confidenceScore = confidence
+            confidenceScore = confidence,
+            placeholderAnnotations = extractedPlaceholders
         )
     }
 

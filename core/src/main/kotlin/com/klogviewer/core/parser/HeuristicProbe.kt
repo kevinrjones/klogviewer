@@ -1,16 +1,27 @@
 package com.klogviewer.core.parser
 
+import com.klogviewer.domain.model.PatternDelimiter
+import com.klogviewer.domain.model.PatternDraft
+import com.klogviewer.domain.model.PatternSegment
+import com.klogviewer.domain.model.PatternToken
+import com.klogviewer.domain.model.PatternTokenRole
 import com.klogviewer.domain.parser.LogParser
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.serialization.json.*
 
 private val logger = KotlinLogging.logger {}
+
+private const val MIN_SAMPLE_MATCH_DENOMINATOR = 3
 
 data class ProbeResult(
     val parser: LogParser,
     val parserName: String,
     val columns: List<String> = emptyList(),
-    val confidence: ParseDetectionConfidence? = null
+    val confidence: ParseDetectionConfidence? = null,
+    val draft: PatternDraft? = null,
+    val isJson: Boolean = false,
+    val matchedLineCount: Int = 0,
+    val totalSampleLineCount: Int = 0,
+    val diagnostics: List<String> = emptyList()
 )
 
 data class ParseDetectionConfidence(
@@ -30,29 +41,63 @@ class HeuristicProbe(
     val registry: ParserRegistry,
     private val jsonConfidenceScorer: JsonConfidenceScorer = JsonConfidenceScorer()
 ) {
-    
-    /**
-     * Attempts to detect the best parser for the given sample lines.
-     * Defaults to [SimpleLogParser] if no better match is found.
-     */
-    fun detect(lines: List<String>): ProbeResult {
-        if (lines.isEmpty()) return ProbeResult(SimpleLogParser(), "Simple")
+    private val textAnalyzer = HeuristicTextAnalyzer()
 
-        // 1. JSON Detection using structured confidence
-        val jsonAnalysis = analyzeJson(lines)
-        if (jsonAnalysis.shouldSelectJson) {
-            logger.info { "Heuristic: Detected JSON log format" }
-            val mapping = detectJsonMapping(jsonAnalysis.parsedJsonObjects)
-            val columns = deriveJsonColumns(mapping, jsonAnalysis.parsedJsonObjects.firstOrNull())
-            return ProbeResult(
-                parser = JsonLogParser(mapping),
-                parserName = "JSON",
-                columns = columns,
-                confidence = jsonAnalysis.confidence
-            )
+    fun detect(lines: List<String>): ProbeResult {
+        if (lines.isEmpty()) return handleEmptyLines()
+
+        val jsonResult = detectJson(lines)
+        if (jsonResult != null) return jsonResult
+
+        val templateResult = detectTemplate(lines)
+        if (templateResult != null) return templateResult
+
+        val logfmtResult = detectLogfmt(lines)
+        if (logfmtResult != null) return logfmtResult
+
+        val dynamicDraftResult = textAnalyzer.analyzeTextHeuristics(lines)
+        if (dynamicDraftResult != null &&
+            dynamicDraftResult.matchedLineCount > lines.size / MIN_SAMPLE_MATCH_DENOMINATOR) {
+            logger.info { "Heuristic: Synthesized text draft with ${dynamicDraftResult.matchedLineCount} matches" }
+            return dynamicDraftResult
         }
 
-        // 2. Template Matching (Prefer specific templates over generic logfmt)
+        return fallbackResult(lines)
+    }
+
+    private fun handleEmptyLines(): ProbeResult {
+        return ProbeResult(
+            parser = SimpleLogParser(),
+            parserName = "Simple",
+            columns = listOf("Timestamp", "Level", "Content"),
+            draft = PatternImporter.defaultFallbackDraft(),
+            isJson = false,
+            totalSampleLineCount = 0,
+            diagnostics = listOf("No sample lines provided; defaulted to fallback draft.")
+        )
+    }
+
+    private fun detectJson(lines: List<String>): ProbeResult? {
+        val jsonAnalysis = analyzeJson(lines)
+        if (!jsonAnalysis.shouldSelectJson) return null
+
+        logger.info { "Heuristic: Detected JSON log format" }
+        val mapping = detectJsonMapping(jsonAnalysis.parsedJsonObjects)
+        val columns = deriveJsonColumns(mapping, jsonAnalysis.parsedJsonObjects.firstOrNull())
+        return ProbeResult(
+            parser = JsonLogParser(mapping),
+            parserName = "JSON",
+            columns = columns,
+            confidence = jsonAnalysis.confidence,
+            draft = null,
+            isJson = true,
+            matchedLineCount = jsonAnalysis.parsedJsonObjects.size,
+            totalSampleLineCount = lines.size,
+            diagnostics = listOf("Structured JSON format detected with authoritative JsonMapping.")
+        )
+    }
+
+    private fun detectTemplate(lines: List<String>): ProbeResult? {
         val templates = registry.getAllTemplates()
         val matchCounts = templates.associateWith { template ->
             val regex = template.regex.toRegex()
@@ -61,73 +106,119 @@ class HeuristicProbe(
 
         val bestMatch = matchCounts.maxByOrNull { it.value }
         if (bestMatch != null && bestMatch.value > lines.size / 2) {
-            logger.info { "Heuristic: Detected template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }
+            logger.info { "Heuristic: Detected template [${bestMatch.key.name}]" }
             return ProbeResult(
                 parser = TemplateLogParser(bestMatch.key),
                 parserName = bestMatch.key.name,
                 columns = bestMatch.key.columns,
-                confidence = jsonAnalysis.confidence
+                draft = draftForTemplate(bestMatch.key),
+                isJson = false,
+                matchedLineCount = bestMatch.value,
+                totalSampleLineCount = lines.size,
+                diagnostics = listOf("Matched registered template '${bestMatch.key.name}'.")
             )
         }
+        return null
+    }
 
-        // 3. logfmt Detection
+    private fun detectLogfmt(lines: List<String>): ProbeResult? {
         val logfmtCount = lines.count { isLogfmt(it) }
         if (logfmtCount > lines.size / 2) {
             logger.info { "Heuristic: Detected logfmt log format" }
-            return ProbeResult(LogfmtParser(), "logfmt", confidence = jsonAnalysis.confidence)
+            return ProbeResult(
+                parser = LogfmtParser(),
+                parserName = "logfmt",
+                columns = listOf("Timestamp", "Level", "Content"),
+                draft = PatternImporter.defaultFallbackDraft(),
+                isJson = false,
+                matchedLineCount = logfmtCount,
+                totalSampleLineCount = lines.size,
+                diagnostics = listOf("Key-value logfmt log format detected.")
+            )
         }
-        
-        // 4. Fallback to best template match if any, or SimpleLogParser
+        return null
+    }
+
+    private fun fallbackResult(lines: List<String>): ProbeResult {
+        val jsonAnalysis = analyzeJson(lines)
+        val bestMatch = registry.getAllTemplates().associateWith { template ->
+            val regex = template.regex.toRegex()
+            lines.count { line -> regex.matches(line.trim()) }
+        }.maxByOrNull { it.value }
+
         return if (bestMatch != null && bestMatch.value > 0) {
-            logger.info { "Heuristic: Falling back to template [${bestMatch.key.name}] with ${bestMatch.value}/${lines.size} matches" }
             ProbeResult(
                 parser = TemplateLogParser(bestMatch.key),
                 parserName = bestMatch.key.name,
                 columns = bestMatch.key.columns,
-                confidence = jsonAnalysis.confidence
+                confidence = jsonAnalysis.confidence,
+                draft = draftForTemplate(bestMatch.key),
+                isJson = false,
+                matchedLineCount = bestMatch.value,
+                totalSampleLineCount = lines.size,
+                diagnostics = listOf("Low-confidence fallback to template '${bestMatch.key.name}'.")
             )
         } else {
-            logger.info { "Heuristic: No match found, falling back to SimpleLogParser" }
-            ProbeResult(SimpleLogParser(), "Simple", confidence = jsonAnalysis.confidence)
+            ProbeResult(
+                parser = SimpleLogParser(),
+                parserName = "Simple",
+                columns = listOf("Timestamp", "Level", "Content"),
+                confidence = jsonAnalysis.confidence,
+                draft = PatternImporter.defaultFallbackDraft(),
+                isJson = false,
+                matchedLineCount = 0,
+                totalSampleLineCount = lines.size,
+                diagnostics = listOf("Unresolved text log layout; seeded fallback draft.")
+            )
         }
     }
 
-    private fun deriveJsonColumns(mapping: JsonMapping, firstJson: JsonObject?): List<String> {
-        if (firstJson == null) return listOf("Timestamp", "Level", "Content")
+    private fun draftForTemplate(template: LogTemplate): PatternDraft {
+        val presetString = when (template.name) {
+            "Standard" -> "%d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %level %logger - %msg"
+            "Syslog" -> "%d{MMM d HH:mm:ss} %X{hostname} %X{process} %msg"
+            "ISO8601" -> "%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} %level %msg"
+            "Apache" -> "%X{clientIp} - %X{user} [%d{dd/MMM/yyyy:HH:mm:ss Z}] \"%X{request}\" %X{status} %X{bytes}"
+            "CSV" -> "%d{yyyy-MM-dd},%level,%msg"
+            else -> null
+        }
 
-        val keys = firstJson.keys.toMutableSet()
-        val resultColumns = mutableListOf<String>()
+        if (presetString != null) {
+            return PatternImporter.importPattern(presetString).draft
+        }
 
-        if (keys.remove(mapping.timestampKey)) resultColumns.add("Timestamp")
-        if (keys.remove(mapping.levelKey)) resultColumns.add("Level")
-        if (keys.remove(mapping.contentKey)) resultColumns.add("Content")
-
-        resultColumns.addAll(keys.sorted().map { it.replaceFirstChar { c -> c.uppercase() } })
-        return resultColumns
+        return draftFromColumns(template)
     }
 
-    private fun detectJsonMapping(parsedObjects: List<JsonObject>): JsonMapping {
-        val keys = parsedObjects
-            .flatMap { it.keys }
-            .toSet()
-            .ifEmpty { return JsonMapping() }
-
-        val timestampKey = keys.firstAvailableKey(CanonicalFieldAliases.TIMESTAMP_ALIASES_IN_PRECEDENCE_ORDER)
-        val levelKey = keys.firstAvailableKey(CanonicalFieldAliases.LEVEL_ALIASES_IN_PRECEDENCE_ORDER)
-        val contentKey = keys.firstAvailableKey(CanonicalFieldAliases.CONTENT_KEYS_IN_PRECEDENCE_ORDER)
-
-        return JsonMapping(timestampKey, levelKey, contentKey)
+    private fun draftFromColumns(template: LogTemplate): PatternDraft {
+        return PatternDraft(
+            name = template.name,
+            segments = template.columns.flatMapIndexed { index, col ->
+                val role = mapColumnToRole(col)
+                val token = PatternToken(
+                    role = role,
+                    customPropertyName = if (role == PatternTokenRole.CUSTOM_PROPERTY) col else null,
+                    formatPattern = if (role == PatternTokenRole.TIMESTAMP) template.timestampPattern else ""
+                )
+                val list = mutableListOf<PatternSegment>(PatternSegment.Token(token))
+                if (index < template.columns.size - 1) {
+                    list.add(PatternSegment.Delimiter(PatternDelimiter(value = " ")))
+                }
+                list
+            }
+        )
     }
 
-    private fun Set<String>.firstAvailableKey(candidates: List<String>): String =
-        candidates.firstOrNull { it in this } ?: candidates.first()
-
-    private fun isLogfmt(line: String): Boolean {
-        val trimmed = line.trim()
-        // Logfmt should have at least 2 pairs or start with a pair to avoid false positives with standard logs
-        val regex = """\w+=(?:"[^"]*"|\S+)""".toRegex()
-        val matches = regex.findAll(trimmed).toList()
-        return matches.size >= 2 || (matches.size == 1 && trimmed.startsWith(matches[0].value))
+    private fun mapColumnToRole(columnName: String): PatternTokenRole {
+        return when (columnName.lowercase()) {
+            "timestamp" -> PatternTokenRole.TIMESTAMP
+            "level" -> PatternTokenRole.LEVEL
+            "thread" -> PatternTokenRole.THREAD
+            "logger" -> PatternTokenRole.LOGGER
+            "content", "message" -> PatternTokenRole.MESSAGE
+            "exception" -> PatternTokenRole.EXCEPTION
+            else -> PatternTokenRole.CUSTOM_PROPERTY
+        }
     }
 
     private fun analyzeJson(lines: List<String>): JsonDetectionAnalysis {
@@ -144,45 +235,4 @@ class HeuristicProbe(
             shouldSelectJson = jsonConfidenceScorer.shouldSelectJson(confidence)
         )
     }
-
-    private fun collectJsonSamples(lines: List<String>): JsonSampleStats {
-        val parsedObjects = mutableListOf<JsonObject>()
-        var malformedCount = 0
-
-        lines.forEach { line ->
-            val trimmed = line.trim()
-            if (!looksJsonLike(trimmed)) {
-                return@forEach
-            }
-
-            val parsed = runCatching { Json.parseToJsonElement(trimmed) }.getOrNull()
-            if (parsed == null) {
-                malformedCount += 1
-                return@forEach
-            }
-
-            if (parsed is JsonObject) {
-                parsedObjects.add(parsed)
-            }
-        }
-
-        return JsonSampleStats(parsedObjects = parsedObjects, malformedCount = malformedCount)
-    }
-
-    private fun looksJsonLike(trimmedLine: String): Boolean {
-        val startsLikeJson = trimmedLine.startsWith("{") || trimmedLine.startsWith("[")
-        val endsLikeJson = trimmedLine.endsWith("}") || trimmedLine.endsWith("]")
-        return startsLikeJson || endsLikeJson
-    }
-
-    private data class JsonDetectionAnalysis(
-        val parsedJsonObjects: List<JsonObject>,
-        val confidence: ParseDetectionConfidence,
-        val shouldSelectJson: Boolean
-    )
-
-    private data class JsonSampleStats(
-        val parsedObjects: List<JsonObject>,
-        val malformedCount: Int
-    )
 }

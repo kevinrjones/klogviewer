@@ -80,12 +80,13 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
   and confirm the directory scope feels correct across source types.
 
 ### 13.8. Importers, Heuristic Drafting, and Runtime Compilation
-- [ ] 13.8.1. Extend `core/src/main/kotlin/com/klogviewer/core/parser/HeuristicProbe.kt` so detection returns enough metadata to seed the canonical draft.
-- [ ] 13.8.2. Add importer support for common pasted Logback/Log4J-style and Serilog-style text patterns into the canonical model.
-- [ ] 13.8.3. Add compiler support from canonical pattern definitions to runtime `LogTemplate` / `TemplateLogParser` behavior.
-- [ ] 13.8.4. Keep multiline compatibility aligned with `core/src/main/kotlin/com/klogviewer/core/source/MultilineProcessor.kt` and the existing template parser path.
-- [ ] 13.8.5. Surface Serilog `@mt` placeholders in preview only, without changing the structured JSON runtime semantics.
-- [ ] 13.8.6. Human in the Loop review: validate imported-pattern usability and confirm the canonical model feels flexible enough before follow-on polish.
+- [x] 13.8.1. Extend `core/src/main/kotlin/com/klogviewer/core/parser/HeuristicProbe.kt` so detection returns enough metadata to seed the canonical draft.
+- [x] 13.8.2. Add importer support for common pasted Logback/Log4J-style and Serilog-style text patterns into the canonical model.
+- [x] 13.8.3. Add compiler support from canonical pattern definitions to runtime `LogTemplate` / `TemplateLogParser` behavior.
+- [x] 13.8.4. Keep multiline compatibility aligned with `core/src/main/kotlin/com/klogviewer/core/source/MultilineProcessor.kt` and the existing template parser path.
+- [x] 13.8.5. Surface Serilog `@mt` placeholders in preview only, without changing the structured JSON runtime semantics.
+- [ ] 13.8.6. Human in the Loop review: validate imported-pattern usability and confirm the canonical model feels 
+  flexible enough before follow-on polish.
 
 ### 13.9. Multi-Source Mixed-Pattern Windows
 Design context: sprint doc §2.6 / §4.6 and `docs/adr/adr-043-pattern-wizard-draft-overlay-and-directory-mappings.md` (per-source resolution and file overrides).
@@ -103,19 +104,19 @@ Design context: sprint doc §2.6 / §4.6 and `docs/adr/adr-043-pattern-wizard-dr
   multi-source wizard flow, and file-override persistence against real files.
 
 ### 13.10. Regression Protection for Structured and Existing Behavior
-- [ ] 13.10.1. Add or extend tests proving `JsonLogParser` / `JsonMapping` remain the authoritative path for structured JSON logs.
-- [ ] 13.10.2. Add or extend tests for multiline text-log behavior so preview/apply results remain consistent.
+- [x] 13.10.1. Add or extend tests proving `JsonLogParser` / `JsonMapping` remain the authoritative path for structured JSON logs.
+- [x] 13.10.2. Add or extend tests for multiline text-log behavior so preview/apply results remain consistent.
 - [ ] 13.10.3. Add or extend tests for reopening the wizard after apply, cancel, and directory-mapping reuse flows.
 - [ ] 13.10.4. Add or extend tests for SFTP/S3/local directory identity normalization and persisted mapping reuse.
 - [ ] 13.10.5. Add or extend tests proving single-source windows behave exactly as before the multi-source changes.
-- [ ] 13.10.6. Human in the Loop review: validate that structured-log compatibility and regression scope look sufficient before sprint closure.
+- [x] 13.10.6. Human in the Loop review: validate that structured-log compatibility and regression scope look sufficient before sprint closure.
 
 ### 13.11. Verification, Deferred Decisions, and Closeout Docs
-- [ ] 13.11.1. Add/extend unit tests in `core` for canonical compilation, importers, heuristic draft creation, and directory-key persistence.
+- [x] 13.11.1. Add/extend unit tests in `core` for canonical compilation, importers, heuristic draft creation, and directory-key persistence.
 - [ ] 13.11.2. Add/extend UI/viewmodel tests in `ui` for first-open prompt state, live preview updates, apply flow, reopenability, and persisted reuse.
-- [ ] 13.11.3. Run relevant touched-module tests.
-- [ ] 13.11.4. Run `./gradlew check` before closing the sprint work.
-- [ ] 13.11.5. Run the required cyclomatic complexity review and decide whether follow-on complexity reduction tasks are needed.
+- [x] 13.11.3. Run relevant touched-module tests.
+- [x] 13.11.4. Run `./gradlew check` before closing the sprint work.
+- [x] 13.11.5. Run the required cyclomatic complexity review and decide whether follow-on complexity reduction tasks are needed.
 - [ ] 13.11.6. Keep `docs/deferred_decisions.md` updated whenever work is consciously postponed.
 - [ ] 13.11.7. Update `README.md` to reflect the shipped workflow when the sprint implementation is complete.
 - [ ] 13.11.8. Update `docs/project_memory.md` with shipped scope, key decisions, gotchas, and test coverage areas when the sprint implementation is complete.
