@@ -208,6 +208,7 @@ class LogColumnResizeTest {
                 columns = listOf("Message"),
                 columnWidths = mapOf("Message" to 80),
                 isAutoScrollEnabled = false,
+                useCompactCellMode = false,
                 windowId = "wrap-test"
             )
         }
@@ -248,6 +249,7 @@ class LogColumnResizeTest {
                 columns = listOf("Thread"),
                 columnWidths = mapOf("Thread" to 80),
                 isAutoScrollEnabled = false,
+                useCompactCellMode = false,
                 windowId = "custom-wrap-test"
             )
         }

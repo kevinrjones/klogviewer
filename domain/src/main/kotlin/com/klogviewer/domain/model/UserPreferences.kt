@@ -72,7 +72,8 @@ data class WindowPreference(
     val columnWidths: Map<String, Int> = emptyMap(),
     val isConnected: Boolean = true,
     val logFontFamily: String = "Monospaced",
-    val logFontSizeSp: Int = 12
+    val logFontSizeSp: Int = 12,
+    val useCompactCellMode: Boolean = true
 )
 
 val DEFAULT_LEVEL_FILTER_KEYS: Set<String> = LogLevel.entries.map { it.name }.toSet()

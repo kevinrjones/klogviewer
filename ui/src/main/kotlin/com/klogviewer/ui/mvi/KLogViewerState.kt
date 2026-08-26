@@ -157,7 +157,8 @@ data class LogWindow(
     val timeFilterPreset: TimeRangePreset? = null,
     val timeFilterValidationMessage: String? = null,
     val logFontFamily: String = DEFAULT_LOG_FONT_FAMILY,
-    val logFontSizeSp: Int = DEFAULT_LOG_FONT_SIZE_SP
+    val logFontSizeSp: Int = DEFAULT_LOG_FONT_SIZE_SP,
+    val useCompactCellMode: Boolean = true
 ) {
     val levelCounts: Map<LevelFilterKey, Int>
         get() = logs.groupingBy { LevelFilterPolicy.resolveLevelKey(it) }.eachCount()

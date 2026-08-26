@@ -36,20 +36,20 @@ Deliver targeted desktop UI polish for the main log table and Pattern Wizard, fo
 - Acceptance criteria (`14.11`) -> verification of all DoD items.
 
 ### 14.5. Table Text Display Modes (Compact vs Full)
-- [ ] 14.5.1. Add `useCompactCellMode: Boolean` field to `WindowPreference` in `domain/src/main/kotlin/com/klogviewer/domain/model/UserPreferences.kt`, defaulting to `true`.
-- [ ] 14.5.2. Implement Compact mode text truncation in the log table cell composable using `TextOverflow.Ellipsis` at the column boundary.
-- [ ] 14.5.3. Create `CellValuePopup.kt` composable: lightweight popup anchored near the truncated cell, displaying the full value with a copy-to-clipboard button.
-- [ ] 14.5.4. Wire click detection on truncated cells in `LogList.kt` to open the `CellValuePopup`.
-- [ ] 14.5.5. Add popup dismissal logic: clicking outside or pressing Escape dismisses the popup; keyboard focus moves to the popup when opened.
-- [ ] 14.5.6. Add a user-visible toggle (e.g., menu item, toolbar button, or context menu action) to switch between Compact and Full display modes per window.
-- [ ] 14.5.7. Wire the toggle to update `useCompactCellMode` in `WindowPreference` and persist via `JsonPreferencesRepository`.
-- [ ] 14.5.8. Handle multiline values in the popup (scrollable content area).
-- [ ] 14.5.9. Handle structured JSON content in the popup (preserved formatting).
-- [ ] 14.5.10. Handle null/empty cells gracefully (no popup shown for empty cells).
-- [ ] 14.5.11. Ensure column sizing interactions remain correct when switching between display modes.
-- [ ] 14.5.12. Add unit tests for the `useCompactCellMode` preference field serialization and default value.
-- [ ] 14.5.13. Add Compose UI tests for the `CellValuePopup` rendering and dismissal behavior.
-- [ ] 14.5.14. Add interaction tests for the toggle state persistence across sessions.
+- [x] 14.5.1. Add `useCompactCellMode: Boolean` field to `WindowPreference`
+- [x] 14.5.2. Implement Compact mode text truncation in the log table cell composable using `TextOverflow.Ellipsis` at the column boundary.
+- [x] 14.5.3. Create `CellValuePopup.kt` composable: lightweight popup anchored near the truncated cell, displaying the full value with a copy-to-clipboard button.
+- [x] 14.5.4. Wire click detection on truncated cells in `LogList.kt` to open the `CellValuePopup`.
+- [x] 14.5.5. Add popup dismissal logic: clicking outside or pressing Escape dismisses the popup; keyboard focus moves to the popup when opened.
+- [x] 14.5.6. Add a user-visible toggle (e.g., menu item, toolbar button, or context menu action) to switch between Compact and Full display modes per window.
+- [x] 14.5.7. Wire the toggle to update `useCompactCellMode` in `WindowPreference` and persist via `JsonPreferencesRepository`.
+- [x] 14.5.8. Handle multiline values in the popup (scrollable content area).
+- [x] 14.5.9. Handle structured JSON content in the popup (preserved formatting).
+- [x] 14.5.10. Handle null/empty cells gracefully (no popup shown for empty cells).
+- [x] 14.5.11. Ensure column sizing interactions remain correct when switching between display modes.
+- [x] 14.5.12. Add unit tests for the `useCompactCellMode` preference field serialization and default value.
+- [x] 14.5.13. Add Compose UI tests for the `CellValuePopup` rendering and dismissal behavior.
+- [x] 14.5.14. Add interaction tests for the toggle state persistence across sessions.
 
 ### 14.6. Table Grid Lines
 - [x] 14.6.1. Add horizontal grid line rendering in `LogEntryRow` composable in `LogList.kt` using `Canvas.drawLine` at the bottom of each row.

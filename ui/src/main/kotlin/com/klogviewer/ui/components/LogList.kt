@@ -36,6 +36,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
@@ -102,6 +103,7 @@ fun LogList(
     isContextClearEnabled: Boolean = false,
     onColumnResize: (String, Int) -> Unit = { _, _ -> },
     windowId: String? = null,
+    useCompactCellMode: Boolean = true,
     modifier: Modifier = Modifier
 ) {
     val horizontalScrollState = rememberScrollState()
@@ -110,6 +112,18 @@ fun LogList(
     var contextMenuOffset by remember { mutableStateOf(Offset.Zero) }
     var latestSecondaryClickInContainer by remember { mutableStateOf<Offset?>(null) }
     var logListCoordinates by remember { mutableStateOf<LayoutCoordinates?>(null) }
+
+    // Popup state for cell value reveal
+    var popupCellValue by remember { mutableStateOf<String?>(null) }
+    var popupCellColumn by remember { mutableStateOf<String?>(null) }
+
+    val onCellValueClick: (String, LogEntry) -> Unit = { column, entry ->
+        val value = resolveCellValue(column, entry)
+        if (value.isNotEmpty()) {
+            popupCellValue = value
+            popupCellColumn = column
+        }
+    }
 
     LaunchedEffect(logs.size) {
         if (isAutoScrollEnabled && logs.isNotEmpty()) {
@@ -186,6 +200,8 @@ fun LogList(
                                     columnWidths = columnWidths,
                                     logFontStyle = logFontStyle,
                                     isSelected = selectedIndices.contains(index),
+                                    useCompactCellMode = useCompactCellMode,
+                                    onCellValueClick = onCellValueClick,
                                     onClick = { isShift, isMeta ->
                                         contextMenuRowIndex = null
                                         if (isShift || isMeta) {
@@ -263,6 +279,33 @@ fun LogList(
                 }
             }
         }
+
+        // Cell value popup
+        CellValuePopupState(
+            popupCellValue = popupCellValue,
+            popupCellColumn = popupCellColumn,
+            onDismiss = {
+                popupCellValue = null
+                popupCellColumn = null
+            }
+        )
+    }
+}
+
+@Composable
+private fun CellValuePopupState(
+    popupCellValue: String?,
+    popupCellColumn: String?,
+    onDismiss: () -> Unit
+) {
+    val cellValue = popupCellValue
+    val cellColumn = popupCellColumn
+    if (cellValue != null && cellColumn != null) {
+        CellValuePopup(
+            value = cellValue,
+            columnName = cellColumn,
+            onDismiss = onDismiss
+        )
     }
 }
 
@@ -448,6 +491,8 @@ fun LogEntryRow(
     onClick: (Boolean, Boolean) -> Unit = { _, _ -> },
     menuContainerCoordinates: LayoutCoordinates? = null,
     onContextMenuRequested: (Offset) -> Unit = {},
+    useCompactCellMode: Boolean = true,
+    onCellValueClick: (String, LogEntry) -> Unit = { _, _ -> },
     modifier: Modifier = Modifier
 ) {
     val logColors = KLogViewerTheme.logColors
@@ -592,7 +637,9 @@ fun LogEntryRow(
                     sourceIds = sourceIds,
                     missingSourceIds = missingSourceIds,
                     logColors = logColors,
-                    logFontStyle = logFontStyle
+                    logFontStyle = logFontStyle,
+                    useCompactCellMode = useCompactCellMode,
+                    onCellValueClick = onCellValueClick
                 )
             }
         }
@@ -659,78 +706,4 @@ private fun LogGutter(
     }
 }
 
-@Composable
-private fun LogEntryCell(
-    column: String,
-    entry: LogEntry,
-    columnModifier: Modifier,
-    filterQueries: List<String>,
-    isDarkMode: Boolean,
-    showAnsiColors: Boolean,
-    sourceIds: List<String>,
-    missingSourceIds: Set<String>,
-    logColors: LogLevelColors,
-    logFontStyle: TextStyle
-) {
-    when (column) {
-        "Source" -> SourceCell(entry, sourceIds, columnModifier, logFontStyle)
-        "Timestamp" -> {
-            Text(
-                text = entry.timestamp.value,
-                color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
-                style = MaterialTheme.typography.caption.copy(
-                    fontFamily = logFontStyle.fontFamily,
-                    fontSize = logFontStyle.fontSize
-                ),
-                modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-        }
-        "Level" -> {
-            val displayLevel = entry.fields["level"]
-                ?.takeIf { it != "UNKNOWN" }
-                ?: ""
-            val color = if (entry.level == LogLevel.UNKNOWN && displayLevel.isNotBlank()) {
-                MaterialTheme.colors.onSurface
-            } else {
-                getLevelColor(entry.level, logColors)
-            }
-            Text(
-                text = displayLevel,
-                color = color,
-                style = MaterialTheme.typography.caption.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = logFontStyle.fontFamily,
-                    fontSize = logFontStyle.fontSize
-                ),
-                modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-        }
-        "Message", "Content" -> {
-            val fullMessage = if (column == "Message") entry.content.value else entry.fields["content"] ?: entry.content.value
-            val displayMessage = if (fullMessage.length > 10000) fullMessage.take(10000) + "..." else fullMessage
-            val isMissing = entry.sourceId != null && missingSourceIds.contains(entry.sourceId)
-            Text(
-                text = LogHighlighter.highlight(displayMessage, filterQueries, isDarkMode, showAnsiColors),
-                style = MaterialTheme.typography.body1.copy(
-                    fontFamily = logFontStyle.fontFamily,
-                    fontSize = logFontStyle.fontSize,
-                    textDecoration = if (isMissing) TextDecoration.LineThrough else TextDecoration.None
-                ),
-                modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-        }
-        else -> {
-            val value = resolveCustomColumnValue(column, entry)
-            Text(
-                text = value,
-                color = MaterialTheme.colors.onSurface,
-                style = MaterialTheme.typography.caption.copy(
-                    fontFamily = logFontStyle.fontFamily,
-                    fontSize = logFontStyle.fontSize
-                ),
-                modifier = columnModifier.padding(horizontal = 4.dp, vertical = 4.dp)
-            )
-        }
-    }
-}
 

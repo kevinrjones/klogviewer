@@ -40,6 +40,12 @@ class UiToggleIntentHandler(
                 }
                 onSavePreferences()
             }
+            KLogViewerIntent.ToggleCompactCellMode -> {
+                state.update { currentState ->
+                    currentState.updateActiveWindow { it.copy(useCompactCellMode = !it.useCompactCellMode) }
+                }
+                onSavePreferences()
+            }
             KLogViewerIntent.ToggleConnection -> toggleConnection()
             KLogViewerIntent.RefreshConnection -> refreshConnection()
         }

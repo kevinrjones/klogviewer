@@ -33,6 +33,7 @@ sealed interface KLogViewerIntent {
     data object ToggleAnsiColors : UiToggleIntent
     data object ToggleConnection : UiToggleIntent
     data object RefreshConnection : UiToggleIntent
+    data object ToggleCompactCellMode : UiToggleIntent
     
     data class AddFilterQuery(val query: String) : FilterIntent
     data class RemoveFilterQuery(val query: String) : FilterIntent

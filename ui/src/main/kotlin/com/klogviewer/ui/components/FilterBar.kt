@@ -51,6 +51,8 @@ fun FilterBar(
     onClearTimeFilter: () -> Unit,
     matchesCount: Int,
     totalCount: Int,
+    useCompactCellMode: Boolean = true,
+    onToggleCompactCellMode: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var textState by remember { mutableStateOf("") }
@@ -100,7 +102,9 @@ fun FilterBar(
                 isConnected = isConnected,
                 onToggleConnection = onToggleConnection,
                 onRefresh = onRefresh,
-                onEditPatternMapping = onEditPatternMapping
+                onEditPatternMapping = onEditPatternMapping,
+                useCompactCellMode = useCompactCellMode,
+                onToggleCompactCellMode = onToggleCompactCellMode
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
@@ -187,7 +191,9 @@ private fun viewActions(
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
     onRefresh: () -> Unit,
-    onEditPatternMapping: (() -> Unit)? = null
+    onEditPatternMapping: (() -> Unit)? = null,
+    useCompactCellMode: Boolean = true,
+    onToggleCompactCellMode: () -> Unit = {}
 ) {
     filterBarIcon(icon = Icons.Default.Brightness4, tooltip = "Toggle Theme", onClick = onToggleTheme)
     filterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)
@@ -214,6 +220,12 @@ private fun viewActions(
         tooltip = if (isConnected) "Connected (Click to Disconnect)" else "Disconnected (Click to Connect)",
         onClick = onToggleConnection,
         tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray
+    )
+    filterBarIcon(
+        icon = Icons.Default.VerticalAlignTop,
+        tooltip = if (useCompactCellMode) "Compact Mode" else "Full Mode",
+        onClick = onToggleCompactCellMode,
+        tint = if (useCompactCellMode) MaterialTheme.colors.primary else LocalContentColor.current
     )
     filterBarIcon(
         icon = Icons.Default.Refresh,

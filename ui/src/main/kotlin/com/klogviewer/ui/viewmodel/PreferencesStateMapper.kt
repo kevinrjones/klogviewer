@@ -104,7 +104,8 @@ object PreferencesStateMapper {
             columnWidths = windowPreference.columnWidths,
             isConnected = windowPreference.isConnected,
             logFontFamily = windowPreference.logFontFamily,
-            logFontSizeSp = windowPreference.logFontSizeSp
+            logFontSizeSp = windowPreference.logFontSizeSp,
+            useCompactCellMode = windowPreference.useCompactCellMode
         )
     }
 
@@ -147,7 +148,8 @@ object PreferencesStateMapper {
             columnWidths = window.columnWidths,
             isConnected = window.isConnected,
             logFontFamily = window.logFontFamily,
-            logFontSizeSp = window.logFontSizeSp
+            logFontSizeSp = window.logFontSizeSp,
+            useCompactCellMode = window.useCompactCellMode
         )
     }
 }

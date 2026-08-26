@@ -301,7 +301,9 @@ private fun LogTopBar(
             },
             onClearTimeFilter = { viewModel.handleIntent(KLogViewerIntent.ResetTimeFilter) },
             matchesCount = activeWindow?.filteredLogs?.size ?: 0,
-            totalCount = activeWindow?.logs?.size ?: 0
+            totalCount = activeWindow?.logs?.size ?: 0,
+            useCompactCellMode = activeWindow?.useCompactCellMode ?: true,
+            onToggleCompactCellMode = { viewModel.handleIntent(KLogViewerIntent.ToggleCompactCellMode) }
         )
     }
 
@@ -802,6 +804,7 @@ private fun LogWorkspace(
                 )
             },
             windowId = window.id,
+            useCompactCellMode = window.useCompactCellMode,
             modifier = Modifier.weight(1f)
         )
     }
