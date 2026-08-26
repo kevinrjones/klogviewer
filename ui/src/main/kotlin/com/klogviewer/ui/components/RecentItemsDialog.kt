@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.klogviewer.domain.model.DirectoryIdentityNormalizer
 import com.klogviewer.domain.repository.LocalFileSystem
 
 @Composable
@@ -149,7 +150,7 @@ fun RecentItemsDialog(
 }
 
 private fun exists(path: String, localFileSystem: LocalFileSystem): Boolean {
-    if (path.startsWith("sftp://")) return true
+    if (DirectoryIdentityNormalizer.isRemote(path)) return true
     return localFileSystem.exists(path)
 }
 

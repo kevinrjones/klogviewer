@@ -85,7 +85,7 @@ Deliver the first-load pattern wizard workflow, live sample-based preview, direc
 - [x] 13.8.3. Add compiler support from canonical pattern definitions to runtime `LogTemplate` / `TemplateLogParser` behavior.
 - [x] 13.8.4. Keep multiline compatibility aligned with `core/src/main/kotlin/com/klogviewer/core/source/MultilineProcessor.kt` and the existing template parser path.
 - [x] 13.8.5. Surface Serilog `@mt` placeholders in preview only, without changing the structured JSON runtime semantics.
-- [ ] 13.8.6. Human in the Loop review: validate imported-pattern usability and confirm the canonical model feels 
+- [x] 13.8.6. Human in the Loop review: validate imported-pattern usability and confirm the canonical model feels 
   flexible enough before follow-on polish.
 
 ### 13.9. Multi-Source Mixed-Pattern Windows
@@ -106,37 +106,37 @@ Design context: sprint doc §2.6 / §4.6 and `docs/adr/adr-043-pattern-wizard-dr
 ### 13.10. Regression Protection for Structured and Existing Behavior
 - [x] 13.10.1. Add or extend tests proving `JsonLogParser` / `JsonMapping` remain the authoritative path for structured JSON logs.
 - [x] 13.10.2. Add or extend tests for multiline text-log behavior so preview/apply results remain consistent.
-- [ ] 13.10.3. Add or extend tests for reopening the wizard after apply, cancel, and directory-mapping reuse flows.
-- [ ] 13.10.4. Add or extend tests for SFTP/S3/local directory identity normalization and persisted mapping reuse.
-- [ ] 13.10.5. Add or extend tests proving single-source windows behave exactly as before the multi-source changes.
+- [x] 13.10.3. Add or extend tests for reopening the wizard after apply, cancel, and directory-mapping reuse flows.
+- [x] 13.10.4. Add or extend tests for SFTP/S3/local directory identity normalization and persisted mapping reuse.
+- [x] 13.10.5. Add or extend tests proving single-source windows behave exactly as before the multi-source changes.
 - [x] 13.10.6. Human in the Loop review: validate that structured-log compatibility and regression scope look sufficient before sprint closure.
 
 ### 13.11. Verification, Deferred Decisions, and Closeout Docs
 - [x] 13.11.1. Add/extend unit tests in `core` for canonical compilation, importers, heuristic draft creation, and directory-key persistence.
-- [ ] 13.11.2. Add/extend UI/viewmodel tests in `ui` for first-open prompt state, live preview updates, apply flow, reopenability, and persisted reuse.
+- [x] 13.11.2. Add/extend UI/viewmodel tests in `ui` for first-open prompt state, live preview updates, apply flow, reopenability, and persisted reuse.
 - [x] 13.11.3. Run relevant touched-module tests.
 - [x] 13.11.4. Run `./gradlew check` before closing the sprint work.
 - [x] 13.11.5. Run the required cyclomatic complexity review and decide whether follow-on complexity reduction tasks are needed.
-- [ ] 13.11.6. Keep `docs/deferred_decisions.md` updated whenever work is consciously postponed.
-- [ ] 13.11.7. Update `README.md` to reflect the shipped workflow when the sprint implementation is complete.
-- [ ] 13.11.8. Update `docs/project_memory.md` with shipped scope, key decisions, gotchas, and test coverage areas when the sprint implementation is complete.
+- [x] 13.11.6. Keep `docs/deferred_decisions.md` updated whenever work is consciously postponed.
+- [x] 13.11.7. Update `README.md` to reflect the shipped workflow when the sprint implementation is complete.
+- [x] 13.11.8. Update `docs/project_memory.md` with shipped scope, key decisions, gotchas, and test coverage areas when the sprint implementation is complete.
 
 ### 13.12. Acceptance Criteria
-- [ ] Opening an unrecognized or heuristically detected text log shows the best-guess pattern wizard before final parser commitment.
-- [ ] Editing the draft updates preview/mapping output immediately from sampled lines.
-- [ ] Applying a pattern reloads the main log table using the existing loading path.
-- [ ] Approved mappings are reused for later files in the same normalized directory scope.
-- [ ] Structured JSON logs continue to auto-detect and render correctly.
-- [ ] Serilog `@mt` placeholders are visible in preview without changing structured runtime parsing semantics.
-- [ ] The wizard can be reopened later from the active log UI.
-- [ ] The wizard never blocks viewing a file: skip/plain-text is always available and high-confidence detection collapses to a confirmation banner.
-- [ ] Hover synchronization, undo/redo, and keyboard shortcuts work across all wizard zones.
-- [ ] A saved mapping that stops matching triggers wizard re-entry with diagnostics rather than silent mis-parsing.
-- [ ] Saved directory mappings can be listed and deleted from the management surface.
-- [ ] Deferred items remain tracked in `docs/deferred_decisions.md`.
-- [ ] Two files with different patterns load into one window, each parsed with its own pattern and interleaved by timestamp.
-- [ ] Union columns render with blank cells where a source lacks a field; the `Source` column and colour accent identify origins.
-- [ ] File overrides win over directory mappings for same-directory conflicts and persist/restore correctly.
-- [ ] Sources without a parseable timestamp load with the approximate-interleaving warning and keep anchored file order.
-- [ ] Live tail across sources inserts out-of-order arrivals at their timestamp position.
-- [ ] The multi-source wizard shows per-source status and applying updates only the selected source's mapping.
+- [x] Opening an unrecognized or heuristically detected text log shows the best-guess pattern wizard before final parser commitment.
+- [x] Editing the draft updates preview/mapping output immediately from sampled lines.
+- [x] Applying a pattern reloads the main log table using the existing loading path.
+- [x] Approved mappings are reused for later files in the same normalized directory scope.
+- [x] Structured JSON logs continue to auto-detect and render correctly.
+- [x] Serilog `@mt` placeholders are visible in preview without changing structured runtime parsing semantics.
+- [x] The wizard can be reopened later from the active log UI.
+- [x] The wizard never blocks viewing a file: skip/plain-text is always available and high-confidence detection collapses to a confirmation banner.
+- [x] Hover synchronization, undo/redo, and keyboard shortcuts work across all wizard zones.
+- [x] A saved mapping that stops matching triggers wizard re-entry with diagnostics rather than silent mis-parsing.
+- [x] Saved directory mappings can be listed and deleted from the management surface.
+- [x] Deferred items remain tracked in `docs/deferred_decisions.md`.
+- [x] Two files with different patterns load into one window, each parsed with its own pattern and interleaved by timestamp.
+- [x] Union columns render with blank cells where a source lacks a field; the `Source` column and colour accent identify origins.
+- [x] File overrides win over directory mappings for same-directory conflicts and persist/restore correctly.
+- [x] Sources without a parseable timestamp load with the approximate-interleaving warning and keep anchored file order.
+- [x] Live tail across sources inserts out-of-order arrivals at their timestamp position.
+- [x] The multi-source wizard shows per-source status and applying updates only the selected source's mapping.

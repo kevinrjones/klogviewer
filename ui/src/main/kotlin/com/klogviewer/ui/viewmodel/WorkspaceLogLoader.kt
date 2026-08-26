@@ -6,6 +6,7 @@ import arrow.core.right
 import com.klogviewer.core.parser.*
 import com.klogviewer.core.source.DirectoryLogSource
 import com.klogviewer.core.source.DirectoryScanner
+import com.klogviewer.domain.model.DirectoryIdentityNormalizer
 import com.klogviewer.domain.model.*
 import com.klogviewer.domain.repository.LocalFileSystem
 import com.klogviewer.domain.repository.LogSource
@@ -28,11 +29,7 @@ class WorkspaceLogLoader(
 
     fun filterRedundantPaths(paths: List<String>): List<String> {
         val directories = paths.filter { path ->
-            when {
-                path.startsWith("sftp://") -> SftpUri.parse(path)?.isDirectory == true
-                path.startsWith("s3://") -> S3Uri.parse(path)?.isDirectory == true
-                else -> localFileSystem.isDirectory(path)
-            }
+            DirectoryIdentityNormalizer.isDirectory(path, localFileSystem)
         }
         
         if (directories.isEmpty()) return paths
@@ -44,22 +41,24 @@ class WorkspaceLogLoader(
             if (isDir) return@filter true
             
             !directories.any { dir ->
-                if (path.startsWith("sftp://") && dir.startsWith("sftp://")) {
-                    val dirUri = SftpUri.parse(dir)
-                    if (sftpUri != null && dirUri != null) {
-                        sftpUri.username == dirUri.username &&
-                        sftpUri.host == dirUri.host &&
-                        sftpUri.port == dirUri.port &&
-                        sftpUri.path.startsWith(dirUri.path) &&
-                        sftpUri.path != dirUri.path
-                    } else false
-                } else if (path.startsWith("s3://") && dir.startsWith("s3://")) {
-                    val dirUri = S3Uri.parse(dir)
-                    if (s3Uri != null && dirUri != null) {
-                        s3Uri.bucket == dirUri.bucket &&
-                        s3Uri.key.startsWith(dirUri.key) &&
-                        s3Uri.key != dirUri.key
-                    } else false
+                if (DirectoryIdentityNormalizer.isRemote(path) && DirectoryIdentityNormalizer.isRemote(dir)) {
+                    if (path.startsWith("sftp://")) {
+                        val dirUri = SftpUri.parse(dir)
+                        if (sftpUri != null && dirUri != null) {
+                            sftpUri.username == dirUri.username &&
+                            sftpUri.host == dirUri.host &&
+                            sftpUri.port == dirUri.port &&
+                            sftpUri.path.startsWith(dirUri.path) &&
+                            sftpUri.path != dirUri.path
+                        } else false
+                    } else {
+                        val dirUri = S3Uri.parse(dir)
+                        if (s3Uri != null && dirUri != null) {
+                            s3Uri.bucket == dirUri.bucket &&
+                            s3Uri.key.startsWith(dirUri.key) &&
+                            s3Uri.key != dirUri.key
+                        } else false
+                    }
                 } else if (!path.isRemoteUri() && !dir.isRemoteUri()) {
                     path.startsWith(dir) && path != dir
                 } else false
@@ -90,8 +89,8 @@ class WorkspaceLogLoader(
     fun createLogFlows(paths: List<String>, results: List<ProbeResult?>): List<Flow<Either<Pair<LogFailure, String>, Pair<LogUpdate, String>>>> {
         return paths.mapIndexed { index, path ->
             val flow = when {
-                path.startsWith("sftp://") -> createSftpLogFlow(path)
-                path.startsWith("s3://") -> createS3LogFlow(path)
+                DirectoryIdentityNormalizer.isRemote(path) && path.startsWith("sftp://") -> createSftpLogFlow(path)
+                DirectoryIdentityNormalizer.isRemote(path) -> createS3LogFlow(path)
                 localFileSystem.isDirectory(path) -> DirectoryLogSource(logSource, heuristicProbe).observeLogs(
                     LogFilePath(path),
                     results.getOrNull(index)?.parser
@@ -218,8 +217,7 @@ class WorkspaceLogLoader(
         }
     }
 
-    private fun String.isRemoteUri(): Boolean =
-        startsWith("sftp://") || startsWith("s3://")
+    private fun String.isRemoteUri(): Boolean = DirectoryIdentityNormalizer.isRemote(this)
 }
 
 private const val RESAMPLE_LINE_SCAN_LIMIT = 1000

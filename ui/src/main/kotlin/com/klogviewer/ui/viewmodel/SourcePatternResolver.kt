@@ -28,7 +28,7 @@ class SourcePatternResolver(
         overrideParserName: String?,
         getParserResultByName: (String, List<String>) -> ProbeResult
     ): ProbeResult {
-        val isDir = localFileSystem.exists(path) && localFileSystem.isDirectory(path)
+        val isDir = DirectoryIdentityNormalizer.isDirectory(path, localFileSystem)
         val directoryKey = DirectoryIdentityNormalizer.normalize(path, isDirectory = isDir)
         val savedMapping = state.value.directoryPatternMappings[directoryKey]
         val fileOverride = if (isDir) null else {
@@ -57,14 +57,11 @@ class SourcePatternResolver(
     }
 
     private fun resolveSourcePatternRef(path: String, result: ProbeResult): SourcePatternRef {
-        val isRemote = path.startsWith("sftp://") || path.startsWith("s3://")
-        val isDir = !isRemote && localFileSystem.exists(path) && localFileSystem.isDirectory(path)
-        val fileKey = if (isRemote || isDir) null else DirectoryIdentityNormalizer.normalizeFile(path)
-        val directoryKey = if (isRemote) null else {
-            DirectoryIdentityNormalizer.normalize(path, isDirectory = isDir)
-        }
+        val isDir = DirectoryIdentityNormalizer.isDirectory(path, localFileSystem)
+        val fileKey = if (isDir) null else DirectoryIdentityNormalizer.normalizeFile(path)
+        val directoryKey = DirectoryIdentityNormalizer.normalize(path, isDirectory = isDir)
         val fileOverride = fileKey?.let { state.value.filePatternOverrides[it] }
-        val directoryMapping = directoryKey?.let { state.value.directoryPatternMappings[it] }
+        val directoryMapping = directoryKey.let { state.value.directoryPatternMappings[it] }
         return when {
             fileOverride != null && fileOverride.patternDraft.name == result.parserName ->
                 SourcePatternRef(parserName = result.parserName, fileOverrideKey = fileKey)

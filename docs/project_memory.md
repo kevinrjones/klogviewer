@@ -3948,3 +3948,40 @@ For each sprint/task
 ### Test coverage areas
 
 - Not run; this task changed documentation and planning artifacts only.
+
+---
+
+## Task: Sprint 13 - Pattern Wizard, Live Preview, Directory Mappings, and Multi-Source Support
+
+**Title**: Implement Sprint 13 Pattern Wizard, Live Preview, Directory-Scoped Persistence, and Regression Safety
+**Date/time completed**: 2026-08-26 11:28
+
+### What was shipped
+
+- **Enriched Heuristic Drafting & Core Importers**: `HeuristicProbe` seeds canonical `PatternDraft` models for text logs while leaving `JsonLogParser`/`JsonMapping` authoritative for structured JSON logs. Added `PatternImporter` for Logback/Log4j (`%d`, `%t`, `%level`, `%c`, `%m`, `%X{name}`) and Serilog text layouts (`{Timestamp}`, `{Level}`, `{ThreadId}`, `{SourceContext}`, `{Message}`, `{Exception}`, `{NewLine}`).
+- **Pattern Draft Compiler & Runtime Integration**: `PatternDraftCompiler` converts canonical pattern definitions into regex-backed `LogTemplate` / `TemplateLogParser` instances with safe named capture groups, delimiter escaping, timestamp format propagation, and token-column mappings.
+- **Preview Service & Serilog `@mt` Annotations**: `DefaultPatternPreviewService` computes debounced off-thread preview rows and match confidence metrics. Serilog `@mt` placeholders are exposed in preview metadata without altering structured runtime parsing.
+- **Directory-Scoped Persistence & Normalization**: `DirectoryIdentityNormalizer` provides unified key normalization across local (`local:/path`), SFTP (`sftp:user@host:port/path`), and S3 (`s3:bucket/prefix`) sources. `DirectoryMappingCoordinator` manages directory-level pattern persistence, mismatch detection, and preloaded wizard recovery.
+- **Multi-Source Mixed-Pattern Windows**: `LogWindow` supports per-source pattern refs (`sourcePatterns`). Merged logs across sources are interleaved by timestamp, columns are unioned with blank cells for missing fields, and a filterable `Source` column with source origin badges renders in `LogList`.
+- **Pattern Wizard UI & Reopenability**: Interactive 5-zone modal container (`PatternWizardDialog`), token bar (`PatternTokenBar`), token config popover, sample inspector, compact table preview, and match summary badge. Wizard can be reopened anytime from the status bar or window header.
+- **Regression Protection & Test Suites**: Added test suites (`PatternWizardRegressionTest`, `HeuristicProbeEnrichedTest`, `PatternImporterTest`, `PatternDraftCompilerIntegrationTest`, `MultilineProcessorCompatibilityTest`, `StructuredSerilogPreviewTest`) verifying structured JSON precedence, multiline preservation, wizard reopening, remote URI mapping resolution, single-source window compatibility, and Gradle `check` compliance.
+
+### Key decisions
+
+- Kept `JsonLogParser` and `JsonMapping` authoritative for structured JSON logs so text-pattern detection never forces JSON through regex parsing.
+- Unified directory key normalization across local, SFTP, and S3 sources using `DirectoryIdentityNormalizer`.
+- Implemented near-tail binary search insertion for live-tail multi-source streams to preserve timestamp ordering with low overhead.
+- Used a draft-overlay editor and debounced preview calculation to prevent continuous main-table reparsing while editing.
+- Preserved single-source window compatibility by maintaining `sourceIds` and `sourcePatterns` maps alongside legacy `parserName` / `patternDraft` window properties.
+
+### Gotchas
+
+- Remote SFTP and S3 paths must preserve scheme prefixes in `DirectoryIdentityNormalizer` (`sftp:...` / `s3:...`) so directory pattern mappings resolve correctly across filesystem boundaries.
+- Positional constructors like `PatternDelimiter(value = " [")` must use named arguments for `value` to avoid assigning string values to auto-generated `id` parameters.
+- Reopening the pattern wizard for an existing window must check `targetWindow.patternDraft` or `sourcePatterns` to preload applied drafts rather than reverting to default best-guess state.
+
+### Test coverage areas
+
+- `./gradlew check` — BUILD SUCCESSFUL across `:domain`, `:core`, `:ui`, and `:app` modules.
+- Unit tests: `PatternWizardRegressionTest`, `PatternImporterTest`, `PatternDraftCompilerIntegrationTest`, `HeuristicProbeEnrichedTest`, `MultilineProcessorCompatibilityTest`, `StructuredSerilogPreviewTest`, `DirectoryIdentityNormalizerTest`, `WorkspaceLogLoaderTest`, `PatternWizardIntentHandlerTest`.
+- Static analysis: `./gradlew detekt` passed cleanly in all modules.

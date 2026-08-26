@@ -287,18 +287,7 @@ private fun SourceTypeBadge(sourceType: String) {
 @Preview
 @Composable
 fun DirectoryMappingsDialogPreview() {
-    val sampleDraft = PatternDraft(
-        name = "Logback Standard",
-        segments = listOf(
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.TIMESTAMP)),
-            PatternSegment.Delimiter(PatternDelimiter(value = " [")),
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.THREAD)),
-            PatternSegment.Delimiter(PatternDelimiter(value = "] ")),
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL)),
-            PatternSegment.Delimiter(PatternDelimiter(value = " - ")),
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
-        )
-    )
+    val sampleDraft = PatternDraft.createDefaultLogback("Logback Standard")
 
     val sampleMappings = mapOf(
         "local:/var/log/nginx" to DirectoryPatternMapping(

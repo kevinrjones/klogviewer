@@ -69,6 +69,27 @@ data class PatternDraft(
 ) {
     val hasTimestampToken: Boolean
         get() = segments.any { it is PatternSegment.Token && it.token.role == PatternTokenRole.TIMESTAMP }
+
+    companion object {
+        fun createDefaultLogback(name: String = "Logback Standard"): PatternDraft {
+            return PatternDraft(
+                name = name,
+                segments = listOf(
+                    PatternSegment.Token(
+                        PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = "yyyy-MM-dd HH:mm:ss.SSS")
+                    ),
+                    PatternSegment.Delimiter(PatternDelimiter(value = " [")),
+                    PatternSegment.Token(PatternToken(role = PatternTokenRole.THREAD)),
+                    PatternSegment.Delimiter(PatternDelimiter(value = "] ")),
+                    PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL)),
+                    PatternSegment.Delimiter(PatternDelimiter(value = " ")),
+                    PatternSegment.Token(PatternToken(role = PatternTokenRole.LOGGER)),
+                    PatternSegment.Delimiter(PatternDelimiter(value = " - ")),
+                    PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
+                )
+            )
+        }
+    }
 }
 
 data class PatternDraftHistory(

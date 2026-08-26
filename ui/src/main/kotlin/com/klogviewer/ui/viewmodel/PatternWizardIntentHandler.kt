@@ -259,9 +259,11 @@ class PatternWizardIntentHandler(
     }
 
     private fun handleOpen(intent: KLogViewerIntent.OpenPatternWizard) {
-        val initialDraft = intent.initialDraft ?: defaultBestGuessDraft()
         val targetWindowId = intent.targetWindowId ?: state.value.activeTab?.activeWindow?.id
         val targetWindow = state.value.tabs.flatMap { it.windows }.firstOrNull { it.id == targetWindowId }
+        val initialDraft = intent.initialDraft
+            ?: targetWindow?.patternDraft
+            ?: defaultBestGuessDraft()
         val sources = buildSourceEntries(targetWindow)
         val activeSourceId = sources.firstOrNull { it.status == SourceWizardStatus.NEEDS_REVIEW }?.sourceId
             ?: sources.firstOrNull()?.sourceId
@@ -430,21 +432,7 @@ class PatternWizardIntentHandler(
     }
 
     private fun defaultBestGuessDraft(): PatternDraft {
-        val defaultSegments = listOf(
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.TIMESTAMP, formatPattern = "yyyy-MM-dd HH:mm:ss.SSS")),
-            PatternSegment.Delimiter(PatternDelimiter(value = " [")),
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.THREAD)),
-            PatternSegment.Delimiter(PatternDelimiter(value = "] ")),
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.LEVEL)),
-            PatternSegment.Delimiter(PatternDelimiter(value = " ")),
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.LOGGER)),
-            PatternSegment.Delimiter(PatternDelimiter(value = " - ")),
-            PatternSegment.Token(PatternToken(role = PatternTokenRole.MESSAGE))
-        )
-        return PatternDraft(
-            name = "Logback / Log4J Default",
-            segments = defaultSegments
-        )
+        return PatternDraft.createDefaultLogback("Logback / Log4J Default")
     }
 
     private fun parsePatternStringToDraft(patternText: String): PatternDraft {

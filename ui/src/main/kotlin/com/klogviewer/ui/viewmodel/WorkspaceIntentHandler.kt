@@ -1,5 +1,6 @@
 package com.klogviewer.ui.viewmodel
 
+import com.klogviewer.domain.model.DirectoryIdentityNormalizer
 import com.klogviewer.ui.mvi.KLogViewerIntent
 import com.klogviewer.ui.mvi.KLogViewerState
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -98,7 +99,7 @@ class WorkspaceIntentHandler(
         if (path.isBlank()) {
             return false
         }
-        if (path.startsWith("sftp://") || path.startsWith("s3://")) {
+        if (DirectoryIdentityNormalizer.isRemote(path)) {
             return true
         }
         return File(path).exists()

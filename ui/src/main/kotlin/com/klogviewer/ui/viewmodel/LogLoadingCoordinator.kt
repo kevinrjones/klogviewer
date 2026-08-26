@@ -77,7 +77,7 @@ class LogLoadingCoordinator(
     }
 
     fun resampleLinesForSource(sourceId: String, limitPerSection: Int = 10): List<String> {
-        val isRemote = sourceId.startsWith("sftp://") || sourceId.startsWith("s3://")
+        val isRemote = DirectoryIdentityNormalizer.isRemote(sourceId)
         return if (!isRemote && localFileSystem.exists(sourceId)) {
             workspaceLogLoader.readResampledLines(sourceId, limitPerSection)
         } else {
@@ -88,7 +88,7 @@ class LogLoadingCoordinator(
     fun resampleLinesForWindow(windowId: String, limitPerSection: Int = 10): List<String> {
         val window = state.value.tabs.flatMap { it.windows }.find { it.id == windowId }
         val path = window?.filePath ?: window?.sourceIds?.firstOrNull() ?: return emptyList()
-        return if (!path.startsWith("sftp://") && !path.startsWith("s3://") && localFileSystem.exists(path)) {
+        return if (!DirectoryIdentityNormalizer.isRemote(path) && localFileSystem.exists(path)) {
             workspaceLogLoader.readResampledLines(path, limitPerSection)
         } else {
             workspaceLogLoader.readSampleLines(path, limit = limitPerSection * 3)
@@ -462,50 +462,63 @@ class LogLoadingCoordinator(
         if (paths.size != 1) return false
         
         val uri = paths[0]
-        if (uri.startsWith("sftp://")) {
-            val config = workspaceLogLoader.findSftpConfig(uri)
-            val sftpUri = SftpUri.parse(uri)
-            
-            if (config != null && sftpUri != null) {
-                if (sftpUri.isDirectory) {
-                    connectSftpDirectory(windowId, config, sftpUri.path, overrideParserName)
-                } else {
-                    connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path, overrideParserName)
-                }
-                return true
-            } else if (sftpUri != null) {
-                state.update { it.updateWindow(windowId) { logWindow ->
-                    logWindow.copy(
-                        filePath = uri,
-                        sourceIds = listOf(uri),
-                        missingSourceIds = setOf(uri),
-                        error = "SFTP connection not found in preferences"
-                    )
-                } }
-                return true
+        if (!DirectoryIdentityNormalizer.isRemote(uri)) return false
+        
+        return when {
+            handleSftpUri(windowId, uri, overrideParserName) -> true
+            handleS3Uri(windowId, uri, overrideParserName) -> true
+            else -> false
+        }
+    }
+
+    private fun handleSftpUri(windowId: String, uri: String, overrideParserName: String?): Boolean {
+        if (!uri.startsWith("sftp://")) return false
+        val config = workspaceLogLoader.findSftpConfig(uri)
+        val sftpUri = SftpUri.parse(uri)
+        
+        if (config != null && sftpUri != null) {
+            if (sftpUri.isDirectory) {
+                connectSftpDirectory(windowId, config, sftpUri.path, overrideParserName)
+            } else {
+                connectSftp(windowId, config.name, config.host.value, config.port.value, config.username.value, config.auth, sftpUri.path, overrideParserName)
             }
-        } else if (uri.startsWith("s3://")) {
-            val config = workspaceLogLoader.findS3Config(uri)
-            val s3Uri = S3Uri.parse(uri)
-            
-            if (config != null && s3Uri != null) {
-                if (s3Uri.isDirectory) {
-                    connectS3Directory(windowId, config, s3Uri.key, overrideParserName)
-                } else {
-                    connectS3(windowId, config.copy(prefix = s3Uri.key), overrideParserName)
-                }
-                return true
-            } else if (s3Uri != null) {
-                state.update { it.updateWindow(windowId) { logWindow ->
-                    logWindow.copy(
-                        filePath = uri,
-                        sourceIds = listOf(uri),
-                        missingSourceIds = setOf(uri),
-                        error = "S3 connection not found in preferences"
-                    )
-                } }
-                return true
+            return true
+        } else if (sftpUri != null) {
+            state.update { it.updateWindow(windowId) { logWindow ->
+                logWindow.copy(
+                    filePath = uri,
+                    sourceIds = listOf(uri),
+                    missingSourceIds = setOf(uri),
+                    error = "SFTP connection not found in preferences"
+                )
+            } }
+            return true
+        }
+        return false
+    }
+
+    private fun handleS3Uri(windowId: String, uri: String, overrideParserName: String?): Boolean {
+        if (!uri.startsWith("s3://")) return false
+        val config = workspaceLogLoader.findS3Config(uri)
+        val s3Uri = S3Uri.parse(uri)
+        
+        if (config != null && s3Uri != null) {
+            if (s3Uri.isDirectory) {
+                connectS3Directory(windowId, config, s3Uri.key, overrideParserName)
+            } else {
+                connectS3(windowId, config.copy(prefix = s3Uri.key), overrideParserName)
             }
+            return true
+        } else if (s3Uri != null) {
+            state.update { it.updateWindow(windowId) { logWindow ->
+                logWindow.copy(
+                    filePath = uri,
+                    sourceIds = listOf(uri),
+                    missingSourceIds = setOf(uri),
+                    error = "S3 connection not found in preferences"
+                )
+            } }
+            return true
         }
         return false
     }
@@ -547,7 +560,7 @@ class LogLoadingCoordinator(
     ) {
         val firstResult = results.firstOrNull()
         val path = filteredPaths.firstOrNull()
-        val isRemote = path != null && (path.startsWith("sftp://") || path.startsWith("s3://"))
+        val isRemote = path != null && DirectoryIdentityNormalizer.isRemote(path)
         val isTextLog = firstResult != null &&
             firstResult.parser !is JsonLogParser &&
             path != null &&
@@ -646,9 +659,8 @@ class LogLoadingCoordinator(
 
     internal suspend fun handleLogLoadingFailure(windowId: String, path: String, failure: LogFailure) {
         val originalMessage = failure.message
-        val isRemote = path.startsWith("s3://") || path.startsWith("sftp://") || 
-                       (failure.sourceId?.startsWith("s3://") == true) || 
-                       (failure.sourceId?.startsWith("sftp://") == true)
+        val isRemote = DirectoryIdentityNormalizer.isRemote(path) || 
+                       (failure.sourceId?.let { DirectoryIdentityNormalizer.isRemote(it) } == true)
         
         val displayMessage = if (isRemote) {
             "Sorry, I was not able to connect. See the log file for more details"

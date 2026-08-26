@@ -37,6 +37,12 @@ Read log objects directly from AWS S3 using default credential chain, named prof
 ### Secure Credential Storage
 Saved remote credentials are protected with native OS secret stores (macOS Keychain, Linux Secret Service via `secret-tool`, and Windows Credential Locker via PowerShell `PasswordVault`) when available.
 
+### Interactive Pattern Wizard & Format Importer
+- **Pattern Wizard**: Interactive 5-zone modal editor with live sample-based preview and bidirectional hover sync.
+- **Format Importer**: Easily import pasted Logback/Log4j (`%d [%t] %p %c - %m`) and Serilog (`{Timestamp} [{Level}] {Message}`) pattern strings into an editable canonical draft.
+- **Directory-Scoped Persistence**: Remember and reuse approved pattern definitions across files in the same directory (local, SFTP, S3) with saved-mapping mismatch recovery.
+- **Multi-Source Mixed Patterns**: Open multiple log files with different custom patterns in a single window with interleaved timeline sorting, union columns, and source origin accents.
+
 ### Advanced Heuristic Parsing
 Supports a wide variety of log formats out-of-the-box, including:
 - **Standard Text**: ISO8601, Apache, Syslog, CSV.

@@ -50,44 +50,19 @@ import com.klogviewer.domain.model.PreviewTableRow
 import com.klogviewer.domain.model.SampleLineSpan
 import com.klogviewer.domain.model.SourceWizardEntry
 import com.klogviewer.domain.model.SourceWizardStatus
+import com.klogviewer.ui.mvi.KLogViewerIntent
 
 @Composable
 fun PatternWizardDialog(
     state: PatternWizardState,
     isDarkMode: Boolean,
-    onPresetSelected: (String) -> Unit,
-    onImportPattern: (String) -> Unit,
-    onDirectoryPersistenceToggled: (Boolean) -> Unit,
-    onTokenClick: (PatternToken) -> Unit,
-    onSegmentHovered: (String?) -> Unit,
-    onRemoveSegment: (String) -> Unit,
-    onReorderSegment: (String, Boolean) -> Unit,
-    onDelimiterUpdated: (String, String) -> Unit,
-    onAddToken: (Int, PatternTokenRole) -> Unit,
-    onLineIndexChanged: (Int) -> Unit,
-    onColumnHovered: (String?) -> Unit,
-    onExtractSpanAsToken: (IntRange, PatternTokenRole, String?) -> Unit,
-    onTokenUpdated: (PatternToken) -> Unit,
-    onTokenDeleted: (String) -> Unit,
-    onToggleDiagnosticsDrawer: () -> Unit,
-    onResetToBestGuess: () -> Unit,
-    onUndo: () -> Unit,
-    onRedo: () -> Unit,
-    onCancel: () -> Unit,
-    onSkip: () -> Unit,
-    onApply: () -> Unit,
-    onExpandBannerToFullWizard: () -> Unit,
-    onClosePopover: () -> Unit,
-    onCloseSelectionPopup: () -> Unit,
-    onResample: (() -> Unit)? = null,
-    onManageMappings: (() -> Unit)? = null,
-    onSelectSource: ((String) -> Unit)? = null,
+    onIntent: (KLogViewerIntent) -> Unit,
     modifier: Modifier = Modifier
 ) {
     if (!state.isVisible) return
 
     Dialog(
-        onDismissRequest = onCancel,
+        onDismissRequest = { onIntent(KLogViewerIntent.ClosePatternWizard) },
         properties = DialogProperties(usePlatformDefaultWidth = false)
     ) {
         Surface(
@@ -101,19 +76,19 @@ fun PatternWizardDialog(
                         val isCmdOrCtrl = keyEvent.isMetaPressed || keyEvent.isCtrlPressed
                         when {
                             keyEvent.key == Key.Escape -> {
-                                onCancel()
+                                onIntent(KLogViewerIntent.ClosePatternWizard)
                                 true
                             }
                             isCmdOrCtrl && keyEvent.key == Key.Enter -> {
-                                onApply()
+                                onIntent(KLogViewerIntent.ApplyPatternDraft)
                                 true
                             }
                             isCmdOrCtrl && keyEvent.key == Key.Z && keyEvent.isShiftPressed -> {
-                                onRedo()
+                                onIntent(KLogViewerIntent.RedoPatternDraft)
                                 true
                             }
                             isCmdOrCtrl && keyEvent.key == Key.Z -> {
-                                onUndo()
+                                onIntent(KLogViewerIntent.UndoPatternDraft)
                                 true
                             }
                             else -> false
@@ -126,9 +101,9 @@ fun PatternWizardDialog(
                 PatternConfirmationBanner(
                     draftName = state.currentDraft.name,
                     confidenceScore = state.confidenceScore,
-                    onApply = onApply,
-                    onReview = onExpandBannerToFullWizard,
-                    onSkip = onSkip
+                    onApply = { onIntent(KLogViewerIntent.ApplyPatternDraft) },
+                    onReview = { onIntent(KLogViewerIntent.ExpandPatternBannerToFullWizard) },
+                    onSkip = { onIntent(KLogViewerIntent.SkipPatternWizard) }
                 )
             } else {
                 // Full 5-Zone Pattern Wizard UI
@@ -148,10 +123,16 @@ fun PatternWizardDialog(
                         )
 
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = onUndo, enabled = state.canUndo) {
+                            OutlinedButton(
+                                onClick = { onIntent(KLogViewerIntent.UndoPatternDraft) },
+                                enabled = state.canUndo
+                            ) {
                                 Text("Undo")
                             }
-                            OutlinedButton(onClick = onRedo, enabled = state.canRedo) {
+                            OutlinedButton(
+                                onClick = { onIntent(KLogViewerIntent.RedoPatternDraft) },
+                                enabled = state.canRedo
+                            ) {
                                 Text("Redo")
                             }
                         }
@@ -161,7 +142,7 @@ fun PatternWizardDialog(
                         WizardSourceSelector(
                             sources = state.sources,
                             activeSourceId = state.activeSourceId,
-                            onSelectSource = { onSelectSource?.invoke(it) }
+                            onSelectSource = { onIntent(KLogViewerIntent.SelectPatternWizardSource(it)) }
                         )
                     }
 
@@ -183,11 +164,19 @@ fun PatternWizardDialog(
                             // Zone 1: Header & Importer Bar
                             PatternImporterBar(
                                 selectedPresetName = state.currentDraft.name,
-                                onPresetSelected = onPresetSelected,
-                                onImportPattern = onImportPattern,
+                                onPresetSelected = {
+                                    onIntent(KLogViewerIntent.ImportPatternString(it))
+                                },
+                                onImportPattern = {
+                                    onIntent(KLogViewerIntent.ImportPatternString(it))
+                                },
                                 isDirectoryPersistenceEnabled = state.currentDraft.isDirectoryPersistenceEnabled,
-                                onDirectoryPersistenceToggled = onDirectoryPersistenceToggled,
-                                onManageMappings = onManageMappings
+                                onDirectoryPersistenceToggled = {
+                                    onIntent(KLogViewerIntent.SetDirectoryPersistenceEnabled(it))
+                                },
+                                onManageMappings = {
+                                    onIntent(KLogViewerIntent.ShowDirectoryMappingsDialog)
+                                }
                             )
 
                             // Zone 2: Interactive Token Bar
@@ -196,12 +185,24 @@ fun PatternWizardDialog(
                                 hoveredSegmentId = state.hoveredSegmentId,
                                 focusedTokenId = state.focusedTokenId,
                                 isDarkMode = isDarkMode,
-                                onTokenClick = onTokenClick,
-                                onSegmentHovered = onSegmentHovered,
-                                onRemoveSegment = onRemoveSegment,
-                                onReorderSegment = onReorderSegment,
-                                onDelimiterUpdated = onDelimiterUpdated,
-                                onAddToken = onAddToken
+                                onTokenClick = { token ->
+                                    onIntent(KLogViewerIntent.OpenPatternTokenConfigPopover(token.id))
+                                },
+                                onSegmentHovered = { segmentId ->
+                                    onIntent(KLogViewerIntent.SetHoveredPatternSegment(segmentId))
+                                },
+                                onRemoveSegment = { segmentId ->
+                                    onIntent(KLogViewerIntent.RemovePatternSegment(segmentId))
+                                },
+                                onReorderSegment = { segmentId, moveLeft ->
+                                    onIntent(KLogViewerIntent.ReorderPatternSegment(segmentId, moveLeft))
+                                },
+                                onDelimiterUpdated = { delimiterId, newValue ->
+                                    onIntent(KLogViewerIntent.UpdatePatternDelimiter(delimiterId, newValue))
+                                },
+                                onAddToken = { segmentIndex, role ->
+                                    onIntent(KLogViewerIntent.AddPatternToken(segmentIndex, role))
+                                }
                             )
 
                             // Zone 3: Sample Line Inspector
@@ -215,9 +216,15 @@ fun PatternWizardDialog(
                                 parseErrors = state.parseErrors,
                                 hoveredSegmentId = state.hoveredSegmentId,
                                 isDarkMode = isDarkMode,
-                                onLineIndexChanged = onLineIndexChanged,
-                                onSegmentHovered = onSegmentHovered,
-                                onResample = onResample
+                                onLineIndexChanged = { index ->
+                                    onIntent(KLogViewerIntent.SelectPatternSampleLine(index))
+                                },
+                                onSegmentHovered = { segmentId ->
+                                    onIntent(KLogViewerIntent.SetHoveredPatternSegment(segmentId))
+                                },
+                                onResample = {
+                                    onIntent(KLogViewerIntent.ResamplePatternLines)
+                                }
                             )
 
                             // Zone 5: Match Health & Summary
@@ -227,7 +234,9 @@ fun PatternWizardDialog(
                                 confidenceScore = state.confidenceScore,
                                 parseErrors = state.parseErrors,
                                 isDiagnosticsDrawerOpen = state.isDiagnosticsDrawerOpen,
-                                onToggleDiagnosticsDrawer = onToggleDiagnosticsDrawer,
+                                onToggleDiagnosticsDrawer = {
+                                    onIntent(KLogViewerIntent.TogglePatternDiagnosticsDrawer)
+                                },
                                 showMissingTimestampWarning = !state.currentDraft.hasTimestampToken
                             )
                         }
@@ -253,7 +262,7 @@ fun PatternWizardDialog(
                                 rows = previewRows,
                                 hoveredColumnName = state.hoveredColumnName,
                                 isDarkMode = isDarkMode,
-                                onColumnHovered = onColumnHovered,
+                                onColumnHovered = { col -> onIntent(KLogViewerIntent.SetHoveredPatternColumn(col)) },
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -270,7 +279,7 @@ fun PatternWizardDialog(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            TextButton(onClick = onResetToBestGuess) {
+                            TextButton(onClick = { onIntent(KLogViewerIntent.ResetPatternToBestGuess) }) {
                                 Text("Reset to Best Guess")
                             }
 
@@ -278,14 +287,14 @@ fun PatternWizardDialog(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                OutlinedButton(onClick = onSkip) {
+                                OutlinedButton(onClick = { onIntent(KLogViewerIntent.SkipPatternWizard) }) {
                                     Text("Skip (Plain Text)")
                                 }
-                                OutlinedButton(onClick = onCancel) {
+                                OutlinedButton(onClick = { onIntent(KLogViewerIntent.ClosePatternWizard) }) {
                                     Text("Cancel")
                                 }
                                 Button(
-                                    onClick = onApply,
+                                    onClick = { onIntent(KLogViewerIntent.ApplyPatternDraft) },
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Text("Apply & Load (⌘↵)")
@@ -308,9 +317,9 @@ fun PatternWizardDialog(
         if (targetToken != null) {
             PatternTokenConfigPopover(
                 token = targetToken,
-                onTokenUpdated = onTokenUpdated,
-                onTokenDeleted = onTokenDeleted,
-                onDismissRequest = onClosePopover
+                onTokenUpdated = { token -> onIntent(KLogViewerIntent.UpdatePatternToken(token)) },
+                onTokenDeleted = { tokenId -> onIntent(KLogViewerIntent.RemovePatternSegment(tokenId)) },
+                onDismissRequest = { onIntent(KLogViewerIntent.ClosePatternTokenConfigPopover) }
             )
         }
     }
@@ -324,8 +333,10 @@ fun PatternWizardDialog(
         SampleLineSelectionPopup(
             selectedText = selectedText,
             selectedRange = selectionRange,
-            onExtractAsToken = onExtractSpanAsToken,
-            onDismissRequest = onCloseSelectionPopup
+            onExtractAsToken = { range, role, customName ->
+                onIntent(KLogViewerIntent.ExtractSpanAsPatternToken(range, role, customName))
+            },
+            onDismissRequest = { onIntent(KLogViewerIntent.ClosePatternSelectionPopup) }
         )
     }
 }
@@ -440,30 +451,7 @@ fun PatternWizardDialogPreview() {
             PatternWizardDialog(
                 state = state,
                 isDarkMode = true,
-                onPresetSelected = {},
-                onImportPattern = {},
-                onDirectoryPersistenceToggled = {},
-                onTokenClick = {},
-                onSegmentHovered = {},
-                onRemoveSegment = {},
-                onReorderSegment = { _, _ -> },
-                onDelimiterUpdated = { _, _ -> },
-                onAddToken = { _, _ -> },
-                onLineIndexChanged = {},
-                onColumnHovered = {},
-                onExtractSpanAsToken = { _, _, _ -> },
-                onTokenUpdated = {},
-                onTokenDeleted = {},
-                onToggleDiagnosticsDrawer = {},
-                onResetToBestGuess = {},
-                onUndo = {},
-                onRedo = {},
-                onCancel = {},
-                onSkip = {},
-                onApply = {},
-                onExpandBannerToFullWizard = {},
-                onClosePopover = {},
-                onCloseSelectionPopup = {}
+                onIntent = {}
             )
         }
     }

@@ -1,6 +1,27 @@
 package com.klogviewer.domain.model
 
+import com.klogviewer.domain.repository.LocalFileSystem
+
 object DirectoryIdentityNormalizer {
+
+    /**
+     * Returns true if the path or URI uses a remote scheme (SFTP or S3).
+     */
+    fun isRemote(pathOrUri: String): Boolean =
+        pathOrUri.startsWith("sftp://") || pathOrUri.startsWith("s3://")
+
+    /**
+     * Determines whether the given path or URI represents a directory.
+     */
+    fun isDirectory(pathOrUri: String, localFileSystem: LocalFileSystem? = null): Boolean {
+        return if (isRemote(pathOrUri)) {
+            pathOrUri.contains("type=directory") || pathOrUri.endsWith("/")
+        } else if (localFileSystem != null) {
+            localFileSystem.exists(pathOrUri) && localFileSystem.isDirectory(pathOrUri)
+        } else {
+            pathOrUri.endsWith("/")
+        }
+    }
 
     /**
      * Normalizes a file path or URI into a canonical directory identity key.

@@ -1,5 +1,6 @@
 package com.klogviewer.ui.viewmodel
 
+import com.klogviewer.domain.model.DirectoryIdentityNormalizer
 import com.klogviewer.domain.model.SftpUri
 import com.klogviewer.domain.repository.LocalFileSystem
 import com.klogviewer.ui.mvi.KLogViewerState
@@ -21,14 +22,14 @@ class RecentItemsManager(private val localFileSystem: LocalFileSystem) {
     }
 
     private fun isFile(path: String): Boolean {
-        if (path.startsWith("sftp://")) {
+        if (DirectoryIdentityNormalizer.isRemote(path)) {
             return SftpUri.parse(path)?.isDirectory == false
         }
         return localFileSystem.isFile(path)
     }
 
     private fun isDirectory(path: String): Boolean {
-        if (path.startsWith("sftp://")) {
+        if (DirectoryIdentityNormalizer.isRemote(path)) {
             return SftpUri.parse(path)?.isDirectory == true
         }
         return localFileSystem.isDirectory(path)
@@ -49,7 +50,7 @@ class RecentItemsManager(private val localFileSystem: LocalFileSystem) {
     }
 
     private fun exists(path: String): Boolean {
-        if (path.startsWith("sftp://")) return true
+        if (DirectoryIdentityNormalizer.isRemote(path)) return true
         return localFileSystem.exists(path)
     }
 }
