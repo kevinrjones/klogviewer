@@ -1,4 +1,4 @@
-# Sprint 15: Serilog Compact Log Event Viewing
+# Sprint 16: Serilog Compact Log Event Viewing
 
 ## 1. Goal
 
@@ -14,7 +14,7 @@ logs.
   `@tr`, `@sp`) are not explicitly first-class in list, filter, and dashboard workflows.
 - Serilog compact logs are newline-delimited JSON events and should be treated as event streams rather than arbitrary
   JSON blobs.
-- The roadmap requires insertion of this sprint immediately after Sprint 14, with downstream renumbering handled
+- The roadmap requires insertion of Sprint 14 (UI Polish) before this sprint, with downstream renumbering handled
   separately in roadmap consistency work.
 
 ## 3. CLEF Format Summary
@@ -45,7 +45,7 @@ logs.
 
 | Tool                               | Relevant CLEF Capabilities                                                                                       | Current KLogViewer Capability                                                                        | Gap                                                                                                                                 | Sprint Decision                                                                 |
 |------------------------------------|------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| `clef-tool` (deprecated)           | CLI pretty-print, filtering expressions, template-based output, enrichment, export pipelines                     | Partial: structured display and filtering exist in app, no equivalent CLI transformation/export flow | No CLI parity for transformation pipelines; no template-driven export formatting                                                    | Deferred; explicit non-goal for Sprint 14 parity                                |
+| `clef-tool` (deprecated)           | CLI pretty-print, filtering expressions, template-based output, enrichment, export pipelines                     | Partial: structured display and filtering exist in app, no equivalent CLI transformation/export flow | No CLI parity for transformation pipelines; no template-driven export formatting                                                    | Deferred; explicit non-goal for this sprint parity                                |
 | Compact Log Format Viewer          | Dedicated CLEF viewer UX, query workflows, Serilog-focused viewing                                               | Partial: structured list/details exist, but CLEF reified fields are not fully first-class            | Needs explicit CLEF field handling in list/details/filter/search                                                                    | Must-have                                                                       |
 | Seq                                | CLEF ingestion, search/filter, dashboards/charts, trace/span correlation                                         | Partial: local viewer, filtering and dashboard frequency exist                                       | Missing explicit CLEF detection confidence, trace/span-focused filtering/grouping, event-id centric views                           | Must-have for local-view parity subset; server-side ingestion/query is non-goal |
 | LogViewPlus                        | Auto parser behavior, chained filters, live tail, SQL-like analysis/dashboarding                                 | Partial: detection heuristics, filters, dashboards, live tail foundations exist                      | Needs clearer property-path filtering UX and high-cardinality guardrails for CLEF-centric grouping                                  | Must-have (core), should-have (advanced grouping polish)                        |
@@ -78,7 +78,7 @@ logs.
 
 - Becoming a Seq replacement (ingestion service, server-side query engine, alerts, app ecosystem).
 - Implementing every `clef-tool`/`seqcli` command.
-- Implementing full Serilog query/template language parity in Sprint 15.
+- Implementing full Serilog query/template language parity in Sprint 16.
 - Enabling pretty-printed multi-line JSON streams as default CLEF interpretation.
 
 ## 5. Scope
@@ -280,16 +280,16 @@ F -->|re-evaluate| B
 ## 22. Verification Commands
 
 - Inventory affected references before/after renumber and doc updates:
-    - `rg -n "Sprint 1[4-7]|TASKS-SPRINT-1[4-7]" README.md docs`
+    - `rg -n "Sprint 1[5-9]|TASKS-SPRINT-1[5-9]" README.md docs`
 - Check for prohibited user-facing phrase in new sprint/task artifacts:
     - `rg -n "CLEF mode" docs/sprints docs/tasks`
-- Verify new Sprint 15 docs exist:
-    - `ls docs/sprints/sprint-15-clef-viewing.md docs/tasks/TASKS-SPRINT-15-CLEF-VIEWING.md`
+- Verify new Sprint 16 docs exist:
+    - `ls docs/sprints/sprint-16-clef-viewing.md docs/tasks/TASKS-SPRINT-16-CLEF-VIEWING.md`
 
 ## 23. Documentation Updates
 
-- Add this sprint document as Sprint 15.
-- Add matching tasks document for Sprint 15.
+- Add this sprint document as Sprint 16.
+- Add matching tasks document for Sprint 16.
 - Update roadmap references and downstream numbering in related sprint/task docs and index references.
 - Reflect outcomes in `docs/project_memory.md` when sprint/task completion is finalized.
 

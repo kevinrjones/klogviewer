@@ -1,4 +1,4 @@
-# Sprint 18: OpenTelemetry Integration
+# Sprint 19: OpenTelemetry Integration
 
 ## 1. Sprint Goal and Scope
 Deliver first-class OpenTelemetry support so KLogViewer can ingest, inspect, correlate, and analyze telemetry data (logs, traces, and metrics) in a workflow consistent with existing log analysis features.
@@ -156,7 +156,7 @@ Deliver first-class OpenTelemetry support so KLogViewer can ingest, inspect, cor
 ## 19. Detailed Task Breakdown
 
 ### 19.1. Discovery and Design
-- [ ] Define supported OpenTelemetry signal subset for Sprint 18 (logs, traces, baseline metrics).
+- [ ] Define supported OpenTelemetry signal subset for Sprint 19 (logs, traces, baseline metrics).
 - [ ] Publish ADR for adapter boundaries, domain model extensions, and correlation design.
 - [ ] Produce sample fixture corpus covering representative OTLP payload variations.
 

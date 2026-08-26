@@ -1,4 +1,4 @@
-# Sprint 14: Power User Workflows, Query UX & Workspace Persistence
+# Sprint 15: Power User Workflows, Query UX & Workspace Persistence
 
 ## 1. Goal
 Deliver power-user workflows that make structured filtering faster to use and easier to persist, while keeping Sprint 12B as the semantic source of truth for query behavior.
@@ -29,20 +29,20 @@ Deliver power-user workflows that make structured filtering faster to use and ea
 - Support external-tool integration entry points (for example "Open in IDE at this line").
 
 ## 3. Dependencies and Ownership Boundaries
-- Sprint 14 query-builder UX depends on `docs/tasks/TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md`.
+- Sprint 15 query-builder UX depends on `docs/tasks/TASKS-SPRINT-12B-STRUCTURED-DATA-FILTERING.md`.
 - Sprint 12B owns filtering parser/query semantics (grammar, typed comparisons, null/missing/exists, array behavior, alias-aware canonical filtering, and backward compatibility).
-- Sprint 14 must not duplicate parser or filtering semantics from 12B; it provides UX/workflow entry points, composition, persistence, and productivity features on top.
+- Sprint 15 must not duplicate parser or filtering semantics from 12B; it provides UX/workflow entry points, composition, persistence, and productivity features on top.
 
 ## 4. Out of Scope
 - Creating a second or competing query language independent from Sprint 12B.
 - Redefining structured predicate semantics already owned by Sprint 12B.
 - Changing typed comparison behavior, null/missing behavior, or array predicate semantics defined in 12B.
 - Broad structured-data normalization expansion (owned by Sprint 12D).
-- Heavy filtering performance tuning unless directly required for Sprint 14 UX outcomes (otherwise owned by Sprint 12E).
+- Heavy filtering performance tuning unless directly required for Sprint 15 UX outcomes (otherwise owned by Sprint 12E).
 
 ## 5. Key Decisions
 - **Semantic source of truth**: Sprint 12B structured filtering engine remains authoritative for query meaning and evaluation.
-- **Sprint 14 focus**: Deliver visual composition, autocomplete, history, presets, workspace persistence, and context-driven entry points.
+- **Sprint 15 focus**: Deliver visual composition, autocomplete, history, presets, workspace persistence, and context-driven entry points.
 - **Project portability**: Use relative paths in `.lvp` files where possible to support sharing projects across machines.
 
 ## 6. Definition of Done

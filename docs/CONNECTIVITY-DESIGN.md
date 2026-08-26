@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This document explains what Sprint 16 (Network Log Adapters) should implement, why it matters, and which protocol expectations are realistic for log listeners.
+This document explains what Sprint 18 (Network Log Adapters) should implement, why it matters, and which protocol expectations are realistic for log listeners.
 
 In short: **TCP and UDP adapters turn KLogViewer into a live network log receiver** so applications can stream logs directly to the viewer without writing to local files first.
 
@@ -57,7 +57,7 @@ Short answer: **you need at least one simple framing contract, and optionally a 
 
 Implement two protocol profiles:
 
-1. **`plain-line` (required for Sprint 13 baseline)**
+1. **`plain-line` (required for Sprint 18 baseline)**
    - UTF-8 text lines separated by `\n`.
    - Works with most custom appenders and `netcat`-style emitters.
    - Minimal complexity; fastest path to value.
@@ -66,11 +66,11 @@ Implement two protocol profiles:
    - Accept RFC 5424-style syslog messages over UDP/TCP.
    - Gives interoperability with standard logging infrastructure and many existing appenders.
 
-If time is limited in Sprint 13, deliver `plain-line` first and define `syslog` as a backward-compatible extension.
+If time is limited in Sprint 18, deliver `plain-line` first and define `syslog` as a backward-compatible extension.
 
-### Requested compatibility targets for Sprint 13
+### Requested compatibility targets for Sprint 18
 
-The Sprint 13 scope should explicitly support these sender ecosystems and wire formats:
+The Sprint 18 scope should explicitly support these sender ecosystems and wire formats:
 
 1. **Java Logback `SocketAppender`**
    - TCP ingestion profile with Logback socket payload decoding.
@@ -170,7 +170,7 @@ Display identity in source badges and allow filtering by sender.
 - Add `tcps`/TLS mode with server certificate and key.
 - Optional mutual TLS can be a future enhancement.
 
-### Non-goals for Sprint 17
+### Non-goals for Sprint 18
 - Full authentication/authorization layer for listener clients.
 - Reliable-at-least-once delivery protocol (this is transport-level ingestion, not a queueing system).
 
@@ -204,9 +204,9 @@ Display identity in source badges and allow filtering by sender.
 - Kafka ingestion bridge
 - Windows Event Forwarding bridge
 
-## Acceptance Mapping to Sprint 17 Tasks
+## Acceptance Mapping to Sprint 18 Tasks
 
-Canonical task tracking file: `docs/tasks/TASKS-SPRINT-17-NETWORK-LOG-ADAPTERS.md`
+Canonical task tracking file: `docs/tasks/TASKS-SPRINT-18-NETWORK-LOG-ADAPTERS.md`
 
 - `13.3.1` / `13.3.2`: concrete TCP and UDP listener adapters in `:core`
 - `13.3.3`: `plain-line` protocol profile documented and implemented
