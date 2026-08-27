@@ -103,7 +103,7 @@ private fun WelcomeCard(
         modifier = (if (testTag != null) modifier.testTag(testTag) else modifier)
             .clickable(onClick = onClick),
         elevation = 2.dp,
-        shape = RoundedCornerShape(8.dp),
+        shape = RoundedCornerShape(4.dp),
         backgroundColor = MaterialTheme.colors.surface
     ) {
         Column(

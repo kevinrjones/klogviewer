@@ -66,7 +66,7 @@ fun DirectoryMappingsDialog(
     ) {
         KLogViewerTheme(darkTheme = isDarkMode) {
             Surface(
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(4.dp),
                 tonalElevation = 8.dp,
                 modifier = Modifier
                     .width(760.dp)
@@ -116,6 +116,7 @@ fun DirectoryMappingsDialog(
                     // Content List
                     if (mappings.isEmpty()) {
                         Card(
+                            shape = RoundedCornerShape(4.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
                             ),
@@ -174,6 +175,7 @@ private fun DirectoryMappingRow(
     onDelete: () -> Unit
 ) {
     Card(
+        shape = RoundedCornerShape(4.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
         ),

@@ -78,7 +78,7 @@ fun CellValuePopup(
                         false
                     }
                 },
-            shape = RoundedCornerShape(8.dp),
+            shape = RoundedCornerShape(4.dp),
             elevation = 8.dp,
             color = MaterialTheme.colors.surface
         ) {
