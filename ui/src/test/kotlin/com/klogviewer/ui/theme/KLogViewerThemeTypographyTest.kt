@@ -14,7 +14,7 @@ import strikt.assertions.isEqualTo
 class KLogViewerThemeTypographyTest {
 
     @Test
-    fun `given app theme when typography is resolved then ui uses sans serif at thirteen points`() = runComposeUiTest {
+    fun `given app theme when typography resolved then hierarchy scale is verified`() = runComposeUiTest {
         var typography: Typography? = null
 
         setContent {
@@ -32,9 +32,13 @@ class KLogViewerThemeTypographyTest {
         expectThat(resolvedTypography.subtitle1.fontFamily).isEqualTo(FontFamily.SansSerif)
         expectThat(resolvedTypography.caption.fontFamily).isEqualTo(FontFamily.SansSerif)
 
+        expectThat(resolvedTypography.h1.fontSize).isEqualTo(20.sp)
+        expectThat(resolvedTypography.h2.fontSize).isEqualTo(18.sp)
+        expectThat(resolvedTypography.h3.fontSize).isEqualTo(16.sp)
+        expectThat(resolvedTypography.subtitle1.fontSize).isEqualTo(14.sp)
         expectThat(resolvedTypography.body1.fontSize).isEqualTo(13.sp)
         expectThat(resolvedTypography.body2.fontSize).isEqualTo(13.sp)
-        expectThat(resolvedTypography.subtitle1.fontSize).isEqualTo(13.sp)
-        expectThat(resolvedTypography.caption.fontSize).isEqualTo(13.sp)
+        expectThat(resolvedTypography.caption.fontSize).isEqualTo(11.sp)
+        expectThat(resolvedTypography.overline.fontSize).isEqualTo(10.sp)
     }
 }

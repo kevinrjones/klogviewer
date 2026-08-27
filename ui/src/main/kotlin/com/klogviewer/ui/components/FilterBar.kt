@@ -89,22 +89,25 @@ fun FilterBar(
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
-            viewActions(
-                onToggleTheme = onToggleTheme,
+            streamAndLayoutActions(
                 onToggleSidebar = onToggleSidebar,
                 onSplitClick = onSplitClick,
                 isReversed = isReversed,
                 onToggleSortOrder = onToggleSortOrder,
                 isAutoScrollEnabled = isAutoScrollEnabled,
                 onToggleAutoScroll = onToggleAutoScroll,
-                showAnsiColors = showAnsiColors,
-                onToggleAnsiColors = onToggleAnsiColors,
                 isConnected = isConnected,
                 onToggleConnection = onToggleConnection,
                 onRefresh = onRefresh,
-                onEditPatternMapping = onEditPatternMapping,
+                onEditPatternMapping = onEditPatternMapping
+            )
+            displaySettingsMenu(
+                onToggleTheme = onToggleTheme,
+                showAnsiColors = showAnsiColors,
+                onToggleAnsiColors = onToggleAnsiColors,
                 useCompactCellMode = useCompactCellMode,
-                onToggleCompactCellMode = onToggleCompactCellMode
+                onToggleCompactCellMode = onToggleCompactCellMode,
+                onEditPatternMapping = onEditPatternMapping
             )
 
             Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
@@ -178,54 +181,49 @@ private fun sourceActions(
 
 
 @Composable
-private fun viewActions(
-    onToggleTheme: () -> Unit,
+private fun streamAndLayoutActions(
     onToggleSidebar: () -> Unit,
     onSplitClick: () -> Unit,
     isReversed: Boolean,
     onToggleSortOrder: () -> Unit,
     isAutoScrollEnabled: Boolean,
     onToggleAutoScroll: () -> Unit,
-    showAnsiColors: Boolean,
-    onToggleAnsiColors: () -> Unit,
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
     onRefresh: () -> Unit,
-    onEditPatternMapping: (() -> Unit)? = null,
-    useCompactCellMode: Boolean = true,
-    onToggleCompactCellMode: () -> Unit = {}
+    onEditPatternMapping: (() -> Unit)? = null
 ) {
-    filterBarIcon(icon = Icons.Default.Brightness4, tooltip = "Toggle Theme", onClick = onToggleTheme)
-    filterBarIcon(icon = Icons.AutoMirrored.Filled.ViewSidebar, tooltip = "Toggle Sidebar", onClick = onToggleSidebar)
-    filterBarIcon(icon = Icons.Default.VerticalSplit, tooltip = "Split Horizontal", onClick = onSplitClick)
+    filterBarIcon(
+        icon = Icons.AutoMirrored.Filled.ViewSidebar,
+        tooltip = "Toggle Sidebar",
+        onClick = onToggleSidebar,
+        testTag = "toggle_sidebar"
+    )
+    filterBarIcon(
+        icon = Icons.Default.VerticalSplit,
+        tooltip = "Split Horizontal",
+        onClick = onSplitClick,
+        testTag = "split_horizontal"
+    )
     filterBarIcon(
         icon = if (isReversed) Icons.Default.SwapVert else Icons.AutoMirrored.Filled.Sort,
         tooltip = if (isReversed) "Newest First" else "Oldest First",
-        onClick = onToggleSortOrder
+        onClick = onToggleSortOrder,
+        testTag = "toggle_sort_order"
     )
     filterBarIcon(
         icon = Icons.Default.ArrowDownward,
         tooltip = if (isAutoScrollEnabled) "Auto-scroll ON" else "Auto-scroll OFF",
         onClick = onToggleAutoScroll,
-        tint = if (isAutoScrollEnabled) MaterialTheme.colors.primary else LocalContentColor.current
-    )
-    filterBarIcon(
-        icon = Icons.Default.Palette,
-        tooltip = if (showAnsiColors) "ANSI Colors ON" else "ANSI Colors OFF",
-        onClick = onToggleAnsiColors,
-        tint = if (showAnsiColors) MaterialTheme.colors.primary else LocalContentColor.current
+        tint = if (isAutoScrollEnabled) MaterialTheme.colors.primary else LocalContentColor.current,
+        testTag = if (isAutoScrollEnabled) "auto-scroll_on" else "auto-scroll_off"
     )
     filterBarIcon(
         icon = if (isConnected) Icons.Default.Link else Icons.Default.LinkOff,
         tooltip = if (isConnected) "Connected (Click to Disconnect)" else "Disconnected (Click to Connect)",
         onClick = onToggleConnection,
-        tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray
-    )
-    filterBarIcon(
-        icon = Icons.Default.VerticalAlignTop,
-        tooltip = if (useCompactCellMode) "Compact Mode" else "Full Mode",
-        onClick = onToggleCompactCellMode,
-        tint = if (useCompactCellMode) MaterialTheme.colors.primary else LocalContentColor.current
+        tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray,
+        testTag = if (isConnected) "connected" else "disconnected"
     )
     filterBarIcon(
         icon = Icons.Default.Refresh,
@@ -240,6 +238,68 @@ private fun viewActions(
             onClick = onEditPatternMapping,
             testTag = "toolbar_edit_pattern_mapping"
         )
+    }
+}
+
+@Composable
+private fun displaySettingsMenu(
+    onToggleTheme: () -> Unit,
+    showAnsiColors: Boolean,
+    onToggleAnsiColors: () -> Unit,
+    useCompactCellMode: Boolean = true,
+    onToggleCompactCellMode: () -> Unit = {},
+    onEditPatternMapping: (() -> Unit)? = null
+) {
+    var menuExpanded by remember { mutableStateOf(false) }
+
+    Box {
+        filterBarIcon(
+            icon = Icons.Default.MoreVert,
+            tooltip = "Display & Settings",
+            onClick = { menuExpanded = true },
+            testTag = "toolbar_settings_menu"
+        )
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { menuExpanded = false }
+        ) {
+            compactMenuItem(
+                text = "Toggle Theme",
+                onClick = {
+                    menuExpanded = false
+                    onToggleTheme()
+                },
+                modifier = Modifier.testTag("toolbar_toggle_theme")
+            )
+            compactMenuItem(
+                text = if (showAnsiColors) "ANSI Colors: ON" else "ANSI Colors: OFF",
+                onClick = {
+                    menuExpanded = false
+                    onToggleAnsiColors()
+                },
+                modifier = Modifier.testTag("toolbar_toggle_ansi")
+            )
+            compactMenuItem(
+                text = if (useCompactCellMode) "Cell View: Compact" else "Cell View: Full",
+                onClick = {
+                    menuExpanded = false
+                    onToggleCompactCellMode()
+                },
+                modifier = Modifier.testTag("toolbar_toggle_compact_mode")
+            )
+            if (onEditPatternMapping != null) {
+                Divider()
+                compactMenuItem(
+                    text = "Edit Pattern Mapping",
+                    onClick = {
+                        menuExpanded = false
+                        onEditPatternMapping()
+                    },
+                    modifier = Modifier.testTag("toolbar_menu_edit_pattern_mapping")
+                )
+            }
+        }
     }
 }
 

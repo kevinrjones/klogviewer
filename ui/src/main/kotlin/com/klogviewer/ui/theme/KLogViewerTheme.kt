@@ -1,7 +1,15 @@
 package com.klogviewer.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Shapes
+import androidx.compose.material.Typography
+import androidx.compose.material.darkColors
+import androidx.compose.material.lightColors
+import androidx.compose.material3.Shapes as M3Shapes
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -9,16 +17,20 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 private val UI_FONT_FAMILY = FontFamily.SansSerif
-private val UI_FONT_SIZE = 13.sp
 
-private fun uiTextStyle(weight: FontWeight = FontWeight.Normal): TextStyle {
+private fun uiTextStyle(
+    size: TextUnit = 13.sp,
+    weight: FontWeight = FontWeight.Normal
+): TextStyle {
     return TextStyle(
         fontFamily = UI_FONT_FAMILY,
         fontWeight = weight,
-        fontSize = UI_FONT_SIZE
+        fontSize = size
     )
 }
 
@@ -116,31 +128,70 @@ fun KLogViewerTheme(
     }
 
     val typography = Typography(
-        h1 = uiTextStyle(FontWeight.Bold),
-        h2 = uiTextStyle(FontWeight.Bold),
-        h3 = uiTextStyle(FontWeight.Bold),
-        h4 = uiTextStyle(FontWeight.Bold),
-        h5 = uiTextStyle(FontWeight.Bold),
-        h6 = uiTextStyle(FontWeight.Bold),
-        subtitle1 = uiTextStyle(FontWeight.Bold),
-        subtitle2 = uiTextStyle(FontWeight.Bold),
-        body1 = uiTextStyle(),
-        body2 = uiTextStyle(),
-        button = uiTextStyle(FontWeight.Medium),
-        caption = uiTextStyle(),
-        overline = uiTextStyle()
+        h1 = uiTextStyle(size = 20.sp, weight = FontWeight.Bold),
+        h2 = uiTextStyle(size = 18.sp, weight = FontWeight.Bold),
+        h3 = uiTextStyle(size = 16.sp, weight = FontWeight.Bold),
+        h4 = uiTextStyle(size = 15.sp, weight = FontWeight.Bold),
+        h5 = uiTextStyle(size = 14.sp, weight = FontWeight.Bold),
+        h6 = uiTextStyle(size = 13.sp, weight = FontWeight.Bold),
+        subtitle1 = uiTextStyle(size = 14.sp, weight = FontWeight.Medium),
+        subtitle2 = uiTextStyle(size = 13.sp, weight = FontWeight.Medium),
+        body1 = uiTextStyle(size = 13.sp, weight = FontWeight.Normal),
+        body2 = uiTextStyle(size = 13.sp, weight = FontWeight.Normal),
+        button = uiTextStyle(size = 13.sp, weight = FontWeight.Medium),
+        caption = uiTextStyle(size = 11.sp, weight = FontWeight.Normal),
+        overline = uiTextStyle(size = 10.sp, weight = FontWeight.Medium)
+    )
+
+    val m3ColorScheme = if (darkTheme) {
+        darkColorScheme(
+            primary = KLogViewerColors.DarkPrimary,
+            onPrimary = KLogViewerColors.DarkOnPrimary,
+            background = KLogViewerColors.DarkBackground,
+            onBackground = KLogViewerColors.DarkOnBackground,
+            surface = KLogViewerColors.DarkSurface,
+            onSurface = KLogViewerColors.DarkOnSurface,
+            surfaceVariant = Color(0xFF323537)
+        )
+    } else {
+        lightColorScheme(
+            primary = KLogViewerColors.LightPrimary,
+            onPrimary = KLogViewerColors.LightOnPrimary,
+            background = KLogViewerColors.LightBackground,
+            onBackground = KLogViewerColors.LightOnBackground,
+            surface = KLogViewerColors.LightSurface,
+            onSurface = KLogViewerColors.LightOnSurface,
+            surfaceVariant = Color(0xFFEBEBEB)
+        )
+    }
+
+    val m3Shapes = M3Shapes(
+        extraSmall = RoundedCornerShape(4.dp),
+        small = RoundedCornerShape(4.dp),
+        medium = RoundedCornerShape(4.dp),
+        large = RoundedCornerShape(4.dp),
+        extraLarge = RoundedCornerShape(4.dp)
     )
 
     MaterialTheme(
         colors = colors,
         typography = typography,
-        shapes = Shapes(),
+        shapes = Shapes(
+            small = RoundedCornerShape(4.dp),
+            medium = RoundedCornerShape(4.dp),
+            large = RoundedCornerShape(4.dp)
+        ),
         content = {
-            CompositionLocalProvider(
-                LocalLogLevelColors provides logLevelColors,
-                LocalCustomColors provides customColors,
-                content = content
-            )
+            androidx.compose.material3.MaterialTheme(
+                colorScheme = m3ColorScheme,
+                shapes = m3Shapes
+            ) {
+                CompositionLocalProvider(
+                    LocalLogLevelColors provides logLevelColors,
+                    LocalCustomColors provides customColors,
+                    content = content
+                )
+            }
         }
     )
 }

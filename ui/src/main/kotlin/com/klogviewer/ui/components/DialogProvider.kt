@@ -12,6 +12,7 @@ import javax.swing.JOptionPane
 import javax.swing.JPanel
 import javax.swing.JSpinner
 import javax.swing.SpinnerNumberModel
+import javax.swing.SwingUtilities
 
 data class FontSelection(
     val family: String,
@@ -131,7 +132,9 @@ class AwtDialogProvider(private val parent: Frame? = null) : DialogProvider {
     }
 
     override fun showMessageDialog(title: String, message: String) {
-        JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE)
+        SwingUtilities.invokeLater {
+            JOptionPane.showMessageDialog(parent, message, title, JOptionPane.ERROR_MESSAGE)
+        }
     }
 
     private fun isMonospacedFamily(family: String): Boolean {

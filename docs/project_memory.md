@@ -3985,3 +3985,86 @@ For each sprint/task
 - `./gradlew check` — BUILD SUCCESSFUL across `:domain`, `:core`, `:ui`, and `:app` modules.
 - Unit tests: `PatternWizardRegressionTest`, `PatternImporterTest`, `PatternDraftCompilerIntegrationTest`, `HeuristicProbeEnrichedTest`, `MultilineProcessorCompatibilityTest`, `StructuredSerilogPreviewTest`, `DirectoryIdentityNormalizerTest`, `WorkspaceLogLoaderTest`, `PatternWizardIntentHandlerTest`.
 - Static analysis: `./gradlew detekt` passed cleanly in all modules.
+
+---
+
+## Task: Impeccable Design Quality Refinement — FilterBar Chunking, Typography Scale & Theme Harmonization
+
+**Title**: Implement Toolbar Distillation, Typographic Hierarchy Scale, and M2/M3 Theme Unification
+**Date/time completed**: 2026-08-27 07:05
+
+### What was shipped
+
+- **FilterBar Toolbar Distillation & Chunking (`FilterBar.kt`)**: Reorganized the 14+ icon-only button strip into distinct semantic clusters (*Sources*, *Stream & Layout Controls*, *Display & Settings Overflow Menu*, *Time & Structured Filters*, *Query Input Area*, and *Results Count*). Moved secondary appearance/display toggles (Theme, ANSI colors, Compact cell mode, Pattern mapping) into a clean Settings/Overflow dropdown (`toolbar_settings_menu`).
+- **Typographic Hierarchy Scale (`KLogViewerTheme.kt`)**: Replaced flat 13sp across all Material heading levels with an explicit desktop scale (`h1`: 20sp bold, `h2`: 18sp bold, `h3`: 16sp bold, `h4`: 15sp bold, `h5`: 14sp bold, `h6`: 13sp bold, `subtitle1`: 14sp medium, `body1`/`body2`: 13sp regular, `caption`: 11sp regular, `overline`: 10sp medium).
+- **Material 2 and Material 3 Harmonization (`KLogViewerTheme.kt`)**: Provided matching `darkColorScheme` and `lightColorScheme` to nested Material 3 `MaterialTheme` inside `KLogViewerTheme`, ensuring both M2 and M3 dialogs and components inherit identical brand colors, surfaces, and theme states.
+- **Verification Suites**: Updated `KLogViewerThemeTypographyTest.kt` to verify full typographic scale; added `FilterBarToolbarChunkingTest.kt` covering stream actions and overflow menu behavior.
+
+### Key decisions
+
+- Kept primary stream-investigation actions (Sidebar, Split, Sort, Auto-scroll, Connection, Refresh) directly accessible in the toolbar while grouping secondary appearance toggles in the overflow menu.
+- Nested Material 3 `MaterialTheme` inside `KLogViewerTheme` with tokens derived from `KLogViewerColors` to seamlessly unify Material 2 and Material 3 components across the application.
+
+### Gotchas
+
+- Test methods with long Gherkin descriptions must adhere to Detekt line length and method length thresholds; extracted compact test composable helpers to keep tests readable and compliant.
+
+### Test coverage areas
+
+- `./gradlew check` — BUILD SUCCESSFUL across all modules (`:domain`, `:core`, `:ui`, `:app`).
+- Unit & UI tests: `FilterBarToolbarChunkingTest`, `KLogViewerThemeTypographyTest`, `FilterBarTimeFilterControlsTest`, `FilterBarStructuredFilterTest`.
+- Static analysis: `./gradlew detekt` passed cleanly with 0 violations.
+
+---
+
+## Task: Fix Reentry into ignoringRedrawRequests Exception
+
+**Title**: Prevent Reentrant Skiko Render Cycle on AWT Error Message Dialogs
+**Date/time completed**: 2026-08-27 08:14
+
+### What was shipped
+
+- **Asynchronous Modal Dialog Dispatch (`DialogProvider.kt`)**: Updated `AwtDialogProvider.showMessageDialog` to dispatch `JOptionPane.showMessageDialog` via `SwingUtilities.invokeLater` instead of blocking synchronously inside the calling thread.
+- **Unit Test (`AwtDialogProviderTest.kt`)**: Added unit test to verify error message dialog invocation without re-entry exceptions.
+
+### Key decisions
+
+- Showing modal Swing/AWT dialogs (`JOptionPane`) synchronously inside Compose coroutine/effect flushes (`LaunchedEffect` / `performScheduledEffects` within `onRender`) enters a nested AWT event pump while Compose is rendering. Dispatching via `SwingUtilities.invokeLater` defers the modal dialog display until the active Compose render pass completes, eliminating re-entrant `ComposeSceneMediator.onRender` / `SwingInteropContainer` calls.
+
+### Gotchas
+
+- Any blocking modal AWT/Swing invocation executed directly inside Compose recomposition or effect execution can trigger Skiko/AWT re-entrant redraw exceptions. Such modal dialogs must always be dispatched asynchronously on the EDT via `SwingUtilities.invokeLater`.
+
+### Test coverage areas
+
+- `./gradlew check` — BUILD SUCCESSFUL across all modules (`:domain`, `:core`, `:ui`, `:app`).
+- Unit test: `AwtDialogProviderTest`.
+- Static analysis: `./gradlew detekt` passed cleanly with 0 violations.
+
+---
+
+## Task: Impeccable Polish Pass
+
+**Title**: Comprehensive UI Polish across Design System, Dialogs, Surfaces, and Tokens
+**Date/time completed**: 2026-08-27 09:25
+
+### What was shipped
+
+- **Corner Radius and Shape Cohesion (`KLogViewerTheme.kt`)**: Standardized shape definitions for both Material 2 and Material 3 design tokens using uniform 4.dp rounded corners (`M3Shapes` and `Shapes`) for crisp desktop tool aesthetics.
+- **Dialog and Popup Refinement (`DirectoryMappingsDialog.kt`, `CellValuePopup.kt`, `WelcomeScreen.kt`)**: Aligned modal surfaces, mapping item cards, cell reveal popups, and welcome cards to 4.dp corner shapes with balanced padding and elevation.
+- **Detector and Static Analysis Verification**: Verified zero anti-pattern findings with the Impeccable CLI detector and validated clean `./gradlew check` across all modules.
+
+### Key decisions
+
+- Standardized on 4.dp corner radiuses across desktop dialogs and containers, aligning the whole application with the desktop workstation aesthetic established in the Pattern Wizard.
+- Unified Material 2 and Material 3 shape defaults at the theme root in `KLogViewerTheme` so nested composables inherit cohesive corner geometry automatically.
+
+### Gotchas
+
+- When defining `M3Shapes` and Material 2 `Shapes` in the same theme file, explicit import aliasing (`import androidx.compose.material3.Shapes as M3Shapes`) and explicit `dp` units ensure clean type resolution.
+
+### Test coverage areas
+
+- `./gradlew check` — BUILD SUCCESSFUL across all modules (`:domain`, `:core`, `:ui`, `:app`).
+- Impeccable deterministic detector: 0 rule findings.
+- Static analysis: `./gradlew detekt` passed cleanly with 0 violations.
