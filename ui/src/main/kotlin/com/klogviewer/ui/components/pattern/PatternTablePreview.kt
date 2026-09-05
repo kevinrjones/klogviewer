@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 import com.klogviewer.domain.model.PreviewTableRow
+import com.klogviewer.ui.theme.KLogViewerTheme
 
 @Composable
 fun PatternTablePreview(
@@ -42,7 +43,7 @@ fun PatternTablePreview(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.medium,
         tonalElevation = 1.dp
     ) {
         Column(
@@ -112,9 +113,11 @@ fun PatternTablePreview(
                     // Data Rows
                     rows.forEachIndexed { index, row ->
                         val rowBg = if (index % 2 == 0) {
-                            if (isDarkMode) Color(0xFF1E1E1E) else Color(0xFFFAFAFA)
+                            MaterialTheme.colorScheme.surface
                         } else {
-                            if (isDarkMode) Color(0xFF252525) else Color(0xFFFFFFFF)
+                            MaterialTheme.colorScheme.surfaceVariant.copy(
+                                alpha = if (isDarkMode) 0.35f else 0.45f
+                            )
                         }
 
                         Row(
@@ -139,7 +142,6 @@ fun PatternTablePreview(
                                             text = value,
                                             style = MaterialTheme.typography.bodySmall.copy(
                                                 fontFamily = FontFamily.Monospace,
-                                                fontSize = 11.sp,
                                                 fontWeight = if (isColumnHighlighted) FontWeight.Bold else FontWeight.Normal,
                                                 color = if (isColumnHighlighted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                                             ),
@@ -159,13 +161,16 @@ fun PatternTablePreview(
 
 @Composable
 fun LevelBadge(levelStr: String, isDarkMode: Boolean) {
-    val (bgColor, textColor) = when (levelStr.uppercase()) {
-        "ERROR", "FATAL", "SEVERE" -> Color(0xFFE74C3C).copy(alpha = 0.25f) to Color(0xFFE74C3C)
-        "WARN", "WARNING" -> Color(0xFFF39C12).copy(alpha = 0.25f) to Color(0xFFF39C12)
-        "INFO" -> Color(0xFF2ECC71).copy(alpha = 0.25f) to Color(0xFF2ECC71)
-        "DEBUG", "TRACE" -> Color(0xFF3498DB).copy(alpha = 0.25f) to Color(0xFF3498DB)
-        else -> Color.Gray.copy(alpha = 0.2f) to Color.Gray
+    val logColors = KLogViewerTheme.logColors
+    val textColor = when (levelStr.uppercase()) {
+        "ERROR", "FATAL", "SEVERE" -> logColors.error
+        "WARN", "WARNING" -> logColors.warn
+        "INFO" -> logColors.info
+        "DEBUG" -> logColors.debug
+        "TRACE" -> logColors.trace
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
+    val bgColor = textColor.copy(alpha = 0.2f)
 
     Surface(
         color = bgColor,

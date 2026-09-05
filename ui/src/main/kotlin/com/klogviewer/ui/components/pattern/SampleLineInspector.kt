@@ -69,7 +69,7 @@ fun SampleLineInspector(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.medium,
         tonalElevation = 1.dp
     ) {
         Column(

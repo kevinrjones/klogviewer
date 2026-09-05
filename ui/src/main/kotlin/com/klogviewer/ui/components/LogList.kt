@@ -322,7 +322,7 @@ fun LogListHeader(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = MaterialTheme.colors.surface,
+        color = KLogViewerTheme.customColors.toolbarSurface,
         elevation = 1.dp,
         modifier = modifier.height(IntrinsicSize.Min)
     ) {
@@ -341,7 +341,7 @@ fun LogListHeader(
                 ) {
                     Text(
                         text = "#",
-                        style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.overline.copy(fontWeight = FontWeight.Bold),
                         modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
                     )
                     val onAutoResizeGutter = remember(logs, sourceIds, logFontSizeSp) {
@@ -393,7 +393,7 @@ fun LogListHeader(
                     ) {
                         Text(
                             text = column,
-                            style = MaterialTheme.typography.caption.copy(fontWeight = FontWeight.Bold),
+                            style = MaterialTheme.typography.overline.copy(fontWeight = FontWeight.Bold),
                             modifier = Modifier.weight(1f).padding(horizontal = 4.dp)
                         )
                         
@@ -498,7 +498,7 @@ fun LogEntryRow(
     val logColors = KLogViewerTheme.logColors
     val rowSourceShadeIndex = getSourceShadeIndex(entry.sourceId, sourceIds)
     val backgroundColor = if (isSelected) {
-        MaterialTheme.colors.primary.copy(alpha = 0.15f)
+        KLogViewerTheme.customColors.selectedRow
     } else {
         getSourceBackgroundColor(rowSourceShadeIndex, isDarkMode)
     }

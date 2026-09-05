@@ -1,13 +1,15 @@
 package com.klogviewer.ui.components.pattern
 
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -15,11 +17,11 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.klogviewer.domain.model.PatternParseError
+import com.klogviewer.ui.theme.KLogViewerTheme
 
 @Composable
 fun PatternMatchSummary(
@@ -33,12 +35,13 @@ fun PatternMatchSummary(
     modifier: Modifier = Modifier
 ) {
     val isAllMatched = totalCount > 0 && matchedCount == totalCount
-    val badgeBgColor = if (isAllMatched) Color(0xFF2ECC71).copy(alpha = 0.2f) else Color(0xFFF39C12).copy(alpha = 0.2f)
-    val badgeTextColor = if (isAllMatched) Color(0xFF2ECC71) else Color(0xFFF39C12)
+    val logColors = KLogViewerTheme.logColors
+    val badgeTextColor = if (isAllMatched) logColors.info else logColors.warn
+    val badgeBgColor = badgeTextColor.copy(alpha = 0.2f)
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.medium,
         tonalElevation = 1.dp
     ) {
         Column(
@@ -53,18 +56,32 @@ fun PatternMatchSummary(
                 // Match Health Badge
                 Surface(
                     color = badgeBgColor,
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.small
                 ) {
-                    Text(
-                        text = if (isAllMatched) "✓ $matchedCount/$totalCount sample lines matched (100%)"
-                        else "⚠️ $matchedCount/$totalCount lines matched (${totalCount - matchedCount} errors)",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            color = badgeTextColor,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 11.sp
-                        ),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isAllMatched) Icons.Default.CheckCircle else Icons.Default.Warning,
+                            contentDescription = if (isAllMatched) {
+                                "All sample lines matched"
+                            } else {
+                                "Some sample lines failed"
+                            },
+                            tint = badgeTextColor,
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            text = if (isAllMatched) "$matchedCount/$totalCount sample lines matched (100%)"
+                            else "$matchedCount/$totalCount lines matched (${totalCount - matchedCount} errors)",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                color = badgeTextColor,
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
                 }
 
                 if (parseErrors.isNotEmpty()) {
@@ -76,18 +93,28 @@ fun PatternMatchSummary(
 
             if (showMissingTimestampWarning) {
                 Surface(
-                    color = WARNING_COLOR.copy(alpha = WARNING_BACKGROUND_ALPHA),
-                    shape = RoundedCornerShape(6.dp),
+                    color = logColors.warn.copy(alpha = WARNING_BACKGROUND_ALPHA),
+                    shape = MaterialTheme.shapes.small,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(
-                        text = "⚠️ No timestamp field mapped — interleaving with other sources will be approximate.",
-                        style = MaterialTheme.typography.bodySmall.copy(
-                            color = WARNING_COLOR,
-                            fontSize = WARNING_FONT_SIZE
-                        ),
-                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Warning,
+                            contentDescription = "Timestamp mapping warning",
+                            tint = logColors.warn,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = "No timestamp field mapped — interleaving with other sources will be approximate.",
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                color = logColors.warn
+                            )
+                        )
+                    }
                 }
             }
 
@@ -95,7 +122,7 @@ fun PatternMatchSummary(
             if (isDiagnosticsDrawerOpen && parseErrors.isNotEmpty()) {
                 Surface(
                     color = MaterialTheme.colorScheme.surfaceVariant,
-                    shape = RoundedCornerShape(6.dp),
+                    shape = MaterialTheme.shapes.small,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -111,8 +138,7 @@ fun PatternMatchSummary(
                             Text(
                                 text = "• Line ${err.lineIndex + 1} (offset ${err.errorOffset}): ${err.message}",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color(0xFFE74C3C),
-                                    fontSize = 11.sp
+                                    color = logColors.error
                                 )
                             )
                         }
@@ -123,9 +149,7 @@ fun PatternMatchSummary(
     }
 }
 
-private val WARNING_COLOR = Color(0xFFF39C12)
 private const val WARNING_BACKGROUND_ALPHA = 0.15f
-private val WARNING_FONT_SIZE = 11.sp
 
 @Preview
 @Composable

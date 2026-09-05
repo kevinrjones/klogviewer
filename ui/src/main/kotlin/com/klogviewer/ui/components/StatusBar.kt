@@ -8,9 +8,9 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.klogviewer.ui.theme.KLogViewerTheme
 
 @Composable
 fun StatusBar(
@@ -27,17 +27,22 @@ fun StatusBar(
     modifier: Modifier = Modifier
 ) {
     var showParserMenu by remember { mutableStateOf(false) }
+    val customColors = KLogViewerTheme.customColors
 
     Surface(
         modifier = modifier
             .fillMaxWidth()
             .height(24.dp),
         color = when {
-            isMissing -> Color.Red
-            !isConnected -> Color.Gray
+            isMissing -> customColors.statusBarError
+            !isConnected -> customColors.statusBarDisconnected
             else -> MaterialTheme.colors.primary
         },
-        contentColor = MaterialTheme.colors.onPrimary
+        contentColor = when {
+            isMissing -> customColors.statusBarOnError
+            !isConnected -> customColors.statusBarOnDisconnected
+            else -> MaterialTheme.colors.onPrimary
+        }
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp),

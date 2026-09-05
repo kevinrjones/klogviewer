@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-04T16:56:00-04:00",
+  "title": "Design System: KLogViewer",
+  "extensions": {
+    "colorMeta": {
+      "primary-light": {
+        "role": "primary",
+        "displayName": "Operator Blue",
+        "canonical": "#007ACC"
+      },
+      "primary-dark": {
+        "role": "primary",
+        "displayName": "Signal Cyan",
+        "canonical": "#00A3E0"
+      },
+      "surface-light": {
+        "role": "surface",
+        "displayName": "Light Surface",
+        "canonical": "#F5F5F5"
+      },
+      "surface-dark": {
+        "role": "surface",
+        "displayName": "Industrial Surface",
+        "canonical": "#3C3F41"
+      },
+      "status-error": {
+        "role": "error",
+        "displayName": "Error Red",
+        "canonical": "#B71C1C"
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Compact Display",
+        "purpose": "Workspace and welcome headings."
+      },
+      "body": {
+        "displayName": "Operational Body",
+        "purpose": "Dense control labels and application copy."
+      },
+      "label": {
+        "displayName": "Instrument Label",
+        "purpose": "Toolbar groups, overlines, and compact metadata labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "table-header",
+        "value": "1dp Compose elevation",
+        "purpose": "Separate column headers from scrolling log rows."
+      },
+      {
+        "name": "toolbar",
+        "value": "2dp Compose elevation",
+        "purpose": "Lift the grouped filter bar above the workspace."
+      },
+      {
+        "name": "persistent-region",
+        "value": "4dp Compose elevation",
+        "purpose": "Separate sidebar and tab strip from content."
+      },
+      {
+        "name": "popup",
+        "value": "8dp Compose elevation",
+        "purpose": "Place transient cell-value and tooltip surfaces above content."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary action",
+      "kind": "button",
+      "refersTo": "button-primary-light",
+      "description": "A compact signal-cyan action for the most important command in a surface.",
+      "html": "<button class=\"ds-button-primary\">OPEN LOG</button>",
+      "css": ".ds-button-primary { background: #007ACC; color: #FFFFFF; padding: 8px 16px; border: 0; border-radius: 4px; font: 500 13px/16px sans-serif; } .ds-button-primary:hover { filter: brightness(1.08); } .ds-button-primary:focus-visible { outline: 2px solid #00A3E0; outline-offset: 2px; }"
+    },
+    {
+      "name": "Welcome card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "A centered source-entry card for the empty workspace state.",
+      "html": "<button class=\"ds-welcome-card\"><span class=\"ds-welcome-card__title\">Open Local File</span><span class=\"ds-welcome-card__description\">View a single log file on your computer</span></button>",
+      "css": ".ds-welcome-card { width: 200px; padding: 16px; border: 0; border-radius: 4px; background: #F5F5F5; color: #121212; box-shadow: 0 2px 4px rgba(0,0,0,.18); text-align: center; } .ds-welcome-card:hover { background: #EBEBEB; } .ds-welcome-card:focus-visible { outline: 2px solid #007ACC; outline-offset: 2px; } .ds-welcome-card__title { display: block; font: 700 14px/18px sans-serif; } .ds-welcome-card__description { display: block; margin-top: 4px; color: rgba(18,18,18,.6); font: 400 11px/15px sans-serif; }"
+    },
+    {
+      "name": "Filter bar",
+      "kind": "custom",
+      "refersTo": "filter-bar",
+      "description": "A grouped command surface for source, stream, view, overflow, and filter actions.",
+      "html": "<div class=\"ds-filter-bar\"><span class=\"ds-filter-bar__group\">Sources</span><span class=\"ds-filter-bar__group\">Stream</span><span class=\"ds-filter-bar__group\">View</span><span class=\"ds-filter-bar__group\">Filters</span></div>",
+      "css": ".ds-filter-bar { display: flex; gap: 8px; align-items: center; padding: 2px 8px; min-height: 32px; border-radius: 4px; background: #F5F5F5; box-shadow: 0 1px 3px rgba(0,0,0,.16); font: 500 10px/12px sans-serif; letter-spacing: .5px; } .ds-filter-bar__group { padding: 4px 8px; color: #121212; } .ds-filter-bar__group:hover { background: rgba(0,122,204,.1); border-radius: 4px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Incident Control Room",
+    "overview": "KLogViewer is a dense and precise operations console. Industrial dark and clean light surfaces keep attention on high-volume log data, while signal cyan and semantic severity colors communicate action and state.",
+    "keyCharacteristics": [
+      "Dense desktop-first layout",
+      "Signal cyan and semantic severity colors",
+      "4dp compact geometry",
+      "Layered and lifted workspace regions"
+    ],
+    "rules": [
+      {
+        "name": "The Signal Before Ornament Rule",
+        "body": "Use weight, spacing, and semantic color to clarify operational state; never decorate merely to fill space.",
+        "section": "typography"
+      },
+      {
+        "name": "The Layered Workspace Rule",
+        "body": "Use tonal surfaces first and elevation second; every lifted surface must clarify a workspace layer or interaction.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do preserve the 2–24dp density rhythm.",
+      "Do keep the log table visually dominant.",
+      "Do organize toolbar actions into labeled groups."
+    ],
+    "donts": [
+      "Don't introduce decorative dashboard styling.",
+      "Don't use glassmorphism or ornamental gradients.",
+      "Don't use status colors as decoration."
+    ]
+  }
+}

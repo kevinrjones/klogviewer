@@ -25,14 +25,72 @@ private val UI_FONT_FAMILY = FontFamily.SansSerif
 
 private fun uiTextStyle(
     size: TextUnit = 13.sp,
-    weight: FontWeight = FontWeight.Normal
+    weight: FontWeight = FontWeight.Normal,
+    lineHeight: TextUnit = TextUnit.Unspecified,
+    letterSpacing: TextUnit = TextUnit.Unspecified
 ): TextStyle {
     return TextStyle(
         fontFamily = UI_FONT_FAMILY,
         fontWeight = weight,
-        fontSize = size
+        fontSize = size,
+        lineHeight = lineHeight,
+        letterSpacing = letterSpacing
     )
 }
+
+private val UI_DISPLAY_PRIMARY = uiTextStyle(
+    size = 20.sp,
+    weight = FontWeight.Bold,
+    lineHeight = 24.sp,
+    letterSpacing = (-0.2).sp
+)
+private val UI_DISPLAY_SECONDARY = uiTextStyle(
+    size = 18.sp,
+    weight = FontWeight.Bold,
+    lineHeight = 22.sp,
+    letterSpacing = (-0.1).sp
+)
+private val UI_SECTION_TITLE = uiTextStyle(
+    size = 16.sp,
+    weight = FontWeight.Bold,
+    lineHeight = 20.sp
+)
+private val UI_SUBTITLE_PRIMARY = uiTextStyle(
+    size = 14.sp,
+    weight = FontWeight.Medium,
+    lineHeight = 18.sp
+)
+private val UI_SUBTITLE_SECONDARY = uiTextStyle(
+    size = 13.sp,
+    weight = FontWeight.Medium,
+    lineHeight = 17.sp
+)
+private val UI_BODY = uiTextStyle(
+    size = 13.sp,
+    lineHeight = 18.sp
+)
+private val UI_METADATA = uiTextStyle(
+    size = 11.sp,
+    lineHeight = 15.sp
+)
+private val UI_ACTION = uiTextStyle(
+    size = 13.sp,
+    weight = FontWeight.Medium,
+    lineHeight = 16.sp,
+    letterSpacing = 0.1.sp
+)
+private val UI_METADATA_ACTION = uiTextStyle(
+    size = 11.sp,
+    weight = FontWeight.Medium,
+    lineHeight = 14.sp,
+    letterSpacing = 0.1.sp
+)
+private val UI_OVERLINE = uiTextStyle(
+    size = 10.sp,
+    weight = FontWeight.Medium,
+    lineHeight = 12.sp,
+    letterSpacing = 0.5.sp
+)
 
 data class LogLevelColors(
     val trace: Color,
@@ -45,7 +103,14 @@ data class LogLevelColors(
 )
 
 data class CustomColors(
-    val tabBackground: Color
+    val contentBackground: Color,
+    val toolbarSurface: Color,
+    val selectedRow: Color,
+    val tabBackground: Color,
+    val statusBarError: Color,
+    val statusBarDisconnected: Color,
+    val statusBarOnError: Color,
+    val statusBarOnDisconnected: Color
 )
 
 val LocalLogLevelColors = staticCompositionLocalOf {
@@ -62,7 +127,14 @@ val LocalLogLevelColors = staticCompositionLocalOf {
 
 val LocalCustomColors = staticCompositionLocalOf {
     CustomColors(
-        tabBackground = Color.LightGray
+        contentBackground = Color.White,
+        toolbarSurface = Color.LightGray,
+        selectedRow = Color.Cyan,
+        tabBackground = Color.LightGray,
+        statusBarError = Color(0xFFB71C1C),
+        statusBarDisconnected = Color(0xFF455A64),
+        statusBarOnError = Color.White,
+        statusBarOnDisconnected = Color.White
     )
 }
 
@@ -119,28 +191,60 @@ fun KLogViewerTheme(
 
     val customColors = if (darkTheme) {
         CustomColors(
-            tabBackground = KLogViewerColors.DarkTabBackground
+            contentBackground = KLogViewerColors.DarkContentBackground,
+            toolbarSurface = KLogViewerColors.DarkToolbarSurface,
+            selectedRow = KLogViewerColors.DarkSelectedRow,
+            tabBackground = KLogViewerColors.DarkTabBackground,
+            statusBarError = KLogViewerColors.DarkStatusBarError,
+            statusBarDisconnected = KLogViewerColors.DarkStatusBarDisconnected,
+            statusBarOnError = KLogViewerColors.DarkStatusBarOnError,
+            statusBarOnDisconnected = KLogViewerColors.DarkStatusBarOnDisconnected
         )
     } else {
         CustomColors(
-            tabBackground = KLogViewerColors.LightTabBackground
+            contentBackground = KLogViewerColors.LightContentBackground,
+            toolbarSurface = KLogViewerColors.LightToolbarSurface,
+            selectedRow = KLogViewerColors.LightSelectedRow,
+            tabBackground = KLogViewerColors.LightTabBackground,
+            statusBarError = KLogViewerColors.LightStatusBarError,
+            statusBarDisconnected = KLogViewerColors.LightStatusBarDisconnected,
+            statusBarOnError = KLogViewerColors.LightStatusBarOnError,
+            statusBarOnDisconnected = KLogViewerColors.LightStatusBarOnDisconnected
         )
     }
 
     val typography = Typography(
-        h1 = uiTextStyle(size = 20.sp, weight = FontWeight.Bold),
-        h2 = uiTextStyle(size = 18.sp, weight = FontWeight.Bold),
-        h3 = uiTextStyle(size = 16.sp, weight = FontWeight.Bold),
-        h4 = uiTextStyle(size = 15.sp, weight = FontWeight.Bold),
-        h5 = uiTextStyle(size = 14.sp, weight = FontWeight.Bold),
-        h6 = uiTextStyle(size = 13.sp, weight = FontWeight.Bold),
-        subtitle1 = uiTextStyle(size = 14.sp, weight = FontWeight.Medium),
-        subtitle2 = uiTextStyle(size = 13.sp, weight = FontWeight.Medium),
-        body1 = uiTextStyle(size = 13.sp, weight = FontWeight.Normal),
-        body2 = uiTextStyle(size = 13.sp, weight = FontWeight.Normal),
-        button = uiTextStyle(size = 13.sp, weight = FontWeight.Medium),
-        caption = uiTextStyle(size = 11.sp, weight = FontWeight.Normal),
-        overline = uiTextStyle(size = 10.sp, weight = FontWeight.Medium)
+        h1 = UI_DISPLAY_PRIMARY,
+        h2 = UI_DISPLAY_SECONDARY,
+        h3 = UI_SECTION_TITLE,
+        h4 = UI_SECTION_TITLE.copy(fontSize = 15.sp, lineHeight = 19.sp),
+        h5 = UI_SUBTITLE_PRIMARY.copy(fontWeight = FontWeight.Bold),
+        h6 = UI_SUBTITLE_SECONDARY.copy(fontWeight = FontWeight.Bold),
+        subtitle1 = UI_SUBTITLE_PRIMARY,
+        subtitle2 = UI_SUBTITLE_SECONDARY,
+        body1 = UI_BODY,
+        body2 = UI_BODY,
+        button = UI_ACTION,
+        caption = UI_METADATA,
+        overline = UI_OVERLINE
+    )
+
+    val m3Typography = androidx.compose.material3.Typography(
+        displayLarge = UI_DISPLAY_PRIMARY,
+        displayMedium = UI_DISPLAY_SECONDARY,
+        displaySmall = UI_SECTION_TITLE,
+        headlineLarge = UI_DISPLAY_PRIMARY,
+        headlineMedium = UI_DISPLAY_SECONDARY,
+        headlineSmall = UI_SECTION_TITLE,
+        titleLarge = UI_SECTION_TITLE,
+        titleMedium = UI_SUBTITLE_PRIMARY,
+        titleSmall = UI_SUBTITLE_SECONDARY,
+        bodyLarge = UI_BODY,
+        bodyMedium = UI_BODY,
+        bodySmall = UI_METADATA,
+        labelLarge = UI_ACTION,
+        labelMedium = UI_METADATA_ACTION,
+        labelSmall = UI_OVERLINE
     )
 
     val m3ColorScheme = if (darkTheme) {
@@ -151,7 +255,7 @@ fun KLogViewerTheme(
             onBackground = KLogViewerColors.DarkOnBackground,
             surface = KLogViewerColors.DarkSurface,
             onSurface = KLogViewerColors.DarkOnSurface,
-            surfaceVariant = Color(0xFF323537)
+            surfaceVariant = KLogViewerColors.DarkSurfaceVariant
         )
     } else {
         lightColorScheme(
@@ -161,7 +265,7 @@ fun KLogViewerTheme(
             onBackground = KLogViewerColors.LightOnBackground,
             surface = KLogViewerColors.LightSurface,
             onSurface = KLogViewerColors.LightOnSurface,
-            surfaceVariant = Color(0xFFEBEBEB)
+            surfaceVariant = KLogViewerColors.LightSurfaceVariant
         )
     }
 
@@ -184,6 +288,7 @@ fun KLogViewerTheme(
         content = {
             androidx.compose.material3.MaterialTheme(
                 colorScheme = m3ColorScheme,
+                typography = m3Typography,
                 shapes = m3Shapes
             ) {
                 CompositionLocalProvider(

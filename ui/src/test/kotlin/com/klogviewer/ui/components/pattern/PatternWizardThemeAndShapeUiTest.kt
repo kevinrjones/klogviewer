@@ -3,6 +3,7 @@ package com.klogviewer.ui.components.pattern
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -155,5 +156,25 @@ class PatternWizardThemeAndShapeUiTest {
             onNodeWithText("timestamp").assertIsDisplayed()
             onNodeWithText("thread").assertIsDisplayed()
             onNodeWithText("reqId").assertIsDisplayed()
+        }
+
+    @Test
+    fun `given a complete pattern match when rendered then success icon has an accessible description`() =
+        runComposeUiTest {
+            setContent {
+                com.klogviewer.ui.theme.KLogViewerTheme {
+                    PatternMatchSummary(
+                        matchedCount = 2,
+                        totalCount = 2,
+                        confidenceScore = 1f,
+                        parseErrors = emptyList(),
+                        isDiagnosticsDrawerOpen = false,
+                        onToggleDiagnosticsDrawer = {}
+                    )
+                }
+            }
+
+            onNodeWithContentDescription("All sample lines matched").assertIsDisplayed()
+            onNodeWithText("2/2 sample lines matched (100%)").assertIsDisplayed()
         }
 }

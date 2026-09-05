@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.v2.runComposeUiTest
@@ -88,7 +89,7 @@ class FilterBarStructuredFilterTest {
     }
 
     @Test
-    fun `edit pattern mapping toolbar button triggers callback`() = runComposeUiTest {
+    fun `edit pattern mapping display menu item triggers callback`() = runComposeUiTest {
         var triggered = false
         setContent {
             FilterBar(
@@ -127,7 +128,8 @@ class FilterBarStructuredFilterTest {
             )
         }
 
-        onNodeWithTag("toolbar_edit_pattern_mapping").assertIsDisplayed().performClick()
+        onNodeWithTag("toolbar_more_menu").performClick()
+        onNodeWithText("Edit Pattern Mapping").assertIsDisplayed().performClick()
         assertEquals(true, triggered)
     }
 

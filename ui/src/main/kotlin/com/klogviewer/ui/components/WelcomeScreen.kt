@@ -15,7 +15,6 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @Composable
 fun WelcomeScreen(
@@ -31,62 +30,74 @@ fun WelcomeScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Welcome to KLogViewer",
-            style = MaterialTheme.typography.h4,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colors.primary
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = "Select a log source to get started",
-            style = MaterialTheme.typography.subtitle1,
-            color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
-        )
-        Spacer(modifier = Modifier.height(48.dp))
-        
-        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            WelcomeCard(
-                icon = Icons.AutoMirrored.Filled.InsertDriveFile,
-                title = "Open Local File",
-                description = "View a single log file on your computer",
-                onClick = onOpenFile,
-                testTag = "welcome_open_file"
-            )
-            WelcomeCard(
-                icon = Icons.Default.Folder,
-                title = "Open Directory",
-                description = "Monitor all logs in a local folder",
-                onClick = onOpenDirectory,
-                testTag = "welcome_open_directory"
-            )
+        Surface(
+            modifier = Modifier.width(480.dp),
+            shape = RoundedCornerShape(4.dp),
+            elevation = 2.dp,
+            color = MaterialTheme.colors.surface
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Welcome to KLogViewer",
+                    style = MaterialTheme.typography.h4,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colors.primary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Select a log source to get started",
+                    style = MaterialTheme.typography.subtitle1,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    WelcomeCard(
+                        icon = Icons.AutoMirrored.Filled.InsertDriveFile,
+                        title = "Open Local File",
+                        description = "View a single log file on your computer",
+                        onClick = onOpenFile,
+                        testTag = "welcome_open_file"
+                    )
+                    WelcomeCard(
+                        icon = Icons.Default.Folder,
+                        title = "Open Directory",
+                        description = "Monitor all logs in a local folder",
+                        onClick = onOpenDirectory,
+                        testTag = "welcome_open_directory"
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                    WelcomeCard(
+                        icon = Icons.Default.Cloud,
+                        title = "Connect SFTP",
+                        description = "Tail logs from a remote server via SSH",
+                        onClick = onConnectSftp,
+                        testTag = "welcome_connect_sftp"
+                    )
+                    WelcomeCard(
+                        icon = Icons.Default.CloudQueue,
+                        title = "Connect S3",
+                        description = "Read logs from an AWS S3 bucket",
+                        onClick = onConnectS3,
+                        testTag = "welcome_connect_s3"
+                    )
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+                WelcomeCard(
+                    icon = Icons.Default.History,
+                    title = "Recent Items",
+                    description = "Quickly reopen your previous logs",
+                    onClick = onShowRecent,
+                    modifier = Modifier.fillMaxWidth(),
+                    testTag = "welcome_recent_items"
+                )
+            }
         }
-        Spacer(modifier = Modifier.height(24.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(24.dp)) {
-            WelcomeCard(
-                icon = Icons.Default.Cloud,
-                title = "Connect SFTP",
-                description = "Tail logs from a remote server via SSH",
-                onClick = onConnectSftp,
-                testTag = "welcome_connect_sftp"
-            )
-            WelcomeCard(
-                icon = Icons.Default.CloudQueue,
-                title = "Connect S3",
-                description = "Read logs from an AWS S3 bucket",
-                onClick = onConnectS3,
-                testTag = "welcome_connect_s3"
-            )
-        }
-        Spacer(modifier = Modifier.height(24.dp))
-        WelcomeCard(
-            icon = Icons.Default.History,
-            title = "Recent Items",
-            description = "Quickly reopen your previous logs",
-            onClick = onShowRecent,
-            modifier = Modifier.width(424.dp),
-            testTag = "welcome_recent_items"
-        )
     }
 }
 
@@ -102,7 +113,7 @@ private fun WelcomeCard(
     Card(
         modifier = (if (testTag != null) modifier.testTag(testTag) else modifier)
             .clickable(onClick = onClick),
-        elevation = 2.dp,
+        elevation = 1.dp,
         shape = RoundedCornerShape(4.dp),
         backgroundColor = MaterialTheme.colors.surface
     ) {
@@ -126,11 +137,10 @@ private fun WelcomeCard(
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                description, 
-                style = MaterialTheme.typography.caption, 
+                description,
+                style = MaterialTheme.typography.caption,
                 textAlign = TextAlign.Center,
-                color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
-                lineHeight = 16.sp
+                color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f)
             )
         }
     }

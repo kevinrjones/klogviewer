@@ -29,7 +29,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.isCtrlPressed
@@ -307,7 +306,7 @@ fun PatternWizardDialog(
                                         } else {
                                             KLogViewerColors.LightPrimary
                                         },
-                                        contentColor = Color.White
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
                                     )
                                 ) {
                                     Text("Apply & Load (⌘↵)")
@@ -406,7 +405,7 @@ fun PatternConfirmationBanner(
                     } else {
                         KLogViewerColors.LightPrimary
                     },
-                    contentColor = Color.White
+                    contentColor = MaterialTheme.colorScheme.onPrimary
                 )
             ) {
                 Text("Apply", maxLines = 1)

@@ -1,5 +1,58 @@
 # Project Memory
 
+## Impeccable Design Improvement Pass — KLogViewer UI
+**Date/Time:** 2026-09-04 17:16
+
+### What was shipped
+- Applied the Incident Control Room direction to the Compose workspace with dedicated content, toolbar, and selected-row surfaces.
+- Added tactile hover feedback for sidebar level filters, stronger table-header hierarchy, and a contained welcome entry panel while preserving existing actions and test tags.
+
+### Key decisions
+- Kept the existing dense desktop workflow and semantic palette, using signal cyan and tonal surfaces for state rather than decoration.
+- Added explicit light/dark content-background, toolbar-surface, and selected-row tokens to keep hierarchy consistent across themes.
+
+### Gotchas
+- The visual pass is implemented in the shared `ui` module; no application wiring or behavior contracts were changed.
+
+### Test coverage areas
+- Focused UI tests passed, followed by the full `./gradlew test` suite and repository-wide `./gradlew check` including Detekt.
+
+## Impeccable Document Pass — KLogViewer Design System
+**Date/Time:** 2026-09-04 16:56
+
+### What was shipped
+- Added the root `DESIGN.md` documenting the existing Compose visual system for KLogViewer.
+- Added `.impeccable/design.json` with non-frontmatter extensions for elevation, component examples, and design narrative.
+
+### Key decisions
+- Documented the visual direction as "The Incident Control Room": dense, precise, industrial, and optimized for incident response.
+- Preserved the existing light/dark palette, 4dp shape language, compact spacing rhythm, semantic log-level colors, and layered elevation model.
+
+### Gotchas
+- The design system is based on the shared `ui` module; the executable `app` module only wires the desktop window and menus.
+
+### Test coverage areas
+- Validated the documented tokens and component guidance against `KLogViewerColors`, `KLogViewerTheme`, `FilterBar`, `WelcomeScreen`, `Sidebar`, `LogList`, and `KLogViewerScreen`.
+
+## Implement Impeccable Distill Pass — FilterBar Hierarchy
+**Date/Time:** 2026-08-29 06:56
+
+### What was shipped
+- Reworked the dense `FilterBar` into labeled `Sources`, `Stream`, `View`, `More`, and `Filters` groups so source loading, stream state, layout controls, display options, and filtering scan as distinct responsibilities.
+- Kept theme, ANSI color, compact-cell, and pattern-mapping actions behind the `More` overflow affordance while preserving every existing callback and test tag contract where behavior was unchanged.
+- Updated the README to document the semantic toolbar hierarchy and the low-frequency display overflow.
+
+### Key decisions
+- Separated sidebar and split-pane actions into `View` rather than mixing layout commands into the `Stream` group.
+- Retained the compact icon treatment and existing menu behavior to preserve the desktop-first, high-density identity while reducing semantic ambiguity.
+
+### Gotchas
+- The overflow trigger test tag is now `toolbar_more_menu`; callers only interact with the public `FilterBar` API, so no application wiring change was needed.
+- Existing compact menu sizing and icon hit-area behavior remain unchanged.
+
+### Test coverage areas
+- Focused `FilterBarToolbarChunkingTest`, `FilterBarStructuredFilterTest`, and `FilterBarTimeFilterControlsTest` coverage for labeled groups, display overflow callbacks, structured filters, time presets, reset, and refresh.
+
 ## Overall
 **What was shipped**
 - Initial project structure defined and documented.
@@ -4068,3 +4121,117 @@ For each sprint/task
 - `./gradlew check` — BUILD SUCCESSFUL across all modules (`:domain`, `:core`, `:ui`, `:app`).
 - Impeccable deterministic detector: 0 rule findings.
 - Static analysis: `./gradlew detekt` passed cleanly with 0 violations.
+
+---
+
+## Task: Impeccable Distill Pass — FilterBar Toolbar Simplification
+
+**Title**: Reduce Toolbar Cognitive Load with Semantic Action Groups
+**Date/time completed**: 2026-08-28 07:08
+
+### What was shipped
+
+- **Semantic Toolbar Groups (`FilterBar.kt`)**: Consolidated the FilterBar into labeled `Sources`, `Stream`, `Display`, and `Filters` clusters so operators can scan actions by intent instead of recalling a flat icon sequence.
+- **Progressive Disclosure**: Removed the duplicate always-visible Pattern Mapping button from stream controls while retaining it as an explicit item in the `Display` overflow menu alongside theme, ANSI, and cell-view settings.
+- **Regression Coverage**: Extended `FilterBarToolbarChunkingTest` to assert all semantic groups and updated `FilterBarStructuredFilterTest` to verify Pattern Mapping through its new overflow entry point.
+
+### Key decisions
+
+- Kept frequent incident-response actions (source connections, sidebar, split, ordering, auto-scroll, connection, and refresh) directly available while hiding low-frequency display and pattern settings behind one labeled overflow control.
+- Used compact overline labels and spacing rather than additional cards or decorative borders, preserving the high-density Command-Line Chic desktop identity.
+
+### Gotchas
+
+- Moving an action from the toolbar into an overflow menu requires updating UI tests to exercise the new discovery path; preserving the callback alone does not protect the user-facing interaction contract.
+
+### Test coverage areas
+
+- `./gradlew :ui:test --tests com.klogviewer.ui.components.FilterBarToolbarChunkingTest` — BUILD SUCCESSFUL.
+- `./gradlew :ui:test --tests com.klogviewer.ui.components.FilterBarStructuredFilterTest` — BUILD SUCCESSFUL.
+- `./gradlew check` — BUILD SUCCESSFUL across `:domain`, `:core`, `:ui`, and `:app`, with all 298 tests passing and Detekt clean.
+
+---
+
+## Task: Impeccable Typeset Pass — Shared Desktop Typography
+
+**Title**: Unify Material Typography Roles for Dense Desktop Workflows
+**Date/time completed**: 2026-08-28 07:13
+
+### What was shipped
+
+- **Shared Type Ramp (`KLogViewerTheme.kt`)**: Replaced scattered role construction with named display, section, subtitle, body, metadata, action, and overline styles using deliberate size, leading, weight, and tracking values.
+- **Material 2 / Material 3 Alignment**: Applied the same type roles to both nested theme systems so Pattern Wizard dialogs inherit the application’s `SansSerif` family and desktop hierarchy rather than Material 3 defaults.
+- **Pattern Wizard Cleanup**: Removed redundant 11sp overrides from match summaries and table preview values; those elements now inherit the shared metadata/body roles while preserving monospace for log data.
+- **Regression Coverage**: Extended `KLogViewerThemeTypographyTest` to verify both Material 2 and Material 3 font sizes, family, line height, and heading tracking.
+
+### Key decisions
+
+- Preserved the compact 13sp body scale required for high-density incident response while increasing distinction through role weight, line height, and selective tracking.
+- Kept `FontFamily.Monospace` limited to paths, patterns, and log data where it communicates machine-readable content rather than using it as a decorative UI face.
+
+### Gotchas
+
+- Material 2 and Material 3 expose different typography role names; both must be explicitly mapped at the theme boundary or Material 3 components silently fall back to their defaults.
+
+### Test coverage areas
+
+- `./gradlew :ui:test --tests com.klogviewer.ui.theme.KLogViewerThemeTypographyTest` — BUILD SUCCESSFUL.
+- `./gradlew check` — BUILD SUCCESSFUL across `:domain`, `:core`, `:ui`, and `:app`.
+- Impeccable typography detector: 0 rule findings (`[]`).
+
+---
+
+## Task: Impeccable Polish Pass — Theme and Surface Consistency
+
+**Title**: Finish Shared State Colors and Desktop Surface Polish
+**Date/time completed**: 2026-08-28 07:21
+
+### What was shipped
+
+- **Semantic Theme Tokens (`KLogViewerColors.kt`, `KLogViewerTheme.kt`)**: Added named light/dark surface-variant, error-status, and disconnected-status colors and wired them through both Material 2 custom colors and Material 3 color schemes.
+- **Status and Toolbar Refinement (`StatusBar.kt`, `FilterBar.kt`)**: Replaced generic disconnected/error color usage with theme-aware semantic colors, added compact group spacing, and removed a local filter-chip typography override.
+- **Pattern and Welcome Surface Alignment (`PatternWizardDialog.kt`, `WelcomeScreen.kt`)**: Used the active Material 3 `onPrimary` token for wizard actions and allowed welcome descriptions to inherit the shared metadata line height.
+- **Regression Coverage (`KLogViewerThemeColorTest.kt`)**: Added light/dark Compose coverage for status colors and Material 3 surface-variant alignment.
+
+### Key decisions
+
+- Preserved the industrial blue identity while moving state treatment and surface values behind semantic theme tokens, so light and dark modes remain intentional and consistent.
+- Kept the dense desktop toolbar compact, improving rhythm with small internal spacing rather than increasing control sizes or adding decorative chrome.
+
+### Gotchas
+
+- Material 2 custom colors and Material 3 color schemes are separate theme boundaries; both must be updated when a shared visual state token changes.
+
+### Test coverage areas
+
+- `./gradlew :ui:test --tests com.klogviewer.ui.theme.KLogViewerThemeColorTest` — BUILD SUCCESSFUL.
+- `./gradlew check` — BUILD SUCCESSFUL across `:domain`, `:core`, `:ui`, and `:app`, with Detekt clean.
+
+---
+
+## Task: Impeccable Polish Pass — Native State and Surface Consistency
+
+**Title**: Finish Theme Contrast and Pattern Wizard Surface Polish
+**Date/time completed**: 2026-08-28 08:38
+
+### What was shipped
+
+- **Contrast-safe theme foregrounds (`KLogViewerColors.kt`, `KLogViewerTheme.kt`)**: Preserved the industrial blue primary while using a readable dark foreground in dark mode and dedicated light foregrounds for error and disconnected status bars.
+- **State-aware status bar (`StatusBar.kt`)**: Applied the correct content color for primary, missing-source, and disconnected states instead of sharing one foreground across incompatible backgrounds.
+- **Pattern Wizard refinement (`PatternMatchSummary.kt`, `PatternTablePreview.kt`, `PatternTokenBar.kt`, `SampleLineInspector.kt`)**: Routed match and severity colors through theme semantics, aligned zone surfaces to shared Material shapes, and replaced Unicode status glyphs with labeled Material icons.
+- **Documentation and regression coverage**: Updated README feature notes, extended theme token assertions, and added a Compose semantics test for the successful match icon.
+
+### Key decisions
+
+- Kept the bright blue identity intact and changed its foreground treatment rather than muting or replacing the primary color.
+- Kept compact desktop density while using shared shapes, semantic color roles, and actual icons to improve scanability and assistive-technology output.
+
+### Gotchas
+
+- The Material 2 and Material 3 themes share visual tokens but expose separate foreground APIs; status surfaces need explicit state-specific content colors when the primary foreground changes.
+
+### Test coverage areas
+
+- `./gradlew :ui:test --tests com.klogviewer.ui.theme.KLogViewerThemeColorTest --tests com.klogviewer.ui.components.pattern.PatternWizardThemeAndShapeUiTest` — BUILD SUCCESSFUL.
+- `./gradlew check` — BUILD SUCCESSFUL across `:domain`, `:core`, `:ui`, and `:app`, with Detekt clean.
+- `git diff --check` — passed.

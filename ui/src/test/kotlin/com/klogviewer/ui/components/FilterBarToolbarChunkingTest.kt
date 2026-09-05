@@ -35,6 +35,11 @@ class FilterBarToolbarChunkingTest {
             }
         }
 
+        onNodeWithTag("toolbar_group_sources").assertIsDisplayed()
+        onNodeWithTag("toolbar_group_stream").assertIsDisplayed()
+        onNodeWithTag("toolbar_group_view").assertIsDisplayed()
+        onNodeWithTag("toolbar_group_more").assertIsDisplayed()
+        onNodeWithTag("toolbar_group_filters").assertIsDisplayed()
         onNodeWithTag("toolbar_open_file").assertIsDisplayed()
         onNodeWithTag("toggle_sidebar").assertIsDisplayed().performClick()
         expectThat(sidebarToggled).isTrue()
@@ -42,15 +47,15 @@ class FilterBarToolbarChunkingTest {
         onNodeWithTag("split_horizontal").assertIsDisplayed().performClick()
         expectThat(splitClicked).isTrue()
 
-        onNodeWithTag("toolbar_settings_menu").assertIsDisplayed().performClick()
+        onNodeWithTag("toolbar_more_menu").assertIsDisplayed().performClick()
         onNodeWithText("Toggle Theme").assertIsDisplayed().performClick()
         expectThat(themeToggled).isTrue()
 
-        onNodeWithTag("toolbar_settings_menu").performClick()
+        onNodeWithTag("toolbar_more_menu").performClick()
         onNodeWithText("ANSI Colors: ON").assertIsDisplayed().performClick()
         expectThat(ansiToggled).isTrue()
 
-        onNodeWithTag("toolbar_settings_menu").performClick()
+        onNodeWithTag("toolbar_more_menu").performClick()
         onNodeWithText("Cell View: Compact").assertIsDisplayed().performClick()
         expectThat(compactToggled).isTrue()
     }

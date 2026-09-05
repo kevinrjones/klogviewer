@@ -219,6 +219,7 @@ fun KLogViewerScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .background(KLogViewerTheme.customColors.contentBackground)
             ) {
                 Sidebar(
                     isExpanded = state.isSidebarExpanded,

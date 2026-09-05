@@ -67,7 +67,7 @@ fun PatternTokenBar(
 
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(8.dp),
+        shape = MaterialTheme.shapes.medium,
         tonalElevation = 2.dp
     ) {
         FlowRow(

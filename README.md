@@ -53,6 +53,9 @@ Supports a wide variety of log formats out-of-the-box, including:
 ### Professional Grid UI
 - **Resizable Columns**: Interactively adjust column widths with persistence across sessions.
 - **Command-Line Chic Theme**: Custom Industrial Dark and Clean Light palettes.
+- **Theme-aware Status Feedback**: Contrast-safe primary actions and semantic status colors remain readable in light, dark, error, and disconnected states.
+- **Pattern Diagnostics**: Match summaries and timestamp warnings use accessible status icons and consistent compact surfaces.
+- **Semantic FilterBar**: The dense desktop toolbar groups source loading, stream controls, view layout, and filters by purpose, while low-frequency display toggles stay in a labeled More menu.
 - **Regex Filtering & Search**: Real-time filtering with support for complex regular expressions.
 - **Smart Highlighting**: Automatically highlights IDs, IP addresses, and timestamps.
 

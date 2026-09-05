@@ -4,12 +4,17 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,6 +22,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.klogviewer.domain.model.LevelFilterKey
+import com.klogviewer.ui.theme.KLogViewerTheme
 @Composable
 fun Sidebar(
     isExpanded: Boolean,
@@ -34,7 +40,7 @@ fun Sidebar(
             .width(if (isExpanded) 200.dp else 56.dp)
             .testTag("sidebar"),
         elevation = 4.dp,
-        color = MaterialTheme.colors.surface
+        color = KLogViewerTheme.customColors.toolbarSurface
     ) {
         Column(
             modifier = Modifier.padding(8.dp),
@@ -122,10 +128,21 @@ private fun LogLevelToggle(
     count: Int,
     onToggle: () -> Unit
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isHovered by interactionSource.collectIsHoveredAsState()
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onToggle)
+            .background(
+                color = when {
+                    isHovered -> MaterialTheme.colors.primary.copy(alpha = 0.12f)
+                    isEnabled -> MaterialTheme.colors.primary.copy(alpha = 0.07f)
+                    else -> Color.Transparent
+                },
+                shape = RoundedCornerShape(4.dp)
+            )
+            .clickable(interactionSource = interactionSource, indication = ripple(), onClick = onToggle)
             .padding(vertical = 2.dp)
             .padding(start = 24.dp, end = 8.dp)
             .testTag("level_toggle_$label"),

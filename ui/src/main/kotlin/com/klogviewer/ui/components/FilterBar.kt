@@ -1,6 +1,7 @@
 package com.klogviewer.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -14,8 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.klogviewer.ui.mvi.TimeRangePreset
+import com.klogviewer.ui.theme.KLogViewerTheme
 
 @Composable
 fun FilterBar(
@@ -70,86 +71,131 @@ fun FilterBar(
     Surface(
         modifier = modifier.fillMaxWidth().testTag("filter_bar"),
         elevation = 2.dp,
-        color = MaterialTheme.colors.surface
+        color = KLogViewerTheme.customColors.toolbarSurface
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            sourceActions(
-                onOpenFileClick = onOpenFileClick,
-                onSftpClick = onSftpClick,
-                onS3Click = onS3Click
-            )
-            workspaceAddActions(
-                onAddFileClick = onAddFileClick,
-                onAddDirectoryClick = onAddDirectoryClick,
-                onAddSftpClick = onAddSftpClick,
-                onAddS3Click = onAddS3Click
-            )
+            filterBarGroup(label = "Sources", testTag = "toolbar_group_sources") {
+                sourceActions(
+                    onOpenFileClick = onOpenFileClick,
+                    onSftpClick = onSftpClick,
+                    onS3Click = onS3Click
+                )
+                workspaceAddActions(
+                    onAddFileClick = onAddFileClick,
+                    onAddDirectoryClick = onAddDirectoryClick,
+                    onAddSftpClick = onAddSftpClick,
+                    onAddS3Click = onAddS3Click
+                )
+            }
 
-            Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
-            streamAndLayoutActions(
-                onToggleSidebar = onToggleSidebar,
-                onSplitClick = onSplitClick,
-                isReversed = isReversed,
-                onToggleSortOrder = onToggleSortOrder,
-                isAutoScrollEnabled = isAutoScrollEnabled,
-                onToggleAutoScroll = onToggleAutoScroll,
-                isConnected = isConnected,
-                onToggleConnection = onToggleConnection,
-                onRefresh = onRefresh,
-                onEditPatternMapping = onEditPatternMapping
-            )
-            displaySettingsMenu(
-                onToggleTheme = onToggleTheme,
-                showAnsiColors = showAnsiColors,
-                onToggleAnsiColors = onToggleAnsiColors,
-                useCompactCellMode = useCompactCellMode,
-                onToggleCompactCellMode = onToggleCompactCellMode,
-                onEditPatternMapping = onEditPatternMapping
-            )
+            filterBarGroup(label = "Stream", testTag = "toolbar_group_stream") {
+                streamActions(
+                    isReversed = isReversed,
+                    onToggleSortOrder = onToggleSortOrder,
+                    isAutoScrollEnabled = isAutoScrollEnabled,
+                    onToggleAutoScroll = onToggleAutoScroll,
+                    isConnected = isConnected,
+                    onToggleConnection = onToggleConnection,
+                    onRefresh = onRefresh
+                )
+            }
 
-            Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
+            filterBarGroup(label = "View", testTag = "toolbar_group_view") {
+                viewActions(
+                    onToggleSidebar = onToggleSidebar,
+                    onSplitClick = onSplitClick
+                )
+            }
 
-            TimeFilterControls(
-                preset = timeFilterPreset,
-                validationMessage = timeFilterValidationMessage,
-                onApplyPreset = onApplyTimeFilterPreset,
-                onClear = onClearTimeFilter
-            )
+            filterBarGroup(label = "More", testTag = "toolbar_group_more") {
+                overflowMenu(
+                    onToggleTheme = onToggleTheme,
+                    showAnsiColors = showAnsiColors,
+                    onToggleAnsiColors = onToggleAnsiColors,
+                    useCompactCellMode = useCompactCellMode,
+                    onToggleCompactCellMode = onToggleCompactCellMode,
+                    onEditPatternMapping = onEditPatternMapping
+                )
+            }
 
-            Divider(modifier = Modifier.height(20.dp).width(1.dp).padding(horizontal = 4.dp))
-
-            structuredFilterActions(
-                draft = structuredFilterDraft,
-                selectedOperator = selectedStructuredOperator,
-                canApply = canApplyStructuredFilter,
-                isDialogOpen = isStructuredFilterDialogOpen,
-                onOpen = { isStructuredFilterDialogOpen = true },
-                onDraftChange = { structuredFilterDraft = it },
-                onApply = {
-                    onAddQuery(structuredFilterDraft.buildQuery())
-                    closeStructuredFilterDialog()
-                },
-                onCancel = closeStructuredFilterDialog
-            )
-
-            filterQueryInputArea(
+            filterBarGroup(
+                label = "Filters",
                 modifier = Modifier.weight(1f),
-                filterQueries = filterQueries,
-                text = textState,
-                onTextChange = { textState = it },
-                onAddQuery = onAddQuery,
-                onRemoveQuery = onRemoveQuery,
-                onClearQueries = {
-                    onClearQueries()
-                    textState = ""
-                }
-            )
+                testTag = "toolbar_group_filters"
+            ) {
+                TimeFilterControls(
+                    preset = timeFilterPreset,
+                    validationMessage = timeFilterValidationMessage,
+                    onApplyPreset = onApplyTimeFilterPreset,
+                    onClear = onClearTimeFilter
+                )
+
+                structuredFilterActions(
+                    draft = structuredFilterDraft,
+                    selectedOperator = selectedStructuredOperator,
+                    canApply = canApplyStructuredFilter,
+                    isDialogOpen = isStructuredFilterDialogOpen,
+                    onOpen = { isStructuredFilterDialogOpen = true },
+                    onDraftChange = { structuredFilterDraft = it },
+                    onApply = {
+                        onAddQuery(structuredFilterDraft.buildQuery())
+                        closeStructuredFilterDialog()
+                    },
+                    onCancel = closeStructuredFilterDialog
+                )
+
+                filterQueryInputArea(
+                    modifier = Modifier.weight(1f),
+                    filterQueries = filterQueries,
+                    text = textState,
+                    onTextChange = { textState = it },
+                    onAddQuery = onAddQuery,
+                    onRemoveQuery = onRemoveQuery,
+                    onClearQueries = {
+                        onClearQueries()
+                        textState = ""
+                    }
+                )
+            }
 
             resultsCount(matchesCount = matchesCount, totalCount = totalCount)
         }
+    }
+}
+
+@Composable
+private fun RowScope.filterBarGroup(
+    label: String,
+    modifier: Modifier = Modifier,
+    testTag: String,
+    content: @Composable RowScope.() -> Unit
+) {
+    Column(
+        modifier = modifier
+            .padding(horizontal = 4.dp)
+            .background(
+                color = MaterialTheme.colors.background.copy(alpha = 0.22f),
+                shape = RoundedCornerShape(4.dp)
+            )
+            .padding(horizontal = 2.dp, vertical = 2.dp)
+            .testTag(testTag),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(1.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.overline,
+            color = MaterialTheme.colors.onSurface.copy(alpha = 0.72f),
+            maxLines = 1
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+            content = content
+        )
     }
 }
 
@@ -181,30 +227,15 @@ private fun sourceActions(
 
 
 @Composable
-private fun streamAndLayoutActions(
-    onToggleSidebar: () -> Unit,
-    onSplitClick: () -> Unit,
+private fun streamActions(
     isReversed: Boolean,
     onToggleSortOrder: () -> Unit,
     isAutoScrollEnabled: Boolean,
     onToggleAutoScroll: () -> Unit,
     isConnected: Boolean,
     onToggleConnection: () -> Unit,
-    onRefresh: () -> Unit,
-    onEditPatternMapping: (() -> Unit)? = null
+    onRefresh: () -> Unit
 ) {
-    filterBarIcon(
-        icon = Icons.AutoMirrored.Filled.ViewSidebar,
-        tooltip = "Toggle Sidebar",
-        onClick = onToggleSidebar,
-        testTag = "toggle_sidebar"
-    )
-    filterBarIcon(
-        icon = Icons.Default.VerticalSplit,
-        tooltip = "Split Horizontal",
-        onClick = onSplitClick,
-        testTag = "split_horizontal"
-    )
     filterBarIcon(
         icon = if (isReversed) Icons.Default.SwapVert else Icons.AutoMirrored.Filled.Sort,
         tooltip = if (isReversed) "Newest First" else "Oldest First",
@@ -222,7 +253,11 @@ private fun streamAndLayoutActions(
         icon = if (isConnected) Icons.Default.Link else Icons.Default.LinkOff,
         tooltip = if (isConnected) "Connected (Click to Disconnect)" else "Disconnected (Click to Connect)",
         onClick = onToggleConnection,
-        tint = if (isConnected) MaterialTheme.colors.primary else Color.Gray,
+        tint = if (isConnected) {
+            MaterialTheme.colors.primary
+        } else {
+            MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium)
+        },
         testTag = if (isConnected) "connected" else "disconnected"
     )
     filterBarIcon(
@@ -231,18 +266,29 @@ private fun streamAndLayoutActions(
         onClick = onRefresh,
         testTag = "toolbar_refresh"
     )
-    if (onEditPatternMapping != null) {
-        filterBarIcon(
-            icon = Icons.Default.Pattern,
-            tooltip = "Edit Pattern Mapping",
-            onClick = onEditPatternMapping,
-            testTag = "toolbar_edit_pattern_mapping"
-        )
-    }
 }
 
 @Composable
-private fun displaySettingsMenu(
+private fun viewActions(
+    onToggleSidebar: () -> Unit,
+    onSplitClick: () -> Unit
+) {
+    filterBarIcon(
+        icon = Icons.AutoMirrored.Filled.ViewSidebar,
+        tooltip = "Toggle Sidebar",
+        onClick = onToggleSidebar,
+        testTag = "toggle_sidebar"
+    )
+    filterBarIcon(
+        icon = Icons.Default.VerticalSplit,
+        tooltip = "Split Horizontal",
+        onClick = onSplitClick,
+        testTag = "split_horizontal"
+    )
+}
+
+@Composable
+private fun overflowMenu(
     onToggleTheme: () -> Unit,
     showAnsiColors: Boolean,
     onToggleAnsiColors: () -> Unit,
@@ -255,9 +301,9 @@ private fun displaySettingsMenu(
     Box {
         filterBarIcon(
             icon = Icons.Default.MoreVert,
-            tooltip = "Display & Settings",
+            tooltip = "More display options",
             onClick = { menuExpanded = true },
-            testTag = "toolbar_settings_menu"
+            testTag = "toolbar_more_menu"
         )
 
         DropdownMenu(
@@ -411,7 +457,7 @@ internal fun filterChip(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 6.dp)
         ) {
-            Text(text = query, style = MaterialTheme.typography.caption, fontSize = 13.sp)
+            Text(text = query, style = MaterialTheme.typography.body2)
             Spacer(modifier = Modifier.width(4.dp))
             TooltipWrapper(tooltip = "Remove filter") {
                 Icon(
