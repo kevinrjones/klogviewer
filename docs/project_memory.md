@@ -1,5 +1,32 @@
 # Project Memory
 
+## Sprint 14: UI Polish
+**Date/Time:** 2026-09-07 11:07
+
+### What was shipped
+- **Compact vs Full cell display mode**: Per-window toggle (`useCompactCellMode` in `WindowPreference`) switches between truncated (ellipsis) and full cell text. Toolbar "More" menu item provides the toggle. Clicking a truncated cell opens `CellValuePopup` with the full value, copy-to-clipboard, and Escape/click-outside dismissal.
+- **Table grid lines**: Horizontal and vertical grid lines rendered via `drawBehind` Canvas in `LogEntryRow` (`LogList.kt`). Dark mode alpha `0.12f`, light mode alpha `0.18f` on `onSurface`.
+- **Pattern Wizard color refinement**: THREAD role color replaced purple (`0xFF9B59B6`) with blue-gray slate (dark `0xFF607D8B`, light `0xFF455A64`). Wizard background uses `surfaceVariant`. Buttons use primary blue.
+- **Pattern Wizard shape refinement**: Dialog corners reduced to `4.dp`, button corners to `4.dp`, footer corners to `0.dp`. Pattern-description pills unchanged at `16.dp`.
+
+### Key decisions
+- Grid lines are always-on (no visibility toggle) for this sprint.
+- Compact mode is the default (`useCompactCellMode = true`).
+- Grid lines drawn with `drawBehind` Canvas for performance rather than overlay composables.
+- Pattern-description pills explicitly excluded from color and shape changes.
+- No new preferences schema — compact mode toggle added as a boolean field in the existing `WindowPreference` model.
+
+### Gotchas
+- Grid line rendering uses `drawBehind` so lines appear on top of row backgrounds (selected, hovered, alternating) without requiring separate composable layers.
+- The Compact/Full toggle lives in the toolbar "More" overflow menu, not as a standalone toolbar button — consistent with other display-mode toggles.
+- Pattern Wizard `tonalElevation` was not changed (deferred as an open question).
+
+### Test coverage areas
+- `CompactCellModePersistenceTest.kt` — preference serialization and default value.
+- `CellValuePopupTest.kt` — popup rendering and dismissal behavior.
+- `LogListGridLineTest.kt` — grid line visibility and color in dark/light theme.
+- `PatternWizardThemeAndShapeUiTest.kt` — wizard palette and corner radii verification.
+
 ## Impeccable Design Improvement Pass — KLogViewer UI
 **Date/Time:** 2026-09-04 17:16
 
@@ -99,6 +126,7 @@
 - `DialogProvider` interaction tests added: `ShowFontDialog` intent verified to call `DialogProvider.showMonospacedFontDialog` with correct args; cancellation (null) verified not to mutate font state; font selection verified to update state.
 - App-module menu wiring smoke tests added: `AppMenuActionKey` enum and `appMenuIntentFor()` mapper extracted as single authoritative source for static menu-item → intent wiring; 13 smoke tests verify every key maps to the correct `KLogViewerIntent`.
 - CI already runs `xvfb-run ./gradlew :ui:desktopTest` on `ubuntu-latest`; confirmed no gap.
+- Sprint 14 `14` completed: UI polish delivered with Compact/Full cell display mode toggle, table grid lines (dark 0.12f / light 0.18f alpha), Pattern Wizard blue-gray slate palette (THREAD 0xFF607D8B/0xFF455A64), and reduced corner radii (4.dp dialog, 0.dp footer).
 
 **Key decisions**
 - Adopted MVI for UI architecture to align with functional and immutable principles.

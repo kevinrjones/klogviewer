@@ -82,30 +82,31 @@ Deliver targeted desktop UI polish for the main log table and Pattern Wizard, fo
 - [x] 14.8.6. Add visual regression tests for the wizard with the new shapes.
 
 ### 14.9. Visual Regression and Usability Verification
-- [ ] 14.9.1. Run `./gradlew :ui:test` to verify all UI tests pass.
-- [ ] 14.9.2. Run `./gradlew check` for all affected modules (`:domain`, `:core`, `:ui`, `:app`).
-- [ ] 14.9.3. Run `./gradlew detekt` to verify static analysis passes.
-- [ ] 14.9.4. Run the cyclomatic complexity review and decide whether follow-up reduction tasks are needed.
-- [ ] 14.9.5. Verify structured JSON logs, heuristic probing, and parser/runtime code are unchanged.
-- [ ] 14.9.6. Verify pattern-description pills are unchanged in color and shape.
-- [ ] 14.9.7. Verify the Compact/Full toggle persists correctly across app restarts.
-- [ ] 14.9.8. Verify grid lines render correctly with dark/light theme switching.
-- [ ] 14.9.9. Verify the Pattern Wizard dialog and buttons have the correct corner radii.
-- [ ] 14.9.10. Verify the Pattern Wizard uses the blue-gray slate palette (no purple remaining).
+- [x] 14.9.1. Run `./gradlew :ui:test` to verify all UI tests pass.
+- [x] 14.9.2. Run `./gradlew check` for all affected modules (`:domain`, `:core`, `:ui`, `:app`).
+- [x] 14.9.3. Run `./gradlew detekt` to verify static analysis passes.
+- [x] 14.9.4. Run the cyclomatic complexity review and decide whether follow-up reduction tasks are needed.
+- [x] 14.9.5. Verify structured JSON logs, heuristic probing, and parser/runtime code are unchanged.
+- [x] 14.9.6. Verify pattern-description pills are unchanged in color and shape.
+- [x] 14.9.7. Verify the Compact/Full toggle persists correctly across app restarts.
+- [x] 14.9.8. Verify grid lines render correctly with dark/light theme switching.
+- [x] 14.9.9. Verify the Pattern Wizard dialog and buttons have the correct corner radii.
+- [x] 14.9.10. Verify the Pattern Wizard uses the blue-gray slate palette (no purple remaining).
 
 ### 14.10. Documentation Updates
-- [ ] 14.10.1. Keep sprint doc (`docs/sprints/sprint-14-ui-polish.md`) and task doc aligned with final implementation.
-- [ ] 14.10.2. Update `docs/project_memory.md` at sprint completion with shipped scope, key decisions, gotchas, and test coverage areas.
+- [x] 14.10.1. Keep sprint doc (`docs/sprints/sprint-14-ui-polish.md`) and task doc aligned with final implementation.
+- [x] 14.10.2. Update `docs/project_memory.md` at sprint completion with shipped scope, key decisions, gotchas, and test coverage areas.
 
 ### 14.11. Acceptance Criteria
-- [ ] Compact mode truncates cell content with ellipsis at column boundaries; Full mode shows content without truncation.
-- [ ] Clicking a truncated cell in Compact mode opens a popup with the full value and a copy button.
-- [ ] The Compact/Full toggle is wired per-window and persists across sessions.
-- [ ] Horizontal and vertical grid lines are visible in the main log table.
-- [ ] Grid line colors respect dark/light theme and row states (selected, hovered, alternating).
-- [ ] Pattern Wizard purple treatment is replaced with the blue-gray slate palette.
-- [ ] Pattern Wizard dialog and button corners are reduced to 4.dp (footer to 0.dp).
-- [ ] Pattern-description pills are unchanged in color and shape.
-- [ ] Structured JSON logs, heuristic probing, and parser/runtime code are unchanged.
-- [ ] Visual regression and usability verification is complete.
-- [ ] Sprint and task documentation is updated.
+- [x] Compact mode truncates cell content with ellipsis at column boundaries; Full mode shows content without 
+  truncation.
+- [x] Clicking a truncated cell in Compact mode opens a popup with the full value and a copy button.
+- [x] The Compact/Full toggle is wired per-window and persists across sessions.
+- [x] Horizontal and vertical grid lines are visible in the main log table.
+- [x] Grid line colors respect dark/light theme and row states (selected, hovered, alternating).
+- [x] Pattern Wizard purple treatment is replaced with the blue-gray slate palette.
+- [x] Pattern Wizard dialog and button corners are reduced to 4.dp (footer to 0.dp).
+- [x] Pattern-description pills are unchanged in color and shape.
+- [x] Structured JSON logs, heuristic probing, and parser/runtime code are unchanged.
+- [x] Visual regression and usability verification is complete.
+- [x] Sprint and task documentation is updated.

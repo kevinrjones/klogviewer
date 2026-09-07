@@ -86,14 +86,46 @@ Deliver targeted desktop UI polish for the main log table and Pattern Wizard, fo
 - **Grid lines drawn with `drawLine`**: Using `Canvas` in `LogEntryRow` for performance.
 
 ## 6. Definition of Done
-- [ ] Compact mode truncates cell content with ellipsis at column boundaries; Full mode shows content without truncation.
-- [ ] Clicking a truncated cell in Compact mode opens a popup with the full value and a copy button.
-- [ ] The Compact/Full toggle is wired per-window and persists across sessions.
-- [ ] Horizontal and vertical grid lines are visible in the main log table.
-- [ ] Grid line colors respect dark/light theme and row states (selected, hovered, alternating).
-- [ ] Pattern Wizard purple treatment is replaced with the blue-gray slate palette.
-- [ ] Pattern Wizard dialog and button corners are reduced to 4.dp (footer to 0.dp).
-- [ ] Pattern-description pills are unchanged in color and shape.
-- [ ] Structured JSON logs, heuristic probing, and parser/runtime code are unchanged.
+- [x] Compact mode truncates cell content with ellipsis at column boundaries; Full mode shows content without truncation.
+- [x] Clicking a truncated cell in Compact mode opens a popup with the full value and a copy button.
+- [x] The Compact/Full toggle is wired per-window and persists across sessions.
+- [x] Horizontal and vertical grid lines are visible in the main log table.
+- [x] Grid line colors respect dark/light theme and row states (selected, hovered, alternating).
+- [x] Pattern Wizard purple treatment is replaced with the blue-gray slate palette.
+- [x] Pattern Wizard dialog and button corners are reduced to 4.dp (footer to 0.dp).
+- [x] Pattern-description pills are unchanged in color and shape.
+- [x] Structured JSON logs, heuristic probing, and parser/runtime code are unchanged.
 - [ ] Visual regression and usability verification is complete.
-- [ ] Sprint and task documentation is updated.
+- [x] Sprint and task documentation is updated.
+
+## 7. Implementation Notes
+
+### 7.1. Compact vs Full Display Mode
+- **Preference field**: `useCompactCellMode: Boolean = true` added to `WindowPreference` in `UserPreferences.kt`.
+- **Toggle location**: Toolbar "More" menu item labeled "Cell View: Compact" / "Cell View: Full" with test tag `toolbar_toggle_compact_mode` in `FilterBar.kt`.
+- **Cell truncation**: `LogEntryCell.kt` uses `maxLines = 1` and `TextOverflow.Ellipsis` in Compact mode; `maxLines = Int.MAX_VALUE` and `TextOverflow.Visible` in Full mode.
+- **Popup**: `CellValuePopup.kt` provides a scrollable popup (200–600dp width, 60–400dp height) with monospace body text, copy-to-clipboard button, and Escape/click-outside dismissal. Test tag: `cell_value_popup`.
+- **Intent**: `KLogViewerIntent.ToggleCompactCellMode` handled in the ViewModel to toggle and persist the preference.
+
+### 7.2. Grid Lines
+- **Rendering**: `drawBehind` Canvas modifier in `LogEntryRow` within `LogList.kt`.
+- **Colors**: Dark mode `onSurface` at `0.12f` alpha; Light mode `onSurface` at `0.18f` alpha.
+- **Lines**: Horizontal line at row bottom, vertical line after the gutter column, vertical lines at each column boundary.
+- **Stroke**: 1px width.
+
+### 7.3. Pattern Wizard Colors
+- **THREAD role**: Dark `0xFF607D8B`, Light `0xFF455A64` (replaced purple `0xFF9B59B6`).
+- **Wizard background**: `MaterialTheme.colorScheme.surfaceVariant`.
+- **Button colors**: Primary blue from `MaterialTheme.colorScheme.primary` (dark `0xFF00A3E0` / light `0xFF007ACC`).
+- **Pills**: Pattern-description pills retain `RoundedCornerShape(16.dp)` and existing color treatment.
+
+### 7.4. Pattern Wizard Shapes
+- **Dialog Surface**: `RoundedCornerShape(4.dp)`.
+- **Apply/Action buttons**: `RoundedCornerShape(4.dp)`.
+- **Footer Surface**: `RoundedCornerShape(0.dp)`.
+
+### 7.5. Test Files
+- `CompactCellModePersistenceTest.kt` — preference serialization and default value.
+- `CellValuePopupTest.kt` — popup rendering and dismissal behavior.
+- `LogListGridLineTest.kt` — grid line visibility and color in dark/light theme.
+- `PatternWizardThemeAndShapeUiTest.kt` — wizard palette and corner radii verification.
